@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="DogFriend">
 <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkRvZ0ZyaWVuZCIsCiAgInNob3J0X25hbWUiOiAiRG9nRnJpZW5kIiwKICAiZGVzY3JpcHRpb24iOiAi0J/RgNC40LvQvtC20LXQvdC40LUg0LTQu9GPINC+0LHRidC10L3QuNGPINGB0L7QsdCw0LrQvtCy0L7QtNC+0LIiLAogICJzdGFydF91cmwiOiAiLyIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI0YwRjRGOCIsCiAgInRoZW1lX2NvbG9yIjogIiM0QTkwRDkiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWwsJTNDc3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDEwMCAxMDAnJTNFJTNDcmVjdCB3aWR0aD0nMTAwJyBoZWlnaHQ9JzEwMCcgZmlsbD0nJTIzNEE5MEQ5JyByeD0nMjAnLyUzRSUzQ3RleHQgeT0nNzUnIGZvbnQtc2l6ZT0nNzAnIHRleHQtYW5jaG9yPSdtaWRkbGUnIHg9JzUwJyUzRSVGMCU5RiU5MCU5NSVGMCU5RiU4RiVCQiUzQy90ZXh0JTNFJTNDL3N2ZyUzRSIsCiAgICAgICJzaXplcyI6ICIxOTJ4MTkyIiwKICAgICAgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIKICAgIH0sCiAgICB7CiAgICAgICJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sLCUzQ3N2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJyUzRSUzQ3JlY3Qgd2lkdGg9JzEwMCcgaGVpZ2h0PScxMDAnIGZpbGw9JyUyMzRBOTBEOScgcng9JzIwJy8lM0UlM0N0ZXh0IHk9Jzc1JyBmb250LXNpemU9JzcwJyB0ZXh0LWFuY2hvcj0nbWlkZGxlJyB4PSc1MCclM0UlRjAlOUYlOTAlOTUlRjAlOUYlOEYlQkIlM0MvdGV4dCUzRSUzQy9zdmclM0UiLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiLAogICAgICAicHVycG9zZSI6ICJhbnkgbWFza2FibGUiCiAgICB9CiAgXQp9">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%234A90D9' rx='20'/%3E%3Ctext y='75' font-size='70' text-anchor='middle' x='50'%3E🐕🏻%3C/text%3E%3C/svg%3E">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%234A90D9' rx='20'/%3E%3Ctext y='75' font-size='70' text-anchor='middle' x='50'%3E🐕🏻%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%234A90D9'/%3E%3Cstop offset='100%25' style='stop-color:%237B5EA7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' fill='url(%23grad)' rx='20'/%3E%3Ctext y='72' font-size='60' text-anchor='middle' x='50'%3E🐕%3C/text%3E%3C/svg%3E">
 <title>DogFriend</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap');
@@ -2683,10 +2683,27 @@ function initBackgroundDM() {
 }
 function connectSupabaseRealtime() {
   try {
+    console.log('🔌 Connecting to Supabase Realtime...');
+    
     // Создаём Realtime канал для общего чата
     supabasePublicChannel = supabaseClient.channel('dogfriend-public-chat', {
       config: { broadcast: { self: false, ack: false } }
     });
+
+    // Таймаут на подключение (10 сек)
+    const connectionTimeout = setTimeout(() => {
+      console.error('⏱️ Connection timeout!');
+      setChatStatus('error');
+      
+      // Retry через 3 секунды
+      setTimeout(() => {
+        console.log('🔄 Retrying connection...');
+        if (supabasePublicChannel) {
+          supabasePublicChannel.unsubscribe();
+        }
+        connectSupabaseRealtime();
+      }, 3000);
+    }, 10000);
 
     supabasePublicChannel
       .on('broadcast', { event: 'message' }, (payload) => {
@@ -2707,7 +2724,10 @@ function connectSupabaseRealtime() {
         if (d.nick !== chatNick) appendSysMsg(d.text);
       })
       .subscribe((status) => {
+        console.log('📡 Realtime status:', status);
+        
         if (status === 'SUBSCRIBED') {
+          clearTimeout(connectionTimeout); // Отменяем таймаут
           setChatStatus('online');
           supabasePublicChannel.send({
             type: 'broadcast',
@@ -2724,12 +2744,29 @@ function connectSupabaseRealtime() {
           startIncomingMessagesPolling();
           
           refreshOnlineCount();
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          clearTimeout(connectionTimeout);
+          console.error('❌ Connection failed:', status);
+          setChatStatus('error');
+          
+          // Retry через 3 секунды
+          setTimeout(() => {
+            console.log('🔄 Retrying after error...');
+            connectSupabaseRealtime();
+          }, 3000);
         }
       });
 
   } catch(e) {
     setChatStatus('error');
+    console.error('❌ Realtime error:', e);
     appendSysMsg('⚠️ Ошибка: ' + e.message);
+    
+    // Retry через 5 секунд
+    setTimeout(() => {
+      console.log('🔄 Retrying after exception...');
+      connectSupabaseRealtime();
+    }, 5000);
   }
 }
 
@@ -3583,7 +3620,12 @@ window.addEventListener('load',()=>{
 
 <!-- LESSONS -->
 <div class="screen" id="lessons">
-  <div class="ghdr" style="padding-top:0;"><h2 style="margin-bottom:4px;">🎓 Уроки и тренировки</h2><p style="font-size:13px;">Бесплатные материалы для вас и питомца</p></div>
+  <div class="header">
+    <button class="back-btn" onclick="back()">‹</button>
+    <span class="header-title">🎓 Уроки и тренировки</span>
+    <div style="width:40px;"></div>
+  </div>
+  <div class="ghdr" style="padding-top:8px;"><p style="font-size:13px;">Бесплатные материалы для вас и питомца</p></div>
   <div class="chips" id="lessons-chips" style="padding-top:8px;flex-shrink:0;">
     <div class="chip on" onclick="filterLessons('Все',this)">Все</div>
     <div class="chip" onclick="filterLessons('Щенки',this)">🐾 Щенки</div>
