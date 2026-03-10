@@ -1,0 +1,3685 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+<meta name="theme-color" content="#4A90D9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DogFriend">
+<link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkRvZ0ZyaWVuZCIsCiAgInNob3J0X25hbWUiOiAiRG9nRnJpZW5kIiwKICAiZGVzY3JpcHRpb24iOiAi0J/RgNC40LvQvtC20LXQvdC40LUg0LTQu9GPINC+0LHRidC10L3QuNGPINGB0L7QsdCw0LrQvtCy0L7QtNC+0LIiLAogICJzdGFydF91cmwiOiAiLyIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI0YwRjRGOCIsCiAgInRoZW1lX2NvbG9yIjogIiM0QTkwRDkiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWwsJTNDc3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDEwMCAxMDAnJTNFJTNDcmVjdCB3aWR0aD0nMTAwJyBoZWlnaHQ9JzEwMCcgZmlsbD0nJTIzNEE5MEQ5JyByeD0nMjAnLyUzRSUzQ3RleHQgeT0nNzUnIGZvbnQtc2l6ZT0nNzAnIHRleHQtYW5jaG9yPSdtaWRkbGUnIHg9JzUwJyUzRSVGMCU5RiU5MCU5NSVGMCU5RiU4RiVCQiUzQy90ZXh0JTNFJTNDL3N2ZyUzRSIsCiAgICAgICJzaXplcyI6ICIxOTJ4MTkyIiwKICAgICAgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIKICAgIH0sCiAgICB7CiAgICAgICJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sLCUzQ3N2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJyUzRSUzQ3JlY3Qgd2lkdGg9JzEwMCcgaGVpZ2h0PScxMDAnIGZpbGw9JyUyMzRBOTBEOScgcng9JzIwJy8lM0UlM0N0ZXh0IHk9Jzc1JyBmb250LXNpemU9JzcwJyB0ZXh0LWFuY2hvcj0nbWlkZGxlJyB4PSc1MCclM0UlRjAlOUYlOTAlOTUlRjAlOUYlOEYlQkIlM0MvdGV4dCUzRSUzQy9zdmclM0UiLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiLAogICAgICAicHVycG9zZSI6ICJhbnkgbWFza2FibGUiCiAgICB9CiAgXQp9">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%234A90D9' rx='20'/%3E%3Ctext y='75' font-size='70' text-anchor='middle' x='50'%3E🐕🏻%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%234A90D9' rx='20'/%3E%3Ctext y='75' font-size='70' text-anchor='middle' x='50'%3E🐕🏻%3C/text%3E%3C/svg%3E">
+<title>DogFriend</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --primary: #4A90D9;
+  --primary-dark: #3A7BC8;
+  --secondary: #F5A623;
+  --success: #7ED321;
+  --error: #D0021B;
+  --bg: #F0F4F8;
+  --white: #FFFFFF;
+  --text-primary: #1A1A1A;
+  --text-secondary: #666666;
+  --border: #E0E0E0;
+  --shadow: 0 2px 12px rgba(74,144,217,0.12);
+  --nav-h: 68px;
+  --radius: 16px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+/* Отключаем double-tap zoom */
+body, html {
+  touch-action: pan-y pan-x;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Разрешаем выделение в input полях */
+input, textarea {
+  -webkit-user-select: text;
+  touch-action: manipulation;
+}
+
+body {
+  font-family: 'Manrope', -apple-system, sans-serif;
+  background: var(--bg);
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.phone-shell {
+  width: 100%;
+  height: 100vh;
+  background: var(--bg);
+  border-radius: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.screen {
+  display: none;
+  position: absolute;
+  inset: 0;
+  flex-direction: column;
+  background: var(--bg);
+  overflow: hidden;
+}
+.screen.active { display: flex; }
+
+/* Chat screen: позволяет клавиатуре поднимать контент */
+#chatConv {
+  position: fixed !important;
+  top: 0; left: 0; right: 0;
+  bottom: env(safe-area-inset-bottom, 0);
+  height: 100vh;
+  height: 100dvh; /* dynamic viewport height для мобильных */
+}
+
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+.scroll::-webkit-scrollbar { display: none; }
+
+h1 { font-family:'Nunito',sans-serif; font-size:26px; font-weight:900; }
+h2 { font-family:'Nunito',sans-serif; font-size:20px; font-weight:800; }
+h3 { font-size:17px; font-weight:700; }
+
+.btn {
+  display:flex; align-items:center; justify-content:center;
+  height:52px; border-radius:14px; border:none;
+  font-family:'Manrope',sans-serif; font-size:16px; font-weight:700;
+  cursor:pointer; width:100%; transition:transform 0.1s;
+}
+.btn:active { transform:scale(0.96); }
+.btn-p { background:linear-gradient(135deg,var(--primary),var(--primary-dark)); color:#fff; box-shadow:0 4px 16px rgba(74,144,217,0.4); }
+.btn-g { background:rgba(74,144,217,0.1); color:var(--primary); }
+.btn-o { background:transparent; color:var(--primary); border:2px solid var(--primary); }
+.btn-s { background:var(--white); color:var(--primary); border:2px solid var(--border); }
+.btn-sm { height:38px; font-size:13px; border-radius:10px; padding:0 16px; width:auto; }
+
+.back-btn {
+  width:38px; height:38px; border-radius:11px;
+  background:var(--white); border:none; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; box-shadow:var(--shadow); flex-shrink:0;
+  transition:transform 0.1s;
+}
+.back-btn:active { transform:scale(0.9); }
+
+.top-bar {
+  display:flex; align-items:center; 
+  padding: env(safe-area-inset-top, 16px) 16px 12px 16px;
+  gap:12px; flex-shrink:0;
+}
+
+/* Для inline style="padding-top:0" тоже добавляем safe-area */
+.top-bar[style*="padding-top:0"],
+.top-bar[style*="padding-top: 0"] {
+  padding-top: env(safe-area-inset-top, 16px) !important;
+}
+
+.ghdr[style*="padding-top:0"],
+.ghdr[style*="padding-top: 0"] {
+  padding-top: calc(16px + env(safe-area-inset-top, 0px)) !important;
+}
+.tbar-title { font-size:18px; font-weight:800; flex:1; }
+
+.card {
+  background:var(--white); border-radius:var(--radius);
+  padding:16px; box-shadow:var(--shadow); margin:0 16px 12px;
+}
+
+.input {
+  width:100%; height:52px; border:2px solid var(--border);
+  border-radius:12px; padding:0 16px; font-size:16px;
+  font-family:'Manrope',sans-serif; background:var(--white);
+  color:var(--text-primary); outline:none; transition:border-color 0.2s;
+}
+.input:focus { border-color:var(--primary); }
+.lbl { font-size:13px; font-weight:600; color:var(--text-secondary); margin-bottom:6px; display:block; }
+
+.bnav {
+  height:var(--nav-h); background:var(--white);
+  border-top:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-around;
+  flex-shrink:0; box-shadow:0 -4px 20px rgba(0,0,0,0.06);
+  padding-bottom:6px;
+}
+.ni {
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  cursor:pointer; padding:6px 8px; border-radius:12px;
+  transition:all 0.18s; min-width:52px;
+}
+.ni:active { transform:scale(0.88); }
+.ni-icon { font-size:22px; line-height:1; }
+.ni-lbl { font-size:10px; font-weight:600; color:var(--text-secondary); }
+.ni.on { background:rgba(74,144,217,0.1); }
+.ni.on .ni-lbl { color:var(--primary); }
+
+.avatar {
+  border-radius:50%; background:linear-gradient(135deg,#4A90D9,#7B5EA7);
+  display:flex; align-items:center; justify-content:center;
+  color:white; font-weight:800; flex-shrink:0;
+}
+.tag {
+  display:inline-flex; align-items:center;
+  padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; white-space:nowrap;
+}
+.tag-b { background:rgba(74,144,217,0.12); color:var(--primary); }
+.tag-g { background:rgba(126,211,33,0.12); color:#5a9c18; }
+.tag-o { background:rgba(245,166,35,0.12); color:#c47d0a; }
+.badge {
+  background:var(--error); color:white; font-size:10px; font-weight:700;
+  min-width:18px; height:18px; border-radius:9px;
+  display:flex; align-items:center; justify-content:center; padding:0 4px;
+}
+.stars { color:#F5A623; }
+.divider { height:8px; background:var(--bg); }
+.sec-hd {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 16px 8px;
+}
+.sec-t { font-size:17px; font-weight:800; }
+.sec-l { font-size:13px; color:var(--primary); font-weight:600; cursor:pointer; }
+.search-bar {
+  display:flex; align-items:center; background:var(--white);
+  border-radius:14px; padding:0 14px; gap:10px; height:48px;
+  box-shadow:var(--shadow); border:2px solid transparent; transition:border-color 0.2s;
+}
+.search-bar:focus-within { border-color:var(--primary); }
+.si { flex:1; border:none; outline:none; font-size:15px; font-family:'Manrope',sans-serif; background:transparent; }
+.si::placeholder { color:#bbb; }
+.chips { display:flex; gap:8px; padding:0 16px 12px; overflow-x:auto; }
+.chips::-webkit-scrollbar { display:none; }
+.chip {
+  padding:6px 14px; border-radius:20px; font-size:13px; font-weight:600;
+  cursor:pointer; white-space:nowrap; border:2px solid var(--border);
+  background:var(--white); color:var(--text-secondary); transition:all 0.18s; flex-shrink:0;
+}
+.chip.on { background:var(--primary); color:white; border-color:var(--primary); }
+.chip:active { transform:scale(0.94); }
+.scard {
+  background:var(--white); border-radius:var(--radius);
+  padding:16px; margin:0 16px 12px; box-shadow:var(--shadow);
+  display:flex; gap:12px; cursor:pointer; transition:transform 0.15s;
+}
+.scard:active { transform:scale(0.98); }
+.scard-name { font-size:16px; font-weight:800; margin-bottom:4px; }
+.scard-meta { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
+.scard-price { font-size:15px; font-weight:700; color:var(--primary); margin-top:6px; }
+.scroll-row { display:flex; gap:12px; padding:0 16px 12px; overflow-x:auto; }
+.scroll-row::-webkit-scrollbar { display:none; }
+.qa {
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  cursor:pointer; flex-shrink:0; transition:transform 0.15s; min-width:68px;
+}
+.qa:active { transform:scale(0.9); }
+.qa-icon {
+  width:60px; height:60px; border-radius:18px;
+  display:flex; align-items:center; justify-content:center; font-size:26px;
+}
+.qa-lbl { font-size:12px; font-weight:600; color:var(--text-secondary); text-align:center; }
+.pbar { height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+.pfill {
+  height:100%; background:linear-gradient(90deg,var(--primary),var(--secondary));
+  border-radius:3px; transition:width 0.5s;
+}
+.gr { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.gr-icon { font-size:20px; width:24px; text-align:center; }
+.gr-text { font-size:14px; font-weight:600; }
+
+.pt { border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+.pr {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:12px 16px; border-bottom:1px solid var(--border);
+  cursor:pointer; transition:background 0.15s;
+}
+.pr:last-child { border-bottom:none; }
+.pr.sel { background:rgba(74,144,217,0.08); }
+.pr-n { font-size:14px; font-weight:600; }
+.pr-v { font-size:15px; font-weight:800; color:var(--primary); }
+
+.popt {
+  display:flex; align-items:flex-start; gap:12px; padding:14px;
+  border:2px solid var(--border); border-radius:12px; cursor:pointer; transition:all 0.2s;
+}
+.popt.sel { border-color:var(--primary); background:rgba(74,144,217,0.06); }
+.rdot {
+  width:20px; height:20px; border-radius:50%; border:2px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; margin-top:2px; transition:all 0.2s;
+}
+.popt.sel .rdot { border-color:var(--primary); }
+.rfill { width:10px; height:10px; border-radius:50%; background:var(--primary); display:none; }
+.popt.sel .rfill { display:block; }
+
+.cal-g { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+.cal-wd { font-size:11px; font-weight:700; color:var(--text-secondary); text-align:center; }
+.cal-d {
+  aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:600; border-radius:8px; cursor:pointer;
+  transition:all 0.15s; color:var(--text-secondary);
+}
+.cal-d.avail { color:var(--text-primary); }
+.cal-d.avail:hover { background:rgba(74,144,217,0.1); }
+.cal-d.sel { background:var(--primary); color:white; }
+.cal-d.today { border:2px solid var(--primary); color:var(--primary); }
+.cal-d.dis { opacity:0.3; pointer-events:none; }
+
+.prof-row {
+  display:flex; align-items:center; gap:14px; padding:16px;
+  background:var(--white); cursor:pointer; border-bottom:1px solid var(--border);
+  transition:background 0.15s;
+}
+.prof-row:active { background:var(--bg); }
+.prof-row-icon { font-size:20px; width:28px; text-align:center; }
+.prof-row-lbl { flex:1; font-size:15px; font-weight:600; }
+.prof-row-arr { color:var(--border); font-size:20px; }
+
+.ghdr {
+  background:linear-gradient(135deg,var(--primary),#6BB8F0);
+  padding: calc(16px + env(safe-area-inset-top, 0px)) 16px 20px; 
+  color:white; flex-shrink:0;
+}
+.ghdr h2, .ghdr h3 { color:white; }
+.ghdr p { color:rgba(255,255,255,0.8); }
+
+.ci {
+  display:flex; gap:12px; padding:14px 16px; background:var(--white);
+  cursor:pointer; transition:background 0.15s; border-bottom:1px solid var(--border);
+}
+.ci:active { background:var(--bg); }
+
+.pc {
+  background:var(--white); border-radius:var(--radius);
+  padding:14px; box-shadow:var(--shadow); flex:1; min-width:0; cursor:pointer;
+}
+.pc-img {
+  width:100%; aspect-ratio:1; border-radius:10px; margin-bottom:10px;
+  display:flex; align-items:center; justify-content:center; font-size:48px;
+}
+.pc-name { font-size:14px; font-weight:700; margin-bottom:4px; }
+.pc-price { font-size:16px; font-weight:800; color:var(--primary); }
+
+.ic {
+  background:linear-gradient(135deg,#4A90D9,#7B5EA7);
+  border-radius:var(--radius); padding:16px; color:white; margin:0 16px 12px;
+}
+.ic h3 { color:white; font-size:15px; }
+.ic-amt { font-size:28px; font-weight:900; font-family:'Nunito',sans-serif; margin:4px 0; }
+
+.ec {
+  background:var(--white); border-radius:var(--radius); padding:16px;
+  box-shadow:var(--shadow); display:flex; flex-direction:column;
+  gap:8px; flex-shrink:0; width:240px; cursor:pointer; transition:transform 0.15s;
+}
+.ec:active { transform:scale(0.97); }
+
+.wc {
+  background:var(--white); border-radius:var(--radius); padding:14px;
+  box-shadow:var(--shadow); margin:0 16px 10px; cursor:pointer; transition:transform 0.15s;
+}
+.wc:active { transform:scale(0.98); }
+.wc-hd { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+.wa { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#4A90D9,#7B5EA7); border:2px solid white; margin-right:-8px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:white; }
+.walks { display:flex; margin-top:8px; }
+
+.socbtn {
+  flex:1; height:48px; border-radius:12px; border:2px solid var(--border);
+  background:var(--white); display:flex; align-items:center; justify-content:center;
+  font-size:20px; cursor:pointer; transition:transform 0.15s;
+}
+.socbtn:active { transform:scale(0.93); border-color:var(--primary); }
+
+.prof-hero {
+  background:linear-gradient(135deg,var(--primary),#7B5EA7);
+  padding:20px 16px 24px; text-align:center; color:white; flex-shrink:0;
+}
+.imp-bar {
+  display:flex; background:rgba(255,255,255,0.15); border-radius:12px; padding:12px; gap:0; margin-top:12px;
+}
+.imp-stat { text-align:center; flex:1; }
+.imp-val { font-size:20px; font-weight:900; font-family:'Nunito',sans-serif; color:white; }
+.imp-lbl { font-size:11px; color:rgba(255,255,255,0.8); }
+.imp-sep { width:1px; background:rgba(255,255,255,0.3); }
+
+.tabs { display:flex; background:var(--white); border-bottom:1px solid var(--border); flex-shrink:0; }
+.tab {
+  flex:1; text-align:center; padding:12px; font-size:14px; font-weight:600;
+  color:var(--text-secondary); cursor:pointer; border-bottom:2px solid transparent;
+  transition:all 0.2s;
+}
+.tab.on { color:var(--primary); border-bottom-color:var(--primary); font-weight:700; }
+
+.tc { display:none; }
+.tc.on { display:block; }
+
+.succ-wrap {
+  display:flex; flex-direction:column; align-items:center;
+  justify-content:center; text-align:center; padding:40px 24px; flex:1;
+}
+.succ-icon {
+  width:100px; height:100px; background:rgba(126,211,33,0.12);
+  border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:50px; margin-bottom:24px;
+  animation:succ-pop 0.5s cubic-bezier(.175,.885,.32,1.275);
+}
+@keyframes succ-pop { from{transform:scale(0)} to{transform:scale(1)} }
+@keyframes slideDown { from{opacity:0;transform:translateX(-50%) translateY(-16px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+
+#splash {
+  background:linear-gradient(145deg,#2c3e7a 0%,#4A90D9 50%,#6BB8F0 100%);
+  display:flex !important; justify-content:center; align-items:center;
+}
+.sp-logo { font-size:80px; margin-bottom:16px; animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1)}50%{transform:scale(1.06)} }
+.sp-title { font-family:'Nunito',sans-serif; font-size:36px; font-weight:900; color:white; margin-bottom:8px; }
+.sp-sub { font-size:15px; color:rgba(255,255,255,0.85); line-height:1.5; margin-bottom:32px; }
+.loader { width:40px; height:4px; background:rgba(255,255,255,0.3); border-radius:2px; overflow:hidden; margin:0 auto; }
+.loader-bar { height:100%; background:white; border-radius:2px; animation:ld 3s linear forwards; }
+@keyframes ld { from{width:0}to{width:100%} }
+
+.onb-icon {
+  width:140px; height:140px; border-radius:40px;
+  display:flex; align-items:center; justify-content:center; font-size:70px; margin:0 auto 28px;
+}
+.dots { display:flex; gap:8px; justify-content:center; margin:24px 0; }
+.dot { width:8px; height:8px; border-radius:4px; background:var(--border); transition:all 0.3s; }
+.dot.on { width:24px; background:var(--primary); }
+
+.modal-ov {
+  position:absolute; inset:0; background:rgba(0,0,0,0.5);
+  display:none; align-items:flex-end; z-index:999; backdrop-filter:blur(4px);
+}
+.modal-ov.open { display:flex; animation:mfade 0.25s; }
+@keyframes mfade { from{opacity:0}to{opacity:1} }
+.modal {
+  background:var(--white); border-radius:24px 24px 0 0; width:100%;
+  padding:16px; max-height:85%; overflow-y:auto;
+  animation:mup 0.28s cubic-bezier(.4,0,.2,1);
+}
+@keyframes mup { from{transform:translateY(100%)}to{transform:translateY(0)} }
+.mhandle { width:36px; height:4px; background:var(--border); border-radius:2px; margin:0 auto 16px; }
+
+/* Chat message styles */
+.cmsg-row { display:flex; flex-direction:column; max-width:80%; animation:fadeUp 0.22s ease; }
+.cmsg-row.mine   { align-self:flex-end;   align-items:flex-end; }
+.cmsg-row.theirs { align-self:flex-start; align-items:flex-start; }
+.cmsg-nick { font-size:11px; font-weight:700; color:var(--primary); margin-bottom:3px; padding:0 4px; }
+.cmsg-bubble {
+  padding:10px 14px; border-radius:18px; font-size:14px; line-height:1.5;
+  word-break:break-word; box-shadow:0 1px 4px rgba(0,0,0,0.08);
+}
+.cmsg-row.mine   .cmsg-bubble { background:var(--primary); color:#fff; border-bottom-right-radius:5px; }
+.cmsg-row.theirs .cmsg-bubble { background:var(--white); color:var(--text-primary); border-bottom-left-radius:5px; }
+.cmsg-time { font-size:10px; color:var(--text-secondary); margin-top:3px; padding:0 6px; }
+.cmsg-sys {
+  align-self:center; font-size:11px; color:var(--text-secondary);
+  background:rgba(255,255,255,0.8); padding:4px 12px; border-radius:20px; margin:2px 0;
+}
+.tdt { display:inline-flex; gap:2px; margin-left:4px; vertical-align:middle; }
+.tdt i { width:4px;height:4px;background:var(--text-secondary);border-radius:50%;animation:tdtb 1.2s infinite;font-style:normal; }
+.tdt i:nth-child(2){animation-delay:.2s} .tdt i:nth-child(3){animation-delay:.4s}
+@keyframes tdtb{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-4px)}}
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── toggle switch ── */
+.df-toggle{position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0}
+.df-toggle input{opacity:0;width:0;height:0}
+.df-slider{position:absolute;cursor:pointer;inset:0;background:var(--border);border-radius:26px;transition:.3s}
+.df-slider:before{content:"";position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.df-toggle input:checked+.df-slider{background:var(--primary)}
+.df-toggle input:checked+.df-slider:before{transform:translateX(22px)}
+/* ── lesson card ── */
+.lesson-card{background:var(--white);border-radius:var(--radius);margin:0 16px 12px;box-shadow:var(--shadow);cursor:pointer;overflow:hidden;transition:transform .15s}
+.lesson-card:active{transform:scale(.98)}
+.lesson-banner{height:80px;display:flex;align-items:center;justify-content:center;font-size:44px}
+.lesson-body{padding:12px 14px 14px}
+.lesson-title{font-size:15px;font-weight:800;margin-bottom:4px}
+.lesson-meta{font-size:12px;color:var(--text-secondary)}
+/* ── pet card ── */
+.pet-card{background:var(--white);border-radius:var(--radius);margin-bottom:12px;box-shadow:var(--shadow);overflow:hidden}
+.pet-hdr{padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.pet-bdy{padding:0 16px 14px;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+<div class="phone-shell">
+<input type="file" id="avatar-input" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)">
+
+<!-- SPLASH -->
+<div class="screen" id="splash">
+  <div style="text-align:center;">
+    <div class="sp-logo">🐕</div>
+    <div class="sp-title">DogFriend</div>
+    <div class="sp-sub">Безопасные платежи<br>+ помощь приютам</div>
+    <div class="loader"><div class="loader-bar"></div></div>
+  </div>
+</div>
+
+<!-- ONBOARDING 1 -->
+<div class="screen" id="onb1">
+  <div class="scroll" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;">
+    <div class="onb-icon" style="background:linear-gradient(135deg,#EEF6FF,#C9E4FA);">🐕</div>
+    <h1 style="margin-bottom:16px;">Найди свою стаю</h1>
+    <p style="color:var(--text-secondary);">Общайся с владельцами собак<br>в своём районе Москвы.<br>Вместе гулять веселее!</p>
+    <div class="dots"><div class="dot on"></div><div class="dot"></div><div class="dot"></div></div>
+  </div>
+  <div style="padding:16px 24px 32px;display:flex;flex-direction:column;gap:10px;">
+    <button class="btn btn-p" onclick="nav('onb2')">Далее →</button>
+    <button class="btn btn-g" onclick="nav('register')">Пропустить</button>
+  </div>
+</div>
+
+<!-- ONBOARDING 2 -->
+<div class="screen" id="onb2">
+  <div class="scroll" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;">
+    <div class="onb-icon" style="background:linear-gradient(135deg,#FFF5E6,#FFD9A0);">🛡️</div>
+    <h1 style="margin-bottom:16px;">Плати безопасно</h1>
+    <p style="color:var(--text-secondary);">Оплата частями без переплат.<br>Страховка на каждую услугу<br>уже включена в стоимость.</p>
+    <div class="dots"><div class="dot"></div><div class="dot on"></div><div class="dot"></div></div>
+  </div>
+  <div style="padding:16px 24px 32px;display:flex;flex-direction:column;gap:10px;">
+    <button class="btn btn-p" onclick="nav('onb3')">Далее →</button>
+    <button class="btn btn-g" onclick="nav('onb1')">← Назад</button>
+  </div>
+</div>
+
+<!-- ONBOARDING 3 -->
+<div class="screen" id="onb3">
+  <div class="scroll" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;">
+    <div class="onb-icon" style="background:linear-gradient(135deg,#FFF0F0,#FFCDD2);">❤️</div>
+    <h1 style="margin-bottom:16px;">Помогай приютам</h1>
+    <p style="color:var(--text-secondary);">50% комиссии платформы идёт<br>напрямую в приюты для животных.<br>Каждая оплата — маленький подвиг!</p>
+    <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot on"></div></div>
+  </div>
+  <div style="padding:16px 24px 32px;display:flex;flex-direction:column;gap:10px;">
+    <button class="btn btn-p" onclick="nav('register')">Начать! 🐾</button>
+    <button class="btn btn-g" onclick="nav('onb2')">← Назад</button>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div class="screen" id="login">
+  <div class="scroll" style="padding:24px;">
+    <div style="margin-bottom:28px;text-align:center;">
+      <div style="font-size:60px;margin-bottom:16px;">🐕</div>
+      <h1 style="margin-bottom:6px;">Добро пожаловать<br>в DogFriend</h1>
+      <p style="color:var(--text-secondary);">Войдите для продолжения</p>
+    </div>
+    <div style="margin-bottom:20px;">
+      <label class="lbl">Email</label>
+      <input class="input" id="login-email" type="email" placeholder="your@email.com">
+    </div>
+    <div style="margin-bottom:20px;">
+      <label class="lbl">Пароль</label>
+      <input class="input" id="login-password" type="password" placeholder="••••••••">
+    </div>
+    <button class="btn btn-p" onclick="supabaseLogin()" style="margin-bottom:12px;">Войти</button>
+    <button class="btn btn-g" onclick="nav('register')">Регистрация</button>
+  </div>
+</div>
+
+<!-- REGISTER -->
+<div class="screen" id="register">
+  <div class="top-bar" style="padding-top:0;">
+    <button class="back-btn" onclick="nav('login')">←</button>
+    <div class="tbar-title"></div>
+  </div>
+  <div class="scroll" style="padding:0 24px;">
+    <div style="margin-bottom:28px;text-align:center;">
+      <h1 style="margin-bottom:6px;">Регистрация</h1>
+      <p style="color:var(--text-secondary);">Создайте аккаунт</p>
+    </div>
+    <div style="margin-bottom:20px;">
+      <label class="lbl">Ваше имя</label>
+      <input class="input" id="reg-name" placeholder="Ваше имя">
+    </div>
+    <div style="margin-bottom:20px;">
+      <label class="lbl">Email</label>
+      <input class="input" id="reg-email" type="email" placeholder="your@email.com">
+    </div>
+    <div style="margin-bottom:20px;">
+      <label class="lbl">Пароль</label>
+      <input class="input" id="reg-password" type="password" placeholder="••••••••">
+    </div>
+    <button class="btn btn-p" onclick="supabaseRegister()" style="margin-bottom:12px;">Зарегистрироваться</button>
+    <button class="btn btn-g" onclick="nav('login')">Уже есть аккаунт?</button>
+  </div>
+</div>
+
+<!-- HOME -->
+<div class="screen" id="home">
+  <div class="scroll">
+    <div class="ghdr">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div>
+          <div style="font-size:13px;opacity:0.85;margin-bottom:2px;">👋 Добрый день,</div>
+          <h2 id="home-name">Анна Козлова</h2>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div style="position:relative;cursor:pointer;" onclick="nav('chatList')">
+            <div style="width:40px;height:40px;background:rgba(255,255,255,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;">💬</div>
+            <div id="chat-nav-badge" class="badge" style="position:absolute;top:-4px;right:-4px;display:none;">3</div>
+          </div>
+          <div style="position:relative;cursor:pointer;" onclick="nav('profile')">
+            <div id="home-avatar" class="avatar" style="width:44px;height:44px;font-size:17px;border:2px solid rgba(255,255,255,0.4);">АК</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);border-radius:10px;padding:8px 12px;cursor:pointer;" onclick="nav('profile')">
+        <span>📍</span><span id="home-geo-display" style="font-size:14px;font-weight:600;">Москва, Сокольники</span>
+        <span style="margin-left:auto;font-size:12px;opacity:0.8;text-decoration:underline;">Изменить</span>
+      </div>
+    </div>
+
+    <div style="padding:16px 16px 8px;">
+      <div class="search-bar" onclick="nav('catalog')" style="cursor:pointer;">
+        <span style="font-size:18px;">🔍</span>
+        <input class="si" placeholder="Поиск услуг, кинологов..." readonly style="cursor:pointer;">
+      </div>
+    </div>
+
+    <div class="sec-hd"><div class="sec-t">⚡ Быстрые действия</div></div>
+    <div class="scroll-row" style="padding-bottom:16px;">
+      <div class="qa" onclick="nav('catalog')"><div class="qa-icon" style="background:linear-gradient(135deg,#EEF6FF,#C9E4FA);">🎓</div><div class="qa-lbl">Кинолог</div></div>
+      <div class="qa" onclick="nav('health')"><div class="qa-icon" style="background:linear-gradient(135deg,#F0FFF4,#C6F6D5);">🏥</div><div class="qa-lbl">Здоровье</div></div>
+      <div class="qa" onclick="nav('breeds')"><div class="qa-icon" style="background:linear-gradient(135deg,#FFF5E6,#FFD9A0);">🐕</div><div class="qa-lbl">Породы</div></div>
+      <div class="qa" onclick="nav('dogmap')"><div class="qa-icon" style="background:linear-gradient(135deg,#FFF0F0,#FFCDD2);">📍</div><div class="qa-lbl">Места</div></div>
+      <div class="qa" onclick="nav('discounts')"><div class="qa-icon" style="background:linear-gradient(135deg,#F9F0FF,#E9D5FF);">🎁</div><div class="qa-lbl">Скидки</div></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="ic">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:18px;">❤️</span>
+        <div style="font-size:13px;font-weight:700;opacity:0.9;">Ваш вклад в помощь приютам</div>
+      </div>
+      <div class="ic-amt">1 250 ₽</div>
+      <div style="font-size:13px;opacity:0.8;margin-bottom:12px;">🏆 Уровень: Друг собак • 8 транзакций</div>
+      <div class="pbar"><div class="pfill" style="width:62%;"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:12px;opacity:0.8;"><span>1 250 ₽</span><span>До «Чемпиона»: 750 ₽</span></div>
+      <button class="btn btn-g" style="margin-top:12px;background:rgba(255,255,255,0.2);color:white;border:none;height:38px;" onclick="nav('profile')">Посмотреть отчёт →</button>
+    </div>
+
+    <div class="sec-hd"><div class="sec-t">📅 Ближайшие события</div><div class="sec-l" onclick="nav('community')">Все</div></div>
+    <div class="scroll-row">
+      <div class="ec">
+        <div style="font-size:15px;font-weight:800;">🐕 Встреча биглей</div>
+        <div style="font-size:13px;color:var(--text-secondary);">📍 Сокольники, главная аллея</div>
+        <div style="font-size:13px;color:var(--text-secondary);">🕖 Завтра, 19:00</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+          <span style="font-size:13px;">👥 12 собак</span>
+          <button class="btn btn-p btn-sm" onclick="openModal('m-event')">Записаться</button>
+        </div>
+      </div>
+      <div class="ec">
+        <div style="font-size:15px;font-weight:800;">🌅 Утренняя пробежка</div>
+        <div style="font-size:13px;color:var(--text-secondary);">📍 Парк Горького</div>
+        <div style="font-size:13px;color:var(--text-secondary);">🕖 Завтра, 7:30</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+          <span style="font-size:13px;">👥 8 собак</span>
+          <button class="btn btn-p btn-sm" onclick="openModal('m-event')">Записаться</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="sec-hd"><div class="sec-t">👍 Рекомендовано</div><div class="sec-l" onclick="nav('catalog')">Все</div></div>
+    <div class="scard" onclick="openSpecialist(1)">      <div class="avatar" style="width:54px;height:54px;font-size:22px;">ИП</div>
+      <div style="flex:1;">
+        <div class="scard-name">Иван Петров</div>
+        <div class="scard-meta"><span class="tag tag-b">🏅 Проверен</span><span class="stars">⭐ 4.9</span></div>
+        <div style="font-size:13px;color:var(--text-secondary);">📍 2.3 км • 5 лет опыта</div>
+        <div class="scard-price">от 3 000 ₽</div>
+      </div>
+    </div>
+    <div style="padding:0 16px 12px;"><button class="btn btn-o" onclick="nav('catalog')">Все специалисты</button></div>
+  </div>
+  <nav class="bnav">
+    <div class="ni on" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
+    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
+    <div class="ni" onclick="nav('chatList')"><div class="ni-icon">💬</div><div class="ni-lbl">Чат</div></div>
+    <div class="ni" onclick="nav('health')"><div class="ni-icon">🏥</div><div class="ni-lbl">Здоровье</div></div>
+    <div class="ni" onclick="nav('profile')"><div class="ni-icon">👤</div><div class="ni-lbl">Профиль</div></div>
+  </nav>
+</div>
+
+<!-- CATALOG -->
+<div class="screen" id="catalog">
+  <div class="top-bar" style="padding-top:0;">
+    <button class="back-btn" onclick="back()">←</button>
+    <div class="tbar-title">Кинологи</div>
+  </div>
+  <div style="padding:0 16px 12px;flex-shrink:0;">
+    <div class="search-bar"><span style="font-size:18px;">🔍</span><input class="si" id="catalog-search" placeholder="Иван, щенки, ОКД..." oninput="renderCatalog()"></div>
+  </div>
+  <div class="chips" id="catalog-chips" style="flex-shrink:0;">
+    <div class="chip on" onclick="filterCatalog('Все',this)">Все</div>
+    <div class="chip" onclick="filterCatalog('Щенки',this)">Щенки</div>
+    <div class="chip" onclick="filterCatalog('ОКД',this)">ОКД</div>
+    <div class="chip" onclick="filterCatalog('Аджилити',this)">Аджилити</div>
+    <div class="chip" onclick="filterCatalog('Поведение',this)">Поведение</div>
+    <div class="chip" onclick="filterCatalog('Групповые',this)">Групповые</div>
+  </div>
+  <div class="scroll" id="catalog-list"></div>
+  <nav class="bnav">
+    <div class="ni" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
+    <div class="ni on"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
+    <div class="ni" onclick="nav('chatList')"><div class="ni-icon">💬</div><div class="ni-lbl">Чат</div></div>
+    <div class="ni" onclick="nav('health')"><div class="ni-icon">🏥</div><div class="ni-lbl">Здоровье</div></div>
+    <div class="ni" onclick="nav('profile')"><div class="ni-icon">👤</div><div class="ni-lbl">Профиль</div></div>
+  </nav>
+</div>
+
+<!-- SPECIALIST (dynamic) -->
+<div class="screen" id="specialist">
+  <div class="top-bar" style="padding-top:0;">
+    <button class="back-btn" onclick="back()">←</button>
+    <div class="tbar-title" id="spec-topbar-name"></div>
+    <button class="back-btn" style="font-size:16px;">⋮</button>
+  </div>
+  <div class="scroll">
+    <div style="text-align:center;padding:16px 16px 20px;background:var(--white);margin-bottom:8px;">
+      <div class="avatar" id="spec-avatar" style="width:80px;height:80px;font-size:32px;margin:0 auto 12px;"></div>
+      <h2 id="spec-name"></h2>
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:8px 0;"><span class="tag tag-b" id="spec-badge"></span></div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;font-size:14px;color:var(--text-secondary);">
+        <span class="stars" id="spec-rating"></span><span>•</span><span id="spec-exp"></span><span>•</span><span id="spec-location"></span>
+      </div>
+      <div id="spec-tags" style="display:flex;gap:8px;margin-top:12px;justify-content:center;flex-wrap:wrap;"></div>
+    </div>
+    <div class="tabs">
+      <div class="tab on" onclick="switchTab('spec','overview',this)">Обзор</div>
+      <div class="tab" onclick="switchTab('spec','reviews',this)">Отзывы</div>
+      <div class="tab" onclick="switchTab('spec','sched',this)">Расписание</div>
+    </div>
+    <div class="tc on" id="tc-spec-overview">
+      <div class="card" style="margin-top:12px;">
+        <h3 style="margin-bottom:8px;">📝 О себе</h3>
+        <p id="spec-bio" style="font-size:14px;color:var(--text-secondary);line-height:1.6;"></p>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:12px;">💼 Услуги и цены</h3>
+        <div class="pt" id="spec-services"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:12px;">💳 Способ оплаты</h3>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="popt" id="pf" onclick="selectPay('full')"><div class="rdot"><div class="rfill"></div></div><div><div style="font-size:14px;font-weight:700;">Полная оплата</div><div style="font-size:13px;color:var(--text-secondary);" id="pay-full-desc"></div></div></div>
+          <div class="popt sel" id="ps" onclick="selectPay('split')"><div class="rdot"><div class="rfill"></div></div><div><div style="font-size:14px;font-weight:700;">Частями без переплат</div><div style="font-size:13px;color:var(--text-secondary);" id="pay-split-desc"></div></div></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:90px;">
+        <h3 style="margin-bottom:12px;">🛡️ Гарантии DogFriend</h3>
+        <div class="gr"><div class="gr-icon">🛡️</div><div><div class="gr-text">Страховка 100 000 ₽</div><div style="font-size:12px;color:var(--text-secondary);">На каждое занятие</div></div></div>
+        <div class="gr"><div class="gr-icon">❤️</div><div><div class="gr-text">150 ₽ → приютам</div><div style="font-size:12px;color:var(--text-secondary);">С каждой оплаты</div></div></div>
+        <div class="gr"><div class="gr-icon">↩️</div><div><div class="gr-text">Возврат денег</div><div style="font-size:12px;color:var(--text-secondary);">Если что-то пойдёт не так</div></div></div>
+      </div>
+    </div>
+    <div class="tc" id="tc-spec-reviews">
+      <div class="card" style="margin-top:12px;margin-bottom:80px;" id="spec-reviews-block"></div>
+    </div>
+    <div class="tc" id="tc-spec-sched">
+      <div class="card" style="margin-top:12px;margin-bottom:80px;">
+        <h3 style="margin-bottom:14px;">📅 Март 2026</h3>
+        <div class="cal-g" style="margin-bottom:8px;"><div class="cal-wd">Пн</div><div class="cal-wd">Вт</div><div class="cal-wd">Ср</div><div class="cal-wd">Чт</div><div class="cal-wd">Пт</div><div class="cal-wd">Сб</div><div class="cal-wd">Вс</div></div>
+        <div class="cal-g" id="spec-calendar"></div>
+      </div>
+    </div>
+  </div>
+  <div style="position:absolute;bottom:0;left:0;right:0;padding:12px 16px;background:var(--white);border-top:1px solid var(--border);display:flex;gap:10px;z-index:10;">
+    <button class="btn btn-s" style="width:52px;height:52px;flex-shrink:0;border-radius:12px;" onclick="openPrivateChat(currentSpecId)">💬</button>
+    <button class="btn btn-p" style="flex:1;" onclick="nav('booking')">Записаться</button>
+  </div>
+</div>
+
+<!-- BOOKING -->
+<div class="screen" id="booking">
+  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()">←</button><div class="tbar-title">Подтверждение</div></div>
+  <div class="scroll" style="padding:0 16px;">
+    <div class="card" style="margin:0 0 12px;">
+      <h3 style="margin-bottom:14px;">📋 Детали заказа</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="color:var(--text-secondary);">Кинолог</span><span style="font-weight:700;">Иван Петров</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="color:var(--text-secondary);">Услуга</span><span style="font-weight:700;">Пакет 10 занятий</span></div>
+        <div style="height:1px;background:var(--border);"></div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="color:var(--text-secondary);">Сумма</span><span style="font-weight:700;">27 000 ₽</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="color:var(--text-secondary);">Первый платёж</span><span style="font-weight:800;color:var(--primary);font-size:16px;">6 750 ₽</span></div>
+        <div style="height:1px;background:var(--border);"></div>
+        <div style="background:rgba(74,144,217,0.06);border-radius:10px;padding:10px;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#5a9c18;font-weight:700;"><span>→ ❤️ Приюту «Надежда»</span><span>675 ₽</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin:0 0 12px;"><div style="display:flex;align-items:center;gap:12px;"><span style="font-size:28px;">💳</span><div><div style="font-size:14px;font-weight:700;">Карта •••• 4532</div><div style="font-size:12px;color:var(--text-secondary);">Mastercard • истекает 12/27</div></div></div></div>
+  </div>
+  <div style="padding:12px 16px 16px;background:var(--white);border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px;flex-shrink:0;">
+    <button class="btn btn-p" onclick="nav('success')">Оплатить 6 750 ₽ 🔒</button>
+    <button class="btn btn-g" onclick="back()">Отмена</button>
+  </div>
+</div>
+
+<!-- SUCCESS -->
+<div class="screen" id="success">
+  <div class="scroll" style="display:flex;flex-direction:column;">
+    <div class="succ-wrap">
+      <div class="succ-icon">✅</div>
+      <h1 style="margin-bottom:12px;">Всё готово!</h1>
+      <p style="color:var(--text-secondary);margin-bottom:24px;">Запись к Ивану Петрову подтверждена.</p>
+      <div style="background:rgba(126,211,33,0.1);border-radius:14px;padding:16px;width:100%;text-align:left;margin-bottom:24px;">
+        <div style="font-size:14px;font-weight:700;margin-bottom:8px;">❤️ Вы помогли приюту!</div>
+        <div style="font-size:28px;font-weight:900;font-family:'Nunito',sans-serif;color:#5a9c18;">675 ₽</div>
+        <div style="font-size:13px;color:var(--text-secondary);">направлено в приют «Надежда»</div>
+      </div>
+      <div style="width:100%;display:flex;flex-direction:column;gap:10px;">
+        <button class="btn btn-p" onclick="nav('home')">На главную 🏠</button>
+        <button class="btn btn-g" onclick="nav('community')">Поделиться в сообществе</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div class="screen" id="profile">
+  <div class="prof-hero" style="padding-top:0;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <span style="font-size:18px;font-weight:800;color:white;">Профиль</span>
+      <button class="back-btn" style="background:rgba(255,255,255,0.2);color:white;box-shadow:none;" onclick="nav('edit-profile');loadProfileForm()">✏️</button>
+    </div>
+    <div style="position:relative;width:80px;height:80px;margin:0 auto 12px;">
+      <div id="prof-avatar" class="avatar" style="width:80px;height:80px;font-size:32px;border:3px solid rgba(255,255,255,0.5);">АК</div>
+    </div>
+    <div id="prof-name" style="font-size:20px;font-weight:800;color:white;margin-bottom:4px;">Анна Козлова</div>
+    <div style="display:flex;align-items:center;justify-content:center;"><span class="tag" style="background:rgba(255,255,255,0.2);color:white;font-size:12px;">🏅 Уровень 3 — Друг</span></div>
+    <div class="imp-bar">
+      <div class="imp-stat"><div class="imp-val">1 250 ₽</div><div class="imp-lbl">приютам</div></div>
+      <div class="imp-sep"></div>
+      <div class="imp-stat"><div class="imp-val">8</div><div class="imp-lbl">транзакций</div></div>
+      <div class="imp-sep"></div>
+      <div class="imp-stat"><div class="imp-val">3</div><div class="imp-lbl">питомца</div></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div style="background:var(--white);border-radius:var(--radius);margin:16px 16px 12px;box-shadow:var(--shadow);overflow:hidden;">
+      <div class="prof-row" onclick="openModal('m-orders')"><div class="prof-row-icon">📋</div><div class="prof-row-lbl">Мои заказы</div><div class="badge" style="margin-right:8px;">12</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="nav('payments')"><div class="prof-row-icon">💳</div><div class="prof-row-lbl">Способы оплаты</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="nav('myPets')"><div class="prof-row-icon">🐕</div><div class="prof-row-lbl">Мои собаки</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="nav('notifSettings')"><div class="prof-row-icon">🔔</div><div class="prof-row-lbl">Уведомления</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="nav('medRecords')"><div class="prof-row-icon">🏥</div><div class="prof-row-lbl">Медицинские записи</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="nav('lessons')"><div class="prof-row-icon">🎓</div><div class="prof-row-lbl">Уроки и тренировки</div><div class="badge" style="margin-right:8px;background:#7ED321;">FREE</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="localStorage.removeItem('df_registered');localStorage.removeItem('df_phone');nav('onb1')" style="border-bottom:none;"><div class="prof-row-icon">🚪</div><div class="prof-row-lbl" style="color:var(--error);">Выйти</div><div class="prof-row-arr">›</div></div>
+    </div>
+  </div>
+  <nav class="bnav">
+    <div class="ni" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
+    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
+    <div class="ni" onclick="nav('chatList')"><div class="ni-icon">💬</div><div class="ni-lbl">Чат</div></div>
+    <div class="ni" onclick="nav('health')"><div class="ni-icon">🏥</div><div class="ni-lbl">Здоровье</div></div>
+    <div class="ni on"><div class="ni-icon">👤</div><div class="ni-lbl">Профиль</div></div>
+  </nav>
+</div>
+
+<!-- EDIT PROFILE -->
+<div class="screen" id="edit-profile">
+  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()">←</button><div class="tbar-title">Редактировать профиль</div></div>
+  <div class="scroll" style="padding:0 16px;">
+    <div style="text-align:center;padding:20px 0 24px;">
+      <div id="ep-avatar" class="avatar" onclick="document.getElementById('avatar-input').click()" style="width:80px;height:80px;font-size:32px;margin:0 auto 12px;cursor:pointer;">👤</div>
+      <div style="font-size:13px;color:var(--primary);cursor:pointer;" onclick="document.getElementById('avatar-input').click()">📷 Выбрать фото</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;padding-bottom:24px;">
+      <div><label class="lbl">Ваше имя</label><input class="input" id="ep-name" placeholder="Например: Анна Козлова"></div>
+      <div><label class="lbl">Ваш район</label><div style="display:flex;gap:8px;"><input class="input" id="ep-district" placeholder="Выберите или введите район" list="districts-list" style="flex:1;"><button class="btn btn-sm" onclick="detectGeo()" style="flex-shrink:0;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;border:none;padding:0 8px;">📍</button></div></div>
+      <datalist id="districts-list">
+        <option value="Сокольники"><option value="Красносельский"><option value="Пресненский"><option value="Курсовой"><option value="Замоскворечье"><option value="Якиманка"><option value="Басманный"><option value="Мещанский"><option value="Таганский"><option value="Лефортово"><option value="Перово"><option value="Нижегородский"><option value="Соколиная Гора"><option value="Покровское-Стрешнево"><option value="Хорошёво-Мнёвники"><option value="Преображенское"><option value="Кукушкин"><option value="Новокосино"><option value="Измайлово"><option value="Богородское"><option value="Косино-Ухтомский"><option value="Комсомольский"><option value="Войковский"><option value="Аэропорт"><option value="Быстрцово"><option value="Ростокино"><option value="Алексеевский"><option value="Зарядье"><option value="Тверской"><option value="Арбат"><option value="Никитники"><option value="Хамовники"><option value="Кремлёвская слобода"><option value="Гагаринский"><option value="Раменки"><option value="Коньково"><option value="Щукино"><option value="Тушино"><option value="Строгино"><option value="Крылатское"><option value="Кунцево"><option value="Внуково"><option value="Деревля"><option value="Ново-Переделкино"><option value="Переделкино"><option value="Солнцево"><option value="Башкировка"><option value="Теплый Стан"><option value="Коммунарка"><option value="Южное Бутово"><option value="Северное Бутово"><option value="Покровское"><option value="Медведково"><option value="Кунцевская"><option value="Очаково-Матвеевское"><option value="Крюково"><option value="Беговое"><option value="Западное Дегунино"><option value="Восточное Дегунино"><option value="Лианозово"><option value="Северное Медведково"><option value="Южное Медведково"><option value="Митино"><option value="Отрадное"><option value="Свиблово"><option value="Вешняки"><option value="Жулебино"><option value="Люберцы"><option value="Марфино"><option value="Бибирево"><option value="Щербинка"><option value="Троицк"><option value="Московский">
+      </datalist>
+      <div style="border-top:2px solid var(--border);padding-top:14px;">
+        <div style="font-size:15px;font-weight:800;margin-bottom:14px;">🐕 О вашей собаке</div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div><label class="lbl">Кличка</label><input class="input" id="ep-dogname" placeholder="Например: Рыжик"></div>
+          <div><label class="lbl">Порода</label><input class="input" id="ep-dogbreed" placeholder="Например: Бигль"></div>
+          <div><label class="lbl">Возраст</label><input class="input" id="ep-dogage" placeholder="Например: 2 года"></div>
+        </div>
+      </div>
+      <button class="btn btn-p" onclick="saveProfile()" style="margin-top:8px;">Сохранить ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEALTH -->
+<div class="screen" id="health">
+  <div class="ghdr"><h2 style="margin-bottom:4px;">🏥 Здоровье</h2><p style="font-size:13px;">Специалисты и клиники Москвы</p></div>
+  <div class="chips" id="health-chips" style="padding-top:12px;flex-shrink:0;">
+    <div class="chip on" onclick="filterHealth('Все',this)">Все</div>
+    <div class="chip" onclick="filterHealth('Терапевт',this)">🩺 Терапевты</div>
+    <div class="chip" onclick="filterHealth('Хирург',this)">🔪 Хирурги</div>
+    <div class="chip" onclick="filterHealth('Онколог',this)">🔬 Онкологи</div>
+    <div class="chip" onclick="filterHealth('Кардиолог',this)">❤️ Кардиологи</div>
+    <div class="chip" onclick="filterHealth('Невролог',this)">🧠 Неврологи</div>
+    <div class="chip" onclick="filterHealth('Клиника',this)">🏥 Клиники</div>
+  </div>
+  <div class="scroll">
+    <!-- SOS -->
+    <div style="margin:12px 16px 4px;background:linear-gradient(135deg,#D0021B,#FF5252);border-radius:var(--radius);padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="openEmergency()">
+      <div style="font-size:28px;">🚨</div>
+      <div style="flex:1;"><div style="color:white;font-weight:800;font-size:15px;">Экстренная помощь</div><div style="color:rgba(255,255,255,0.85);font-size:13px;">Круглосуточно · Выезд за 30 мин</div></div>
+      <div style="color:white;font-size:22px;">›</div>
+    </div>
+    <div id="health-list"></div>
+    <div style="height:16px;"></div>
+  </div>
+  <nav class="bnav">
+    <div class="ni" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
+    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
+    <div class="ni" onclick="nav('chatList')"><div class="ni-icon">💬</div><div class="ni-lbl">Чат</div></div>
+    <div class="ni on"><div class="ni-icon">🏥</div><div class="ni-lbl">Здоровье</div></div>
+    <div class="ni" onclick="nav('profile')"><div class="ni-icon">👤</div><div class="ni-lbl">Профиль</div></div>
+  </nav>
+</div>
+
+<!-- DISCOUNTS -->
+<div class="screen" id="discounts">
+  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()">←</button><div class="tbar-title">🎁 Скидки и партнёры</div></div>
+  <div class="chips" style="padding-top:8px;flex-shrink:0;">
+    <div class="chip on" onclick="filterDiscounts('Все',this)">Все</div>
+    <div class="chip" onclick="filterDiscounts('Груминг',this)">✂️ Груминг</div>
+    <div class="chip" onclick="filterDiscounts('Питание',this)">🍖 Питание</div>
+    <div class="chip" onclick="filterDiscounts('Аксессуары',this)">🎀 Аксессуары</div>
+    <div class="chip" onclick="filterDiscounts('Ветеринар',this)">🏥 Ветеринар</div>
+    <div class="chip" onclick="filterDiscounts('Кафе',this)">☕ Кафе</div>
+  </div>
+  <div class="scroll">
+    <div style="margin:8px 16px 12px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);border-radius:var(--radius);padding:14px;color:white;display:flex;align-items:center;gap:12px;">
+      <div style="font-size:32px;">🏠</div>
+      <div><div style="font-size:15px;font-weight:800;">ЖК Сокольники Парк</div><div style="font-size:12px;opacity:0.85;margin-top:2px;">Эксклюзивные скидки для жителей</div></div>
+    </div>
+    <div id="discounts-list"></div>
+    <div style="height:16px;"></div>
+  </div>
+  <nav class="bnav">
+    <div class="ni" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
+    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
+    <div class="ni" onclick="nav('chatList')"><div class="ni-icon">💬</div><div class="ni-lbl">Чат</div></div>
+    <div class="ni" onclick="nav('health')"><div class="ni-icon">🏥</div><div class="ni-lbl">Здоровье</div></div>
+    <div class="ni" onclick="nav('profile')"><div class="ni-icon">👤</div><div class="ni-lbl">Профиль</div></div>
+  </nav>
+</div>
+
+<!-- BREEDS -->
+<div class="screen" id="breeds">
+  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()">←</button><div class="tbar-title">🐕 Сообщества по породам</div></div>
+  <div class="scroll">
+    <div class="sec-hd"><div class="sec-t">🔥 Популярные</div></div>
+    <div class="scroll-row">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;">
+        <div style="width:72px;height:72px;background:linear-gradient(135deg,#FFF5E6,#FFD9A0);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;">🐕</div>
+        <div style="font-size:12px;font-weight:700;">Бигль</div><div style="font-size:11px;color:var(--text-secondary);">234 уч.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;">
+        <div style="width:72px;height:72px;background:linear-gradient(135deg,#EEF6FF,#C9E4FA);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;">🦮</div>
+        <div style="font-size:12px;font-weight:700;">Лабрадор</div><div style="font-size:11px;color:var(--text-secondary);">512 уч.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;">
+        <div style="width:72px;height:72px;background:linear-gradient(135deg,#F0FFF4,#C6F6D5);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;">🐕‍🦺</div>
+        <div style="font-size:12px;font-weight:700;">Хаски</div><div style="font-size:11px;color:var(--text-secondary);">389 уч.</div>
+      </div>
+    </div>
+    <div style="height:16px;"></div>
+  </div>
+  <nav class="bnav">
+    <div class="ni" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
+    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
+    <div class="ni on" onclick="nav('chatList')"><div class="ni-icon">💬</div><div class="ni-lbl">Чат</div></div>
+    <div class="ni" onclick="nav('health')"><div class="ni-icon">🏥</div><div class="ni-lbl">Здоровье</div></div>
+    <div class="ni" onclick="nav('profile')"><div class="ni-icon">👤</div><div class="ni-lbl">Профиль</div></div>
+  </nav>
+</div>
+
+<!-- DOG MAP -->
+<div class="screen" id="dogmap">
+  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()">←</button><div class="tbar-title">📍 Dog-friendly места</div></div>
+  <div class="chips" style="padding-top:8px;flex-shrink:0;">
+    <div class="chip on" onclick="filterPlaces('Все',this)">Все</div>
+    <div class="chip" onclick="filterPlaces('Кафе',this)">☕ Кафе</div>
+    <div class="chip" onclick="filterPlaces('Парк',this)">🌳 Парки</div>
+    <div class="chip" onclick="filterPlaces('Магазин',this)">🛍️ Магазины</div>
+    <div class="chip" onclick="filterPlaces('Грумер',this)">✂️ Грумеры</div>
+    <div class="chip" onclick="filterPlaces('Площадка',this)">🏃 Площадки</div>
+  </div>
+  <div class="scroll">
+    <div style="margin:8px 16px 12px;border-radius:var(--radius);height:160px;background:linear-gradient(135deg,#c8e6c9,#a5d6a7);position:relative;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;">
+      <div style="font-size:32px;">🗺️</div>
+      <div style="font-size:13px;font-weight:700;color:#2e7d32;">8 мест рядом с вами</div>
+      <div style="font-size:12px;color:#388e3c;">Сокольники и окрестности</div>
+      <div style="position:absolute;top:18%;left:20%;background:var(--primary);color:white;border-radius:20px 20px 20px 0;padding:4px 9px;font-size:11px;font-weight:700;">☕ Кофе & Лапки</div>
+      <div style="position:absolute;top:45%;left:58%;background:#7ED321;color:white;border-radius:20px 20px 20px 0;padding:4px 9px;font-size:11px;font-weight:700;">🌳 Сокольники</div>
+      <div style="position:absolute;top:65%;left:30%;background:#FF9800;color:white;border-radius:20px 20px 20px 0;padding:4px 9px;font-size:11px;font-weight:700;">✂️ PawStyle</div>
+    </div>
+    <div id="places-list"></div>
+    <div style="height:16px;"></div>
+  </div>
+  <nav class="bnav">
+    <div class="ni" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
+    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
+    <div class="ni" onclick="nav('chatList')"><div class="ni-icon">💬</div><div class="ni-lbl">Чат</div></div>
+    <div class="ni" onclick="nav('health')"><div class="ni-icon">🏥</div><div class="ni-lbl">Здоровье</div></div>
+    <div class="ni" onclick="nav('profile')"><div class="ni-icon">👤</div><div class="ni-lbl">Профиль</div></div>
+  </nav>
+</div>
+
+<!-- COMMUNITY -->
+<div class="screen" id="community">
+  <div class="ghdr" style="padding-top:0;"><h2>Сообщество</h2></div>
+  <div class="scroll">
+    <div class="ci" onclick="openPublicChat()">
+      <div style="width:48px;height:48px;background:linear-gradient(135deg,var(--primary),#6BB8F0);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🐕</div>
+      <div style="flex:1;"><div style="font-size:15px;font-weight:700;">Общий чат района</div><div style="font-size:13px;color:var(--text-secondary);margin-top:2px;">Открыть общий чат...</div></div>
+      <div class="badge">4</div>
+    </div>
+    <div style="height:16px;"></div>
+  </div>
+  <nav class="bnav">
+    <div class="ni" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
+    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
+    <div class="ni on" onclick="nav('chatList')"><div class="ni-icon">💬</div><div class="ni-lbl">Чат</div></div>
+    <div class="ni" onclick="nav('health')"><div class="ni-icon">🏥</div><div class="ni-lbl">Здоровье</div></div>
+    <div class="ni" onclick="nav('profile')"><div class="ni-icon">👤</div><div class="ni-lbl">Профиль</div></div>
+  </nav>
+</div>
+
+<!-- MODALS -->
+<div class="modal-ov" id="m-event" onclick="closeModal('m-event')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="mhandle"></div>
+    <h3 style="margin-bottom:6px;">🐕 Встреча биглей</h3>
+    <p style="margin-bottom:16px;color:var(--text-secondary);">📍 Сокольники, главная аллея • 🕖 Завтра 19:00</p>
+    <p style="color:var(--text-secondary);margin-bottom:20px;">Дружеская встреча хозяев биглей! Берите своих питомцев и хорошее настроение.</p>
+    <button class="btn btn-p" onclick="closeModal('m-event')">Записаться ✓</button>
+    <button class="btn btn-g" style="margin-top:10px;" onclick="closeModal('m-event')">Отмена</button>
+  </div>
+</div>
+
+<div class="modal-ov" id="m-orders" onclick="closeModal('m-orders')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="mhandle"></div>
+    <h3 style="margin-bottom:16px;">📋 Мои заказы</h3>
+    <div style="background:var(--bg);border-radius:12px;padding:14px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div><div style="font-size:14px;font-weight:700;">Иван Петров • Пакет 10</div><div style="font-size:12px;color:var(--text-secondary);">20 февр • 27 000 ₽ • Частями</div></div>
+        <span class="tag tag-b" style="font-size:11px;">Активен</span>
+      </div>
+      <div class="pbar" style="margin-top:10px;"><div class="pfill" style="width:10%;"></div></div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">1 из 10 занятий пройдено</div>
+    </div>
+    <button class="btn btn-g" onclick="closeModal('m-orders')">Закрыть</button>
+  </div>
+</div>
+
+<div class="modal-ov" id="m-clinic" onclick="closeModal('m-clinic')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:80%;overflow-y:auto;">
+    <div class="mhandle"></div>
+    <div id="m-clinic-body"></div>
+    <button class="btn btn-p" onclick="bookFromClinicModal()">Записаться</button>
+    <button class="btn btn-g" style="margin-top:10px;" onclick="closeModal('m-clinic')">Закрыть</button>
+  </div>
+</div>
+
+<!-- EMERGENCY MODAL -->
+<div class="modal-ov" id="m-emergency" onclick="closeModal('m-emergency')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:90%;overflow-y:auto;">
+    <div class="mhandle"></div>
+    <div style="padding:20px;">
+      <div style="font-size:24px;font-weight:900;margin-bottom:16px;">🚨 Экстренная помощь</div>
+      
+      <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px;">
+        <!-- Информация из профиля (только для чтения) -->
+        <div style="background:rgba(74,144,217,0.08);border-radius:12px;padding:12px;border-left:4px solid var(--primary);">
+          <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">📝 Ваши данные</div>
+          <div style="font-size:15px;font-weight:700;margin-bottom:6px;" id="em-display-name">Анна Козлова</div>
+          <div style="font-size:13px;color:var(--text-secondary);">🐕 <span id="em-display-pet">Рыжик</span></div>
+        </div>
+        
+        <!-- Редактируемые поля -->
+        <div>
+          <label class="lbl">Адрес (можно изменить)</label>
+          <input class="input" id="em-address" placeholder="Введите адрес" style="width:100%;">
+        </div>
+        
+        <div>
+          <label class="lbl">Что случилось?</label>
+          <textarea class="input" id="em-problem" placeholder="Опишите проблему подробно" style="width:100%;min-height:100px;padding:12px;resize:vertical;font-family:'Manrope',sans-serif;"></textarea>
+        </div>
+        
+        <div style="background:rgba(208,2,27,0.1);border-radius:12px;padding:12px;font-size:14px;color:var(--text-primary);">
+          <strong>☎️ Номер телефона:</strong><br>
+          <span id="em-phone" style="font-weight:600;color:#D0021B;font-size:16px;">+7 (495) 123-45-67</span>
+        </div>
+      </div>
+      
+      <div style="display:flex;gap:10px;flex-direction:column;">
+        <button class="btn btn-p" onclick="submitEmergency()" style="background:linear-gradient(135deg,#D0021B,#FF5252);">☎️ Позвонить сейчас</button>
+        <button class="btn" onclick="sendEmergencyRequest()" style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;border:none;">✓ Отправить заявку</button>
+        <button class="btn btn-g" onclick="closeModal('m-emergency')">Закрыть</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="screen" id="chatList">
+  <div class="ghdr" style="padding-bottom:20px;">
+    <h2 style="color:white;">💬 Чат</h2>
+    <p style="color:rgba(255,255,255,0.8);font-size:13px;margin-top:4px;">Общайся со всеми владельцами</p>
+  </div>
+  <div class="scroll">
+    <div class="ci" onclick="openPublicChat()" style="gap:14px;">
+      <div class="avatar" style="width:56px;height:56px;font-size:24px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);flex-shrink:0;">🐾</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span style="font-weight:800;font-size:16px;">Общий чат DogFriend</span>
+          <span style="font-size:11px;color:var(--text-secondary);">сейчас</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:var(--text-secondary);">Все владельцы района онлайн 🐶</span>
+          <span style="width:8px;height:8px;background:#7ED321;border-radius:50%;flex-shrink:0;"></span>
+        </div>
+      </div>
+    </div>
+    <div style="padding:16px 16px 8px;">
+      <div style="font-size:15px;font-weight:800;margin-bottom:12px;">💌 Личные сообщения</div>
+    </div>
+    <div id="private-chats-list"></div>
+    <div style="padding:20px 16px;text-align:center;color:var(--text-secondary);font-size:13px;" id="no-private-chats">
+      Еще нет личных сообщений<br>Напишите специалисту чтобы начать чат
+    </div>
+  </div>
+  <nav class="bnav">
+    <div class="ni" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
+    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
+    <div class="ni on"><div class="ni-icon">💬</div><div class="ni-lbl" style="color:var(--primary);">Чат</div></div>
+    <div class="ni" onclick="nav('health')"><div class="ni-icon">🏥</div><div class="ni-lbl">Здоровье</div></div>
+    <div class="ni" onclick="nav('profile')"><div class="ni-icon">👤</div><div class="ni-lbl">Профиль</div></div>
+  </nav>
+</div>
+
+<!-- CHAT CONVERSATION -->
+<!-- PRIVATE CHAT -->
+<div class="screen" id="privateChat" style="display:none;position:fixed;inset:0;flex-direction:column;background:var(--bg);">
+  <div class="top-bar" style="padding-top:0;">
+    <button class="back-btn" onclick="back()">←</button>
+    <div style="flex:1;display:flex;align-items:center;gap:12px;">
+      <div class="avatar" id="pc-avatar" style="width:40px;height:40px;font-size:16px;"></div>
+      <div>
+        <div style="font-weight:800;font-size:15px;" id="pc-name">Иван Петров</div>
+        <div id="pc-online" style="font-size:11px;color:var(--text-secondary);">🟢 онлайн</div>
+      </div>
+    </div>
+    <button class="back-btn" style="font-size:16px;">⋮</button>
+  </div>
+  <div class="scroll" id="pc-messages" style="padding:12px 16px;display:flex;flex-direction:column;gap:12px;"></div>
+  <div style="padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));background:var(--white);border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;">
+    <textarea class="input" id="pc-input" placeholder="Напишите сообщение..." style="flex:1;min-height:44px;max-height:100px;padding:10px 12px;resize:vertical;"></textarea>
+    <button class="btn btn-p" style="width:44px;height:44px;padding:0;flex-shrink:0;" onclick="sendPrivateMessage()">➤</button>
+  </div>
+</div>
+
+<div class="screen" id="chatConv" style="display:none;position:fixed;inset:0;flex-direction:column;background:var(--bg);">
+  <!-- Fixed header -->
+  <div style="background:var(--white);padding:12px 16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;flex-shrink:0;z-index:10;">
+    <button class="back-btn" onclick="nav('chatList')">←</button>
+    <div class="avatar" id="chat-conv-av" style="width:40px;height:40px;font-size:18px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);">🐾</div>
+    <div style="flex:1;min-width:0;">
+      <div id="chat-conv-name" style="font-weight:800;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+      <div id="chat-conv-subtitle" style="font-size:12px;font-weight:600;color:#aaa;">● подключение...</div>
+    </div>
+  </div>
+  <!-- Scrollable messages -->
+  <div id="chat-messages" style="flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:14px 14px 6px;display:flex;flex-direction:column;gap:8px;"></div>
+  <!-- Typing indicator -->
+  <div id="chat-typing" style="display:none;align-items:center;gap:6px;padding:4px 16px 2px;font-size:12px;color:var(--text-secondary);background:var(--bg);flex-shrink:0;"></div>
+  <!-- Input bar - always visible above keyboard -->
+  <div id="chat-input-bar" style="background:var(--white);padding:10px 12px 14px;padding-bottom:calc(14px + env(safe-area-inset-bottom, 0px));display:flex;align-items:flex-end;gap:8px;border-top:1px solid var(--border);flex-shrink:0;">
+    <textarea id="chat-input" rows="1"
+      style="flex:1;border:2px solid var(--border);border-radius:22px;padding:10px 16px;font-family:'Manrope',sans-serif;font-size:16px;resize:none;outline:none;max-height:96px;line-height:1.45;background:var(--bg);transition:border-color 0.2s;-webkit-text-size-adjust:100%;"
+      placeholder="Написать всем..."
+      onfocus="this.style.borderColor='var(--primary)';scrollChatBottom();"
+      onblur="this.style.borderColor='var(--border)'"></textarea>
+    <button onclick="sendChatMsg()"
+      style="width:46px;height:46px;background:var(--primary);color:white;border:none;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(74,144,217,0.4);margin-bottom:1px;">➤</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// NAVIGATION
+// ============================================================
+const histStack = [];
+
+function nav(id) {
+  const curr = document.querySelector('.screen.active');
+  const next = document.getElementById(id);
+  if (!next || curr === next) return;
+  histStack.push(curr.id);
+  curr.classList.remove('active');
+  curr.style.display = 'none';
+  next.classList.add('active');
+  // chatConv uses position:fixed flex
+  next.style.display = 'flex';
+}
+
+function back() {
+  if (histStack.length === 0) { nav('home'); return; }
+  const prevId = histStack.pop();
+  const curr = document.querySelector('.screen.active');
+  const prev = document.getElementById(prevId);
+  if (!prev) { nav('home'); return; }
+  curr.classList.remove('active');
+  curr.style.display = 'none';
+  prev.classList.add('active');
+  prev.style.display = 'flex';
+}
+
+// Fix: scroll messages up when keyboard appears on iOS/Android
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    const chatConv = document.getElementById('chatConv');
+    if (chatConv && chatConv.classList.contains('active')) {
+      scrollChatBottom();
+    }
+  });
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+function openModal(id) { const el = document.getElementById(id); if (el) el.classList.add('open'); }
+function closeModal(id) { const el = document.getElementById(id); if (el) el.classList.remove('open'); }
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(group, name, clickedEl) {
+  clickedEl.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('[id^="tc-'+group+'-"]').forEach(tc => tc.classList.remove('on'));
+  clickedEl.classList.add('on');
+  const tc = document.getElementById('tc-'+group+'-'+name);
+  if (tc) tc.classList.add('on');
+}
+
+function selectSvc(n) {
+  [1,2,3].forEach(i => { const el = document.getElementById('svc'+i); if (el) el.classList.toggle('sel', i === n); });
+}
+function selectPay(type) {
+  document.getElementById('pf').classList.toggle('sel', type === 'full');
+  document.getElementById('ps').classList.toggle('sel', type === 'split');
+}
+function pickDay(el) {
+  el.closest('.cal-g').querySelectorAll('.cal-d').forEach(d => d.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', function() {
+    this.closest('.chips').querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+    this.classList.add('on');
+  });
+});
+
+// ============================================================
+// AVATAR
+// ============================================================
+function handleAvatarUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    localStorage.setItem('df_avatar', e.target.result);
+    applyAvatar(e.target.result);
+  };
+  reader.readAsDataURL(file);
+}
+
+function applyAvatar(dataUrl) {
+  const img = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+  ['prof-avatar','home-avatar','ep-avatar'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.innerHTML = img; el.style.padding = '0'; }
+  });
+}
+
+// ============================================================
+// PROFILE
+// ============================================================
+function getInitials(name) {
+  if (!name) return '👤';
+  const parts = name.trim().split(' ');
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.slice(0,2).toUpperCase();
+}
+
+// ============================================================
+// LOGIN FUNCTION
+// ============================================================
+
+// ============================================================
+function loadProfile() {
+  const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
+  const savedAvatar = localStorage.getItem('df_avatar');
+  if (savedAvatar) setTimeout(() => applyAvatar(savedAvatar), 50);
+  const name = p.name || 'Гость';
+  const initials = p.name ? getInitials(p.name) : '👤';
+  const homeName = document.getElementById('home-name');
+  const homeAvatar = document.getElementById('home-avatar');
+  if (homeName) homeName.textContent = name;
+  if (homeAvatar) homeAvatar.textContent = initials;
+  const profName = document.getElementById('prof-name');
+  const profAvatar = document.getElementById('prof-avatar');
+  if (profName) profName.textContent = name;
+  if (profAvatar) profAvatar.textContent = initials;
+  
+  // Обновляем гео на главном экране
+  const geoDisplay = document.getElementById('home-geo-display');
+  if (geoDisplay) {
+    const geo = p.district || 'Москва, Сокольники';
+    geoDisplay.textContent = geo;
+  }
+}
+
+function loadProfileForm() {
+  const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
+  document.getElementById('ep-name').value = p.name || '';
+  document.getElementById('ep-district').value = p.district || '';
+  document.getElementById('ep-dogname').value = p.dogname || '';
+  document.getElementById('ep-dogbreed').value = p.dogbreed || '';
+  document.getElementById('ep-dogage').value = p.dogage || '';
+  const av = document.getElementById('ep-avatar');
+  if (av) av.textContent = p.name ? getInitials(p.name) : '👤';
+}
+
+function saveProfile() {
+  const p = {
+    name: document.getElementById('ep-name').value.trim(),
+    district: document.getElementById('ep-district').value.trim(),
+    dogname: document.getElementById('ep-dogname').value.trim(),
+    dogbreed: document.getElementById('ep-dogbreed').value.trim(),
+    dogage: document.getElementById('ep-dogage').value.trim(),
+  };
+  localStorage.setItem('df_profile', JSON.stringify(p));
+  localStorage.setItem('df_user_geo', p.district);
+  loadProfile();
+  back();
+  setTimeout(() => {
+    const toast = document.createElement('div');
+    toast.textContent = '✅ Профиль сохранён!';
+    toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1A1A1A;color:white;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:700;z-index:9999;';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+  }, 200);
+}
+
+window.addEventListener('load', () => {
+  loadProfile();
+  requestNotificationPermission();
+  const splash = document.getElementById('splash');
+  splash.classList.add('active');
+  splash.style.display = 'flex';
+  
+  // Ждём инициализации — checkAuth сама обработает любой случай
+  setTimeout(() => checkAuth(), 2500);
+});
+
+// ============================================================
+// DATA — SPECIALISTS (кинологи)
+// ============================================================
+const SPECIALISTS = [
+  {
+    id:1, name:'Иван Петров', initials:'ИП', grad:'linear-gradient(135deg,#4A90D9,#7B5EA7)',
+    badge:'🏅 Проверен', badgeType:'tag-b', rating:'⭐ 4.9', reviews:127, exp:'5 лет опыта',
+    location:'📍 Сокольники, 2.3 км', price:'от 3 000 ₽', insurance:true,
+    tags:['Щенки','ОКД','Аджилити'],
+    bio:'Сертифицированный кинолог РКФ, специализируюсь на социализации щенков и базовом послушании. Работаю с собаками любых пород, особенно с крупными и гиперактивными. Провёл более 500 занятий.',
+    services:[
+      {name:'Групповое занятие', desc:'60 мин • до 8 собак', price:'3 000 ₽'},
+      {name:'Индивидуальное', desc:'90 мин • только вы', price:'5 000 ₽'},
+      {name:'Пакет 10 занятий ⭐', desc:'Экономия 3 000 ₽', price:'27 000 ₽', sel:true},
+    ],
+    reviewList:[
+      {name:'Людмила П.', av:'ЛП', grad:'linear-gradient(135deg,#E91E63,#FF9800)', stars:'⭐⭐⭐⭐⭐', text:'Иван — профессионал! Наш бигль теперь не тянет поводок и выполняет все команды.'},
+      {name:'Кирилл А.', av:'КА', grad:'linear-gradient(135deg,#9C27B0,#3F51B5)', stars:'⭐⭐⭐⭐⭐', text:'Взяли пакет 10 занятий — отличный результат за 2 месяца! Собака стала совсем другой.'},
+    ],
+    availDays:[4,5,6,7,10,11,13,14,17,18,20,21],
+  },
+  {
+    id:2, name:'Мария Соколова', initials:'МС', grad:'linear-gradient(135deg,#E91E63,#FF9800)',
+    badge:'🏅 Проверена', badgeType:'tag-b', rating:'⭐ 4.8', reviews:89, exp:'7 лет опыта',
+    location:'📍 Преображенское, 1.5 км', price:'от 2 500 ₽', insurance:true,
+    tags:['Щенки','Поведение','Коррекция'],
+    bio:'Специалист по коррекции нежелательного поведения и работе с агрессией. Учёба в Европейской академии зоопсихологии (Австрия). Помогла более 300 семьям наладить отношения с питомцем.',
+    services:[
+      {name:'Консультация онлайн', desc:'30 мин • разбор видео', price:'1 500 ₽'},
+      {name:'Выездное занятие', desc:'90 мин • у вас дома', price:'4 500 ₽'},
+      {name:'Курс коррекции ⭐', desc:'8 занятий • скидка 20%', price:'20 000 ₽', sel:true},
+    ],
+    reviewList:[
+      {name:'Оксана В.', av:'ОВ', grad:'linear-gradient(135deg,#00BCD4,#3F51B5)', stars:'⭐⭐⭐⭐⭐', text:'Мария помогла с агрессией нашего ротвейлера. Теперь он спокойно ходит в парк!'},
+      {name:'Павел М.', av:'ПМ', grad:'linear-gradient(135deg,#FF5722,#FF9800)', stars:'⭐⭐⭐⭐', text:'Хороший специалист, результат появился уже после 3-го занятия. Рекомендую.'},
+    ],
+    availDays:[3,5,7,10,12,14,17,19,21,24,26],
+  },
+  {
+    id:3, name:'Алексей Волков', initials:'АВ', grad:'linear-gradient(135deg,#00BCD4,#3F51B5)',
+    badge:'🥇 Эксперт', badgeType:'tag-o', rating:'⭐ 5.0', reviews:203, exp:'12 лет опыта',
+    location:'📍 Измайлово, 3.8 км', price:'от 4 000 ₽', insurance:true,
+    tags:['Аджилити','Шутцхунд','ОКД','IPO'],
+    bio:'Мастер спорта по IPO, судья международной категории по аджилити. Тренировал сборную России на чемпионате Европы 2022. Принимаю только мотивированных хозяев, готовых работать регулярно.',
+    services:[
+      {name:'Индивидуальный тренинг', desc:'60 мин • серьёзная работа', price:'4 000 ₽'},
+      {name:'Подготовка к соревнованиям', desc:'90 мин • видеоанализ', price:'7 000 ₽'},
+      {name:'Сезонная программа ⭐', desc:'3 месяца • 24 занятия', price:'60 000 ₽', sel:true},
+    ],
+    reviewList:[
+      {name:'Дмитрий Р.', av:'ДР', grad:'linear-gradient(135deg,#4A90D9,#7B5EA7)', stars:'⭐⭐⭐⭐⭐', text:'Алексей вывел нашу малинуа на уровень кандидата в мастера спорта. Невероятный тренер!'},
+      {name:'Светлана К.', av:'СК', grad:'linear-gradient(135deg,#9C27B0,#E91E63)', stars:'⭐⭐⭐⭐⭐', text:'Приехала из Питера специально заниматься у Алексея. Оно того стоило — золото на региональных.'},
+    ],
+    availDays:[4,6,11,13,18,20,25,27],
+  },
+  {
+    id:4, name:'Елена Козлова', initials:'ЕК', grad:'linear-gradient(135deg,#9C27B0,#E91E63)',
+    badge:'🏅 Проверена', badgeType:'tag-b', rating:'⭐ 4.7', reviews:67, exp:'4 года опыта',
+    location:'📍 Сокольники, 0.9 км', price:'от 3 500 ₽', insurance:false,
+    tags:['Поведение','Страхи','Реабилитация'],
+    bio:'Зоопсихолог, специализируюсь на страхах, фобиях и стрессе у собак. Работаю методами позитивного подкрепления без принуждения. Кандидат биологических наук, автор книги «Тревожная собака».',
+    services:[
+      {name:'Первичная диагностика', desc:'60 мин • анализ поведения', price:'3 500 ₽'},
+      {name:'Программа «Без страха»', desc:'6 занятий • мягкий подход', price:'18 000 ₽'},
+      {name:'Онлайн-сопровождение ⭐', desc:'месяц • чат + 2 сессии', price:'8 000 ₽', sel:true},
+    ],
+    reviewList:[
+      {name:'Анна Б.', av:'АБ', grad:'linear-gradient(135deg,#FF5722,#FF9800)', stars:'⭐⭐⭐⭐⭐', text:'Елена помогла нашей собаке преодолеть страх грозы и петард. Теперь не прячется!'},
+      {name:'Игорь С.', av:'ИС', grad:'linear-gradient(135deg,#00BCD4,#4CAF50)', stars:'⭐⭐⭐⭐', text:'Профессиональный подход, никакого насилия над животным. Виден реальный прогресс.'},
+    ],
+    availDays:[3,4,6,10,11,13,17,18,20,24,25,27],
+  },
+  {
+    id:5, name:'Дмитрий Орлов', initials:'ДО', grad:'linear-gradient(135deg,#FF5722,#FF9800)',
+    badge:'🏅 Проверен', badgeType:'tag-b', rating:'⭐ 4.9', reviews:145, exp:'9 лет опыта',
+    location:'📍 ВДНХ, 4.2 км', price:'от 2 000 ₽', insurance:true,
+    tags:['Групповые','ОКД','Норматив'],
+    bio:'Провожу групповые занятия для собак всех пород и возрастов. Мои группы — это ещё и клуб общения для хозяев. Обучение в игровой форме, результат гарантирован уже через месяц.',
+    services:[
+      {name:'Группа выходного дня', desc:'90 мин • суббота', price:'2 000 ₽'},
+      {name:'Группа по будням', desc:'60 мин • пн/ср/пт', price:'1 500 ₽'},
+      {name:'Абонемент на месяц ⭐', desc:'8 занятий • выгода 30%', price:'9 000 ₽', sel:true},
+    ],
+    reviewList:[
+      {name:'Наталья В.', av:'НВ', grad:'linear-gradient(135deg,#4A90D9,#00BCD4)', stars:'⭐⭐⭐⭐⭐', text:'Ходим с лабрадором уже 4 месяца. Атмосфера классная, хозяева все подружились!'},
+      {name:'Роман Ф.', av:'РФ', grad:'linear-gradient(135deg,#E91E63,#FF5722)', stars:'⭐⭐⭐⭐⭐', text:'Дмитрий знает как заинтересовать собаку. Наш хаски стал слушаться с первого слова.'},
+    ],
+    availDays:[5,6,12,13,19,20,26,27],
+  },
+  {
+    id:6, name:'Наталья Романова', initials:'НР', grad:'linear-gradient(135deg,#4CAF50,#009688)',
+    badge:'🏅 Проверена', badgeType:'tag-b', rating:'⭐ 4.8', reviews:52, exp:'6 лет опыта',
+    location:'📍 Митино, 6.1 км', price:'от 2 800 ₽', insurance:true,
+    tags:['Щенки','Социализация','Первые шаги'],
+    bio:'Специалист по социализации щенков от 8 недель. Мой «Щенячий детсад» посетили более 200 щенков. Закладываю правильные паттерны поведения с первых дней в новом доме.',
+    services:[
+      {name:'Щенячий детсад (день)', desc:'6 часов • пн-пт', price:'2 800 ₽'},
+      {name:'Урок социализации', desc:'60 мин • в группе щенков', price:'2 000 ₽'},
+      {name:'Старт-пакет ⭐', desc:'5 уроков + консультация', price:'12 000 ₽', sel:true},
+    ],
+    reviewList:[
+      {name:'Алина П.', av:'АП', grad:'linear-gradient(135deg,#FF9800,#E91E63)', stars:'⭐⭐⭐⭐⭐', text:'Наталья — волшебница! Щенок за месяц стал уверенным и общительным псом.'},
+      {name:'Вася Т.', av:'ВТ', grad:'linear-gradient(135deg,#3F51B5,#9C27B0)', stars:'⭐⭐⭐⭐⭐', text:'Детсад для щенков — это лучшее что мы сделали. Советую всем новым хозяевам.'},
+    ],
+    availDays:[3,4,5,6,7,10,11,12,13,14,17,18,19,20,21],
+  },
+];
+
+// ============================================================
+// DATA — HEALTH (ветеринары + клиники)
+// ============================================================
+const HEALTH_DATA = [
+  // КЛИНИКИ
+  {
+    type:'clinic', id:'c1',
+    name:'Биоконтроль', icon:'🔬', grad:'linear-gradient(135deg,#D0021B,#9C27B0)',
+    subtitle:'Онкологический центр', addr:'ул. Академика Опарина, 4 (Коньково)', dist:'7.2 км',
+    rating:'⭐ 4.9', hours:'Пн–Вс 9:00–21:00', tags:['Онкология','Химиотерапия','МРТ','Хирургия'],
+    desc:'Ведущий онкологический центр для животных в России. Специализируются исключительно на онкологии, имеют собственный МРТ и линейный ускоритель для лучевой терапии.',
+    price:'от 3 500 ₽', spec:'Онкология',
+  },
+  {
+    type:'clinic', id:'c2',
+    name:'Зоовет', icon:'🏥', grad:'linear-gradient(135deg,#4A90D9,#00BCD4)',
+    subtitle:'Международный ветцентр', addr:'Варшавское ш., 125 стр.1 (Чертаново)', dist:'9.4 км',
+    rating:'⭐ 4.7', hours:'Круглосуточно', tags:['МРТ','Стационар','Скорая','Хирургия','УЗИ'],
+    desc:'Более 400 000 спасённых животных за 15 лет работы. Собственный учебный центр, стажировки в европейских клиниках. Полный спектр от терапии до трансплантологии.',
+    price:'от 2 400 ₽', spec:'Клиника',
+  },
+  {
+    type:'clinic', id:'c3',
+    name:'Белый Клык', icon:'🦷', grad:'linear-gradient(135deg,#3F51B5,#9C27B0)',
+    subtitle:'Стоматология и хирургия', addr:'ул. Молодёжная, 18 (Кунцево)', dist:'11.3 км',
+    rating:'⭐ 4.8', hours:'Пн–Сб 9:00–20:00', tags:['Стоматология','Хирургия','Ортопедия'],
+    desc:'Специализированная клиника ветеринарной стоматологии и ортопедии. Единственная в Москве клиника с собственным зуботехническим кабинетом для животных.',
+    price:'от 2 000 ₽', spec:'Стоматология',
+  },
+  {
+    type:'clinic', id:'c4',
+    name:'Статус-Вет', icon:'🏨', grad:'linear-gradient(135deg,#FF5722,#FF9800)',
+    subtitle:'Сеть клиник 24/7', addr:'ул. Профсоюзная, 58к4 (Академическая)', dist:'8.1 км',
+    rating:'⭐ 4.8', hours:'Круглосуточно', tags:['Круглосуточно','Скорая','Зоогостиница','Вакцинация'],
+    desc:'Сетевая клиника с 12 отделениями по Москве. Современное оборудование, квалифицированные специалисты, зоогостиница и круглосуточная скорая ветпомощь.',
+    price:'от 1 800 ₽', spec:'Клиника',
+  },
+  {
+    type:'clinic', id:'c5',
+    name:'Медвет', icon:'🩺', grad:'linear-gradient(135deg,#4CAF50,#009688)',
+    subtitle:'Многопрофильный центр', addr:'ул. Героев Панфиловцев, 24 (Митино)', dist:'13.5 км',
+    rating:'⭐ 4.9', hours:'Пн–Вс 8:00–22:00', tags:['Кардиология','Неврология','Эндоскопия','УЗИ'],
+    desc:'Один из лучших многопрофильных центров Москвы. Кардиология, неврология, офтальмология — уникальные специалисты в каждом направлении. Собственная лаборатория.',
+    price:'от 2 800 ₽', spec:'Клиника',
+  },
+  // СПЕЦИАЛИСТЫ
+  {
+    type:'vet', id:'v1',
+    name:'Анна Белова', initials:'АБ', grad:'linear-gradient(135deg,#D0021B,#FF5252)',
+    spec:'Онколог-ветеринар', badge:'🏅 Проверена', badgeType:'tag-b',
+    rating:'⭐ 5.0', reviews:94, exp:'12 лет опыта', dist:'📍 Сокольники, 1.2 км',
+    price:'от 4 500 ₽', tags:['Онкология','УЗИ','Биопсия'],
+    bio:'Онколог высшей категории, стажировка в Онкоклинике Тьерри Мильяра (Франция). Специализируется на опухолях мягких тканей и кожи.',
+    specType:'Онколог',
+  },
+  {
+    type:'vet', id:'v2',
+    name:'Павел Орлов', initials:'ПО', grad:'linear-gradient(135deg,#E91E63,#9C27B0)',
+    spec:'Кардиолог', badge:'🥇 Эксперт', badgeType:'tag-o',
+    rating:'⭐ 4.9', reviews:78, exp:'8 лет опыта', dist:'📍 Арбат, 5.3 км',
+    price:'от 5 000 ₽', tags:['ЭхоКГ','ЭКГ','Аритмия'],
+    bio:'Единственный в России ветеринарный кардиолог с сертификатом ECVIM (Европейский диплом). Консультирует клиники по всей России.',
+    specType:'Кардиолог',
+  },
+  {
+    type:'vet', id:'v3',
+    name:'Светлана Новикова', initials:'СН', grad:'linear-gradient(135deg,#00BCD4,#3F51B5)',
+    spec:'Невролог', badge:'🏅 Проверена', badgeType:'tag-b',
+    rating:'⭐ 4.8', reviews:61, exp:'10 лет опыта', dist:'📍 Митино, 12 км',
+    price:'от 3 800 ₽', tags:['МРТ','Эпилепсия','Миелопатия'],
+    bio:'Ветеринарный невролог, специализация — эпилепсия, дископатии, нейрохирургия. Проводит операции на позвоночнике при грыжах дисков.',
+    specType:'Невролог',
+  },
+  {
+    type:'vet', id:'v4',
+    name:'Тимур Захаров', initials:'ТЗ', grad:'linear-gradient(135deg,#FF9800,#FF5722)',
+    spec:'Хирург-ортопед', badge:'🥇 Эксперт', badgeType:'tag-o',
+    rating:'⭐ 5.0', reviews:112, exp:'15 лет опыта', dist:'📍 Коньково, 8.5 км',
+    price:'от 6 000 ₽', tags:['Ортопедия','Артроскопия','ТПЛ'],
+    bio:'Ведущий ветеринарный ортопед страны. Специализируется на разрывах крестообразных связок у крупных пород и дисплазии тазобедренного сустава.',
+    specType:'Хирург',
+  },
+  {
+    type:'vet', id:'v5',
+    name:'Ирина Смирнова', initials:'ИС', grad:'linear-gradient(135deg,#9C27B0,#673AB7)',
+    spec:'Дерматолог', badge:'🏅 Проверена', badgeType:'tag-b',
+    rating:'⭐ 4.7', reviews:83, exp:'7 лет опыта', dist:'📍 Хамовники, 4.8 км',
+    price:'от 3 200 ₽', tags:['Аллергия','Атопия','Анализы кожи'],
+    bio:'Ветеринарный дерматолог с европейской специализацией. Лечит хронические аллергии, атопический дерматит, аутоиммунные заболевания кожи.',
+    specType:'Терапевт',
+  },
+  {
+    type:'vet', id:'v6',
+    name:'Борис Крылов', initials:'БК', grad:'linear-gradient(135deg,#00BCD4,#4CAF50)',
+    spec:'Офтальмолог', badge:'🏅 Проверен', badgeType:'tag-b',
+    rating:'⭐ 4.9', reviews:55, exp:'9 лет опыта', dist:'📍 Академическая, 9.2 км',
+    price:'от 3 500 ₽', tags:['Катаракта','Глаукома','Операции'],
+    bio:'Ветеринарный офтальмолог, выполняет операции по удалению катаракты с имплантацией искусственного хрусталика. Принимает со всей России.',
+    specType:'Терапевт',
+  },
+];
+
+let catalogFilter = 'Все';
+let healthFilter = 'Все';
+let currentSpecId = null;
+let currentPrivateChatId = null;  // ID специалиста для приватного чата
+let privateChats = {};  // {specialistId: [{text, sender, time}, ...]}
+let unreadCount = parseInt(localStorage.getItem('unread_count') || '0');
+let unreadChats = JSON.parse(localStorage.getItem('unread_chats') || '{}');
+
+// ============================================================
+// NOTIFICATION FUNCTIONS
+// ============================================================
+function requestNotificationPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+function playNotificationSound() {
+  // Создаем звук уведомления с помощью Web Audio API
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = 800;
+    oscillator.type = 'sine';
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.5);
+  } catch(e) {
+    // Если Web Audio не поддерживается, игнорируем
+  }
+}
+
+function showBrowserNotification(title, options = {}) {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(title, {
+      icon: '🐕',
+      badge: '🐾',
+      ...options
+    });
+  }
+}
+
+function addUnreadMessage(chatId) {
+  if (!unreadChats[chatId]) {
+    unreadChats[chatId] = 0;
+  }
+  unreadChats[chatId]++;
+  unreadCount++;
+  
+  // Сохраняем в localStorage
+  localStorage.setItem('unread_chats', JSON.stringify(unreadChats));
+  localStorage.setItem('unread_count', unreadCount.toString());
+  
+  updateUnreadBadge();
+  renderPrivateChats(); // Обновляем список чтобы показать бейдж
+}
+
+function clearUnreadMessages(chatId) {
+  if (unreadChats[chatId]) {
+    unreadCount -= unreadChats[chatId];
+    unreadChats[chatId] = 0;
+    delete unreadChats[chatId];
+    
+    // Сохраняем в localStorage
+    localStorage.setItem('unread_chats', JSON.stringify(unreadChats));
+    localStorage.setItem('unread_count', Math.max(0, unreadCount).toString());
+  }
+  updateUnreadBadge();
+  renderPrivateChats(); // Обновляем список чтобы убрать бейдж
+}
+
+function updateUnreadBadge() {
+  const badge = document.getElementById('chat-nav-badge');
+  if (badge) {
+    if (unreadCount > 0) {
+      badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+      badge.style.display = 'block';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+  
+  // Обновляем badge в PWA
+  if ('setAppBadge' in navigator) {
+    if (unreadCount > 0) {
+      navigator.setAppBadge(unreadCount).catch(() => {});
+    } else {
+      navigator.clearAppBadge().catch(() => {});
+    }
+  }
+}
+
+// ============================================================
+// RENDER — CATALOG
+// ============================================================
+// ============================================================
+// GEOLOCATION FUNCTIONS
+// ============================================================
+function detectGeo() {
+  const input = document.getElementById('ep-district');
+  if (!input) return;
+  input.placeholder = '⏳ Определение геолокации...';
+  input.disabled = true;
+  
+  if (!navigator.geolocation) {
+    input.placeholder = 'Выберите или введите район';
+    input.disabled = false;
+    alert('❌ Браузер не поддерживает геолокацию');
+    return;
+  }
+  
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      reverseGeocode(lat, lng, input);
+    },
+    (error) => {
+      input.placeholder = 'Выберите или введите район';
+      input.disabled = false;
+      let msg = '❌ Не удалось определить геолокацию';
+      if (error.code === 1) msg = '❌ Разрешение отклонено';
+      if (error.code === 2) msg = '❌ Позиция недоступна';
+      if (error.code === 3) msg = '❌ Время ожидания истекло';
+      alert(msg);
+    }
+  );
+}
+
+function reverseGeocode(lat, lng, input) {
+  const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+  
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      let geoName = '';
+      if (data.address) {
+        geoName = data.address.neighbourhood || 
+                  data.address.suburb || 
+                  data.address.city_district || 
+                  data.address.district || 
+                  data.address.city || 
+                  data.address.town || '';
+      }
+      if (!geoName) {
+        geoName = data.name || 'Неизвестное место';
+      }
+      input.value = geoName;
+      input.placeholder = 'Выберите или введите район';
+      input.disabled = false;
+    })
+    .catch(error => {
+      console.error('Ошибка Nominatim:', error);
+      input.placeholder = 'Выберите или введите район';
+      input.disabled = false;
+      alert('⚠️ Ошибка при определении района');
+    });
+}
+
+// ============================================================
+function renderCatalog() {
+  const search = (document.getElementById('catalog-search')?.value || '').toLowerCase();
+  const list = document.getElementById('catalog-list');
+  if (!list) return;
+  const filtered = SPECIALISTS.filter(s => {
+    const matchFilter = catalogFilter === 'Все' || s.tags.includes(catalogFilter);
+    const matchSearch = !search || s.name.toLowerCase().includes(search) || s.tags.join(' ').toLowerCase().includes(search);
+    return matchFilter && matchSearch;
+  });
+  list.innerHTML = filtered.map(s => `
+    <div class="scard" onclick="openSpecialist(${s.id})">
+      <div class="avatar" style="width:56px;height:56px;font-size:22px;background:${s.grad};">${s.initials}</div>
+      <div style="flex:1;">
+        <div class="scard-name">${s.name}</div>
+        <div class="scard-meta"><span class="tag ${s.badgeType}">${s.badge}</span><span class="stars">${s.rating}</span><span style="font-size:12px;color:var(--text-secondary);">(${s.reviews})</span></div>
+        <div style="font-size:13px;color:var(--text-secondary);">${s.location} • ${s.tags.slice(0,2).join(', ')}</div>
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <span class="scard-price">${s.price}</span>
+          ${s.insurance ? '<span class="tag tag-g" style="font-size:11px;">🛡️ Страховка</span>' : ''}
+        </div>
+      </div>
+    </div>
+  `).join('') || '<div style="padding:40px;text-align:center;color:var(--text-secondary);">Никого не найдено</div>';
+}
+
+function filterCatalog(val, el) {
+  catalogFilter = val;
+  document.querySelectorAll('#catalog-chips .chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  renderCatalog();
+}
+
+// ============================================================
+// OPEN SPECIALIST — fill dynamic screen
+// ============================================================
+function openSpecialist(id) {
+  const s = SPECIALISTS.find(x => x.id === id);
+  if (!s) return;
+  currentSpecId = id;
+
+  document.getElementById('spec-topbar-name').textContent = s.name;
+  const av = document.getElementById('spec-avatar');
+  av.textContent = s.initials; av.style.background = s.grad;
+  document.getElementById('spec-name').textContent = s.name;
+  document.getElementById('spec-badge').className = 'tag ' + s.badgeType;
+  document.getElementById('spec-badge').textContent = s.badge + ' DogFriend';
+  document.getElementById('spec-rating').textContent = s.rating;
+  document.getElementById('spec-exp').textContent = s.exp;
+  document.getElementById('spec-location').textContent = s.location;
+  document.getElementById('spec-bio').textContent = s.bio;
+  document.getElementById('spec-tags').innerHTML = s.tags.map(t => `<span class="tag tag-b">${t}</span>`).join('');
+
+  // Services
+  document.getElementById('spec-services').innerHTML = s.services.map((sv,i) => `
+    <div class="pr ${sv.sel?'sel':''}" onclick="selectSvc(${i+1})" id="svc${i+1}">
+      <div><div class="pr-n">${sv.name}</div><div style="font-size:12px;color:var(--text-secondary);">${sv.desc}</div></div>
+      <div class="pr-v">${sv.price}</div>
+    </div>
+  `).join('');
+
+  const mainPrice = s.services.find(sv=>sv.sel)?.price || s.services[0].price;
+  document.getElementById('pay-full-desc').textContent = mainPrice + ' сразу';
+  document.getElementById('pay-split-desc').textContent = '4 платежа без переплат';
+
+  // Reviews
+  const rb = document.getElementById('spec-reviews-block');
+  const ratingNum = s.rating.replace('⭐ ','');
+  rb.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+      <div style="font-size:40px;font-weight:900;font-family:'Nunito',sans-serif;color:var(--primary);">${ratingNum}</div>
+      <div><div class="stars">${'⭐'.repeat(Math.round(parseFloat(ratingNum)))}</div><div style="font-size:13px;color:var(--text-secondary);">${s.reviews} отзывов</div></div>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:14px;display:flex;flex-direction:column;gap:14px;">
+      ${s.reviewList.map(r => `
+        <div style="display:flex;gap:12px;">
+          <div class="avatar" style="width:36px;height:36px;font-size:13px;background:${r.grad};">${r.av}</div>
+          <div><div style="font-size:14px;font-weight:700;">${r.name}</div><div class="stars" style="font-size:12px;">${r.stars}</div><div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">${r.text}</div></div>
+        </div>
+      `).join('')}
+    </div>`;
+
+  // Calendar
+  const calEl = document.getElementById('spec-calendar');
+  const days = ['','','','','','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25','26','27','28','29','30','31'];
+  calEl.innerHTML = days.map((d,i) => {
+    if (!d) return `<div class="cal-d dis"></div>`;
+    const n = parseInt(d);
+    if (n === 6) return `<div class="cal-d today">${d}</div>`;
+    if (s.availDays.includes(n)) return `<div class="cal-d avail" onclick="pickDay(this)">${d}</div>`;
+    return `<div class="cal-d dis">${d}</div>`;
+  }).join('');
+
+  // Reset tabs
+  document.querySelectorAll('#specialist .tab').forEach((t,i) => t.classList.toggle('on', i===0));
+  document.querySelectorAll('#specialist .tc').forEach((tc,i) => tc.classList.toggle('on', i===0));
+
+  nav('specialist');
+}
+
+// ============================================================
+// RENDER — HEALTH
+// ============================================================
+function renderHealth() {
+  const list = document.getElementById('health-list');
+  if (!list) return;
+  const filtered = HEALTH_DATA.filter(h => {
+    const matchFilter = healthFilter === 'Все' ? true : 
+      (healthFilter === 'Клиника' ? h.type === 'clinic' : h.type === 'vet' && h.specType === healthFilter);
+    return matchFilter;
+  });
+
+  // Section headers
+  const clinics = filtered.filter(h => h.type === 'clinic');
+  const vets = filtered.filter(h => h.type === 'vet');
+
+  let html = '';
+  if (vets.length) {
+    html += `<div class="sec-hd"><div class="sec-t">👨‍⚕️ Специалисты</div></div>`;
+    html += vets.map(v => `
+      <div class="scard" onclick="openSpecialistHealth('${v.id}')">
+        <div class="avatar" style="width:56px;height:56px;font-size:22px;background:${v.grad};">${v.initials}</div>
+        <div style="flex:1;">
+          <div class="scard-name">${v.name}</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">${v.spec}</div>
+          <div class="scard-meta"><span class="tag ${v.badgeType}">${v.badge}</span><span class="stars">${v.rating}</span><span style="font-size:12px;color:var(--text-secondary);">(${v.reviews})</span></div>
+          <div style="font-size:13px;color:var(--text-secondary);">${v.dist} • ${v.exp}</div>
+          <div class="scard-price">${v.price}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+  if (clinics.length) {
+    html += `<div class="sec-hd"><div class="sec-t">🏥 Клиники Москвы</div></div>`;
+    html += clinics.map(c => `
+      <div class="card" style="display:flex;gap:12px;cursor:pointer;margin-bottom:10px;" onclick="openClinicModal('${c.id}')">
+        <div style="width:54px;height:54px;background:${c.grad};border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${c.icon}</div>
+        <div style="flex:1;">
+          <div style="font-weight:800;font-size:15px;">${c.name}</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">${c.subtitle}</div>
+          <div style="font-size:13px;color:var(--text-secondary);">📍 ${c.addr}</div>
+          <div style="font-size:13px;color:var(--text-secondary);">🕐 ${c.hours} • ${c.rating}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
+            ${c.tags.map(t=>`<span class="tag tag-b" style="font-size:11px;">${t}</span>`).join('')}
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+  list.innerHTML = html || '<div style="padding:40px;text-align:center;color:var(--text-secondary);">Ничего не найдено</div>';
+}
+
+function filterHealth(val, el) {
+  healthFilter = val;
+  document.querySelectorAll('#health-chips .chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  renderHealth();
+}
+
+function openSpecialistHealth(id) {
+  const v = HEALTH_DATA.find(x => x.id === id);
+  if (!v) return;
+  // Show vet detail via modal
+  openClinicModal(id);
+}
+
+// Clinic/vet detail modal
+// ============================================================
+// EMERGENCY FUNCTIONS
+// ============================================================
+function openEmergency() {
+  // Подтягиваем данные из профиля
+  const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
+  const phone = localStorage.getItem('df_phone') || '+7 (495) 123-45-67';
+  const name = p.name || 'Не указано';
+  const petname = p.dogname || 'Не указано';
+  
+  // Показываем информацию из профиля (только для чтения)
+  document.getElementById('em-display-name').textContent = name;
+  document.getElementById('em-display-pet').textContent = petname;
+  
+  // Показываем номер телефона
+  document.getElementById('em-phone').textContent = phone;
+  
+  // Заполняем адрес (можно редактировать)
+  document.getElementById('em-address').value = p.district || '';
+  document.getElementById('em-problem').value = '';
+  
+  openModal('m-emergency');
+}
+
+function submitEmergency() {
+  const address = document.getElementById('em-address').value.trim();
+  const problem = document.getElementById('em-problem').value.trim();
+  const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
+  const name = p.name || 'Не указано';
+  const petname = p.dogname || 'Не указано';
+  
+  if (!address || !problem) {
+    alert('❌ Пожалуйста, заполните адрес и описание проблемы');
+    return;
+  }
+  
+  // В реальности здесь можно вызвать реальный номер
+  // window.location.href = 'tel:+74951234567';
+  alert('☎️ Сейчас вас свяжут с оператором\n\n' +
+    'Ваши данные:\n' +
+    `Владелец: ${name}\n` +
+    `Питомец: ${petname}\n` +
+    `Адрес: ${address}\n` +
+    `Проблема: ${problem}`);
+  closeModal('m-emergency');
+}
+
+function sendEmergencyRequest() {
+  const address = document.getElementById('em-address').value.trim();
+  const problem = document.getElementById('em-problem').value.trim();
+  const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
+  const name = p.name || 'Не указано';
+  const petname = p.dogname || 'Не указано';
+  
+  if (!address || !problem) {
+    alert('❌ Пожалуйста, заполните адрес и описание проблемы');
+    return;
+  }
+  
+  // Сохраняем заявку (в реальности отправляется на сервер)
+  const request = {
+    id: Date.now(),
+    name,
+    address,
+    petname,
+    problem,
+    timestamp: new Date().toLocaleString('ru-RU'),
+    status: 'new'
+  };
+  
+  // Сохраняем в localStorage для примера
+  let requests = JSON.parse(localStorage.getItem('emergency_requests') || '[]');
+  requests.push(request);
+  localStorage.setItem('emergency_requests', JSON.stringify(requests));
+  
+  alert('✅ Ваша заявка отправлена!\n\n' +
+    'Оператор свяжется с вами в ближайшее время.\n\n' +
+    `Время отправки: ${request.timestamp}`);
+  
+  closeModal('m-emergency');
+}
+
+// ============================================================
+function openClinicModal(id) {
+  const item = HEALTH_DATA.find(x => x.id === id);
+  if (!item) return;
+  const m = document.getElementById('m-clinic');
+  let html = '';
+  if (item.type === 'clinic') {
+    html = `
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:14px;">
+        <div style="width:56px;height:56px;background:${item.grad};border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;">${item.icon}</div>
+        <div><div style="font-size:18px;font-weight:800;">${item.name}</div><div style="font-size:13px;color:var(--text-secondary);">${item.subtitle}</div></div>
+      </div>
+      <div style="font-size:14px;color:var(--text-secondary);line-height:1.6;margin-bottom:14px;">${item.desc}</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+        <div style="font-size:14px;">📍 ${item.addr}</div>
+        <div style="font-size:14px;">🕐 ${item.hours}</div>
+        <div style="font-size:14px;">${item.rating} • ${item.dist}</div>
+        <div style="font-size:14px;font-weight:700;color:var(--primary);">${item.price}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">
+        ${item.tags.map(t=>`<span class="tag tag-b">${t}</span>`).join('')}
+      </div>`;
+  } else {
+    html = `
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:14px;">
+        <div class="avatar" style="width:56px;height:56px;font-size:22px;background:${item.grad};">${item.initials}</div>
+        <div><div style="font-size:18px;font-weight:800;">${item.name}</div><div style="font-size:13px;color:var(--text-secondary);">${item.spec}</div></div>
+      </div>
+      <div style="font-size:14px;color:var(--text-secondary);line-height:1.6;margin-bottom:14px;">${item.bio}</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+        <div style="font-size:14px;">${item.dist} • ${item.exp}</div>
+        <div style="font-size:14px;">${item.rating} (${item.reviews} отзывов)</div>
+        <div style="font-size:14px;font-weight:700;color:var(--primary);">${item.price}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">
+        ${item.tags.map(t=>`<span class="tag tag-b">${t}</span>`).join('')}
+      </div>`;
+  }
+  document.getElementById('m-clinic-body').innerHTML = html;
+  openModal('m-clinic');
+}
+
+// ============================================================
+// PRIVATE CHAT — правильная архитектура пользователь ↔ пользователь
+// chatId = userId собеседника
+// Ably канал = "dm__" + sorted(myId, theirId) — одинаковый с обеих сторон
+// ============================================================
+
+let contactBook = {}; // { userId: {name, initials, grad} }
+
+function loadContactBook() {
+  try { contactBook = JSON.parse(localStorage.getItem('df_contacts') || '{}'); } catch(e) { contactBook = {}; }
+}
+
+// Открыть чат с реальным пользователем
+function openChatWithUser(theirUserId, theirName, theirInitials, theirGrad) {
+  if (!theirUserId || theirUserId === userId) return;
+  currentPrivateChatId = theirUserId;
+
+  // Запомним контакт
+  contactBook[theirUserId] = { name: theirName, initials: theirInitials || theirName.slice(0,2).toUpperCase(), grad: theirGrad || 'linear-gradient(135deg,#4A90D9,#7B5EA7)' };
+  localStorage.setItem('df_contacts', JSON.stringify(contactBook));
+
+  if (!privateChats[theirUserId]) privateChats[theirUserId] = [];
+
+  const av = document.getElementById('pc-avatar');
+  av.textContent = contactBook[theirUserId].initials;
+  av.style.background = contactBook[theirUserId].grad;
+  document.getElementById('pc-name').textContent = theirName;
+  document.getElementById('pc-online').textContent = '🟢 онлайн';
+
+  renderPrivateChatMessages(theirUserId);
+  loadPrivateChatFromServer(theirUserId);
+  subscribeToPrivateChat(theirUserId);
+  clearUnreadMessages(theirUserId);
+  nav('privateChat');
+}
+
+// Открыть чат со специалистом (кнопка 💬 на карточке)
+function openPrivateChat(specId) {
+  const spec = SPECIALISTS.find(s => s.id === specId);
+  if (!spec) return;
+  openChatWithUser('spec_' + specId, spec.name, spec.initials, spec.grad);
+}
+
+// Подписка на Supabase Realtime DM-канал
+function subscribeToPrivateChat(theirId) {
+  if (!supabaseClient) {
+    setTimeout(() => subscribeToPrivateChat(theirId), 500);
+    return;
+  }
+
+  // Канал одинаковый с обеих сторон — sorted IDs
+  const roomId = [userId, String(theirId)].sort().join('__');
+  const channelName = 'dogfriend-dm-' + roomId;
+
+  if (supabasePrivateChannels[channelName]) {
+    console.log('✅ Already subscribed to:', channelName);
+    return; // уже подписаны
+  }
+
+  console.log('🔵 Subscribing to private chat:', channelName, 'for user:', theirId);
+
+  const channel = supabaseClient.channel(channelName, {
+    config: { broadcast: { self: false } }
+  });
+
+  channel.on('broadcast', { event: 'message' }, (payload) => {
+    console.log('📩 Private message received:', payload);
+    const data = payload.payload;
+    // Игнорируем свои (уже отображены локально)
+    if (data.senderId === userId) return;
+
+    const chatId = data.senderId; // сообщение от него — ключ = его userId
+    if (!privateChats[chatId]) privateChats[chatId] = [];
+    
+    // Проверяем дубликаты
+    const isDuplicate = privateChats[chatId].some(m => 
+      m.text === data.text && m.time === data.time && m.senderId === data.senderId
+    );
+    
+    if (isDuplicate) {
+      console.log('⚠️ Duplicate message, skipping');
+      return;
+    }
+    
+    privateChats[chatId].push({
+      text: data.text,
+      sender: 'other',
+      time: data.time,
+      senderName: data.senderName,
+      senderId: data.senderId,
+    });
+    localStorage.setItem('private_chats', JSON.stringify(privateChats));
+
+    // Запоминаем контакт если не знаем
+    if (!contactBook[chatId]) {
+      contactBook[chatId] = { name: data.senderName, initials: data.senderName.slice(0,2).toUpperCase(), grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)' };
+      localStorage.setItem('df_contacts', JSON.stringify(contactBook));
+    }
+
+    if (currentPrivateChatId !== chatId) {
+      console.log('📢 Showing notification for chat:', chatId);
+      addUnreadMessage(chatId);
+      playNotificationSound();
+      showInAppNotification('💬 ' + data.senderName, data.text);
+      showBrowserNotification('Новое от ' + data.senderName, { body: data.text.substring(0, 80) });
+    } else {
+      renderPrivateChatMessages(chatId);
+    }
+    renderPrivateChats();
+  }).subscribe((status) => {
+    console.log('📡 Private channel subscribe status:', status, 'for', channelName);
+    if (status === 'SUBSCRIBED') {
+      console.log('✅ Successfully subscribed to private chat:', channelName);
+    } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+      console.error('❌ Failed to subscribe to private chat:', channelName, status);
+    }
+  });
+
+  supabasePrivateChannels[channelName] = channel;
+}
+
+function loadPrivateChatHistory(chatId) {
+  if (!privateChats[chatId]) privateChats[chatId] = [];
+  renderPrivateChatMessages(chatId);
+}
+
+function renderPrivateChatMessages(chatId) {
+  const messages = privateChats[chatId] || [];
+  const container = document.getElementById('pc-messages');
+  const myName = (JSON.parse(localStorage.getItem('df_profile') || '{}')).name || 'Я';
+
+  if (messages.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text-secondary);font-size:14px;">Напишите первое сообщение 👋</div>';
+    return;
+  }
+
+  container.innerHTML = messages.map(msg => {
+    const isMine = msg.sender === 'user';
+    return `<div style="display:flex;justify-content:${isMine ? 'flex-end' : 'flex-start'};">
+      <div style="max-width:75%;background:${isMine ? 'var(--primary)' : 'var(--white)'};color:${isMine ? 'white' : 'var(--text-primary)'};padding:10px 14px;border-radius:${isMine ? '16px 16px 4px 16px' : '16px 16px 16px 4px'};word-wrap:break-word;font-size:14px;box-shadow:var(--shadow);">
+        ${!isMine ? `<div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:4px;">${escHtml(msg.senderName || '')}</div>` : ''}
+        ${escHtml(msg.text)}
+        <div style="font-size:11px;${isMine ? 'color:rgba(255,255,255,0.7)' : 'color:var(--text-secondary)'};margin-top:4px;text-align:right;">${msg.time}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  container.scrollTop = container.scrollHeight;
+}
+
+function sendPrivateMessage() {
+  const input = document.getElementById('pc-input');
+  const text = input.value.trim();
+  if (!text || !currentPrivateChatId) return;
+
+  const time = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  const myProfile = JSON.parse(localStorage.getItem('df_profile') || '{}');
+  const myName = myProfile.name || 'Гость';
+
+  if (!privateChats[currentPrivateChatId]) privateChats[currentPrivateChatId] = [];
+  privateChats[currentPrivateChatId].push({ text, sender: 'user', time, senderName: myName, senderId: userId });
+  localStorage.setItem('private_chats', JSON.stringify(privateChats));
+  savePrivateMsgToServer(currentPrivateChatId, text, time);
+
+  input.value = '';
+  input.style.height = 'auto';
+  renderPrivateChatMessages(currentPrivateChatId);
+  renderPrivateChats();
+
+  // Отправить через Supabase Realtime
+  if (supabaseClient) {
+    const roomId = [userId, String(currentPrivateChatId)].sort().join('__');
+    const channelName = 'dogfriend-dm-' + roomId;
+    
+    // Используем существующий канал или создаём и подписываемся
+    let channel = supabasePrivateChannels[channelName];
+    if (!channel) {
+      channel = supabaseClient.channel(channelName, {
+        config: { broadcast: { self: false } }
+      });
+      channel.subscribe();
+      supabasePrivateChannels[channelName] = channel;
+    }
+    
+    channel.send({
+      type: 'broadcast',
+      event: 'message',
+      payload: { text, senderName: myName, senderId: userId, time }
+    });
+  }
+}
+
+// Нажатие Enter в поле приватного чата
+document.addEventListener('DOMContentLoaded', () => {
+  const pcInput = document.getElementById('pc-input');
+  if (pcInput) {
+    pcInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendPrivateMessage(); }
+    });
+  }
+});
+
+function openUserProfile(nick) {
+  // nick — имя из общего чата, msgData содержит senderId
+  // Вызываем с данными из сообщения
+  const msgData = _lastClickedUser || {};
+  const theirUserId = msgData.senderId || nick;
+  const theirName = msgData.senderName || nick;
+  const colors = ['#4A90D9','#E91E63','#9C27B0','#00BCD4','#FF5722','#4CAF50'];
+  const color = colors[nick.charCodeAt(0) % colors.length];
+  const initials = nick.slice(0,2).toUpperCase();
+
+  let modal = document.getElementById('m-user-profile');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'm-user-profile';
+    modal.className = 'modal-ov';
+    modal.onclick = function(e) { if (e.target === this) closeModal('m-user-profile'); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `<div class="modal" onclick="event.stopPropagation()" style="max-height:80%;overflow-y:auto;">
+    <div class="mhandle"></div>
+    <div style="text-align:center;padding:20px;">
+      <div class="avatar" style="width:72px;height:72px;font-size:28px;margin:0 auto 12px;background:linear-gradient(135deg,${color},${color}99);">${initials}</div>
+      <h2 style="margin-bottom:4px;">${escHtml(theirName)}</h2>
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;">👤 Участник сообщества</div>
+      <button class="btn btn-p" style="margin-bottom:10px;" onclick="openChatWithUser('${escHtml(theirUserId)}','${escHtml(theirName)}','${initials}','linear-gradient(135deg,${color},${color}99)');closeModal('m-user-profile')">💬 Написать</button>
+      <button class="btn btn-g" onclick="closeModal('m-user-profile')">Закрыть</button>
+    </div>
+  </div>`;
+  openModal('m-user-profile');
+}
+
+let _lastClickedUser = null;
+
+function startPrivateChatWithUser(nick) {
+  openChatWithUser(nick, nick, nick.slice(0,2).toUpperCase(), 'linear-gradient(135deg,#4A90D9,#7B5EA7)');
+}
+
+function renderPrivateChats() {
+  const list = document.getElementById('private-chats-list');
+  const noChats = document.getElementById('no-private-chats');
+  const keys = Object.keys(privateChats).filter(k => privateChats[k].length > 0);
+
+  if (!keys.length) {
+    list.innerHTML = '';
+    if (noChats) noChats.style.display = 'block';
+    return;
+  }
+  if (noChats) noChats.style.display = 'none';
+
+  // Сортируем чаты по времени последнего сообщения (новые сверху)
+  keys.sort((a, b) => {
+    const aLast = privateChats[a][privateChats[a].length - 1];
+    const bLast = privateChats[b][privateChats[b].length - 1];
+    const aTime = aLast?.created_at || aLast?.time || '00:00';
+    const bTime = bLast?.created_at || bLast?.time || '00:00';
+    return bTime.localeCompare(aTime);
+  });
+
+  list.innerHTML = keys.map(id => {
+    const msgs = privateChats[id];
+    const last = msgs[msgs.length - 1];
+    const contact = contactBook[id] || { name: id, initials: id.slice(0,2).toUpperCase(), grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)' };
+    const unread = unreadChats[id] || 0;
+    return `<div class="ci" onclick="openChatWithUser('${escHtml(id)}','${escHtml(contact.name)}','${escHtml(contact.initials)}','${escHtml(contact.grad)}')" style="gap:14px;">
+      <div class="avatar" style="width:52px;height:52px;font-size:20px;background:${contact.grad};flex-shrink:0;">${contact.initials}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span style="font-weight:800;font-size:15px;">${escHtml(contact.name)}</span>
+          <span style="font-size:11px;color:var(--text-secondary);">${last?.time || ''}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">${escHtml(last?.text || '')}</span>
+          ${unread ? `<span class="badge">${unread}</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function loadPrivateChatsFromStorage() {
+  loadContactBook();
+  try { privateChats = JSON.parse(localStorage.getItem('private_chats') || '{}'); } catch(e) { privateChats = {}; }
+  renderPrivateChats();
+}
+
+// ============================================================
+// SUPABASE CONFIG (вместо Railway + Ably)
+// ============================================================
+const SUPABASE_URL = 'https://nxrztljcxphkdfbfubba.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cnp0bGpjeHBoa2RmYmZ1YmJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwNDkzNzQsImV4cCI6MjA4ODYyNTM3NH0.nCunfVYOwBKAMbbuDu4zTQ0tZhjNoWk680VFSWPwuUk';
+
+// Загружаем Supabase SDK
+if (!window.supabaseLoaded) {
+  const script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js';
+  script.onload = async () => { 
+    window.supabaseLoaded = true; 
+    await initSupabase(); 
+  };
+  script.onerror = () => {
+    console.error('❌ Failed to load Supabase SDK');
+    // Fallback - идём на login без Supabase
+    setTimeout(() => nav('login'), 2000);
+  };
+  document.head.appendChild(script);
+}
+
+// Регистрируем Service Worker для PWA и push-уведомлений
+if ('serviceWorker' in navigator) {
+  // Создаём Service Worker inline
+  const swCode = `
+    self.addEventListener('install', (event) => {
+      console.log('Service Worker installing...');
+      self.skipWaiting();
+    });
+
+    self.addEventListener('activate', (event) => {
+      console.log('Service Worker activated');
+      event.waitUntil(self.clients.claim());
+    });
+
+    self.addEventListener('push', (event) => {
+      const data = event.data ? event.data.json() : {};
+      const title = data.title || 'DogFriend';
+      const options = {
+        body: data.body || 'Новое сообщение',
+        icon: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect width="100" height="100" fill="%234A90D9" rx="20"/%3E%3Ctext y="75" font-size="70" text-anchor="middle" x="50"%3E🐕🏻%3C/text%3E%3C/svg%3E',
+        badge: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Ctext y="75" font-size="75"%3E🐕%3C/text%3E%3C/svg%3E',
+        tag: 'dogfriend-message',
+        requireInteraction: false,
+        data: data
+      };
+      event.waitUntil(self.registration.showNotification(title, options));
+    });
+
+    self.addEventListener('notificationclick', (event) => {
+      event.notification.close();
+      event.waitUntil(
+        clients.openWindow(event.notification.data?.url || '/')
+      );
+    });
+  `;
+  
+  const blob = new Blob([swCode], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(blob);
+  
+  navigator.serviceWorker.register(swUrl).then((registration) => {
+    console.log('✅ Service Worker registered for PWA');
+  }).catch((error) => {
+    console.log('Service Worker registration failed:', error);
+  });
+}
+
+let supabaseClient = null;
+let currentUser = null;
+let currentUserProfile = null;
+
+async function initSupabase() {
+  if (window.supabase) {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('✅ Supabase connected');
+    // checkAuth вызывается из splash-таймера
+  }
+}
+
+// Проверка авторизации при загрузке
+async function checkAuth() {
+  // Если Supabase ещё не готов — подождём и попробуем снова
+  if (!supabaseClient) {
+    setTimeout(() => checkAuth(), 300);
+    return;
+  }
+
+  console.log('🔍 Checking auth...');
+
+  // Запасной таймер — никогда не зависнем на сплэше
+  const fallback = setTimeout(() => {
+    const active = document.querySelector('.screen.active');
+    if (active && active.id === 'splash') {
+      nav(localStorage.getItem('df_registered') === '1' ? 'home' : 'login');
+    }
+  }, 5000);
+
+  try {
+    const { data: { session }, error } = await supabaseClient.auth.getSession();
+    clearTimeout(fallback);
+
+    if (error) {
+      console.error('❌ Auth error:', error);
+      nav('login');
+      return;
+    }
+
+    if (session) {
+      console.log('✅ User authenticated:', session.user.email);
+      currentUser = session.user;
+      try { await loadUserProfile(); } catch(e) { console.warn('loadUserProfile:', e); }
+      nav('home');
+    } else {
+      console.log('❌ No session found');
+      const oldRegistered = localStorage.getItem('df_registered');
+      if (oldRegistered === '1') {
+        console.log('🔄 Using localStorage auth');
+        nav('home');
+      } else {
+        console.log('→ Redirecting to login');
+        nav('login');
+      }
+    }
+  } catch(e) {
+    clearTimeout(fallback);
+    console.error('❌ checkAuth exception:', e);
+    nav(localStorage.getItem('df_registered') === '1' ? 'home' : 'login');
+  }
+}
+
+// Вход через Supabase
+async function supabaseLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  
+  if (!email || !password) {
+    alert('❌ Заполните все поля');
+    return;
+  }
+  
+  // Try Supabase first, fall back to localStorage if network unavailable
+  try {
+    if (supabaseClient) {
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (!error && data && data.user) {
+        currentUser = data.user;
+        localStorage.setItem('df_registered', '1');
+        localStorage.setItem('df_email', email);
+        try { loadUserProfile(); } catch(e) {}
+        nav('home');
+        return;
+      }
+    }
+  } catch (err) {
+    console.warn('Supabase unavailable, using local auth:', err.message);
+  }
+  
+  // Local fallback — works offline / in preview
+  const stored = localStorage.getItem('df_local_pass_' + email);
+  if (stored && stored === password) {
+    localStorage.setItem('df_registered', '1');
+    localStorage.setItem('df_email', email);
+    nav('home');
+    return;
+  }
+  // Auto-login if no password stored yet (first time, demo mode)
+  if (!stored) {
+    localStorage.setItem('df_registered', '1');
+    localStorage.setItem('df_email', email);
+    localStorage.setItem('df_local_pass_' + email, password);
+    nav('home');
+    return;
+  }
+  alert('❌ Неверный пароль');
+}
+
+// Регистрация через Supabase
+async function supabaseRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  
+  if (!name || !email || !password) {
+    alert('❌ Заполните все поля');
+    return;
+  }
+  
+  // Try Supabase, fall back to local
+  try {
+    if (supabaseClient) {
+      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+      if (!error && data && data.user) {
+        localStorage.setItem('df_registered', '1');
+        localStorage.setItem('df_email', email);
+        localStorage.setItem('df_local_pass_' + email, password);
+        const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
+        p.name = name;
+        localStorage.setItem('df_profile', JSON.stringify(p));
+        nav('home');
+        return;
+      }
+    }
+  } catch(err) {
+    console.warn('Supabase unavailable, local register:', err.message);
+  }
+  
+  // Local fallback
+  localStorage.setItem('df_registered', '1');
+  localStorage.setItem('df_email', email);
+  localStorage.setItem('df_local_pass_' + email, password);
+  const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
+  p.name = name;
+  localStorage.setItem('df_profile', JSON.stringify(p));
+  nav('home');
+}
+
+
+// Загрузка профиля пользователя
+function loadUserProfile() {
+  if (!currentUser || !supabaseClient) return;
+  
+  try {
+    const { data, error } = supabaseClient
+      .from('profiles')
+      .select('*')
+      .eq('id', currentUser.id)
+      .single();
+    
+    if (data) {
+      currentUserProfile = data;
+      // Обновляем localStorage для совместимости
+      localStorage.setItem('df_profile', JSON.stringify({ 
+        name: data.name, 
+        district: data.district,
+        dogname: data.dogname 
+      }));
+    }
+  } catch (err) {
+    console.error('Load profile error:', err);
+  }
+}
+// ============================================================
+
+// Уникальный ID комнаты из двух userId (всегда одинаковый порядок)
+function getRoomId(a, b) {
+  return [String(a), String(b)].sort().join('__');
+}
+
+// In-app уведомление — работает везде без разрешений
+function showInAppNotification(title, body) {
+  const el = document.createElement('div');
+  el.style.cssText = `
+    position:fixed; top:16px; left:50%; transform:translateX(-50%);
+    background:#1A1A1A; color:white; padding:12px 18px; border-radius:16px;
+    font-size:14px; font-weight:600; z-index:99999; max-width:300px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.3); display:flex; gap:10px; align-items:center;
+    animation:slideDown 0.3s ease;
+  `;
+  el.innerHTML = `<span style="font-size:20px;">💬</span><div><div style="font-size:13px;opacity:0.7;margin-bottom:2px;">${title}</div><div>${body.substring(0,50)}${body.length>50?'...':''}</div></div>`;
+  document.body.appendChild(el);
+  setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity 0.3s'; setTimeout(()=>el.remove(), 300); }, 3500);
+}
+
+// Browser Push Notification (работает даже когда приложение закрыто)
+function showBrowserNotification(title, options) {
+  // Проверяем поддержку
+  if (!('Notification' in window)) return;
+  
+  // Запрашиваем разрешение если ещё не дано
+  if (Notification.permission === 'default') {
+    Notification.requestPermission();
+    return;
+  }
+  
+  // Показываем уведомление если разрешено
+  if (Notification.permission === 'granted') {
+    try {
+      // Вибрация на мобильных
+      if (navigator.vibrate) {
+        navigator.vibrate([200, 100, 200]);
+      }
+      
+      // Уникальный tag для каждого чата - чтобы каждое сообщение показывалось
+      const tag = options.tag || `dogfriend-msg-${Date.now()}`;
+      
+      new Notification(title, {
+        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">🐕</text></svg>',
+        badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">🐾</text></svg>',
+        tag: tag,
+        renotify: true,
+        requireInteraction: false,
+        silent: false,
+        ...options
+      });
+    } catch(e) {
+      console.log('Notification error:', e);
+    }
+  }
+}
+
+// Запрашиваем разрешение на уведомления при первом открытии чата
+function requestNotificationPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission().then(permission => {
+      if (permission === 'granted') {
+        showInAppNotification('✅ Уведомления включены', 'Теперь вы будете получать уведомления о новых сообщениях');
+      }
+    });
+  }
+}
+
+let supabasePublicChannel = null;
+let supabasePrivateChannels = {};
+let chatNick    = '';
+let typingTimer = null;
+let typingUsers = new Set();
+let chatInited  = false;
+// userId — постоянный (один человек), sessionId — уникален для каждой вкладки
+let userId = localStorage.getItem('df_user_id');
+if (!userId) {
+  userId = 'u_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  localStorage.setItem('df_user_id', userId);
+}
+// sessionId уникален для каждой вкладки — чтобы тестировать в двух вкладках
+const sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+
+function getChatNick() {
+  try {
+    const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
+    return (p.name || 'Гость').split(' ')[0];
+  } catch { return 'Гость'; }
+}
+
+function openPublicChat() {
+  chatNick = getChatNick();
+  document.getElementById('chat-conv-name').textContent = '🐾 Общий чат DogFriend';
+  document.getElementById('chat-conv-av').style.background = 'linear-gradient(135deg,#4A90D9,#7B5EA7)';
+  document.getElementById('chat-conv-av').textContent = '💬';
+  document.getElementById('chat-conv-subtitle').innerHTML = '<span style="color:#aaa">● подключение...</span>';
+  nav('chatConv');
+  
+  // Запрашиваем разрешение на уведомления при первом открытии
+  requestNotificationPermission();
+  
+  if (!chatInited) initSupabaseChat();
+  else scrollChatBottom();
+}
+
+function initSupabaseChat() {
+  chatInited = true;
+  if (!supabaseClient) {
+    setTimeout(initSupabaseChat, 500);
+    return;
+  }
+  
+  connectSupabaseRealtime();
+}
+
+
+// Фоновая инициализация ЛС — работает без захода в публичный чат
+function initBackgroundDM() {
+  if (!supabaseClient) {
+    setTimeout(initBackgroundDM, 600);
+    return;
+  }
+  chatNick = getChatNick();
+  Object.keys(privateChats).forEach(chatId => {
+    subscribeToPrivateChat(chatId);
+  });
+  startIncomingMessagesPolling();
+}
+function connectSupabaseRealtime() {
+  try {
+    // Создаём Realtime канал для общего чата
+    supabasePublicChannel = supabaseClient.channel('dogfriend-public-chat', {
+      config: { broadcast: { self: false, ack: false } }
+    });
+
+    supabasePublicChannel
+      .on('broadcast', { event: 'message' }, (payload) => {
+        const d = payload.payload;
+        if (d.nick !== chatNick) appendMessage(d.nick, d.text, d.time, false, d.senderId);
+        typingUsers.delete(d.nick);
+        renderTyping();
+      })
+      .on('broadcast', { event: 'typing' }, (payload) => {
+        const d = payload.payload;
+        if (d.nick === chatNick) return;
+        if (d.isTyping) typingUsers.add(d.nick);
+        else typingUsers.delete(d.nick);
+        renderTyping();
+      })
+      .on('broadcast', { event: 'system' }, (payload) => {
+        const d = payload.payload;
+        if (d.nick !== chatNick) appendSysMsg(d.text);
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          setChatStatus('online');
+          supabasePublicChannel.send({
+            type: 'broadcast',
+            event: 'system',
+            payload: { nick: chatNick, text: `🐾 ${chatNick} присоединился к чату` }
+          });
+          
+          // Подписываемся на все приватные чаты
+          Object.keys(privateChats).forEach(chatId => {
+            subscribeToPrivateChat(chatId);
+          });
+          
+          // Запускаем polling для новых личных сообщений
+          startIncomingMessagesPolling();
+          
+          refreshOnlineCount();
+        }
+      });
+
+  } catch(e) {
+    setChatStatus('error');
+    appendSysMsg('⚠️ Ошибка: ' + e.message);
+  }
+}
+
+// Polling для входящих личных сообщений
+let incomingMsgPollInterval = null;
+let lastCheckedTime = Date.now();
+let processedMessageIds = new Set(); // Храним ID обработанных сообщений
+
+function startIncomingMessagesPolling() {
+  if (incomingMsgPollInterval || !supabaseClient) return;
+  
+  console.log('🔄 Starting incoming messages polling');
+  
+  incomingMsgPollInterval = setInterval(async () => {
+    try {
+      // Ищем сообщения где мы получатель (roomId содержит наш userId)
+      const { data, error } = await supabaseClient
+        .from('direct_messages')
+        .select('*')
+        .gt('created_at', new Date(lastCheckedTime).toISOString())
+        .order('created_at', { ascending: true })
+        .limit(50);
+      
+      if (data && data.length > 0) {
+        console.log('📬 Polling found', data.length, 'new messages');
+        
+        data.forEach(msg => {
+          // Проверяем что не обрабатывали это сообщение
+          const msgKey = `${msg.id}-${msg.created_at}`;
+          if (processedMessageIds.has(msgKey)) return;
+          
+          // Проверяем что это для нас (roomId содержит наш userId)
+          if (!msg.room_id || !msg.room_id.includes(userId)) return;
+          
+          // Игнорируем свои сообщения
+          if (msg.sender_id === userId) return;
+          
+          const chatId = msg.sender_id;
+          const roomId = msg.room_id;
+          const channelName = 'dogfriend-dm-' + roomId;
+          
+          // Если уже подписаны на Realtime для этого чата - пропускаем
+          // (сообщение придёт через Realtime)
+          if (supabasePrivateChannels[channelName]) {
+            console.log('⏭️ Skipping polling for', chatId, '- using Realtime');
+            processedMessageIds.add(msgKey);
+            return;
+          }
+          
+          console.log('📥 Processing polled message from:', chatId);
+          
+          // Добавляем сообщение
+          if (!privateChats[chatId]) privateChats[chatId] = [];
+          
+          // Проверяем что такого сообщения ещё нет
+          const exists = privateChats[chatId].some(m => 
+            m.time === msg.time && m.text === msg.text && m.senderId === msg.sender_id
+          );
+          
+          if (exists) {
+            processedMessageIds.add(msgKey);
+            return;
+          }
+          
+          privateChats[chatId].push({
+            text: msg.text,
+            sender: 'other',
+            time: msg.time,
+            senderName: msg.sender_name,
+            senderId: msg.sender_id,
+          });
+          
+          localStorage.setItem('private_chats', JSON.stringify(privateChats));
+          
+          // Запоминаем контакт
+          if (!contactBook[chatId]) {
+            contactBook[chatId] = { 
+              name: msg.sender_name, 
+              initials: msg.sender_name.slice(0,2).toUpperCase(), 
+              grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)' 
+            };
+            localStorage.setItem('df_contacts', JSON.stringify(contactBook));
+          }
+          
+          // Подписываемся на Realtime канал этого чата для будущих сообщений
+          subscribeToPrivateChat(chatId);
+          
+          // Показываем уведомления
+          if (currentPrivateChatId !== chatId) {
+            addUnreadMessage(chatId);
+            playNotificationSound();
+            showInAppNotification('💬 ' + msg.sender_name, msg.text);
+            showBrowserNotification('Новое от ' + msg.sender_name, { body: msg.text.substring(0, 80) });
+          } else {
+            renderPrivateChatMessages(chatId);
+          }
+          
+          renderPrivateChats();
+          processedMessageIds.add(msgKey);
+        });
+        
+        lastCheckedTime = Date.now();
+      }
+    } catch(e) {
+      console.error('❌ Polling error:', e);
+    }
+  }, 3000); // Проверяем каждые 3 секунды
+}
+
+function sendChatMsg() {
+  const input = document.getElementById('chat-input');
+  const text  = input.value.trim();
+  if (!text || !supabasePublicChannel) return;
+  const now  = new Date();
+  const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  appendMessage(chatNick, text, time, true);
+  input.value = '';
+  chatInputResize(input);
+  
+  supabasePublicChannel.send({
+    type: 'broadcast',
+    event: 'message',
+    payload: { nick: chatNick, text, time, senderId: userId }
+  });
+  
+  clearTimeout(typingTimer);
+  supabasePublicChannel.send({
+    type: 'broadcast',
+    event: 'typing',
+    payload: { nick: chatNick, isTyping: false }
+  });
+}
+
+function appendMessage(nick, text, time, isMine, senderId) {
+  const wrap  = document.getElementById('chat-messages');
+  const row   = document.createElement('div');
+  row.className = 'cmsg-row ' + (isMine ? 'mine' : 'theirs');
+  const initials = nick.slice(0,2).toUpperCase();
+  const colors   = ['#4A90D9','#E91E63','#9C27B0','#00BCD4','#FF5722','#4CAF50'];
+  const color    = colors[nick.charCodeAt(0) % colors.length];
+  const grad = `linear-gradient(135deg,${color},${color}99)`;
+  // клик по имени → запоминаем пользователя и открываем профиль
+  const clickHandler = senderId
+    ? `_lastClickedUser={senderId:'${senderId}',senderName:'${escHtml(nick)}'};openUserProfile('${escHtml(nick)}')`
+    : `openUserProfile('${escHtml(nick)}')`;
+  row.innerHTML = `
+    ${!isMine ? `<div class="cmsg-nick" style="cursor:pointer;color:var(--primary);" onclick="${clickHandler}">${escHtml(nick)}</div>` : ''}
+    <div style="display:flex;align-items:flex-end;gap:6px;${isMine?'flex-direction:row-reverse':''}">
+      ${!isMine ? `<div class="avatar" style="width:28px;height:28px;font-size:10px;flex-shrink:0;background:${grad};cursor:pointer;" onclick="${clickHandler}">${initials}</div>` : ''}
+      <div class="cmsg-bubble">${escHtml(text)}</div>
+    </div>
+    <div class="cmsg-time">${time}</div>
+  `;
+  wrap.appendChild(row);
+  scrollChatBottom();
+}
+
+function appendSysMsg(text) {
+  const wrap = document.getElementById('chat-messages');
+  const el   = document.createElement('div');
+  el.className = 'cmsg-sys';
+  el.textContent = text;
+  wrap.appendChild(el);
+  scrollChatBottom();
+}
+
+function renderTyping() {
+  const el = document.getElementById('chat-typing');
+  if (typingUsers.size > 0) {
+    const names = [...typingUsers].join(', ');
+    el.innerHTML = `<span>${escHtml(names)} печатает<span class="tdt"><i></i><i></i><i></i></span></span>`;
+    el.style.display = 'flex';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function setChatStatus(s) {
+  const sub = document.getElementById('chat-conv-subtitle');
+  if (!sub) return;
+  if (s === 'online')     sub.innerHTML = '<span style="color:#7ED321">● онлайн</span>';
+  else if (s === 'error') sub.innerHTML = '<span style="color:#D0021B">● ошибка</span>';
+  else                    sub.innerHTML = '<span style="color:#aaa">● подключение...</span>';
+}
+
+function scrollChatBottom() {
+  const wrap = document.getElementById('chat-messages');
+  if (wrap) wrap.scrollTop = wrap.scrollHeight;
+}
+
+function chatInputResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 96) + 'px';
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function openChat() { openPublicChat(); }
+function renderDialogList() {}
+
+// ============================================================
+// SUPABASE DATABASE API (замена Railway API)
+// ============================================================
+
+// Загрузить историю с сервера
+async function loadPrivateChatFromServer(chatId) {
+  if (!supabaseClient) return;
+  const roomId = getRoomId(userId, String(chatId));
+  
+  try {
+    const { data, error } = await supabaseClient
+      .from('direct_messages')
+      .select('*')
+      .eq('room_id', roomId)
+      .order('created_at', { ascending: true })
+      .limit(100);
+    
+    if (data && data.length > 0) {
+      privateChats[chatId] = data.map(m => ({
+        text: m.text,
+        sender: m.sender_id === userId ? 'user' : 'other',
+        time: m.time,
+        senderName: m.sender_name,
+        senderId: m.sender_id,
+      }));
+      localStorage.setItem('private_chats', JSON.stringify(privateChats));
+      if (currentPrivateChatId == chatId) renderPrivateChatMessages(chatId);
+    }
+  } catch(e) {
+    console.error('Load chat error:', e);
+  }
+}
+
+// Сохранить сообщение на сервере
+async function savePrivateMsgToServer(chatId, text, time) {
+  if (!supabaseClient) return;
+  const roomId = getRoomId(userId, String(chatId));
+  const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
+  
+  try {
+    const { data, error } = await supabaseClient.from('direct_messages').insert({
+      room_id: roomId,
+      sender_id: userId,
+      sender_name: p.name || 'Гость',
+      text: text,
+      time: time
+    });
+    
+    if (error) {
+      console.error('❌ Failed to save message:', error);
+    } else {
+      console.log('✅ Message saved to DB');
+    }
+  } catch(e) {
+    console.error('❌ Save message error:', e);
+  }
+}
+
+// Счётчик онлайн в шапке общего чата
+function refreshOnlineCount() {
+  // Упрощённо: показываем статус онлайн
+  const sub = document.getElementById('chat-conv-subtitle');
+  if (sub) sub.innerHTML = '<span style="color:#7ED321">● онлайн</span>';
+}
+
+// Экстренный вызов на сервер
+function sendEmergencyToServer(address, problem) {
+  if (!supabaseClient) return null;
+  const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
+  
+  try {
+    const { data, error } = supabaseClient.from('emergency_calls').insert({
+      user_id: userId,
+      name: p.name || 'Не указано',
+      petname: p.dogname || 'Не указано',
+      address: address,
+      problem: problem
+    });
+    return data;
+  } catch(e) {
+    console.error('Emergency error:', e);
+    return null;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadProfile();
+  loadPrivateChatsFromStorage();
+  renderCatalog();
+  renderHealth();
+
+  // ⚡ Запускаем Supabase сразу при загрузке
+  chatNick = getChatNick();
+  if (window.supabaseLoaded) initSupabase();
+
+  // ⚡ Фоновые ЛС-уведомления — без захода в публичный чат
+  initBackgroundDM();
+
+  const inp = document.getElementById('chat-input');
+  if (!inp) return;
+  inp.addEventListener('input', () => {
+    chatInputResize(inp);
+    if (!supabasePublicChannel) return;
+    clearTimeout(typingTimer);
+    supabasePublicChannel.send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: { nick: chatNick, isTyping: true }
+    });
+    typingTimer = setTimeout(() => {
+      if (supabasePublicChannel) {
+        supabasePublicChannel.send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: { nick: chatNick, isTyping: false }
+        });
+      }
+    }, 2500);
+  });
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMsg(); }
+  });
+});
+
+// ════════════════════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════════════════════
+function showToast(msg, bg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:'+(bg||'#1A1A1A')+';color:white;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:700;z-index:99999;white-space:nowrap;max-width:90vw;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,0.25);';
+  document.body.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},2500);
+}
+
+// ════════════════════════════════════════════════════════════
+// CLINIC BOOKING  (called by button in m-clinic modal)
+// ════════════════════════════════════════════════════════════
+let _currentBookingItem = null;
+// Monkey-patch openClinicModal to capture current item
+(function(){
+  const orig = window.openClinicModal;
+  window.openClinicModal = function(id) {
+    if (typeof HEALTH_DATA !== 'undefined') {
+      _currentBookingItem = HEALTH_DATA.find(x => x.id === id) || null;
+    }
+    orig && orig(id);
+  };
+})();
+
+function bookFromClinicModal() {
+  const item = _currentBookingItem;
+  const name = item ? item.name : 'Специалист';
+  const now  = new Date();
+  const dateStr = now.toLocaleDateString('ru-RU');
+
+  // save to localStorage (CRM feed)
+  let appts = JSON.parse(localStorage.getItem('df_appointments') || '[]');
+  const rec = {
+    id: Date.now(),
+    name,
+    type: item ? (item.type === 'clinic' ? 'Клиника' : 'Специалист') : '—',
+    spec: item ? (item.subtitle || item.spec || '') : '',
+    addr: item ? (item.addr || item.dist || '') : '',
+    date: dateStr, time: '10:00', status: 'pending',
+    createdAt: now.toISOString()
+  };
+  appts.push(rec);
+  localStorage.setItem('df_appointments', JSON.stringify(appts));
+
+  // auto-add med record
+  const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
+  let recs = JSON.parse(localStorage.getItem('df_med_records') || '[]');
+  recs.unshift({ id: Date.now()+1, type:'Приём', petName: p.dogname||'', title:'Запись: '+name, date: now.toISOString().split('T')[0], doctor: name, notes: 'Создано через DogFriend' });
+  localStorage.setItem('df_med_records', JSON.stringify(recs));
+
+  closeModal('m-clinic');
+
+  // show success screen
+  document.getElementById('appt-success-text').textContent = 'Заявка на приём в «' + name + '» отправлена.';
+  document.getElementById('appt-success-card').innerHTML =
+    '<div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;">'
+    + '<div style="width:44px;height:44px;background:'+(item&&item.grad?item.grad:'linear-gradient(135deg,#4A90D9,#7B5EA7)')+';border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">'+(item&&item.icon?item.icon:(item&&item.initials?item.initials:'🏥'))+'</div>'
+    + '<div><div style="font-weight:800;font-size:15px;">'+name+'</div><div style="font-size:13px;color:var(--text-secondary);">'+(rec.spec)+'</div></div></div>'
+    + '<div style="font-size:13px;color:var(--text-secondary);line-height:1.9;">'
+    + '📅 Дата заявки: <strong>'+dateStr+'</strong><br>'
+    + '🕐 Ориентировочно: <strong>10:00–12:00</strong><br>'
+    + (rec.addr ? '📍 '+rec.addr+'<br>' : '')
+    + '📞 Менеджер свяжется для подтверждения времени</div>';
+  nav('apptSuccess');
+}
+
+// ════════════════════════════════════════════════════════════
+// PLACES DATA & RENDER
+// ════════════════════════════════════════════════════════════
+const PLACES_DATA = [
+  {id:'p1',name:'Кофе & Лапки',icon:'☕',type:'Кафе',addr:'Сокольнический вал, 1',dist:'0.3 км',rating:'4.8',tags:['Питомцы welcome','Веранда','Wi-Fi'],desc:'Уютная кофейня с отдельным меню для собак. Миски с водой и лакомства на стойке. Просторная летняя веранда.',hours:'Пн–Вс 8:00–22:00',ymaps:'https://yandex.ru/maps/213/moscow/?text=Сокольнический+вал+1',color:'#FF9800',promo:null},
+  {id:'p2',name:'Парк Сокольники',icon:'🌳',type:'Парк',addr:'Сокольнический вал, 1',dist:'0.5 км',rating:'4.9',tags:['Зоны без поводка','3 площадки','Водоёмы'],desc:'Один из лучших парков Москвы. 3 специальные площадки для собак без поводка, водоёмы, широкие аллеи.',hours:'Круглосуточно',ymaps:'https://yandex.ru/maps/org/park_sokolniki/1018907069/',color:'#4CAF50',promo:null},
+  {id:'p3',name:'PawStyle Груминг',icon:'✂️',type:'Грумер',addr:'Стромынка, 10',dist:'0.8 км',rating:'4.7',tags:['Стрижка','Купание','Укладка'],desc:'Профессиональный груминг-салон. Работают с собаками всех пород. Скидка 15% для жителей ЖК Сокольники Парк.',hours:'Пн–Сб 9:00–20:00',ymaps:'https://yandex.ru/maps/213/moscow/?text=Стромынка+10',color:'#9C27B0',promo:'SOKOL15'},
+  {id:'p4',name:'Хвост & Лапа',icon:'🛍️',type:'Магазин',addr:'Преображенская пл., 8',dist:'1.2 км',rating:'4.6',tags:['Корм','Аксессуары','Игрушки'],desc:'Зоомагазин с широким выбором кормов премиум-класса. Онлайн-заказ с доставкой за 2 часа.',hours:'Пн–Вс 9:00–22:00',ymaps:'https://yandex.ru/maps/213/moscow/?text=Преображенская+площадь+8',color:'#2196F3',promo:null},
+  {id:'p5',name:'Площадка Огородная',icon:'🏃',type:'Парк',addr:'Огородный пр., 15',dist:'1.5 км',rating:'4.5',tags:['Без поводка','Освещение','Скамейки'],desc:'Оборудованная площадка с препятствиями для аджилити. Работает до 23:00, есть освещение.',hours:'6:00–23:00',ymaps:'https://yandex.ru/maps/213/moscow/?text=Огородный+проезд+15',color:'#009688',promo:null},
+  {id:'p6',name:'Собачья жизнь',icon:'🍽️',type:'Кафе',addr:'Проспект Мира, 34',dist:'2.1 км',rating:'4.8',tags:['Dog-friendly','Меню для собак','Веранда'],desc:'Ресторан, где у собак есть собственное меню от шеф-повара. Резервация обязательна.',hours:'Пн–Вс 12:00–23:00',ymaps:'https://yandex.ru/maps/213/moscow/?text=Проспект+Мира+34',color:'#E91E63',promo:'DOGTABLE'},
+  {id:'p7',name:'Измайловский парк',icon:'🌲',type:'Парк',addr:'Измайловское ш., 71',dist:'3.4 км',rating:'4.7',tags:['Лес','Без поводка','Озёра'],desc:'Огромный лесопарк с озёрами. Популярен для утренних пробежек. Несколько зон без поводка.',hours:'Круглосуточно',ymaps:'https://yandex.ru/maps/213/moscow/?text=Измайловское+шоссе+71',color:'#388E3C',promo:null},
+  {id:'p8',name:'Zoobox Аксессуары',icon:'🎀',type:'Магазин',addr:'Богородский вал, 3',dist:'1.9 км',rating:'4.5',tags:['Одежда','Ошейники','Переноски'],desc:'Бутик с дизайнерскими аксессуарами. Индивидуальный пошив ошейников и поводков. Постоянная скидка 10%.',hours:'Пн–Сб 10:00–20:00',ymaps:'https://yandex.ru/maps/213/moscow/?text=Богородский+вал+3',color:'#FF5722',promo:'DOGFRIEND10'},
+];
+let _placesFilter = 'Все';
+let _currentPlace = null;
+
+function filterPlaces(val, el) {
+  _placesFilter = val;
+  document.querySelectorAll('#dogmap .chips .chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  renderPlaces();
+}
+function renderPlaces() {
+  const list = document.getElementById('places-list');
+  if (!list) return;
+  const data = _placesFilter==='Все' ? PLACES_DATA : PLACES_DATA.filter(p=>p.type===_placesFilter);
+  list.innerHTML = data.map(p=>`
+    <div class="card" style="display:flex;gap:12px;cursor:pointer;margin-bottom:10px;" onclick="openPlaceModal('${p.id}')">
+      <div style="width:54px;height:54px;background:${p.color};border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">${p.icon}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:800;font-size:15px;">${p.name}</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin:2px 0;">📍 ${p.addr} · ${p.dist}</div>
+        <div style="font-size:12px;color:var(--text-secondary);">⭐ ${p.rating} · 🕐 ${p.hours}</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;">${p.tags.slice(0,2).map(t=>`<span class="tag tag-g" style="font-size:11px;">${t}</span>`).join('')}</div>
+      </div>
+      <div style="color:var(--border);font-size:22px;align-self:center;">›</div>
+    </div>`).join('')||'<div style="padding:40px;text-align:center;color:var(--text-secondary);">Ничего не найдено</div>';
+}
+function openPlaceModal(id) {
+  _currentPlace = PLACES_DATA.find(x=>x.id===id);
+  if (!_currentPlace) return;
+  const p = _currentPlace;
+  document.getElementById('m-place-body').innerHTML = `
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:14px;">
+      <div style="width:56px;height:56px;background:${p.color};border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;">${p.icon}</div>
+      <div><div style="font-size:18px;font-weight:800;">${p.name}</div><div style="font-size:13px;color:var(--text-secondary);">${p.type} · ⭐ ${p.rating}</div></div>
+    </div>
+    <div style="font-size:14px;color:var(--text-secondary);line-height:1.7;margin-bottom:14px;">${p.desc}</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+      <div style="font-size:14px;">📍 ${p.addr} · ${p.dist} от вас</div>
+      <div style="font-size:14px;">🕐 ${p.hours}</div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">${p.tags.map(t=>`<span class="tag tag-b">${t}</span>`).join('')}</div>
+    ${p.promo?`<div style="background:rgba(126,211,33,0.12);border-radius:12px;padding:12px;"><div style="font-size:13px;font-weight:700;color:#5a9c18;">🎁 Промокод жителям ЖК:</div><div style="font-size:24px;font-weight:900;font-family:'Nunito',sans-serif;color:#5a9c18;letter-spacing:2px;">${p.promo}</div></div>`:''}
+  `;
+  openModal('m-place');
+}
+function openYandexMap() {
+  if (_currentPlace) window.open(_currentPlace.ymaps,'_blank');
+}
+
+// ════════════════════════════════════════════════════════════
+// DISCOUNTS DATA & RENDER
+// ════════════════════════════════════════════════════════════
+const DISCOUNTS_DATA = [
+  {id:'d1',partner:'PawStyle Груминг',icon:'✂️',cat:'Груминг',pct:'-15%',short:'Скидка 15% на все услуги для жителей ЖК',code:'SOKOL15',valid:'до 31.12.2026',color:'linear-gradient(135deg,#9C27B0,#E91E63)',addr:'Стромынка, 10 · 0.8 км',full:'Профессиональная стрижка, купание, чистка ушей и когтей. Работаем с породами любой сложности. Предъявите промокод при оплате или назовите кассиру.'},
+  {id:'d2',partner:'Хвост & Лапа',icon:'🛍️',cat:'Питание',pct:'-20%',short:'Скидка 20% на первый заказ кормов Royal Canin и Hills',code:'FIRSTORDER',valid:'Однократно',color:'linear-gradient(135deg,#2196F3,#00BCD4)',addr:'Преображенская пл., 8 · 1.2 км',full:'Широкий выбор кормов премиум-класса. Скидка 20% распространяется на первый заказ кормов Royal Canin и Hill\'s в магазине или онлайн.'},
+  {id:'d3',partner:'Zoobox Аксессуары',icon:'🎀',cat:'Аксессуары',pct:'-10%',short:'Постоянная скидка 10% на все аксессуары',code:'DOGFRIEND10',valid:'Бессрочно',color:'linear-gradient(135deg,#FF5722,#FF9800)',addr:'Богородский вал, 3 · 1.9 км',full:'Дизайнерские ошейники, поводки, одежда и переноски. Промокод действует на весь ассортимент магазина при любой покупке от 500 ₽.'},
+  {id:'d4',partner:'Статус-Вет',icon:'🏥',cat:'Ветеринар',pct:'-25%',short:'Скидка 25% на первичный приём терапевта',code:'VETFIRST25',valid:'до 30.06.2026',color:'linear-gradient(135deg,#D0021B,#FF5252)',addr:'Профсоюзная, 58к4 · 8.1 км',full:'Скидка 25% на первичный приём ветеринара-терапевта в любом отделении сети Статус-Вет. Не распространяется на экстренную помощь и операции.'},
+  {id:'d5',partner:'Собачья жизнь',icon:'🍽️',cat:'Кафе',pct:'-10%',short:'Скидка 10% и бесплатный десерт для питомца',code:'DOGTABLE',valid:'Пн–Пт до 17:00',color:'linear-gradient(135deg,#E91E63,#FF5722)',addr:'Проспект Мира, 34 · 2.1 км',full:'При предъявлении промокода скидка 10% на счёт и бесплатный фирменный десерт для вашей собаки. Действует только при предварительном бронировании.'},
+  {id:'d6',partner:'Медвет',icon:'🩺',cat:'Ветеринар',pct:'-15%',short:'Скидка 15% на чипирование + ветпаспорт',code:'CHIP15',valid:'до 31.05.2026',color:'linear-gradient(135deg,#4CAF50,#009688)',addr:'Героев Панфиловцев, 24 · 13.5 км',full:'Скидка 15% на комплекс: чипирование + ветеринарный паспорт + первичная вакцинация. Идеально для новых питомцев.'},
+];
+let _discFilter = 'Все';
+let _currentDisc = null;
+
+function filterDiscounts(val, el) {
+  _discFilter = val;
+  document.querySelectorAll('#discounts .chips .chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  renderDiscounts();
+}
+function renderDiscounts() {
+  const list = document.getElementById('discounts-list');
+  if (!list) return;
+  const data = _discFilter==='Все' ? DISCOUNTS_DATA : DISCOUNTS_DATA.filter(d=>d.cat===_discFilter);
+  list.innerHTML = data.map(d=>`
+    <div class="card" style="cursor:pointer;margin-bottom:10px;" onclick="openDiscountModal('${d.id}')">
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="width:52px;height:52px;background:${d.color};border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${d.icon}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+            <div style="font-weight:800;font-size:15px;">${d.partner}</div>
+            <div style="background:var(--secondary);color:white;border-radius:10px;padding:4px 10px;font-size:14px;font-weight:900;font-family:'Nunito',sans-serif;flex-shrink:0;">${d.pct}</div>
+          </div>
+          <div style="font-size:13px;color:var(--text-secondary);margin:4px 0;">${d.short}</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+            <span class="tag tag-b" style="font-size:11px;letter-spacing:1px;">${d.code}</span>
+            <span style="font-size:11px;color:var(--text-secondary);">⏰ ${d.valid}</span>
+          </div>
+        </div>
+      </div>
+    </div>`).join('')||'<div style="padding:40px;text-align:center;color:var(--text-secondary);">Ничего не найдено</div>';
+}
+function openDiscountModal(id) {
+  _currentDisc = DISCOUNTS_DATA.find(x=>x.id===id);
+  if (!_currentDisc) return;
+  const d = _currentDisc;
+  document.getElementById('m-discount-body').innerHTML = `
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:14px;">
+      <div style="width:56px;height:56px;background:${d.color};border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;">${d.icon}</div>
+      <div><div style="font-size:18px;font-weight:800;">${d.partner}</div><div style="font-size:13px;color:var(--text-secondary);">${d.cat}</div></div>
+    </div>
+    <div style="background:rgba(245,166,35,0.12);border-radius:12px;padding:12px;text-align:center;margin-bottom:14px;">
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">Скидка</div>
+      <div style="font-size:36px;font-weight:900;font-family:'Nunito',sans-serif;color:var(--secondary);">${d.pct}</div>
+    </div>
+    <div style="font-size:14px;color:var(--text-secondary);line-height:1.7;margin-bottom:14px;">${d.full}</div>
+    <div style="font-size:14px;margin-bottom:6px;">📍 ${d.addr}</div>
+    <div style="font-size:14px;margin-bottom:14px;">⏰ ${d.valid}</div>
+    <div style="background:rgba(74,144,217,0.08);border-radius:12px;padding:14px;text-align:center;">
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">Ваш промокод</div>
+      <div style="font-size:26px;font-weight:900;font-family:'Nunito',sans-serif;color:var(--primary);letter-spacing:3px;">${d.code}</div>
+    </div>
+  `;
+  openModal('m-discount');
+}
+function copyPromoCode() {
+  if (!_currentDisc) return;
+  navigator.clipboard.writeText(_currentDisc.code)
+    .then(()=>showToast('✅ Промокод '+_currentDisc.code+' скопирован!','#7ED321'))
+    .catch(()=>showToast('Промокод: '+_currentDisc.code));
+}
+
+// ════════════════════════════════════════════════════════════
+// PETS
+// ════════════════════════════════════════════════════════════
+let _petSex = 'м';
+function selectPetSex(s) {
+  _petSex = s;
+  document.getElementById('pet-sex-m').classList.toggle('on', s==='м');
+  document.getElementById('pet-sex-f').classList.toggle('on', s==='ж');
+}
+function savePet() {
+  const name  = document.getElementById('new-pet-name').value.trim();
+  const breed = document.getElementById('new-pet-breed').value.trim();
+  if (!name) { showToast('❌ Введите кличку'); return; }
+  let pets = JSON.parse(localStorage.getItem('df_pets')||'[]');
+  const GRADS=['linear-gradient(135deg,#4A90D9,#7B5EA7)','linear-gradient(135deg,#E91E63,#FF9800)','linear-gradient(135deg,#00BCD4,#4CAF50)','linear-gradient(135deg,#FF5722,#FF9800)','linear-gradient(135deg,#9C27B0,#E91E63)'];
+  const EMOJIS=['🐕','🦮','🐩','🐕‍🦺','🐶'];
+  pets.push({id:Date.now(),name,breed,age:document.getElementById('new-pet-age').value.trim(),weight:document.getElementById('new-pet-weight').value.trim(),sex:_petSex,dob:document.getElementById('new-pet-dob').value,notes:document.getElementById('new-pet-notes').value.trim(),color:GRADS[pets.length%GRADS.length],emoji:EMOJIS[pets.length%EMOJIS.length]});
+  localStorage.setItem('df_pets',JSON.stringify(pets));
+  closeModal('m-add-pet');
+  renderPets();
+  showToast('🐾 '+name+' добавлен!','#7ED321');
+}
+function deletePet(id) {
+  let pets = JSON.parse(localStorage.getItem('df_pets')||'[]').filter(p=>p.id!==id);
+  localStorage.setItem('df_pets',JSON.stringify(pets));
+  renderPets();
+  showToast('Питомец удалён');
+}
+function togglePetCard(idx) {
+  const b=document.getElementById('pet-bdy-'+idx), a=document.getElementById('pet-arr-'+idx);
+  const open=b.style.display==='none';
+  b.style.display=open?'block':'none'; a.textContent=open?'⌄':'›';
+}
+function renderPets() {
+  const list = document.getElementById('pets-list');
+  if (!list) return;
+  let pets = JSON.parse(localStorage.getItem('df_pets')||'[]');
+  // seed from profile if empty
+  if (!pets.length) {
+    const p=JSON.parse(localStorage.getItem('df_profile')||'{}');
+    if (p.dogname) pets=[{id:1,name:p.dogname,breed:p.dogbreed||'Порода не указана',age:p.dogage||'',sex:'м',color:'linear-gradient(135deg,#4A90D9,#7B5EA7)',emoji:'🐕',weight:'',notes:''}];
+  }
+  if (!pets.length) {
+    list.innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--text-secondary);"><div style="font-size:64px;margin-bottom:16px;">🐾</div><div style="font-size:16px;font-weight:700;margin-bottom:8px;">Питомцев пока нет</div><div style="font-size:13px;">Нажмите «+ Добавить»</div></div>';
+    return;
+  }
+  const recs=JSON.parse(localStorage.getItem('df_med_records')||'[]');
+  list.innerHTML=pets.map((pet,i)=>{
+    const cnt=recs.filter(r=>r.petName===pet.name).length;
+    return `<div class="pet-card">
+      <div class="pet-hdr" onclick="togglePetCard(${i})">
+        <div style="width:52px;height:52px;background:${pet.color};border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">${pet.emoji}</div>
+        <div style="flex:1;">
+          <div style="font-size:16px;font-weight:800;">${pet.name} ${pet.sex==='ж'?'♀':'♂'}</div>
+          <div style="font-size:13px;color:var(--text-secondary);">${pet.breed}${pet.age?' · '+pet.age:''}</div>
+        </div>
+        <div style="font-size:22px;color:var(--border);" id="pet-arr-${i}">›</div>
+      </div>
+      <div id="pet-bdy-${i}" class="pet-bdy" style="display:none;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;padding-top:12px;">
+          ${pet.weight?`<div style="background:var(--bg);border-radius:10px;padding:8px 12px;text-align:center;"><div style="font-size:16px;font-weight:800;">${pet.weight} кг</div><div style="font-size:11px;color:var(--text-secondary);">Вес</div></div>`:''}
+          ${pet.dob?`<div style="background:var(--bg);border-radius:10px;padding:8px 12px;text-align:center;"><div style="font-size:13px;font-weight:800;">${pet.dob}</div><div style="font-size:11px;color:var(--text-secondary);">Дата рожд.</div></div>`:''}
+          <div style="background:var(--bg);border-radius:10px;padding:8px 12px;text-align:center;"><div style="font-size:16px;font-weight:800;">${cnt}</div><div style="font-size:11px;color:var(--text-secondary);">Мед. записей</div></div>
+        </div>
+        ${pet.notes?`<div style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;">⚠️ ${pet.notes}</div>`:''}
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-g btn-sm" style="flex:1;" onclick="nav('medRecords')">🏥 Мед. записи</button>
+          <button class="btn btn-sm" style="flex:1;background:rgba(208,2,27,0.08);color:var(--error);border-radius:10px;height:38px;font-size:13px;font-weight:700;" onclick="deletePet(${pet.id})">🗑️ Удалить</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+// MED RECORDS
+// ════════════════════════════════════════════════════════════
+const MED_ICONS={'Вакцинация':'💉','Приём':'🏥','Анализ':'🔬','Операция':'🔪','Другое':'📋'};
+const MED_BG={'Вакцинация':'rgba(74,144,217,.12)','Приём':'rgba(76,175,80,.12)','Анализ':'rgba(156,39,176,.12)','Операция':'rgba(208,2,27,.12)','Другое':'rgba(0,0,0,.06)'};
+let _medType='Вакцинация';
+function selectMedType(t,el){_medType=t;document.querySelectorAll('#med-type-chips .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');}
+function saveMedRecord(){
+  const title=document.getElementById('med-title').value.trim();
+  if(!title){showToast('❌ Укажите название/диагноз');return;}
+  let recs=JSON.parse(localStorage.getItem('df_med_records')||'[]');
+  recs.unshift({id:Date.now(),type:_medType,petName:document.getElementById('med-pet-name').value.trim(),title,date:document.getElementById('med-date').value,doctor:document.getElementById('med-doctor').value.trim(),notes:document.getElementById('med-notes').value.trim()});
+  localStorage.setItem('df_med_records',JSON.stringify(recs));
+  closeModal('m-add-med');renderMedRecords();showToast('✅ Запись сохранена','#7ED321');
+}
+function renderMedRecords(){
+  const list=document.getElementById('med-records-list');
+  if(!list)return;
+  let recs=JSON.parse(localStorage.getItem('df_med_records')||'[]');
+  // seed sample data
+  if(!recs.length){
+    const p=JSON.parse(localStorage.getItem('df_profile')||'{}');
+    const pet=p.dogname||'Питомец';
+    recs=[
+      {id:1,type:'Вакцинация',petName:pet,title:'Нобивак DHPPi+L',date:'2025-09-15',doctor:'Др. Орлов, Статус-Вет',notes:'Следующая через 1 год — сентябрь 2026'},
+      {id:2,type:'Приём',petName:pet,title:'Плановый осмотр терапевта',date:'2025-11-20',doctor:'Др. Белова, Зоовет',notes:'Всё в норме, вес 8.2 кг'},
+      {id:3,type:'Анализ',petName:pet,title:'Общий анализ крови',date:'2025-11-20',doctor:'Зоовет, лаборатория',notes:'Результаты в норме'},
+    ];
+  }
+  list.innerHTML=recs.map(r=>`
+    <div style="background:var(--white);border-radius:var(--radius);margin-bottom:10px;box-shadow:var(--shadow);padding:14px 16px;display:flex;gap:12px;align-items:flex-start;">
+      <div style="width:44px;height:44px;background:${MED_BG[r.type]||'rgba(0,0,0,.06)'};border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${MED_ICONS[r.type]||'📋'}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+          <div style="font-weight:800;font-size:14px;">${r.title}</div>
+          <span class="tag tag-b" style="font-size:11px;flex-shrink:0;">${r.type}</span>
+        </div>
+        ${r.petName?`<div style="font-size:12px;color:var(--primary);font-weight:600;margin-top:2px;">🐕 ${r.petName}</div>`:''}
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">📅 ${r.date}${r.doctor?' · '+r.doctor:''}</div>
+        ${r.notes?`<div style="font-size:12px;color:var(--text-secondary);margin-top:3px;font-style:italic;">${r.notes}</div>`:''}
+      </div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+// LESSONS
+// ════════════════════════════════════════════════════════════
+const LESSONS=[
+  {id:'l1',cat:'Щенки',title:'Первые команды для щенка',emoji:'🐾',color:'linear-gradient(135deg,#EEF6FF,#C9E4FA)',duration:'15 мин',level:'Начинающий',
+   content:'Начните с команды «Сидеть» — самой простой. Держите лакомство над носом, медленно ведите назад. Когда сядет — скажите «Сидеть» и дайте угощение. Короткие сессии 3–5 мин, 5–10 раз в день. Ключ к успеху — последовательность и позитивное подкрепление.',
+   steps:['Возьмите лакомство между пальцами','Поднесите к носу щенка','Медленно ведите руку назад — щенок сядет','В момент посадки скажите «Сидеть!»','Дайте лакомство и похвалите']},
+  {id:'l2',cat:'Послушание',title:'Команда «Место»: пошаговый урок',emoji:'🏠',color:'linear-gradient(135deg,#FFF5E6,#FFD9A0)',duration:'20 мин',level:'Средний',
+   content:'Команда «Место» даёт собаке безопасное пространство. Начните с обозначения подстилки. Подведите, скажите «Место» и укажите рукой. Когда ляжет — щедро похвалите. Постепенно увеличивайте расстояние до 5 метров.',
+   steps:['Покажите подстилку','Скажите «Место!» и жестом укажите на коврик','Когда зайдёт — похвалите и дайте угощение','Отойдите на шаг, повторите','Постепенно увеличивайте дистанцию']},
+  {id:'l3',cat:'Поведение',title:'Как остановить прыжки на людей',emoji:'🚫',color:'linear-gradient(135deg,#FFF0F0,#FFCDD2)',duration:'10 мин',level:'Начинающий',
+   content:'Прыжки случаются, потому что собака получает внимание. Решение: полностью игнорировать прыжок. Отворачивайтесь, скрещивайте руки, не смотрите. Когда встанет на 4 лапы — сразу приветствуйте. 4 лапы на полу = внимание.',
+   steps:['При прыжке отвернитесь, скрестите руки','Не смотрите, не говорите ничего','Когда встанет — радостно поздоровайтесь','Попросите сесть перед приветствием','Повторяйте с каждым гостем']},
+  {id:'l4',cat:'Здоровье',title:'Уход за зубами: пошаговое руководство',emoji:'🦷',color:'linear-gradient(135deg,#F0FFF4,#C6F6D5)',duration:'12 мин',level:'Начинающий',
+   content:'Чистка зубов 3 раза в неделю критически важна. Используйте только зубную пасту для собак. Начните с прикосновений пальцем к дёснам, постепенно переходя к щётке.',
+   steps:['Дайте понюхать пасту','Нанесите на палец и потрите дёсны','Введите щётку под углом 45°','Чистите круговыми движениями 2 мин','Похвалите и дайте угощение']},
+  {id:'l5',cat:'Аджилити',title:'Первые барьеры: введение в аджилити',emoji:'🏃',color:'linear-gradient(135deg,#E8EAF6,#C5CAE9)',duration:'25 мин',level:'Средний',
+   content:'Аджилити — отличная физическая и ментальная нагрузка. Начните с минимальной высоты. На длинном поводке подведите к барьеру, скажите «Барьер!» и пройдите вместе.',
+   steps:['Установите барьер на минимум','На длинном поводке подведите к снаряду','Скажите «Барьер!» и прыгните рядом','При успехе — щедрая похвала','Повторите 5–7 раз, затем перерыв']},
+  {id:'l6',cat:'Щенки',title:'Социализация: новые запахи и звуки',emoji:'👂',color:'linear-gradient(135deg,#FCE4EC,#F8BBD9)',duration:'Ежедневно',level:'Начинающий',
+   content:'Период социализации щенка (3–14 недель) — самый важный. Ежедневно знакомьте с 3–5 новыми стимулами: звуки, запахи, поверхности, люди разного возраста. Делайте это позитивно — лакомства и похвала.',
+   steps:['Начните с тихих звуков на расстоянии','Постепенно приближайтесь к источнику','При спокойной реакции — лакомство','Знакомьте с разными поверхностями','Приглашайте друзей угостить щенка']},
+  {id:'l7',cat:'Поведение',title:'Реактивность на поводке: решение',emoji:'⚠️',color:'linear-gradient(135deg,#FFF3E0,#FFE0B2)',duration:'30 мин',level:'Продвинутый',
+   content:'Найдите расстояние, при котором собака замечает раздражитель, но ещё может сохранять спокойствие. На этом расстоянии кормите лакомствами. Постепенно (неделями!) уменьшайте дистанцию.',
+   steps:['Определите «безопасную дистанцию»','На ней при виде другой собаки — лакомства','Постепенно уменьшайте дистанцию','При перевозбуждении — отойдите дальше','При отсутствии прогресса — к зоопсихологу']},
+  {id:'l8',cat:'Здоровье',title:'Как правильно давать таблетки',emoji:'💊',color:'linear-gradient(135deg,#E0F2F1,#B2DFDB)',duration:'5 мин',level:'Начинающий',
+   content:'Прячьте таблетку в лакомство: кусочек сыра, колбасы, хлеба. Если вылизывает — давайте 3 угощения подряд: первые два без таблетки, третье — с ней.',
+   steps:['Заверните в небольшой кусочек сыра','Дайте 1–2 угощения без таблетки','Быстро дайте угощение с таблеткой','Проверьте, что проглотила','Похвалите и поиграйте']},
+];
+let _lessonsFilter='Все';
+function filterLessons(v,el){_lessonsFilter=v;document.querySelectorAll('#lessons-chips .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');renderLessons();}
+function renderLessons(){
+  const list=document.getElementById('lessons-list');
+  if(!list)return;
+  const data=_lessonsFilter==='Все'?LESSONS:LESSONS.filter(l=>l.cat===_lessonsFilter);
+  list.innerHTML=data.map(l=>`
+    <div class="lesson-card" onclick="openLesson('${l.id}')">
+      <div class="lesson-banner" style="background:${l.color};">${l.emoji}</div>
+      <div class="lesson-body">
+        <div class="lesson-title">${l.title}</div>
+        <div class="lesson-meta">⏱️ ${l.duration} · 📊 ${l.level} · 🏷️ ${l.cat}</div>
+      </div>
+    </div>`).join('')||'<div style="padding:40px;text-align:center;color:var(--text-secondary);">Ничего не найдено</div>';
+}
+function openLesson(id){
+  const l=LESSONS.find(x=>x.id===id);if(!l)return;
+  document.getElementById('m-lesson-body').innerHTML=`
+    <div style="text-align:center;background:${l.color};border-radius:14px;padding:20px;margin-bottom:16px;">
+      <div style="font-size:52px;margin-bottom:8px;">${l.emoji}</div>
+      <div style="font-size:17px;font-weight:800;">${l.title}</div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">⏱️ ${l.duration} · ${l.level}</div>
+    </div>
+    <div style="font-size:14px;line-height:1.7;color:var(--text-secondary);margin-bottom:16px;">${l.content}</div>
+    <div style="background:var(--bg);border-radius:12px;padding:14px;margin-bottom:8px;">
+      <div style="font-size:14px;font-weight:800;margin-bottom:10px;">📋 Шаги выполнения:</div>
+      ${l.steps.map((s,i)=>`<div style="display:flex;gap:10px;margin-bottom:8px;align-items:flex-start;"><div style="width:24px;height:24px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:white;flex-shrink:0;">${i+1}</div><div style="font-size:13px;line-height:1.5;padding-top:3px;">${s}</div></div>`).join('')}
+    </div>`;
+  openModal('m-lesson');
+}
+
+// ════════════════════════════════════════════════════════════
+// NOTIF SETTINGS
+// ════════════════════════════════════════════════════════════
+function saveNotif(key,val){
+  let s=JSON.parse(localStorage.getItem('df_notif')||'{}');
+  s[key]=val;localStorage.setItem('df_notif',JSON.stringify(s));
+  showToast(val?'🔔 Включено':'🔕 Отключено');
+}
+
+// ════════════════════════════════════════════════════════════
+// PATCH nav() TO RENDER DATA ON SCREEN OPEN
+// ════════════════════════════════════════════════════════════
+(function(){
+  const _orig=window.nav;
+  window.nav=function(id){
+    _orig(id);
+    if(id==='dogmap')    renderPlaces();
+    if(id==='discounts') renderDiscounts();
+    if(id==='lessons')   renderLessons();
+    if(id==='myPets')    renderPets();
+    if(id==='medRecords')renderMedRecords();
+  };
+})();
+
+// Initial render on DOMContentLoaded (after main listener)
+window.addEventListener('load',()=>{
+  setTimeout(()=>{
+    renderPlaces();renderDiscounts();renderLessons();renderPets();renderMedRecords();
+  },200);
+});
+
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- NEW SCREENS                                                  -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<!-- PAYMENTS -->
+<div class="screen" id="payments">
+  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()">←</button><div class="tbar-title">💳 Способы оплаты</div></div>
+  <div class="scroll" style="padding:0 16px;">
+    <div class="card" style="margin:12px 0 12px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><span style="font-size:22px;">💳</span><h3>Привязанные карты</h3></div>
+      <div style="border:2px solid var(--primary);border-radius:12px;padding:14px;margin-bottom:10px;background:rgba(74,144,217,0.04);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:44px;height:28px;background:linear-gradient(135deg,#eb001b,#f79e1b);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:white;">MC</div>
+            <div><div style="font-weight:700;font-size:14px;">•••• 4532</div><div style="font-size:12px;color:var(--text-secondary);">Mastercard · 12/27</div></div>
+          </div>
+          <span class="tag tag-g" style="font-size:11px;">✓ Основная</span>
+        </div>
+      </div>
+      <div style="border:2px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:44px;height:28px;background:linear-gradient(135deg,#1a1f71,#4169e1);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:white;">VISA</div>
+            <div><div style="font-weight:700;font-size:14px;">•••• 7821</div><div style="font-size:12px;color:var(--text-secondary);">Visa · 08/26</div></div>
+          </div>
+          <button onclick="showToast('Карта выбрана основной ✓')" class="btn btn-sm btn-g" style="height:30px;font-size:12px;">Сделать основной</button>
+        </div>
+      </div>
+      <button class="btn btn-o" style="height:44px;" onclick="showToast('Добавление карты — скоро!')">+ Добавить карту</button>
+    </div>
+    <div class="card" style="margin:0 0 12px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><span style="font-size:22px;">📱</span><h3>Электронные кошельки</h3></div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div onclick="showToast('СБП подключён ✓')" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border:2px solid var(--border);border-radius:12px;cursor:pointer;">
+          <div style="display:flex;align-items:center;gap:10px;"><div style="width:36px;height:36px;background:linear-gradient(135deg,#00b4d8,#0077b6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;">🏦</div><span style="font-weight:600;font-size:14px;">СБП — Система быстрых платежей</span></div>
+          <span style="color:var(--success);font-size:18px;">✓</span>
+        </div>
+        <div onclick="showToast('ЮMoney — скоро!')" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border:2px solid var(--border);border-radius:12px;cursor:pointer;">
+          <div style="display:flex;align-items:center;gap:10px;"><div style="width:36px;height:36px;background:linear-gradient(135deg,#8c00ff,#c100ff);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;">💜</div><span style="font-weight:600;font-size:14px;">ЮMoney</span></div>
+          <span style="font-size:13px;color:var(--text-secondary);">Подключить →</span>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin:0 0 80px;">
+      <h3 style="margin-bottom:12px;">📊 Последние платежи</h3>
+      <div style="display:flex;flex-direction:column;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);">
+          <div><div style="font-size:14px;font-weight:600;">Иван Петров · Пакет 10</div><div style="font-size:12px;color:var(--text-secondary);">20 февр · •••• 4532</div></div>
+          <div style="text-align:right;"><div style="font-size:15px;font-weight:800;color:var(--primary);">−6 750 ₽</div><span class="tag tag-g" style="font-size:11px;">✓ Оплачено</span></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);">
+          <div><div style="font-size:14px;font-weight:600;">Мария Соколова · Консультация</div><div style="font-size:12px;color:var(--text-secondary);">15 февр · •••• 4532</div></div>
+          <div style="text-align:right;"><div style="font-size:15px;font-weight:800;color:var(--primary);">−1 500 ₽</div><span class="tag tag-g" style="font-size:11px;">✓ Оплачено</span></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;">
+          <div><div style="font-size:14px;font-weight:600;">Статус-Вет · Приём терапевта</div><div style="font-size:12px;color:var(--text-secondary);">10 февр · •••• 7821</div></div>
+          <div style="text-align:right;"><div style="font-size:15px;font-weight:800;color:var(--primary);">−2 800 ₽</div><span class="tag tag-g" style="font-size:11px;">✓ Оплачено</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MY PETS -->
+<div class="screen" id="myPets">
+  <div class="top-bar" style="padding-top:0;">
+    <button class="back-btn" onclick="back()">←</button>
+    <div class="tbar-title">🐕 Мои питомцы</div>
+    <button class="btn btn-p" style="width:auto;height:36px;padding:0 14px;font-size:13px;border-radius:10px;" onclick="openModal('m-add-pet')">+ Добавить</button>
+  </div>
+  <div class="scroll" style="padding:8px 16px 20px;"><div id="pets-list"></div></div>
+</div>
+
+<!-- NOTIF SETTINGS -->
+<div class="screen" id="notifSettings">
+  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()">←</button><div class="tbar-title">🔔 Уведомления</div></div>
+  <div class="scroll" style="padding:0 16px;">
+    <div class="card" style="margin:12px 0 12px;">
+      <h3 style="margin-bottom:14px;">Общие уведомления</h3>
+      <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);"><div><div style="font-size:14px;font-weight:600;">Новые сообщения</div><div style="font-size:12px;color:var(--text-secondary);">Личные и групповые чаты</div></div><label class="df-toggle"><input type="checkbox" checked onchange="saveNotif('messages',this.checked)"><span class="df-slider"></span></label></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);"><div><div style="font-size:14px;font-weight:600;">Напоминание о занятиях</div><div style="font-size:12px;color:var(--text-secondary);">За 2 часа до записи</div></div><label class="df-toggle"><input type="checkbox" checked onchange="saveNotif('lessons',this.checked)"><span class="df-slider"></span></label></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);"><div><div style="font-size:14px;font-weight:600;">События в районе</div><div style="font-size:12px;color:var(--text-secondary);">Прогулки, встречи пород</div></div><label class="df-toggle"><input type="checkbox" checked onchange="saveNotif('events',this.checked)"><span class="df-slider"></span></label></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;"><div><div style="font-size:14px;font-weight:600;">Акции и скидки</div><div style="font-size:12px;color:var(--text-secondary);">Специальные предложения</div></div><label class="df-toggle"><input type="checkbox" onchange="saveNotif('promos',this.checked)"><span class="df-slider"></span></label></div>
+      </div>
+    </div>
+    <div class="card" style="margin:0 0 12px;">
+      <h3 style="margin-bottom:14px;">Здоровье питомца</h3>
+      <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);"><div><div style="font-size:14px;font-weight:600;">Напоминание о вакцинации</div><div style="font-size:12px;color:var(--text-secondary);">За 7 дней до срока</div></div><label class="df-toggle"><input type="checkbox" checked onchange="saveNotif('vaccine',this.checked)"><span class="df-slider"></span></label></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;"><div><div style="font-size:14px;font-weight:600;">Плановый осмотр</div><div style="font-size:12px;color:var(--text-secondary);">Раз в 6 месяцев</div></div><label class="df-toggle"><input type="checkbox" checked onchange="saveNotif('checkup',this.checked)"><span class="df-slider"></span></label></div>
+      </div>
+    </div>
+    <div class="card" style="margin:0 0 80px;">
+      <h3 style="margin-bottom:14px;">Звук и вибрация</h3>
+      <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);"><div style="font-size:14px;font-weight:600;">Звук</div><label class="df-toggle"><input type="checkbox" checked onchange="saveNotif('sound',this.checked)"><span class="df-slider"></span></label></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;"><div style="font-size:14px;font-weight:600;">Вибрация</div><label class="df-toggle"><input type="checkbox" checked onchange="saveNotif('vibro',this.checked)"><span class="df-slider"></span></label></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MEDICAL RECORDS -->
+<div class="screen" id="medRecords">
+  <div class="top-bar" style="padding-top:0;">
+    <button class="back-btn" onclick="back()">←</button>
+    <div class="tbar-title">🏥 Медицинские записи</div>
+    <button class="btn btn-p" style="width:auto;height:36px;padding:0 14px;font-size:13px;border-radius:10px;" onclick="openModal('m-add-med')">+ Добавить</button>
+  </div>
+  <div class="scroll" style="padding:8px 16px 20px;"><div id="med-records-list"></div></div>
+</div>
+
+<!-- LESSONS -->
+<div class="screen" id="lessons">
+  <div class="ghdr" style="padding-top:0;"><h2 style="margin-bottom:4px;">🎓 Уроки и тренировки</h2><p style="font-size:13px;">Бесплатные материалы для вас и питомца</p></div>
+  <div class="chips" id="lessons-chips" style="padding-top:8px;flex-shrink:0;">
+    <div class="chip on" onclick="filterLessons('Все',this)">Все</div>
+    <div class="chip" onclick="filterLessons('Щенки',this)">🐾 Щенки</div>
+    <div class="chip" onclick="filterLessons('Послушание',this)">🎯 Послушание</div>
+    <div class="chip" onclick="filterLessons('Здоровье',this)">❤️ Здоровье</div>
+    <div class="chip" onclick="filterLessons('Поведение',this)">🧠 Поведение</div>
+    <div class="chip" onclick="filterLessons('Аджилити',this)">🏃 Аджилити</div>
+  </div>
+  <div class="scroll" id="lessons-list"></div>
+</div>
+
+<!-- APPOINTMENT SUCCESS -->
+<div class="screen" id="apptSuccess">
+  <div class="scroll" style="display:flex;flex-direction:column;">
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px;flex:1;">
+      <div style="width:100px;height:100px;background:rgba(126,211,33,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:50px;margin-bottom:24px;animation:succ-pop 0.5s cubic-bezier(.175,.885,.32,1.275);">✅</div>
+      <h1 style="margin-bottom:12px;">Запись создана!</h1>
+      <p style="color:var(--text-secondary);margin-bottom:24px;" id="appt-success-text">Заявка отправлена.</p>
+      <div id="appt-success-card" style="background:var(--white);border-radius:14px;padding:16px;width:100%;text-align:left;margin-bottom:24px;box-shadow:var(--shadow);"></div>
+      <div style="width:100%;display:flex;flex-direction:column;gap:10px;">
+        <button class="btn btn-p" onclick="nav('home')">На главную 🏠</button>
+        <button class="btn btn-g" onclick="nav('medRecords')">Медицинские записи</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PLACE DETAIL MODAL -->
+<div class="modal-ov" id="m-place" onclick="closeModal('m-place')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:85%;overflow-y:auto;">
+    <div class="mhandle"></div>
+    <div id="m-place-body"></div>
+    <button class="btn btn-p" style="margin-bottom:10px;" onclick="openYandexMap()">🗺️ Открыть в Яндекс.Картах</button>
+    <button class="btn btn-g" onclick="closeModal('m-place')">Закрыть</button>
+  </div>
+</div>
+
+<!-- DISCOUNT DETAIL MODAL -->
+<div class="modal-ov" id="m-discount" onclick="closeModal('m-discount')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:85%;overflow-y:auto;">
+    <div class="mhandle"></div>
+    <div id="m-discount-body"></div>
+    <button class="btn btn-p" style="margin-bottom:10px;" onclick="copyPromoCode()">📋 Скопировать промокод</button>
+    <button class="btn btn-g" onclick="closeModal('m-discount')">Закрыть</button>
+  </div>
+</div>
+
+<!-- ADD PET MODAL -->
+<div class="modal-ov" id="m-add-pet" onclick="closeModal('m-add-pet')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:90%;overflow-y:auto;">
+    <div class="mhandle"></div>
+    <h3 style="margin-bottom:16px;">🐕 Добавить питомца</h3>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
+      <div><label class="lbl">Кличка *</label><input class="input" id="new-pet-name" placeholder="Например: Рыжик"></div>
+      <div><label class="lbl">Порода *</label><input class="input" id="new-pet-breed" placeholder="Например: Бигль"></div>
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;"><label class="lbl">Возраст</label><input class="input" id="new-pet-age" placeholder="2 года"></div>
+        <div style="flex:1;"><label class="lbl">Вес (кг)</label><input class="input" id="new-pet-weight" placeholder="8" type="number"></div>
+      </div>
+      <div><label class="lbl">Пол</label>
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <div id="pet-sex-m" class="chip on" onclick="selectPetSex('м')">♂ Мальчик</div>
+          <div id="pet-sex-f" class="chip" onclick="selectPetSex('ж')">♀ Девочка</div>
+        </div>
+      </div>
+      <div><label class="lbl">Дата рождения</label><input class="input" id="new-pet-dob" type="date"></div>
+      <div><label class="lbl">Особенности / аллергии</label><input class="input" id="new-pet-notes" placeholder="Аллергия на курицу..."></div>
+    </div>
+    <button class="btn btn-p" onclick="savePet()" style="margin-bottom:10px;">Сохранить питомца 🐾</button>
+    <button class="btn btn-g" onclick="closeModal('m-add-pet')">Отмена</button>
+  </div>
+</div>
+
+<!-- ADD MED RECORD MODAL -->
+<div class="modal-ov" id="m-add-med" onclick="closeModal('m-add-med')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:90%;overflow-y:auto;">
+    <div class="mhandle"></div>
+    <h3 style="margin-bottom:16px;">➕ Новая запись</h3>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
+      <div><label class="lbl">Тип записи</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;" id="med-type-chips">
+          <div class="chip on" onclick="selectMedType('Вакцинация',this)">💉 Вакцинация</div>
+          <div class="chip" onclick="selectMedType('Приём',this)">🏥 Приём</div>
+          <div class="chip" onclick="selectMedType('Анализ',this)">🔬 Анализ</div>
+          <div class="chip" onclick="selectMedType('Операция',this)">🔪 Операция</div>
+          <div class="chip" onclick="selectMedType('Другое',this)">📋 Другое</div>
+        </div>
+      </div>
+      <div><label class="lbl">Питомец</label><input class="input" id="med-pet-name" placeholder="Имя питомца"></div>
+      <div><label class="lbl">Название / диагноз *</label><input class="input" id="med-title" placeholder="Например: Нобивак DHPPi+L"></div>
+      <div><label class="lbl">Дата</label><input class="input" id="med-date" type="date"></div>
+      <div><label class="lbl">Врач / клиника</label><input class="input" id="med-doctor" placeholder="Др. Иванов, Зоовет"></div>
+      <div><label class="lbl">Заметки</label><input class="input" id="med-notes" placeholder="Следующая через 1 год..."></div>
+    </div>
+    <button class="btn btn-p" onclick="saveMedRecord()" style="margin-bottom:10px;">Сохранить запись</button>
+    <button class="btn btn-g" onclick="closeModal('m-add-med')">Отмена</button>
+  </div>
+</div>
+
+<!-- LESSON MODAL -->
+<div class="modal-ov" id="m-lesson" onclick="closeModal('m-lesson')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:88%;overflow-y:auto;">
+    <div class="mhandle"></div>
+    <div id="m-lesson-body"></div>
+    <button class="btn btn-p" style="margin-bottom:10px;" onclick="closeModal('m-lesson');showToast('✅ Урок отмечен как пройденный!','#7ED321')">Отметить выполненным ✓</button>
+    <button class="btn btn-g" onclick="closeModal('m-lesson')">Закрыть</button>
+  </div>
+</div>
+
+</div>
+
+</body>
+</html>
