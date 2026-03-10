@@ -3457,6 +3457,8 @@ function renderMedRecords(){
       {id:2,type:'Приём',petName:pet,title:'Плановый осмотр терапевта',date:'2025-11-20',doctor:'Др. Белова, Зоовет',notes:'Всё в норме, вес 8.2 кг'},
       {id:3,type:'Анализ',petName:pet,title:'Общий анализ крови',date:'2025-11-20',doctor:'Зоовет, лаборатория',notes:'Результаты в норме'},
     ];
+    // СОХРАНЯЕМ sample данные чтобы можно было удалять!
+    localStorage.setItem('df_med_records', JSON.stringify(recs));
   }
   list.innerHTML=recs.map(r=>`
     <div id="med-${r.id}" class="med-record-item" onclick="openMedRecord(${r.id})" style="background:var(--white);border-radius:var(--radius);margin-bottom:10px;box-shadow:var(--shadow);padding:14px 16px;display:flex;gap:12px;align-items:flex-start;cursor:pointer;position:relative;transition:transform 0.2s;">
