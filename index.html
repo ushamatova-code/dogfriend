@@ -2333,6 +2333,9 @@ if (!window.supabaseLoaded) {
 }
 
 // Регистрируем Service Worker для PWA и push-уведомлений
+// Service Worker временно отключен (проблема с blob: URL на Vercel)
+// Базовая функциональность работает без него
+/*
 if ('serviceWorker' in navigator) {
   // Создаём Service Worker inline
   const swCode = `
@@ -2377,6 +2380,7 @@ if ('serviceWorker' in navigator) {
     console.log('Service Worker registration failed:', error);
   });
 }
+*/
 
 let supabaseClient = null;
 let currentUser = null;
