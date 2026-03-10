@@ -2659,8 +2659,16 @@ function openPublicChat() {
   // Запрашиваем разрешение на уведомления при первом открытии
   requestNotificationPermission();
   
-  if (!chatInited) initSupabaseChat();
-  else scrollChatBottom();
+  // Всегда проверяем подключение
+  if (!chatInited) {
+    initSupabaseChat();
+  } else if (!supabasePublicChannel) {
+    // Если канал отключился - переподключаем
+    console.log('🔄 Reconnecting to public chat...');
+    connectSupabaseRealtime();
+  } else {
+    scrollChatBottom();
+  }
 }
 
 function initSupabaseChat() {
