@@ -1171,6 +1171,13 @@ function nav(id) {
   const curr = document.querySelector('.screen.active');
   const next = document.getElementById(id);
   if (!next || curr === next) return;
+  
+  // Сбрасываем currentPrivateChatId когда уходим с экрана личного чата
+  if (curr && curr.id === 'privateChat' && id !== 'privateChat') {
+    console.log('🔄 Closing private chat, resetting currentPrivateChatId');
+    currentPrivateChatId = null;
+  }
+  
   histStack.push(curr.id);
   curr.classList.remove('active');
   curr.style.display = 'none';
@@ -1185,6 +1192,13 @@ function back() {
   const curr = document.querySelector('.screen.active');
   const prev = document.getElementById(prevId);
   if (!prev) { nav('home'); return; }
+  
+  // Сбрасываем currentPrivateChatId когда уходим с экрана личного чата назад
+  if (curr && curr.id === 'privateChat' && prevId !== 'privateChat') {
+    console.log('🔄 Going back from private chat, resetting currentPrivateChatId');
+    currentPrivateChatId = null;
+  }
+  
   curr.classList.remove('active');
   curr.style.display = 'none';
   prev.classList.add('active');
