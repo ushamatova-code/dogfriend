@@ -1323,7 +1323,7 @@ function loadProfileForm() {
   if (av) av.textContent = p.name ? getInitials(p.name) : '👤';
 }
 
-function saveProfile() {
+async function saveProfile() {
   const p = {
     name: document.getElementById('ep-name').value.trim(),
     district: document.getElementById('ep-district').value.trim(),
@@ -1331,8 +1331,39 @@ function saveProfile() {
     dogbreed: document.getElementById('ep-dogbreed').value.trim(),
     dogage: document.getElementById('ep-dogage').value.trim(),
   };
+  
+  // Сохраняем локально
   localStorage.setItem('df_profile', JSON.stringify(p));
   localStorage.setItem('df_user_geo', p.district);
+  
+  // Сохраняем в Supabase (используем существующую таблицу profiles)
+  if (supabaseClient && currentUser) {
+    try {
+      const { error } = await supabaseClient
+        .from('profiles')
+        .upsert({
+          id: currentUser.id,
+          user_id: currentUser.id,
+          name: p.name,
+          district: p.district,
+          dogname: p.dogname,
+          dog_breed: p.dogbreed,
+          dog_age: p.dogage,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id'
+        });
+      
+      if (error) {
+        console.error('❌ Failed to save profile to Supabase:', error);
+      } else {
+        console.log('✅ Profile saved to Supabase');
+      }
+    } catch(e) {
+      console.error('❌ Error saving profile:', e);
+    }
+  }
+  
   loadProfile();
   back();
   setTimeout(() => {
@@ -2533,27 +2564,44 @@ async function supabaseRegister() {
 
 
 // Загрузка профиля пользователя
-function loadUserProfile() {
+async function loadUserProfile() {
   if (!currentUser || !supabaseClient) return;
   
   try {
-    const { data, error } = supabaseClient
+    console.log('📥 Loading profile from Supabase for user:', currentUser.id);
+    
+    const { data, error } = await supabaseClient
       .from('profiles')
       .select('*')
       .eq('id', currentUser.id)
       .single();
     
+    if (error && error.code !== 'PGRST116') { // PGRST116 = not found, это норм для нового юзера
+      console.error('❌ Load profile error:', error);
+      return;
+    }
+    
     if (data) {
+      console.log('✅ Profile loaded from Supabase:', data);
       currentUserProfile = data;
+      
       // Обновляем localStorage для совместимости
-      localStorage.setItem('df_profile', JSON.stringify({ 
-        name: data.name, 
-        district: data.district,
-        dogname: data.dogname 
-      }));
+      const profileData = { 
+        name: data.name || '', 
+        district: data.district || '',
+        dogname: data.dogname || '',
+        dogbreed: data.dog_breed || '',
+        dogage: data.dog_age || ''
+      };
+      localStorage.setItem('df_profile', JSON.stringify(profileData));
+      
+      // Обновляем UI
+      loadProfile();
+    } else {
+      console.log('ℹ️ No profile found in Supabase, using localStorage');
     }
   } catch (err) {
-    console.error('Load profile error:', err);
+    console.error('❌ Load profile exception:', err);
   }
 }
 // ============================================================
