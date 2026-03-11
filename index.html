@@ -133,6 +133,13 @@ h3 { font-size:17px; font-weight:700; }
 .ghdr[style*="padding-top: 0"] {
   padding-top: calc(16px + env(safe-area-inset-top, 0px)) !important;
 }
+
+/* Универсальный фикс: любой цветной блок первым в .screen растягивается до верха */
+.screen > [style*="background:linear-gradient"]:first-child,
+.screen > [style*="background: linear-gradient"]:first-child {
+  padding-top: calc(20px + env(safe-area-inset-top, 0px)) !important;
+}
+/* Для бизнес-дашборда (hero внутри .scroll) — не трогаем, safe-area не нужна */
 .tbar-title { font-size:18px; font-weight:800; flex:1; }
 
 .card {
@@ -289,7 +296,7 @@ h3 { font-size:17px; font-weight:700; }
 
 .ghdr {
   background:linear-gradient(135deg,var(--primary),#6BB8F0);
-  padding: calc(16px + env(safe-area-inset-top, 0px)) 16px 20px; 
+  padding: calc(20px + env(safe-area-inset-top, 0px)) 16px 20px; 
   color:white; flex-shrink:0;
 }
 .ghdr h2, .ghdr h3 { color:white; }
@@ -345,6 +352,7 @@ h3 { font-size:17px; font-weight:700; }
 .prof-hero {
   background:linear-gradient(135deg,var(--primary),#7B5EA7);
   padding:20px 16px 24px; text-align:center; color:white; flex-shrink:0;
+  padding-top: calc(20px + env(safe-area-inset-top, 0px));
 }
 .imp-bar {
   display:flex; background:rgba(255,255,255,0.15); border-radius:12px; padding:12px; gap:0; margin-top:12px;
@@ -854,7 +862,7 @@ async function sendBookingNotification() {
 
 <!-- PROFILE -->
 <div class="screen" id="profile">
-  <div class="prof-hero" style="padding-top:0;">
+  <div class="prof-hero">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
       <span style="font-size:18px;font-weight:800;color:white;">Профиль</span>
       <button class="back-btn" style="background:rgba(255,255,255,0.2);color:white;box-shadow:none;" onclick="nav('edit-profile');loadProfileForm()">✏️</button>
@@ -1044,7 +1052,7 @@ async function sendBookingNotification() {
 
 <!-- COMMUNITY -->
 <div class="screen" id="community">
-  <div class="ghdr" style="padding-top:0;"><h2>Сообщество</h2></div>
+  <div class="ghdr"><h2>Сообщество</h2></div>
   <div class="scroll">
     <div class="ci" onclick="openPublicChat()">
       <div style="width:48px;height:48px;background:linear-gradient(135deg,var(--primary),#6BB8F0);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🐕</div>
@@ -4938,7 +4946,7 @@ async function saveBizEdit() {
   </div>
   <div class="scroll" style="padding:0 0 24px;">
     <!-- Шапка события -->
-    <div id="ev-hero" style="padding:20px 16px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);color:white;">
+    <div id="ev-hero" style="padding:20px 16px;padding-top:calc(20px + env(safe-area-inset-top, 0px));background:linear-gradient(135deg,#4A90D9,#7B5EA7);color:white;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
         <span id="ev-type-icon" style="font-size:32px;">📅</span>
         <div>
