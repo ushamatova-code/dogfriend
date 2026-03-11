@@ -894,6 +894,7 @@ async function sendBookingNotification() {
       <div class="prof-row" onclick="nav('notifSettings')"><div class="prof-row-icon">🔔</div><div class="prof-row-lbl">Уведомления</div><div class="prof-row-arr">›</div></div>
       <div class="prof-row" onclick="nav('medRecords')"><div class="prof-row-icon">🏥</div><div class="prof-row-lbl">Медицинские записи</div><div class="prof-row-arr">›</div></div>
       <div class="prof-row" onclick="nav('lessons')"><div class="prof-row-icon">🎓</div><div class="prof-row-lbl">Уроки и тренировки</div><div class="badge" style="margin-right:8px;background:#7ED321;">FREE</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" id="biz-mgmt-row" onclick="openBusinessDashboard()" style="display:none;"><div class="prof-row-icon">💼</div><div class="prof-row-lbl">Управление бизнесом</div><div class="prof-row-arr">›</div></div>
       <div class="prof-row" onclick="localStorage.removeItem('df_registered');localStorage.removeItem('df_phone');nav('onb1')" style="border-bottom:none;"><div class="prof-row-icon">🚪</div><div class="prof-row-lbl" style="color:var(--error);">Выйти</div><div class="prof-row-arr">›</div></div>
     </div>
   </div>
@@ -4350,3 +4351,392 @@ async function submitBusiness() {
 
 </body>
 </html>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- BUSINESS DASHBOARD                                          -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="screen" id="bizDashboard">
+  <div class="top-bar" style="padding-top:0;">
+    <button class="back-btn" onclick="back()">←</button>
+    <div class="tbar-title" id="biz-dash-title">💼 Мой бизнес</div>
+    <button class="btn btn-sm btn-p" id="biz-dash-edit-btn" onclick="openBizEdit()" style="height:36px;padding:0 14px;font-size:13px;">✏️ Изменить</button>
+  </div>
+  <div class="scroll" id="biz-dash-content" style="padding:0 16px 24px;">
+    <!-- Контент рендерится JS -->
+  </div>
+</div>
+
+<!-- BUSINESS EDIT FORM -->
+<div class="screen" id="bizEdit">
+  <div class="top-bar" style="padding-top:0;">
+    <button class="back-btn" onclick="back()">←</button>
+    <div class="tbar-title" id="biz-edit-title">Редактировать</div>
+    <div style="width:40px;"></div>
+  </div>
+  <div class="scroll" style="padding:0 16px 24px;">
+    <div id="biz-edit-form"></div>
+    <div style="margin-top:8px;display:flex;flex-direction:column;gap:10px;">
+      <button class="btn btn-p" onclick="saveBizEdit()">Сохранить изменения ✓</button>
+      <button class="btn btn-g" onclick="back()">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// BUSINESS DASHBOARD + EDIT
+// ════════════════════════════════════════════════════════════
+
+let currentBiz = null; // текущий бизнес пользователя
+
+// Поля для каждого типа
+const BIZ_FIELDS = {
+  trainer: {
+    icon: '🐕',
+    label: 'Кинолог / Тренер',
+    sections: [
+      {
+        title: '📋 Основная информация',
+        fields: [
+          { id: 'name',        label: 'ФИО / Название',      type: 'text',     placeholder: 'Иван Петров', required: true },
+          { id: 'description', label: 'О себе',               type: 'textarea', placeholder: 'Опыт работы, специализация, подход...' },
+          { id: 'address',     label: 'Район / Место занятий',type: 'text',     placeholder: 'Сокольники, Москва', required: true },
+          { id: 'price_from',  label: 'Цена от',              type: 'text',     placeholder: '3 000 ₽' },
+        ]
+      },
+      {
+        title: '📞 Контакты',
+        fields: [
+          { id: 'phone',    label: 'Телефон',   type: 'tel',   placeholder: '+7 (999) 123-45-67', required: true },
+          { id: 'email',    label: 'Email',     type: 'email', placeholder: 'trainer@mail.ru' },
+          { id: 'telegram', label: 'Telegram',  type: 'text',  placeholder: '@username' },
+          { id: 'website',  label: 'Сайт',      type: 'url',   placeholder: 'https://...' },
+        ]
+      },
+      {
+        title: '🎓 Специализация',
+        fields: [
+          { id: 'experience',   label: 'Опыт работы',           type: 'text',     placeholder: '5 лет' },
+          { id: 'education',    label: 'Образование / сертификаты', type: 'textarea', placeholder: 'РКФ, МDSA...' },
+          { id: 'dog_breeds',   label: 'Породы (специализация)', type: 'text',     placeholder: 'Все породы, МБС, лабрадор...' },
+          { id: 'lesson_format',label: 'Формат занятий',         type: 'text',     placeholder: 'Индивидуально, группа, выезд' },
+          { id: 'area',         label: 'Рабочая зона (км)',       type: 'text',     placeholder: '10 км от метро Сокольники' },
+        ]
+      },
+      {
+        title: '✅ Услуги',
+        type: 'checkboxes',
+        id: 'services',
+        options: ['ОКД','Щенки (3-6 мес)','Послушание','Аджилити','Коррекция поведения','Социализация','Защитная служба','Норматив','Выезд на дом','Онлайн-консультация']
+      },
+      {
+        title: '🕐 График работы',
+        fields: [
+          { id: 'schedule', label: 'Расписание', type: 'textarea', placeholder: 'Пн-Пт 10:00–19:00, Сб 10:00–15:00' },
+        ]
+      },
+    ]
+  },
+  clinic: {
+    icon: '🏥',
+    label: 'Ветеринарная клиника',
+    sections: [
+      {
+        title: '📋 Основная информация',
+        fields: [
+          { id: 'name',        label: 'Название клиники', type: 'text',     placeholder: 'Ветклиника «Здоровый пёс»', required: true },
+          { id: 'description', label: 'О клинике',        type: 'textarea', placeholder: 'Специализация, оборудование, опыт...' },
+          { id: 'address',     label: 'Адрес',            type: 'text',     placeholder: 'ул. Ленина, 10, Москва', required: true },
+          { id: 'price_from',  label: 'Приём от',         type: 'text',     placeholder: '1 500 ₽' },
+        ]
+      },
+      {
+        title: '📞 Контакты',
+        fields: [
+          { id: 'phone',     label: 'Телефон',        type: 'tel',   placeholder: '+7 (495) 123-45-67', required: true },
+          { id: 'phone2',    label: 'Доп. телефон',   type: 'tel',   placeholder: '+7 (495) 765-43-21' },
+          { id: 'email',     label: 'Email',          type: 'email', placeholder: 'info@vetclinic.ru' },
+          { id: 'website',   label: 'Сайт',           type: 'url',   placeholder: 'https://...' },
+          { id: 'telegram',  label: 'Telegram / WhatsApp', type: 'text', placeholder: '@vetclinic' },
+        ]
+      },
+      {
+        title: '🏥 Специализация',
+        fields: [
+          { id: 'experience',  label: 'Лет на рынке',        type: 'text',     placeholder: 'Работаем с 2015 года' },
+          { id: 'doctors',     label: 'Кол-во врачей',       type: 'text',     placeholder: '8 специалистов' },
+          { id: 'equipment',   label: 'Оборудование',        type: 'textarea', placeholder: 'УЗИ, рентген, анализаторы...' },
+          { id: 'emergency',   label: 'Скорая помощь',       type: 'text',     placeholder: 'Круглосуточно / Нет' },
+          { id: 'area',        label: 'Обслуживаемые районы',type: 'text',     placeholder: 'Сокольники, Преображенское...' },
+        ]
+      },
+      {
+        title: '✅ Услуги',
+        type: 'checkboxes',
+        id: 'services',
+        options: ['Терапия','Хирургия','Стоматология','Вакцинация','Анализы','УЗИ','Рентген','Дерматология','Офтальмология','Онкология','Кардиология','Неврология','Чипирование','Кастрация / стерилизация','Скорая помощь 24/7']
+      },
+      {
+        title: '🕐 График работы',
+        fields: [
+          { id: 'schedule', label: 'Расписание', type: 'textarea', placeholder: 'Пн-Пт 9:00–21:00\nСб-Вс 10:00–18:00' },
+        ]
+      },
+    ]
+  },
+  cafe: {
+    icon: '☕',
+    label: 'Dog-friendly место',
+    sections: [
+      {
+        title: '📋 Основная информация',
+        fields: [
+          { id: 'name',        label: 'Название места',  type: 'text',     placeholder: 'Кафе «Рыжий пёс»', required: true },
+          { id: 'description', label: 'Описание',        type: 'textarea', placeholder: 'Атмосфера, кухня, особенности...' },
+          { id: 'address',     label: 'Адрес',           type: 'text',     placeholder: 'ул. Арбат, 25, Москва', required: true },
+          { id: 'price_from',  label: 'Средний чек',     type: 'text',     placeholder: '800 ₽' },
+        ]
+      },
+      {
+        title: '📞 Контакты',
+        fields: [
+          { id: 'phone',    label: 'Телефон',             type: 'tel',   placeholder: '+7 (495) 123-45-67', required: true },
+          { id: 'email',    label: 'Email',               type: 'email', placeholder: 'hello@cafe.ru' },
+          { id: 'website',  label: 'Сайт / меню',         type: 'url',   placeholder: 'https://...' },
+          { id: 'instagram',label: 'Instagram',           type: 'text',  placeholder: '@dogcafe_moscow' },
+          { id: 'telegram', label: 'Telegram',            type: 'text',  placeholder: '@dogcafe' },
+        ]
+      },
+      {
+        title: '🐕 Условия для собак',
+        fields: [
+          { id: 'dog_policy',   label: 'Политика для собак', type: 'textarea', placeholder: 'Все породы, только на поводке, до 30 кг...' },
+          { id: 'max_dog_size', label: 'Макс. размер собаки',type: 'text',     placeholder: 'Без ограничений / до 30 кг / только мелкие' },
+          { id: 'dog_menu',     label: 'Меню для собак',     type: 'text',     placeholder: 'Лакомства, миски с водой, корм' },
+          { id: 'area',         label: 'Зона для собак',     type: 'text',     placeholder: 'Терраса, весь зал, только улица' },
+        ]
+      },
+      {
+        title: '✅ Удобства',
+        type: 'checkboxes',
+        id: 'services',
+        options: ['Веранда','Миски с водой','Лакомства в меню','Wi-Fi','Детская зона','Парковка','Доставка','Бронирование столов','Кальян','Живая музыка','Своя пивоварня','Специальное меню для собак']
+      },
+      {
+        title: '🕐 График работы',
+        fields: [
+          { id: 'schedule', label: 'Расписание', type: 'textarea', placeholder: 'Ежедневно 10:00–23:00' },
+        ]
+      },
+    ]
+  }
+};
+
+// Загрузить бизнес пользователя и показать кнопку в профиле
+async function checkUserBusiness() {
+  if (!supabaseClient || !currentUser) return;
+  try {
+    const { data, error } = await supabaseClient
+      .from('businesses')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .single();
+    if (data) {
+      currentBiz = data;
+      const row = document.getElementById('biz-mgmt-row');
+      if (row) row.style.display = 'flex';
+    }
+  } catch(e) {
+    // нет бизнеса — кнопка остаётся скрытой
+  }
+}
+
+function openBusinessDashboard() {
+  if (!currentBiz) { showToast('Бизнес не найден'); return; }
+  const cfg = BIZ_FIELDS[currentBiz.type];
+  document.getElementById('biz-dash-title').textContent = cfg ? cfg.icon + ' ' + currentBiz.name : '💼 ' + currentBiz.name;
+
+  const status = currentBiz.is_approved
+    ? '<span class="tag tag-g">✓ Опубликовано</span>'
+    : '<span class="tag tag-o">⏳ На модерации</span>';
+
+  let html = `
+    <div style="background:linear-gradient(135deg,var(--primary),#6BB8F0);border-radius:var(--radius);padding:20px;color:white;margin-top:16px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
+        <div style="width:60px;height:60px;background:rgba(255,255,255,0.2);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;">${cfg ? cfg.icon : '💼'}</div>
+        <div>
+          <div style="font-size:18px;font-weight:800;">${currentBiz.name}</div>
+          <div style="font-size:13px;opacity:0.85;">${cfg ? cfg.label : ''}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">${status}<span style="font-size:13px;opacity:0.8;">⭐ ${currentBiz.rating || '5.0'} · ${currentBiz.reviews_count || 0} отзывов</span></div>
+    </div>`;
+
+  // Статистика
+  html += `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+      <div style="background:var(--white);border-radius:14px;padding:14px;text-align:center;box-shadow:var(--shadow);">
+        <div style="font-size:24px;font-weight:900;font-family:'Nunito',sans-serif;color:var(--primary);">0</div>
+        <div style="font-size:11px;color:var(--text-secondary);font-weight:600;">Просмотры</div>
+      </div>
+      <div style="background:var(--white);border-radius:14px;padding:14px;text-align:center;box-shadow:var(--shadow);">
+        <div style="font-size:24px;font-weight:900;font-family:'Nunito',sans-serif;color:var(--primary);" id="biz-msg-count">0</div>
+        <div style="font-size:11px;color:var(--text-secondary);font-weight:600;">Сообщений</div>
+      </div>
+      <div style="background:var(--white);border-radius:14px;padding:14px;text-align:center;box-shadow:var(--shadow);">
+        <div style="font-size:24px;font-weight:900;font-family:'Nunito',sans-serif;color:var(--primary);">0</div>
+        <div style="font-size:11px;color:var(--text-secondary);font-weight:600;">Записей</div>
+      </div>
+    </div>`;
+
+  // Детали по секциям
+  if (cfg) {
+    cfg.sections.forEach(sec => {
+      html += `<div style="background:var(--white);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);">
+        <div style="font-size:15px;font-weight:800;margin-bottom:12px;">${sec.title}</div>`;
+      if (sec.type === 'checkboxes') {
+        const vals = currentBiz[sec.id] || [];
+        html += vals.length
+          ? `<div style="display:flex;flex-wrap:wrap;gap:6px;">${vals.map(v => `<span class="tag tag-b">${v}</span>`).join('')}</div>`
+          : `<div style="color:var(--text-secondary);font-size:13px;">Не указано</div>`;
+      } else {
+        sec.fields.forEach(f => {
+          const val = currentBiz[f.id] || '';
+          html += `<div style="margin-bottom:8px;">
+            <div style="font-size:12px;color:var(--text-secondary);font-weight:600;margin-bottom:2px;">${f.label}</div>
+            <div style="font-size:14px;font-weight:600;color:${val ? 'var(--text-primary)' : 'var(--border)'};">${val || 'Не указано'}</div>
+          </div>`;
+        });
+      }
+      html += `</div>`;
+    });
+  }
+
+  document.getElementById('biz-dash-content').innerHTML = html;
+
+  // Подсчитать сообщения
+  const msgCount = Object.values(privateChats).reduce((sum, msgs) => sum + msgs.length, 0);
+  const el = document.getElementById('biz-msg-count');
+  if (el) el.textContent = msgCount;
+
+  nav('bizDashboard');
+}
+
+function openBizEdit() {
+  if (!currentBiz) return;
+  const cfg = BIZ_FIELDS[currentBiz.type];
+  if (!cfg) return;
+  document.getElementById('biz-edit-title').textContent = 'Редактировать: ' + currentBiz.name;
+
+  let html = '';
+  cfg.sections.forEach(sec => {
+    html += `<div style="margin-bottom:20px;">
+      <div style="font-size:15px;font-weight:800;margin-bottom:12px;padding-top:16px;border-top:2px solid var(--border);">${sec.title}</div>`;
+
+    if (sec.type === 'checkboxes') {
+      const vals = currentBiz[sec.id] || [];
+      html += `<div style="display:flex;flex-wrap:wrap;gap:8px;" id="biz-edit-checks-${sec.id}">`;
+      sec.options.forEach(opt => {
+        const checked = vals.includes(opt);
+        html += `<label style="display:flex;align-items:center;gap:6px;background:${checked ? 'rgba(74,144,217,0.1)' : 'var(--bg)'};border:2px solid ${checked ? 'var(--primary)' : 'var(--border)'};border-radius:10px;padding:6px 12px;cursor:pointer;transition:all 0.15s;" onclick="toggleBizCheck(this,'${sec.id}')">
+          <input type="checkbox" value="${opt}" ${checked ? 'checked' : ''} style="display:none;">
+          <span style="font-size:13px;font-weight:600;">${opt}</span>
+        </label>`;
+      });
+      html += `</div>`;
+    } else {
+      sec.fields.forEach(f => {
+        const val = currentBiz[f.id] || '';
+        if (f.type === 'textarea') {
+          html += `<div style="margin-bottom:12px;"><label class="lbl">${f.label}${f.required ? ' *' : ''}</label><textarea class="input" id="biz-f-${f.id}" placeholder="${f.placeholder}" style="min-height:72px;padding:12px;resize:none;">${val}</textarea></div>`;
+        } else {
+          html += `<div style="margin-bottom:12px;"><label class="lbl">${f.label}${f.required ? ' *' : ''}</label><input class="input" id="biz-f-${f.id}" type="${f.type}" placeholder="${f.placeholder}" value="${val.replace(/"/g, '&quot;')}"></div>`;
+        }
+      });
+    }
+    html += `</div>`;
+  });
+
+  document.getElementById('biz-edit-form').innerHTML = html;
+  nav('bizEdit');
+}
+
+function toggleBizCheck(label, fieldId) {
+  const input = label.querySelector('input');
+  input.checked = !input.checked;
+  if (input.checked) {
+    label.style.background = 'rgba(74,144,217,0.1)';
+    label.style.borderColor = 'var(--primary)';
+  } else {
+    label.style.background = 'var(--bg)';
+    label.style.borderColor = 'var(--border)';
+  }
+}
+
+async function saveBizEdit() {
+  if (!currentBiz || !supabaseClient) return;
+  const cfg = BIZ_FIELDS[currentBiz.type];
+  if (!cfg) return;
+
+  const updates = {};
+
+  cfg.sections.forEach(sec => {
+    if (sec.type === 'checkboxes') {
+      const container = document.getElementById('biz-edit-checks-' + sec.id);
+      if (container) {
+        const checked = Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map(i => i.value);
+        updates[sec.id] = checked;
+      }
+    } else {
+      sec.fields.forEach(f => {
+        const el = document.getElementById('biz-f-' + f.id);
+        if (el) updates[f.id] = el.value.trim();
+      });
+    }
+  });
+
+  // Валидация обязательных
+  const allFields = cfg.sections.flatMap(s => s.fields || []);
+  for (const f of allFields) {
+    if (f.required && !updates[f.id]) {
+      showToast('❌ Заполните: ' + f.label);
+      return;
+    }
+  }
+
+  try {
+    const { error } = await supabaseClient
+      .from('businesses')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', currentBiz.id);
+
+    if (error) throw error;
+
+    // Обновляем локальный объект
+    Object.assign(currentBiz, updates);
+    showToast('✅ Изменения сохранены!', '#7ED321');
+    back();
+    // Обновляем дашборд
+    setTimeout(() => openBusinessDashboard(), 300);
+  } catch(e) {
+    console.error('Save biz error:', e);
+    showToast('❌ Ошибка сохранения');
+  }
+}
+
+// Вызываем после авторизации
+(function patchCheckAuth() {
+  const origNav = window.nav;
+  let bizChecked = false;
+  window.nav = function(id) {
+    origNav(id);
+    if (id === 'home' && !bizChecked && currentUser) {
+      bizChecked = true;
+      checkUserBusiness();
+    }
+    if (id === 'profile') {
+      checkUserBusiness();
+    }
+  };
+})();
+</script>
