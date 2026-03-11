@@ -2554,6 +2554,9 @@ async function reloadEventChatsFromDB() {
   for (const chatId of eventChatIds) {
     await loadEventChatFromServer(chatId, chatId);
   }
+  // Инициализируем курсоры и запускаем фоновый polling
+  initEventLastIds();
+  startBgEventPolling();
   renderPrivateChats();
 }
 
@@ -5529,7 +5532,9 @@ function openEventGroupChat(ev) {
 
   renderPrivateChatMessages(chatId);
   loadEventChatFromServer(chatId, roomId);
-  startEventChatPolling(chatId, roomId);
+  // Убеждаемся что фоновый polling запущен (запускается один раз)
+  initEventLastIds();
+  startBgEventPolling();
   clearUnreadMessages(chatId);
   nav('privateChat');
 }
@@ -5558,66 +5563,99 @@ async function loadEventChatFromServer(chatId, roomId) {
   } catch(e) { console.error('loadEventChat error:', e); }
 }
 
-// Polling для event-чата — каждые 3 сек проверяем новые сообщения в БД
-let eventChatPollInterval = null;
-let eventChatLastId = 0; // последний известный id сообщения
+// ── Фоновый polling всех event-чатов ─────────────────────────
+// Один интервал на все event-чаты, работает всегда в фоне
+let bgEventPollInterval = null;
+// lastDbId на каждый chatId: { 'event_XXX': 42, ... }
+const eventLastIds = {};
 
-function startEventChatPolling(chatId, roomId) {
-  // Останавливаем предыдущий polling
-  if (eventChatPollInterval) { clearInterval(eventChatPollInterval); eventChatPollInterval = null; }
+function startBgEventPolling() {
+  if (bgEventPollInterval) return; // уже запущен
+  bgEventPollInterval = setInterval(bgEventPollTick, 3000);
+}
 
-  // Запоминаем последний ID из уже загруженных сообщений
-  const msgs = privateChats[chatId] || [];
-  eventChatLastId = msgs.length > 0 ? (msgs[msgs.length-1].dbId || 0) : 0;
+async function bgEventPollTick() {
+  if (!supabaseClient) return;
+  const myUserId = currentUser?.id || userId;
+  if (!myUserId) return;
 
-  eventChatPollInterval = setInterval(async () => {
-    // Останавливаемся если ушли из этого чата
-    if (currentPrivateChatId !== chatId) {
-      clearInterval(eventChatPollInterval);
-      eventChatPollInterval = null;
-      return;
-    }
-    if (!supabaseClient) return;
+  const eventChatIds = Object.keys(contactBook).filter(k => k.startsWith('event_'));
+  if (!eventChatIds.length) return;
+
+  for (const chatId of eventChatIds) {
     try {
-      let query = supabaseClient
+      let q = supabaseClient
         .from('direct_messages')
         .select('*')
-        .eq('room_id', roomId)
-        .order('created_at', { ascending: true });
+        .eq('room_id', chatId)
+        .order('id', { ascending: true })
+        .limit(50);
 
-      if (eventChatLastId > 0) query = query.gt('id', eventChatLastId);
+      const lastId = eventLastIds[chatId] || 0;
+      if (lastId > 0) q = q.gt('id', lastId);
 
-      const { data } = await query.limit(50);
-      if (!data || data.length === 0) return;
+      const { data } = await q;
+      if (!data || data.length === 0) continue;
 
-      const myUserId = currentUser?.id || userId;
-      let added = false;
+      if (!privateChats[chatId]) privateChats[chatId] = [];
+
+      let hasNew = false;
       data.forEach(m => {
-        // Не добавляем своё — оно уже есть локально (оптимистично)
-        if (m.sender_id === myUserId) {
-          // Но обновляем dbId чтобы не запрашивать повторно
-          const local = (privateChats[chatId] || []).find(x => x.text === m.text && x.time === m.time && x.sender === 'user');
-          if (local) local.dbId = m.id;
-          eventChatLastId = Math.max(eventChatLastId, Number(m.id));
-          return;
-        }
-        // Проверка дублей
-        const dup = (privateChats[chatId] || []).some(x => x.dbId === m.id);
+        // Обновляем курсор
+        eventLastIds[chatId] = Math.max(eventLastIds[chatId] || 0, Number(m.id));
+
+        // Дубль?
+        const dup = privateChats[chatId].some(x => x.dbId === m.id);
         if (dup) return;
 
-        if (!privateChats[chatId]) privateChats[chatId] = [];
+        const isMine = m.sender_id === myUserId;
+        // Своё уже показано оптимистично — обновляем dbId и пропускаем
+        if (isMine) {
+          const local = privateChats[chatId].find(x =>
+            x.sender === 'user' && x.text === m.text && x.time === m.time && !x.dbId);
+          if (local) local.dbId = m.id;
+          return;
+        }
+
         privateChats[chatId].push({
           text: m.text, sender: 'other',
           time: m.time, senderName: m.sender_name,
           senderId: m.sender_id, dbId: m.id,
         });
-        eventChatLastId = Math.max(eventChatLastId, Number(m.id));
-        added = true;
+        hasNew = true;
+
+        // Уведомление если не в этом чате
+        if (currentPrivateChatId !== chatId) {
+          addUnreadMessage(chatId);
+          playNotificationSound();
+          showInAppNotification('💬 ' + m.sender_name, m.text);
+        }
       });
 
-      if (added) renderPrivateChatMessages(chatId);
-    } catch(e) { console.error('eventChatPoll error:', e); }
-  }, 2000);
+      if (hasNew) {
+        if (currentPrivateChatId === chatId) renderPrivateChatMessages(chatId);
+        renderPrivateChats();
+      }
+    } catch(e) { console.error('bgEventPoll error:', chatId, e); }
+  }
+}
+
+// Инициализируем курсоры lastId из уже загруженных сообщений
+function initEventLastIds() {
+  Object.keys(privateChats).forEach(chatId => {
+    if (!chatId.startsWith('event_')) return;
+    const msgs = privateChats[chatId];
+    if (!msgs.length) return;
+    const maxId = Math.max(...msgs.map(m => m.dbId || 0).filter(Boolean));
+    if (maxId > 0) eventLastIds[chatId] = maxId;
+  });
+}
+
+// startEventChatPolling теперь просто запускает фоновый polling
+// (оставляем для обратной совместимости вызовов)
+function startEventChatPolling(chatId, roomId) {
+  initEventLastIds();
+  startBgEventPolling();
 }
 
 // ── Профиль организатора ──────────────────────────────────────
