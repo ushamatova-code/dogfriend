@@ -2136,7 +2136,8 @@ function loadContactBook() {
 
 // Открыть чат с реальным пользователем
 function openChatWithUser(theirUserId, theirName, theirInitials, theirGrad) {
-  if (!theirUserId || theirUserId === userId) return;
+  const myUserId = currentUser?.id || userId;
+  if (!theirUserId || theirUserId === myUserId) return;
   currentPrivateChatId = theirUserId;
 
   // Запомним контакт
@@ -2292,6 +2293,7 @@ function sendPrivateMessage() {
 
   if (!privateChats[currentPrivateChatId]) privateChats[currentPrivateChatId] = [];
   const myUserId = currentUser?.id || userId;
+  console.log('💬 Sending private message, currentUser:', currentUser, 'myUserId:', myUserId);
   privateChats[currentPrivateChatId].push({ text, sender: 'user', time, senderName: myName, senderId: myUserId });
   localStorage.setItem('private_chats', JSON.stringify(privateChats));
   savePrivateMsgToServer(currentPrivateChatId, text, time);
@@ -3115,7 +3117,8 @@ function renderDialogList() {}
 // Загрузить историю с сервера
 async function loadPrivateChatFromServer(chatId) {
   if (!supabaseClient) return;
-  const roomId = getRoomId(userId, String(chatId));
+  const myUserId = currentUser?.id || userId;
+  const roomId = getRoomId(myUserId, String(chatId));
   
   try {
     const { data, error } = await supabaseClient
@@ -3128,7 +3131,7 @@ async function loadPrivateChatFromServer(chatId) {
     if (data && data.length > 0) {
       privateChats[chatId] = data.map(m => ({
         text: m.text,
-        sender: m.sender_id === userId ? 'user' : 'other',
+        sender: m.sender_id === myUserId ? 'user' : 'other',
         time: m.time,
         senderName: m.sender_name,
         senderId: m.sender_id,
