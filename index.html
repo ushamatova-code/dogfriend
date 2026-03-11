@@ -808,7 +808,7 @@ async function sendBookingNotification() {
     if (!privateChats[currentSpecId]) privateChats[currentSpecId] = [];
     const myUserId = currentUser?.id || userId;
     privateChats[currentSpecId].push({ text: message, sender: 'user', time, senderName: profile.name || 'Клиент', senderId: myUserId });
-    localStorage.setItem('private_chats', JSON.stringify(privateChats));
+    savePrivateChatsToStorage();
     
     // Сохраняем в БД через правильную функцию (chatId = currentSpecId)
     await savePrivateMsgToServer(currentSpecId, message, time);
@@ -1670,6 +1670,15 @@ let healthFilter = 'Все';
 let currentSpecId = null;
 let currentPrivateChatId = null;  // ID специалиста для приватного чата
 let privateChats = {};  // {specialistId: [{text, sender, time}, ...]}
+
+// Сохраняем в localStorage только личные чаты, event-чаты туда не пишем никогда
+function savePrivateChatsToStorage() {
+  const toSave = {};
+  Object.keys(privateChats).forEach(k => {
+    if (!k.startsWith('event_')) toSave[k] = privateChats[k];
+  });
+  localStorage.setItem('private_chats', JSON.stringify(toSave));
+}
 let unreadCount = parseInt(localStorage.getItem('unread_count') || '0');
 let unreadChats = JSON.parse(localStorage.getItem('unread_chats') || '{}');
 
@@ -2229,7 +2238,7 @@ function subscribeToPrivateChat(theirId) {
       senderName: data.senderName,
       senderId: data.senderId,
     });
-    localStorage.setItem('private_chats', JSON.stringify(privateChats));
+    savePrivateChatsToStorage();
 
     // Запоминаем контакт если не знаем
     if (!contactBook[chatId]) {
@@ -2308,7 +2317,7 @@ function sendPrivateMessage() {
 
   // Для личных чатов — кэшируем в localStorage
   if (!isEventChat) {
-    localStorage.setItem('private_chats', JSON.stringify(privateChats));
+    savePrivateChatsToStorage();
   }
 
   input.value = '';
@@ -2391,7 +2400,7 @@ function deleteLocalChat(chatId) {
   const isEventChat = String(chatId).startsWith('event_');
 
   delete privateChats[chatId];
-  localStorage.setItem('private_chats', JSON.stringify(privateChats));
+  savePrivateChatsToStorage();
 
   if (unreadChats[chatId]) {
     unreadCount -= unreadChats[chatId];
@@ -2415,7 +2424,11 @@ function deleteLocalChat(chatId) {
 function renderPrivateChats() {
   const list = document.getElementById('private-chats-list');
   const noChats = document.getElementById('no-private-chats');
-  const keys = Object.keys(privateChats).filter(k => privateChats[k].length > 0);
+  // Личные чаты: только непустые из памяти
+  // Event-чаты: берём из contactBook (они могут быть пустыми в памяти до загрузки БД)
+  const eventKeys = Object.keys(contactBook).filter(k => k.startsWith('event_'));
+  const personalKeys = Object.keys(privateChats).filter(k => !k.startsWith('event_') && privateChats[k].length > 0);
+  const keys = [...new Set([...personalKeys, ...eventKeys])];
 
   if (!keys.length) {
     list.innerHTML = '';
@@ -2425,15 +2438,17 @@ function renderPrivateChats() {
   if (noChats) noChats.style.display = 'none';
 
   keys.sort((a, b) => {
-    const aLast = privateChats[a][privateChats[a].length - 1];
-    const bLast = privateChats[b][privateChats[b].length - 1];
+    const aMsgs = privateChats[a] || [];
+    const bMsgs = privateChats[b] || [];
+    const aLast = aMsgs[aMsgs.length - 1];
+    const bLast = bMsgs[bMsgs.length - 1];
     const aTime = aLast?.created_at || aLast?.time || '00:00';
     const bTime = bLast?.created_at || bLast?.time || '00:00';
     return bTime.localeCompare(aTime);
   });
 
   list.innerHTML = keys.map(id => {
-    const msgs = privateChats[id];
+    const msgs = privateChats[id] || [];
     const last = msgs[msgs.length - 1];
     const contact = contactBook[id] || { name: id, initials: id.slice(0,2).toUpperCase(), grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)' };
     const unread = unreadChats[id] || 0;
@@ -2501,9 +2516,18 @@ function renderPrivateChats() {
         open = false;
         return;
       }
-      const safeId = escHtml(id);
-      const contact = contactBook[id] || { name: id, initials: id.slice(0,2).toUpperCase(), grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)' };
-      openChatWithUser(id, contact.name, contact.initials, contact.grad);
+      if (id.startsWith('event_')) {
+        // Event-чат: восстанавливаем из contactBook и открываем через правильный путь
+        const evContact = contactBook[id];
+        if (evContact) {
+          const evId = id.replace('event_', '');
+          // Создаём минимальный объект события чтобы передать в openEventGroupChat
+          openEventGroupChat({ id: evId, title: evContact.name.replace('📅 ', '') });
+        }
+      } else {
+        const contact = contactBook[id] || { name: id, initials: id.slice(0,2).toUpperCase(), grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)' };
+        openChatWithUser(id, contact.name, contact.initials, contact.grad);
+      }
     });
   });
 }
@@ -2519,18 +2543,18 @@ function loadPrivateChatsFromStorage() {
   });
 
   renderPrivateChats();
+  // Event-чаты грузятся из БД после инициализации Supabase (см. initSupabase)
+}
 
-  // После инициализации Supabase — обновляем event-чаты из БД
-  // (делаем через setTimeout чтобы дать Supabase время подняться)
-  setTimeout(async () => {
-    if (!supabaseClient) return;
-    const eventChatIds = Object.keys(contactBook).filter(k => k.startsWith('event_'));
-    for (const chatId of eventChatIds) {
-      const roomId = chatId; // для event_ чатов chatId == roomId
-      await loadEventChatFromServer(chatId, roomId);
-    }
-    if (eventChatIds.length > 0) renderPrivateChats();
-  }, 2500);
+// Вызывается из initSupabase после успешного подключения
+async function reloadEventChatsFromDB() {
+  if (!supabaseClient) return;
+  const eventChatIds = Object.keys(contactBook).filter(k => k.startsWith('event_'));
+  if (!eventChatIds.length) return;
+  for (const chatId of eventChatIds) {
+    await loadEventChatFromServer(chatId, chatId);
+  }
+  renderPrivateChats();
 }
 
 // ============================================================
@@ -2657,11 +2681,17 @@ async function checkAuth() {
       }
       lastCheckedTime = Date.now() - 60 * 1000;
       startIncomingMessagesPolling();
-      Object.keys(privateChats).forEach(chatId => { subscribeToPrivateChat(chatId); });
-      
+      // Подписываемся только на личные чаты, не на event_ (у них свой polling)
+      Object.keys(privateChats).forEach(chatId => {
+        if (!chatId.startsWith('event_')) subscribeToPrivateChat(chatId);
+      });
+
+      // Загружаем event-чаты из БД (единственный источник истины)
+      reloadEventChatsFromDB();
+
       // Проверяем бизнес сразу после авторизации
       checkUserBusiness();
-      
+
       nav('home');
     } else {
       console.log('❌ No session found');
@@ -3088,18 +3118,18 @@ function startIncomingMessagesPolling() {
           const msgKey = `${msg.id}-${msg.created_at}`;
           if (processedMessageIds.has(msgKey)) return;
           
-          // Проверяем что это для нас:
-          // — личный чат: room_id содержит наш userId
-          // — чат события: room_id начинается с event_ и мы подписаны
+          // Личный чат: room_id содержит наш userId
+          // Event-чаты обрабатываются отдельным polling (startEventChatPolling)
           const isEventRoom = msg.room_id && msg.room_id.startsWith('event_');
+          if (isEventRoom) return; // event-чаты пропускаем здесь
+
           const isMyRoom = msg.room_id && msg.room_id.includes(myEffectiveId);
-          if (!isEventRoom && !isMyRoom) return;
+          if (!isMyRoom) return;
 
           // Игнорируем свои сообщения
           if (msg.sender_id === myEffectiveId) return;
 
-          // Для event_ чатов chatId = roomId, для личных = sender_id
-          const chatId = isEventRoom ? msg.room_id : msg.sender_id;
+          const chatId = msg.sender_id;
           const roomId = msg.room_id;
           const channelName = 'dogfriend-dm-' + roomId;
           
@@ -3134,7 +3164,7 @@ function startIncomingMessagesPolling() {
             senderId: msg.sender_id,
           });
           
-          localStorage.setItem('private_chats', JSON.stringify(privateChats));
+          savePrivateChatsToStorage();
           
           // Запоминаем контакт
           if (!contactBook[chatId]) {
@@ -3146,8 +3176,8 @@ function startIncomingMessagesPolling() {
             localStorage.setItem('df_contacts', JSON.stringify(contactBook));
           }
           
-          // Подписываемся на Realtime канал этого чата для будущих сообщений
-          subscribeToPrivateChat(chatId);
+          // Подписываемся на Realtime канал (только для личных чатов)
+          if (!chatId.startsWith('event_')) subscribeToPrivateChat(chatId);
           
           // Показываем уведомления
           if (currentPrivateChatId !== chatId) {
@@ -3290,7 +3320,7 @@ async function loadPrivateChatFromServer(chatId) {
         senderName: m.sender_name,
         senderId: m.sender_id,
       }));
-      localStorage.setItem('private_chats', JSON.stringify(privateChats));
+      savePrivateChatsToStorage();
       if (currentPrivateChatId == chatId) renderPrivateChatMessages(chatId);
     }
   } catch(e) {
@@ -3332,7 +3362,7 @@ async function savePrivateMsgToServer(chatId, text, time) {
         event: 'message',
         payload: { text, time, senderId: myUserId, senderName: p.name || 'Гость' }
       });
-      localStorage.setItem('private_chats', JSON.stringify(privateChats));
+      savePrivateChatsToStorage();
     }
   } catch(e) {
     console.error('❌ Save message error:', e);
