@@ -4019,7 +4019,7 @@ async function renderCatalogTrainers() {
   }
   
   list.innerHTML = businesses.map(b => `
-    <div class="scard" onclick="openBusinessProfile('${b.id}')">
+    <div class="scard" onclick='openBusinessProfile("${b.id}")'>
       <div class="avatar" style="width:54px;height:54px;font-size:18px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);">${b.name.substring(0,2).toUpperCase()}</div>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
@@ -4049,7 +4049,7 @@ async function renderHealthClinics() {
   }
   
   list.innerHTML = businesses.map(b => `
-    <div class="scard" onclick="openBusinessProfile('${b.id}')" style="margin:0 16px 12px;">
+    <div class="scard" onclick='openBusinessProfile("${b.id}")' style="margin:0 16px 12px;">
       <div class="avatar" style="width:54px;height:54px;font-size:18px;background:linear-gradient(135deg,#F0FFF4,#C6F6D5);">🏥</div>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
@@ -4079,7 +4079,7 @@ async function renderCafes() {
   }
   
   list.innerHTML = businesses.map(b => `
-    <div class="pc" onclick="openBusinessProfile('${b.id}')" style="margin:0 16px 12px;">
+    <div class="pc" onclick='openBusinessProfile("${b.id}")' style="margin:0 16px 12px;">
       <div class="pc-img" style="background:linear-gradient(135deg,#FFF5E6,#FFD9A0);display:flex;align-items:center;justify-content:center;font-size:40px;">☕</div>
       <div style="flex:1;padding:12px;">
         <div style="font-weight:800;font-size:15px;margin-bottom:4px;">${b.name}</div>
