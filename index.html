@@ -2689,14 +2689,11 @@ async function checkAuth() {
       currentUser = session.user;
       try { await loadUserProfile(); } catch(e) { console.warn('loadUserProfile:', e); }
       
-      // Перезапускаем polling и подписки с правильным userId (currentUser.id)
-      if (incomingMsgPollInterval) {
-        clearInterval(incomingMsgPollInterval);
-        incomingMsgPollInterval = null;
-      }
-      lastCheckedTime = Date.now() - 60 * 1000;
-      startIncomingMessagesPolling();
-      // Подписываемся только на личные чаты, не на event_ (у них свой polling)
+      // Запускаем Realtime подписку на новые сообщения (заменяет polling)
+      stopRealtimeDMSubscription(); // Сбрасываем если была старая
+      startRealtimeDMSubscription();
+      
+      // Подписываемся только на личные чаты broadcast-каналы
       Object.keys(privateChats).forEach(chatId => {
         if (!chatId.startsWith('event_')) subscribeToPrivateChat(chatId);
       });
@@ -2746,14 +2743,12 @@ async function supabaseLogin() {
         localStorage.setItem('df_email', email);
         try { loadUserProfile(); } catch(e) {}
         
-        // Перезапускаем polling с правильным Supabase userId
-        if (incomingMsgPollInterval) {
-          clearInterval(incomingMsgPollInterval);
-          incomingMsgPollInterval = null;
-        }
-        lastCheckedTime = Date.now() - 60 * 1000;
-        startIncomingMessagesPolling();
-        Object.keys(privateChats).forEach(chatId => subscribeToPrivateChat(chatId));
+        // Запускаем Realtime подписку вместо polling
+        stopRealtimeDMSubscription();
+        startRealtimeDMSubscription();
+        Object.keys(privateChats).forEach(chatId => {
+          if (!chatId.startsWith('event_')) subscribeToPrivateChat(chatId);
+        });
         
         // Проверяем бизнес
         checkUserBusiness();
@@ -2971,6 +2966,12 @@ function openPublicChat() {
   document.getElementById('chat-conv-av').style.background = 'linear-gradient(135deg,#4A90D9,#7B5EA7)';
   document.getElementById('chat-conv-av').textContent = '💬';
   document.getElementById('chat-conv-subtitle').innerHTML = '<span style="color:#aaa">● подключение...</span>';
+  
+  // Очищаем старые сообщения и загружаем историю из БД
+  const wrap = document.getElementById('chat-messages');
+  if (wrap) wrap.innerHTML = '';
+  loadPublicChatHistory();
+  
   nav('chatConv');
   
   // Запрашиваем разрешение на уведомления при первом открытии
@@ -3007,13 +3008,13 @@ function initBackgroundDM() {
   }
   chatNick = getChatNick();
   
-  // Подписываемся на все существующие чаты
+  // Подписываемся на broadcast каналы существующих чатов
   Object.keys(privateChats).forEach(chatId => {
-    subscribeToPrivateChat(chatId);
+    if (!chatId.startsWith('event_')) subscribeToPrivateChat(chatId);
   });
   
-  // Запускаем polling — он сам разберётся с userId через currentUser
-  startIncomingMessagesPolling();
+  // Запускаем Realtime подписку на БД (заменяет polling)
+  startRealtimeDMSubscription();
 }
 function connectSupabaseRealtime() {
   try {
@@ -3070,17 +3071,13 @@ function connectSupabaseRealtime() {
             payload: { nick: chatNick, text: `🐾 ${chatNick} присоединился к чату` }
           });
           
-          // Подписываемся на все приватные чаты
+          // Подписываемся на все приватные чаты (broadcast каналы для мгновенной доставки)
           Object.keys(privateChats).forEach(chatId => {
-            subscribeToPrivateChat(chatId);
+            if (!chatId.startsWith('event_')) subscribeToPrivateChat(chatId);
           });
           
-          // Запускаем/перезапускаем polling для новых личных сообщений
-          if (incomingMsgPollInterval) {
-            clearInterval(incomingMsgPollInterval);
-            incomingMsgPollInterval = null;
-          }
-          startIncomingMessagesPolling();
+          // Запускаем Realtime подписку на БД (если ещё не запущена)
+          startRealtimeDMSubscription();
           
           refreshOnlineCount();
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
@@ -3109,122 +3106,154 @@ function connectSupabaseRealtime() {
   }
 }
 
-// Polling для входящих личных сообщений
-let incomingMsgPollInterval = null;
-let lastCheckedTime = Date.now();
-let processedMessageIds = new Set(); // Храним ID обработанных сообщений
+// ============================================================
+// REALTIME ПОДПИСКА НА НОВЫЕ СООБЩЕНИЯ (заменяет polling)
+// Одна подписка ловит ВСЕ новые сообщения: личные, event, публичные
+// ============================================================
+let realtimeDMChannel = null;
 
-function startIncomingMessagesPolling() {
-  if (incomingMsgPollInterval || !supabaseClient) return;
+function startRealtimeDMSubscription() {
+  if (realtimeDMChannel || !supabaseClient) return;
   
-  console.log('🔄 Starting incoming messages polling');
+  const myUserId = currentUser?.id || userId;
+  if (!myUserId) return;
   
-  incomingMsgPollInterval = setInterval(async () => {
-    try {
-      // Ищем сообщения где мы получатель (roomId содержит наш userId)
-      const { data, error } = await supabaseClient
-        .from('direct_messages')
-        .select('*')
-        .gt('created_at', new Date(lastCheckedTime).toISOString())
-        .order('created_at', { ascending: true })
-        .limit(50);
+  console.log('🔔 Starting Realtime subscription for direct_messages');
+  
+  realtimeDMChannel = supabaseClient
+    .channel('dm-changes')
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'direct_messages'
+    }, (payload) => {
+      const msg = payload.new;
+      if (!msg) return;
       
-      if (data && data.length > 0) {
-        console.log('📬 Polling found', data.length, 'new messages');
+      const myId = currentUser?.id || userId;
+      const myIds = [myId];
+      if (currentUser?.id && userId && currentUser.id !== userId) myIds.push(userId);
+      
+      // Пропускаем свои сообщения
+      if (myIds.includes(msg.sender_id)) return;
+      
+      const roomId = msg.room_id;
+      
+      // ── Общий чат ──
+      if (roomId === 'public_chat') {
+        // Общий чат обрабатывается через broadcast (мгновенно), пропускаем
+        return;
+      }
+      
+      // ── Event-чат ──
+      if (roomId && roomId.startsWith('event_')) {
+        const chatId = roomId;
+        // Проверяем что мы подписаны на этот event-чат
+        if (!contactBook[chatId]) return;
         
-        // Используем реальный Supabase userId если есть, иначе локальный
-        const myEffectiveId = currentUser?.id || userId;
-        // Проверяем оба ID — на случай если собеседник использовал старый локальный ID
-        const myIds = [myEffectiveId];
-        if (currentUser?.id && userId && currentUser.id !== userId) myIds.push(userId);
+        if (!privateChats[chatId]) privateChats[chatId] = [];
         
-        data.forEach(msg => {
-          // Проверяем что не обрабатывали это сообщение
-          const msgKey = `${msg.id}-${msg.created_at}`;
-          if (processedMessageIds.has(msgKey)) return;
-          
-          // Личный чат: room_id содержит наш userId
-          // Event-чаты обрабатываются отдельным polling (startEventChatPolling)
-          const isEventRoom = msg.room_id && msg.room_id.startsWith('event_');
-          if (isEventRoom) return; // event-чаты пропускаем здесь
-
-          const isMyRoom = msg.room_id && myIds.some(id => msg.room_id.includes(id));
-          if (!isMyRoom) return;
-
-          // Игнорируем свои сообщения
-          if (myIds.includes(msg.sender_id)) return;
-
-          const chatId = msg.sender_id;
-          const roomId = msg.room_id;
-          const channelName = 'dogfriend-dm-' + roomId;
-          
-          // Если уже подписаны на Realtime для этого чата - пропускаем
-          // (сообщение придёт через Realtime)
-          if (supabasePrivateChannels[channelName]) {
-            console.log('⏭️ Skipping polling for', chatId, '- using Realtime');
-            processedMessageIds.add(msgKey);
-            return;
-          }
-          
-          console.log('📥 Processing polled message from:', chatId);
-          
-          // Добавляем сообщение
-          if (!privateChats[chatId]) privateChats[chatId] = [];
-          
-          // Проверяем что такого сообщения ещё нет
-          const exists = privateChats[chatId].some(m => 
-            m.time === msg.time && m.text === msg.text && m.senderId === msg.sender_id
-          );
-          
-          if (exists) {
-            processedMessageIds.add(msgKey);
-            return;
-          }
-          
-          privateChats[chatId].push({
-            text: msg.text,
-            sender: 'other',
-            time: msg.time,
-            senderName: msg.sender_name,
-            senderId: msg.sender_id,
-            created_at: msg.created_at,
-          });
-          
-          savePrivateChatsToStorage();
-          
-          // Запоминаем контакт
-          if (!contactBook[chatId]) {
-            contactBook[chatId] = { 
-              name: msg.sender_name, 
-              initials: msg.sender_name.slice(0,2).toUpperCase(), 
-              grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)' 
-            };
-            localStorage.setItem('df_contacts', JSON.stringify(contactBook));
-          }
-          
-          // Подписываемся на Realtime канал (только для личных чатов)
-          if (!chatId.startsWith('event_')) subscribeToPrivateChat(chatId);
-          
-          // Показываем уведомления
-          if (currentPrivateChatId !== chatId) {
-            addUnreadMessage(chatId);
-            playNotificationSound();
-            showInAppNotification('💬 ' + msg.sender_name, msg.text);
-            showBrowserNotification('Новое от ' + msg.sender_name, { body: msg.text.substring(0, 80) });
-          } else {
-            renderPrivateChatMessages(chatId);
-          }
-          
-          renderPrivateChats();
-          processedMessageIds.add(msgKey);
+        // Дубль?
+        const dup = privateChats[chatId].some(x => x.dbId === msg.id);
+        if (dup) return;
+        
+        privateChats[chatId].push({
+          text: msg.text, sender: 'other',
+          time: msg.time, senderName: msg.sender_name,
+          senderId: msg.sender_id, dbId: msg.id,
+          created_at: msg.created_at,
         });
         
-        lastCheckedTime = Date.now();
+        if (currentPrivateChatId === chatId) {
+          renderPrivateChatMessages(chatId);
+        } else {
+          addUnreadMessage(chatId);
+          playNotificationSound();
+          showInAppNotification('💬 ' + msg.sender_name, msg.text);
+        }
+        renderPrivateChats();
+        return;
       }
-    } catch(e) {
-      console.error('❌ Polling error:', e);
-    }
-  }, 3000); // Проверяем каждые 3 секунды
+      
+      // ── Личный чат ──
+      const isMyRoom = myIds.some(id => roomId && roomId.includes(id));
+      if (!isMyRoom) return;
+      
+      const chatId = msg.sender_id;
+      if (!privateChats[chatId]) privateChats[chatId] = [];
+      
+      // Дубль? (может прийти и через broadcast и через postgres_changes)
+      const exists = privateChats[chatId].some(m => 
+        m.text === msg.text && m.time === msg.time && m.senderId === msg.sender_id
+      );
+      if (exists) return;
+      
+      privateChats[chatId].push({
+        text: msg.text,
+        sender: 'other',
+        time: msg.time,
+        senderName: msg.sender_name,
+        senderId: msg.sender_id,
+        created_at: msg.created_at,
+        dbId: msg.id,
+      });
+      savePrivateChatsToStorage();
+      
+      // Запоминаем контакт
+      if (!contactBook[chatId]) {
+        contactBook[chatId] = { 
+          name: msg.sender_name, 
+          initials: msg.sender_name.slice(0,2).toUpperCase(), 
+          grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)' 
+        };
+        localStorage.setItem('df_contacts', JSON.stringify(contactBook));
+      }
+      
+      // Подписываемся на broadcast-канал для мгновенной доставки
+      if (!chatId.startsWith('event_')) subscribeToPrivateChat(chatId);
+      
+      if (currentPrivateChatId !== chatId) {
+        addUnreadMessage(chatId);
+        playNotificationSound();
+        showInAppNotification('💬 ' + msg.sender_name, msg.text);
+        showBrowserNotification('Новое от ' + msg.sender_name, { body: msg.text.substring(0, 80) });
+      } else {
+        renderPrivateChatMessages(chatId);
+      }
+      renderPrivateChats();
+    })
+    .subscribe((status) => {
+      console.log('📡 Realtime DM subscription status:', status);
+      if (status === 'SUBSCRIBED') {
+        console.log('✅ Realtime DM subscription active');
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        console.error('❌ Realtime DM subscription failed:', status);
+        // Retry
+        realtimeDMChannel = null;
+        setTimeout(startRealtimeDMSubscription, 3000);
+      }
+    });
+}
+
+function stopRealtimeDMSubscription() {
+  if (realtimeDMChannel) {
+    realtimeDMChannel.unsubscribe();
+    realtimeDMChannel = null;
+  }
+}
+
+// ============================================================
+// LEGACY POLLING — ОТКЛЮЧЁН (заменён на Realtime выше)
+// Оставлен как fallback на случай если Realtime не поддерживается
+// ============================================================
+let incomingMsgPollInterval = null;
+let lastCheckedTime = Date.now();
+let processedMessageIds = new Set();
+
+function startIncomingMessagesPolling() {
+  // Polling отключён — используем Realtime Postgres Changes
+  // Запускаем Realtime подписку вместо polling
+  startRealtimeDMSubscription();
 }
 
 function sendChatMsg() {
@@ -3233,10 +3262,11 @@ function sendChatMsg() {
   if (!text || !supabasePublicChannel) return;
   const now  = new Date();
   const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
-  appendMessage(chatNick, text, time, true);
+  appendMessage(chatNick, text, time, true, currentUser?.id || userId);
   input.value = '';
   chatInputResize(input);
   
+  // Broadcast для мгновенной доставки (typing + сообщение)
   supabasePublicChannel.send({
     type: 'broadcast',
     event: 'message',
@@ -3249,6 +3279,46 @@ function sendChatMsg() {
     event: 'typing',
     payload: { nick: chatNick, isTyping: false }
   });
+
+  // Сохраняем в БД для истории общего чата
+  if (supabaseClient) {
+    const myUserId = currentUser?.id || userId;
+    const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
+    supabaseClient.from('direct_messages').insert({
+      room_id: 'public_chat',
+      sender_id: myUserId,
+      sender_name: p.name || chatNick,
+      text: text,
+      time: time
+    }).then(({ error }) => {
+      if (error) console.error('❌ Failed to save public msg:', error);
+    });
+  }
+}
+
+// Загрузка истории общего чата из БД
+async function loadPublicChatHistory() {
+  if (!supabaseClient) return;
+  try {
+    const { data } = await supabaseClient
+      .from('direct_messages')
+      .select('*')
+      .eq('room_id', 'public_chat')
+      .order('created_at', { ascending: true })
+      .limit(100);
+    
+    if (!data || !data.length) return;
+    const myUserId = currentUser?.id || userId;
+    const wrap = document.getElementById('chat-messages');
+    if (!wrap) return;
+    
+    data.forEach(m => {
+      const isMine = m.sender_id === myUserId;
+      appendMessage(m.sender_name, m.text, m.time, isMine, m.sender_id);
+    });
+  } catch(e) {
+    console.error('loadPublicChatHistory error:', e);
+  }
 }
 
 function appendMessage(nick, text, time, isMine, senderId) {
@@ -5591,81 +5661,14 @@ async function loadEventChatFromServer(chatId, roomId) {
   } catch(e) { console.error('loadEventChat error:', e); }
 }
 
-// ── Фоновый polling всех event-чатов ─────────────────────────
-// Один интервал на все event-чаты, работает всегда в фоне
+// ── Фоновый polling event-чатов — ОТКЛЮЧЁН ──────────────────
+// Заменён на единую Realtime подписку (startRealtimeDMSubscription)
 let bgEventPollInterval = null;
-// lastDbId на каждый chatId: { 'event_XXX': 42, ... }
 const eventLastIds = {};
 
 function startBgEventPolling() {
-  if (bgEventPollInterval) return; // уже запущен
-  bgEventPollInterval = setInterval(bgEventPollTick, 3000);
-}
-
-async function bgEventPollTick() {
-  if (!supabaseClient) return;
-  const myUserId = currentUser?.id || userId;
-  if (!myUserId) return;
-
-  const eventChatIds = Object.keys(contactBook).filter(k => k.startsWith('event_'));
-  if (!eventChatIds.length) return;
-
-  for (const chatId of eventChatIds) {
-    try {
-      let q = supabaseClient
-        .from('direct_messages')
-        .select('*')
-        .eq('room_id', chatId)
-        .order('id', { ascending: true })
-        .limit(50);
-
-      const lastId = eventLastIds[chatId] || 0;
-      if (lastId > 0) q = q.gt('id', lastId);
-
-      const { data } = await q;
-      if (!data || data.length === 0) continue;
-
-      if (!privateChats[chatId]) privateChats[chatId] = [];
-
-      let hasNew = false;
-      data.forEach(m => {
-        // Обновляем курсор
-        eventLastIds[chatId] = Math.max(eventLastIds[chatId] || 0, Number(m.id));
-
-        // Дубль?
-        const dup = privateChats[chatId].some(x => x.dbId === m.id);
-        if (dup) return;
-
-        const isMine = m.sender_id === myUserId;
-        // Своё уже показано оптимистично — обновляем dbId и пропускаем
-        if (isMine) {
-          const local = privateChats[chatId].find(x =>
-            x.sender === 'user' && x.text === m.text && x.time === m.time && !x.dbId);
-          if (local) local.dbId = m.id;
-          return;
-        }
-
-        privateChats[chatId].push({
-          text: m.text, sender: 'other',
-          time: m.time, senderName: m.sender_name,
-          senderId: m.sender_id, dbId: m.id,
-        });
-        hasNew = true;
-
-        // Уведомление если не в этом чате
-        if (currentPrivateChatId !== chatId) {
-          addUnreadMessage(chatId);
-          playNotificationSound();
-          showInAppNotification('💬 ' + m.sender_name, m.text);
-        }
-      });
-
-      if (hasNew) {
-        if (currentPrivateChatId === chatId) renderPrivateChatMessages(chatId);
-        renderPrivateChats();
-      }
-    } catch(e) { console.error('bgEventPoll error:', chatId, e); }
-  }
+  // Event-чаты теперь получают сообщения через Realtime Postgres Changes
+  startRealtimeDMSubscription();
 }
 
 // Инициализируем курсоры lastId из уже загруженных сообщений
