@@ -1191,9 +1191,13 @@ function nav(id) {
     currentPrivateChatId = null;
   }
   
-  // Загружаем бизнесы при открытии каталога
+  // Загружаем бизнесы при открытии экранов
   if (id === 'catalog') {
     renderCatalogTrainers();
+  } else if (id === 'health') {
+    renderHealthClinics();
+  } else if (id === 'dogmap') {
+    renderCafes();
   }
   
   histStack.push(curr.id);
@@ -3993,6 +3997,60 @@ async function renderCatalogTrainers() {
       </div>
       <div style="text-align:right;flex-shrink:0;">
         <div style="font-weight:800;font-size:14px;color:var(--primary);">${b.price_from || 'от 3000 ₽'}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Рендер клиник (загружаем из БД)
+async function renderHealthClinics() {
+  const businesses = await loadBusinesses('clinic');
+  const list = document.getElementById('health-list');
+  if (!list) return;
+  
+  if (businesses.length === 0) {
+    list.innerHTML = '<p style="padding:20px;text-align:center;color:var(--text-secondary);">Пока нет клиник. Добавьте свою!</p>';
+    return;
+  }
+  
+  list.innerHTML = businesses.map(b => `
+    <div class="scard" onclick="openBusinessProfile('${b.id}')" style="margin:0 16px 12px;">
+      <div class="avatar" style="width:54px;height:54px;font-size:18px;background:linear-gradient(135deg,#F0FFF4,#C6F6D5);">🏥</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+          <div style="font-weight:800;font-size:15px;">${b.name}</div>
+          <span class="tag tag-g">Проверено</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">⭐ ${b.rating} · ${b.reviews_count || 0} отзывов</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">📍 ${b.address}</div>
+        ${b.services && b.services.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;">${b.services.map(s => `<span class="tag tag-b" style="font-size:11px;">${s}</span>`).join('')}</div>` : ''}
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-weight:800;font-size:14px;color:var(--primary);">${b.price_from || 'от 2500 ₽'}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Рендер кафе (загружаем из БД)
+async function renderCafes() {
+  const businesses = await loadBusinesses('cafe');
+  const list = document.getElementById('places-list');
+  if (!list) return;
+  
+  if (businesses.length === 0) {
+    list.innerHTML = '<p style="padding:20px;text-align:center;color:var(--text-secondary);">Пока нет кафе. Добавьте своё!</p>';
+    return;
+  }
+  
+  list.innerHTML = businesses.map(b => `
+    <div class="pc" onclick="openBusinessProfile('${b.id}')" style="margin:0 16px 12px;">
+      <div class="pc-img" style="background:linear-gradient(135deg,#FFF5E6,#FFD9A0);display:flex;align-items:center;justify-content:center;font-size:40px;">☕</div>
+      <div style="flex:1;padding:12px;">
+        <div style="font-weight:800;font-size:15px;margin-bottom:4px;">${b.name}</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">📍 ${b.address}</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">⭐ ${b.rating} · ${b.reviews_count || 0} отзывов</div>
+        ${b.services && b.services.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;">${b.services.map(s => `<span class="tag tag-b" style="font-size:11px;">${s}</span>`).join('')}</div>` : ''}
       </div>
     </div>
   `).join('');
