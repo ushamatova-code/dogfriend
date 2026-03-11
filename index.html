@@ -3049,13 +3049,18 @@ function startIncomingMessagesPolling() {
           const msgKey = `${msg.id}-${msg.created_at}`;
           if (processedMessageIds.has(msgKey)) return;
           
-          // Проверяем что это для нас (roomId содержит наш userId)
-          if (!msg.room_id || !msg.room_id.includes(myEffectiveId)) return;
-          
+          // Проверяем что это для нас:
+          // — личный чат: room_id содержит наш userId
+          // — чат события: room_id начинается с event_ и мы подписаны
+          const isEventRoom = msg.room_id && msg.room_id.startsWith('event_');
+          const isMyRoom = msg.room_id && msg.room_id.includes(myEffectiveId);
+          if (!isEventRoom && !isMyRoom) return;
+
           // Игнорируем свои сообщения
           if (msg.sender_id === myEffectiveId) return;
-          
-          const chatId = msg.sender_id;
+
+          // Для event_ чатов chatId = roomId, для личных = sender_id
+          const chatId = isEventRoom ? msg.room_id : msg.sender_id;
           const roomId = msg.room_id;
           const channelName = 'dogfriend-dm-' + roomId;
           
@@ -3258,25 +3263,34 @@ async function loadPrivateChatFromServer(chatId) {
 async function savePrivateMsgToServer(chatId, text, time) {
   if (!supabaseClient) return;
   const myUserId = currentUser?.id || userId;
-  const roomId = getRoomId(myUserId, String(chatId));
   const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
-  
-  console.log('💾 savePrivateMsgToServer: chatId=', chatId, 'myUserId=', myUserId, 'roomId=', roomId);
-  
+
+  // Для чатов событий room_id = chatId напрямую (event_XXX)
+  // Для личных чатов — sorted join
+  const isEventChat = String(chatId).startsWith('event_');
+  const roomId = isEventChat ? String(chatId) : getRoomId(myUserId, String(chatId));
+
+  // Для event чатов broadcast идёт в channel dogfriend-dm-{roomId}
+  const channelName = 'dogfriend-dm-' + roomId;
+
   try {
-    const { data, error } = await supabaseClient.from('direct_messages').insert({
+    // Сохраняем в БД
+    const { error } = await supabaseClient.from('direct_messages').insert({
       room_id: roomId,
       sender_id: myUserId,
       sender_name: p.name || 'Гость',
       text: text,
       time: time
     });
-    
-    if (error) {
-      console.error('❌ Failed to save message:', error);
-    } else {
-      console.log('✅ Message saved to DB');
-    }
+    if (error) { console.error('❌ Failed to save message:', error); return; }
+
+    // Broadcast через Realtime чтобы получатели увидели сразу
+    const ch = supabasePrivateChannels[channelName] || supabaseClient.channel(channelName);
+    ch.send({
+      type: 'broadcast',
+      event: 'message',
+      payload: { text, time, senderId: myUserId, senderName: p.name || 'Гость' }
+    });
   } catch(e) {
     console.error('❌ Save message error:', e);
   }
@@ -5119,6 +5133,7 @@ async function loadEvents() {
   if (!supabaseClient) return;
   try {
     const now = new Date().toISOString();
+    // Загружаем события
     const { data, error } = await supabaseClient
       .from('events')
       .select('*, businesses(name, type)')
@@ -5127,12 +5142,29 @@ async function loadEvents() {
       .limit(50);
     if (error) throw error;
     allEvents = data || [];
+
+    // Загружаем количество участников для каждого события одним запросом
+    if (allEvents.length > 0) {
+      const eventIds = allEvents.map(e => e.id);
+      const { data: parts } = await supabaseClient
+        .from('event_participants')
+        .select('event_id')
+        .in('event_id', eventIds)
+        .eq('status', 'going');
+
+      // Считаем участников по event_id
+      const counts = {};
+      (parts || []).forEach(p => {
+        counts[p.event_id] = (counts[p.event_id] || 0) + 1;
+      });
+      allEvents.forEach(ev => { ev.participants_count = counts[ev.id] || 0; });
+    }
+
     renderHomeEvents();
     if (document.getElementById('events')?.classList.contains('active') ||
         document.getElementById('events')?.style.display !== 'none') {
       renderEventsList();
     }
-    // Загружаем свои участия
     if (currentUser) loadMyParticipations();
   } catch(e) {
     console.error('loadEvents error:', e);
@@ -5399,9 +5431,102 @@ async function toggleRSVP() {
 function openEventChat() {
   if (!currentEvent) return;
   if (!currentUser) { showToast('Войдите чтобы открыть чат'); return; }
-  const roomId = 'event_' + currentEvent.id;
-  const name = '📅 ' + currentEvent.title;
-  openChatWithUser(roomId, name, '📅', 'linear-gradient(135deg,#4A90D9,#7B5EA7)');
+  openEventGroupChat(currentEvent);
+}
+
+function openEventGroupChat(ev) {
+  const roomId = 'event_' + ev.id; // фиксированный room_id для всех участников
+  const name = '📅 ' + ev.title;
+  const chatId = roomId; // ключ в privateChats = room_id события
+
+  // Запоминаем как контакт (группа)
+  contactBook[chatId] = {
+    name: name,
+    initials: '📅',
+    grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)',
+    isEventChat: true,
+    roomId: roomId
+  };
+  localStorage.setItem('df_contacts', JSON.stringify(contactBook));
+
+  currentPrivateChatId = chatId;
+  if (!privateChats[chatId]) privateChats[chatId] = [];
+
+  const av = document.getElementById('pc-avatar');
+  av.textContent = '📅';
+  av.style.background = 'linear-gradient(135deg,#4A90D9,#7B5EA7)';
+  document.getElementById('pc-name').textContent = name;
+  document.getElementById('pc-online').textContent = '👥 Групповой чат';
+
+  renderPrivateChatMessages(chatId);
+  loadEventChatFromServer(chatId, roomId);
+  subscribeToEventChat(chatId, roomId);
+  clearUnreadMessages(chatId);
+  nav('privateChat');
+}
+
+// Загрузка истории группового чата события из БД
+async function loadEventChatFromServer(chatId, roomId) {
+  if (!supabaseClient) return;
+  try {
+    const { data } = await supabaseClient
+      .from('direct_messages')
+      .select('*')
+      .eq('room_id', roomId)
+      .order('created_at', { ascending: true })
+      .limit(200);
+    if (data && data.length > 0) {
+      const myUserId = currentUser?.id || userId;
+      privateChats[chatId] = data.map(m => ({
+        text: m.text,
+        sender: m.sender_id === myUserId ? 'user' : 'other',
+        time: m.time,
+        senderName: m.sender_name,
+        senderId: m.sender_id,
+      }));
+      localStorage.setItem('private_chats', JSON.stringify(privateChats));
+      if (currentPrivateChatId === chatId) renderPrivateChatMessages(chatId);
+    }
+  } catch(e) { console.error('loadEventChat error:', e); }
+}
+
+// Realtime подписка на групповой чат события
+function subscribeToEventChat(chatId, roomId) {
+  if (!supabaseClient) { setTimeout(() => subscribeToEventChat(chatId, roomId), 500); return; }
+  const channelName = 'dogfriend-dm-' + roomId;
+  if (supabasePrivateChannels[channelName]) return;
+
+  const channel = supabaseClient.channel(channelName, {
+    config: { broadcast: { self: false } }
+  });
+
+  channel.on('broadcast', { event: 'message' }, (payload) => {
+    const data = payload.payload;
+    const myUserId = currentUser?.id || userId;
+    if (data.senderId === myUserId) return;
+
+    if (!privateChats[chatId]) privateChats[chatId] = [];
+    const isDup = privateChats[chatId].some(m =>
+      m.text === data.text && m.time === data.time && m.senderId === data.senderId);
+    if (isDup) return;
+
+    privateChats[chatId].push({
+      text: data.text, sender: 'other',
+      time: data.time, senderName: data.senderName, senderId: data.senderId,
+    });
+    localStorage.setItem('private_chats', JSON.stringify(privateChats));
+
+    if (currentPrivateChatId === chatId) {
+      renderPrivateChatMessages(chatId);
+    } else {
+      addUnreadMessage(chatId);
+      playNotificationSound();
+      showInAppNotification('💬 ' + data.senderName, data.text);
+    }
+    renderPrivateChats();
+  }).subscribe();
+
+  supabasePrivateChannels[channelName] = channel;
 }
 
 // ── Профиль организатора ──────────────────────────────────────
