@@ -687,7 +687,7 @@ h3 { font-size:17px; font-weight:700; }
     <div class="chip" onclick="filterCatalog('Поведение',this)">Поведение</div>
     <div class="chip" onclick="filterCatalog('Групповые',this)">Групповые</div>
   </div>
-  <div class="scroll" id="catalog-list"></div>
+  <div class="scroll" id="catalog-trainers-list"></div>
   <nav class="bnav">
     <div class="ni" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
     <div class="ni on"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
@@ -1189,6 +1189,11 @@ function nav(id) {
   if (curr && curr.id === 'privateChat' && id !== 'privateChat') {
     console.log('🔄 Closing private chat, resetting currentPrivateChatId');
     currentPrivateChatId = null;
+  }
+  
+  // Загружаем бизнесы при открытии каталога
+  if (id === 'catalog') {
+    renderCatalogTrainers();
   }
   
   histStack.push(curr.id);
@@ -3945,6 +3950,97 @@ window.addEventListener('load',()=>{
 
 <script>
 let selectedBusinessType = '';
+let loadedBusinesses = []; // Бизнесы из БД
+
+// Загрузка бизнесов из Supabase
+async function loadBusinesses(type = null) {
+  if (!supabaseClient) return [];
+  try {
+    let query = supabaseClient.from('businesses').select('*').eq('is_approved', true);
+    if (type) query = query.eq('type', type);
+    const { data, error } = await query.order('rating', { ascending: false });
+    if (error) throw error;
+    loadedBusinesses = data || [];
+    return loadedBusinesses;
+  } catch(e) {
+    console.error('Load businesses error:', e);
+    return [];
+  }
+}
+
+// Рендер каталога кинологов (загружаем из БД)
+async function renderCatalogTrainers() {
+  const businesses = await loadBusinesses('trainer');
+  const list = document.getElementById('catalog-trainers-list');
+  if (!list) return;
+  
+  if (businesses.length === 0) {
+    list.innerHTML = '<p style="padding:20px;text-align:center;color:var(--text-secondary);">Пока нет кинологов. Станьте первым!</p>';
+    return;
+  }
+  
+  list.innerHTML = businesses.map(b => `
+    <div class="scard" onclick="openBusinessProfile('${b.id}')">
+      <div class="avatar" style="width:54px;height:54px;font-size:18px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);">${b.name.substring(0,2).toUpperCase()}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+          <div style="font-weight:800;font-size:15px;">${b.name}</div>
+          <span class="tag tag-b">✓ DogFriend</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">⭐ ${b.rating} · ${b.reviews_count || 0} отзывов</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">📍 ${b.address}</div>
+        ${b.services && b.services.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;">${b.services.map(s => `<span class="tag tag-b" style="font-size:11px;">${s}</span>`).join('')}</div>` : ''}
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-weight:800;font-size:14px;color:var(--primary);">${b.price_from || 'от 3000 ₽'}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openBusinessProfile(id) {
+  const b = loadedBusinesses.find(x => x.id === id);
+  if (!b) return;
+  
+  document.getElementById('spec-topbar-name').textContent = b.name;
+  const av = document.getElementById('spec-avatar');
+  av.textContent = b.name.substring(0,2).toUpperCase();
+  av.style.background = 'linear-gradient(135deg,#4A90D9,#7B5EA7)';
+  document.getElementById('spec-name').textContent = b.name;
+  document.getElementById('spec-badge').className = 'tag tag-b';
+  document.getElementById('spec-badge').textContent = '✓ DogFriend';
+  document.getElementById('spec-rating').textContent = `⭐ ${b.rating}`;
+  document.getElementById('spec-exp').textContent = b.type === 'trainer' ? '5+ лет опыта' : 'Работаем с 2020';
+  document.getElementById('spec-location').textContent = `📍 ${b.address}`;
+  document.getElementById('spec-bio').textContent = b.description || 'Профессиональные услуги для вашего питомца';
+  
+  if (b.services && b.services.length) {
+    document.getElementById('spec-tags').innerHTML = b.services.map(t => `<span class="tag tag-b">${t}</span>`).join('');
+  }
+  
+  // Услуги
+  const defaultServices = b.services && b.services.length 
+    ? b.services.map((s,i) => ({name: s, desc: `Профессионально`, price: b.price_from || '3000 ₽', sel: i===0}))
+    : [{name: 'Консультация', desc: '60 минут', price: b.price_from || '3000 ₽', sel: true}];
+    
+  document.getElementById('spec-services').innerHTML = defaultServices.map((sv,i) => `
+    <div class="pr ${sv.sel?'sel':''}" onclick="selectSvc(${i+1})" id="svc${i+1}">
+      <div><div class="pr-n">${sv.name}</div><div style="font-size:12px;color:var(--text-secondary);">${sv.desc}</div></div>
+      <div class="pr-v">${sv.price}</div>
+    </div>
+  `).join('');
+  
+  // Отзывы заглушка
+  document.getElementById('spec-reviews-block').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+      <div style="font-size:40px;font-weight:900;font-family:'Nunito',sans-serif;color:var(--primary);">${b.rating}</div>
+      <div><div class="stars">${'⭐'.repeat(Math.round(b.rating))}</div><div style="font-size:13px;color:var(--text-secondary);">${b.reviews_count || 0} отзывов</div></div>
+    </div>
+    <p style="font-size:13px;color:var(--text-secondary);padding-top:14px;border-top:1px solid var(--border);">Отзывы скоро появятся</p>`;
+  
+  renderCalendar();
+  nav('spec');
+}
 
 function selectBusinessType(type) {
   selectedBusinessType = type;
