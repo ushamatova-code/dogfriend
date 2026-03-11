@@ -4111,8 +4111,23 @@ async function renderCafes() {
   `).join('');
 }
 
-function openBusinessProfile(id) {
-  const b = loadedBusinesses.find(x => x.id === id);
+async function openBusinessProfile(id) {
+  let b = loadedBusinesses.find(x => x.id === id);
+  
+  // Если не нашли в кеше, загружаем из БД
+  if (!b) {
+    console.log('⚠️ Business not in cache, loading from DB:', id);
+    try {
+      const { data, error } = await supabaseClient.from('businesses').select('*').eq('id', id).single();
+      if (error) throw error;
+      b = data;
+      if (b) loadedBusinesses.push(b); // Добавляем в кеш
+    } catch(e) {
+      console.error('Failed to load business:', e);
+      return;
+    }
+  }
+  
   if (!b) return;
   
   currentSpecId = b.user_id; // Сохраняем для чата!
