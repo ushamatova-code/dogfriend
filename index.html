@@ -3268,9 +3268,7 @@ function filterPlaces(val, el) {
 function renderPlaces() {
   renderCafes(); // Используем новую функцию
 }
-      <div style="color:var(--border);font-size:22px;align-self:center;">›</div>
-    </div>`).join('')||'<div style="padding:40px;text-align:center;color:var(--text-secondary);">Ничего не найдено</div>';
-}
+
 function openPlaceModal(id) {
   _currentPlace = PLACES_DATA.find(x=>x.id===id);
   if (!_currentPlace) return;
