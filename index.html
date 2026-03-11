@@ -2381,22 +2381,29 @@ function startPrivateChatWithUser(nick) {
 
 // Удалить чат только локально (БД не трогаем — собеседник ничего не теряет)
 function deleteLocalChat(chatId) {
+  // Чаты событий нельзя удалить — история хранится в БД и восстановится
+  // Просто убираем из локального списка, при следующем открытии загрузится снова
+  const isEventChat = String(chatId).startsWith('event_');
+
   delete privateChats[chatId];
   localStorage.setItem('private_chats', JSON.stringify(privateChats));
+
   if (unreadChats[chatId]) {
     unreadCount -= unreadChats[chatId];
     delete unreadChats[chatId];
     localStorage.setItem('unread_chats', JSON.stringify(unreadChats));
     updateChatBadge();
   }
-  // Отписываемся от Realtime канала этого чата
+
+  // Отписываемся от Realtime канала
   const myUserId = currentUser?.id || userId;
-  const roomId = getRoomId(myUserId, String(chatId));
+  const roomId = isEventChat ? String(chatId) : getRoomId(myUserId, String(chatId));
   const channelName = 'dogfriend-dm-' + roomId;
   if (supabasePrivateChannels[channelName]) {
     supabasePrivateChannels[channelName].unsubscribe();
     delete supabasePrivateChannels[channelName];
   }
+
   renderPrivateChats();
 }
 
@@ -5474,6 +5481,7 @@ function openEventGroupChat(ev) {
 }
 
 // Загрузка истории группового чата события из БД
+// Всегда берём из БД — localStorage только кэш, не источник истины
 async function loadEventChatFromServer(chatId, roomId) {
   if (!supabaseClient) return;
   try {
@@ -5482,19 +5490,19 @@ async function loadEventChatFromServer(chatId, roomId) {
       .select('*')
       .eq('room_id', roomId)
       .order('created_at', { ascending: true })
-      .limit(200);
-    if (data && data.length > 0) {
-      const myUserId = currentUser?.id || userId;
-      privateChats[chatId] = data.map(m => ({
-        text: m.text,
-        sender: m.sender_id === myUserId ? 'user' : 'other',
-        time: m.time,
-        senderName: m.sender_name,
-        senderId: m.sender_id,
-      }));
-      localStorage.setItem('private_chats', JSON.stringify(privateChats));
-      if (currentPrivateChatId === chatId) renderPrivateChatMessages(chatId);
-    }
+      .limit(500);
+
+    const myUserId = currentUser?.id || userId;
+    // Перезаписываем полностью — БД главнее localStorage
+    privateChats[chatId] = (data || []).map(m => ({
+      text: m.text,
+      sender: m.sender_id === myUserId ? 'user' : 'other',
+      time: m.time,
+      senderName: m.sender_name,
+      senderId: m.sender_id,
+    }));
+    // Не сохраняем event-чаты в localStorage — они всегда грузятся из БД
+    if (currentPrivateChatId === chatId) renderPrivateChatMessages(chatId);
   } catch(e) { console.error('loadEventChat error:', e); }
 }
 
@@ -5522,7 +5530,7 @@ function subscribeToEventChat(chatId, roomId) {
       text: data.text, sender: 'other',
       time: data.time, senderName: data.senderName, senderId: data.senderId,
     });
-    localStorage.setItem('private_chats', JSON.stringify(privateChats));
+    // Event-чаты не кэшируем в localStorage — история всегда из БД
 
     if (currentPrivateChatId === chatId) {
       renderPrivateChatMessages(chatId);
