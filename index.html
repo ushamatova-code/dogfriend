@@ -3155,6 +3155,8 @@ async function savePrivateMsgToServer(chatId, text, time) {
   const roomId = getRoomId(myUserId, String(chatId));
   const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
   
+  console.log('💾 savePrivateMsgToServer: chatId=', chatId, 'myUserId=', myUserId, 'roomId=', roomId);
+  
   try {
     const { data, error } = await supabaseClient.from('direct_messages').insert({
       room_id: roomId,
