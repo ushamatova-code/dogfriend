@@ -2638,14 +2638,12 @@ async function checkAuth() {
         clearInterval(incomingMsgPollInterval);
         incomingMsgPollInterval = null;
       }
-      // Обновляем lastCheckedTime чтобы не пропустить старые сообщения
-      lastCheckedTime = Date.now() - 60 * 1000; // проверяем за последнюю минуту
+      lastCheckedTime = Date.now() - 60 * 1000;
       startIncomingMessagesPolling();
+      Object.keys(privateChats).forEach(chatId => { subscribeToPrivateChat(chatId); });
       
-      // Переподписываемся на существующие DM-каналы с правильным userId
-      Object.keys(privateChats).forEach(chatId => {
-        subscribeToPrivateChat(chatId);
-      });
+      // Проверяем бизнес сразу после авторизации
+      checkUserBusiness();
       
       nav('home');
     } else {
@@ -2694,6 +2692,9 @@ async function supabaseLogin() {
         lastCheckedTime = Date.now() - 60 * 1000;
         startIncomingMessagesPolling();
         Object.keys(privateChats).forEach(chatId => subscribeToPrivateChat(chatId));
+        
+        // Проверяем бизнес
+        checkUserBusiness();
         
         nav('home');
         return;
@@ -4533,21 +4534,35 @@ const BIZ_FIELDS = {
 };
 
 // Загрузить бизнес пользователя и показать кнопку в профиле
+let userBusinesses = [];
+
 async function checkUserBusiness() {
-  if (!supabaseClient || !currentUser) return;
+  if (!supabaseClient || !currentUser) {
+    console.log('checkUserBusiness: waiting for supabase/user...');
+    return;
+  }
   try {
+    console.log('Checking business for user:', currentUser.id);
     const { data, error } = await supabaseClient
       .from('businesses')
       .select('*')
       .eq('user_id', currentUser.id)
-      .single();
-    if (data) {
-      currentBiz = data;
+      .order('created_at', { ascending: false });
+
+    console.log('Business query result:', JSON.stringify(data), error);
+
+    if (error) { console.error('checkUserBusiness error:', error); return; }
+
+    if (data && data.length > 0) {
+      userBusinesses = data;
+      currentBiz = data[0];
       const row = document.getElementById('biz-mgmt-row');
-      if (row) row.style.display = 'flex';
+      if (row) { row.style.display = 'flex'; console.log('Business button shown, found:', data.length); }
+    } else {
+      console.log('No businesses found for user:', currentUser.id);
     }
   } catch(e) {
-    // нет бизнеса — кнопка остаётся скрытой
+    console.error('checkUserBusiness exception:', e);
   }
 }
 
@@ -4725,17 +4740,17 @@ async function saveBizEdit() {
 }
 
 // Вызываем после авторизации
+// Проверяем бизнес при каждом заходе в профиль и при первом home
+// Используем небольшой delay чтобы currentUser точно был установлен
 (function patchCheckAuth() {
   const origNav = window.nav;
-  let bizChecked = false;
   window.nav = function(id) {
     origNav(id);
-    if (id === 'home' && !bizChecked && currentUser) {
-      bizChecked = true;
-      checkUserBusiness();
-    }
-    if (id === 'profile') {
-      checkUserBusiness();
+    if (id === 'home' || id === 'profile') {
+      // Небольшой delay — currentUser может ещё не быть установлен
+      setTimeout(() => {
+        if (currentUser) checkUserBusiness();
+      }, 300);
     }
   };
 })();
