@@ -4241,62 +4241,147 @@ async function renderCafes() {
 
 async function openBusinessProfile(id) {
   let b = loadedBusinesses.find(x => x.id === id);
-  
-  // Если не нашли в кеше, загружаем из БД
+
   if (!b) {
-    console.log('⚠️ Business not in cache, loading from DB:', id);
     try {
       const { data, error } = await supabaseClient.from('businesses').select('*').eq('id', id).single();
       if (error) throw error;
       b = data;
-      if (b) loadedBusinesses.push(b); // Добавляем в кеш
+      if (b) loadedBusinesses.push(b);
     } catch(e) {
       console.error('Failed to load business:', e);
       return;
     }
   }
-  
   if (!b) return;
-  
-  currentSpecId = b.user_id; // Сохраняем для чата!
-  console.log('🔵 openBusinessProfile: business.id=', id, 'business.user_id=', b.user_id, 'currentSpecId=', currentSpecId);
-  
+
+  currentSpecId = b.user_id;
+
+  const typeIcons = { trainer: '🐕', clinic: '🏥', cafe: '☕' };
+  const typeLabels = { trainer: 'Кинолог / Тренер', clinic: 'Ветеринарная клиника', cafe: 'Dog-friendly место' };
+
+  // Шапка
   document.getElementById('spec-topbar-name').textContent = b.name;
   const av = document.getElementById('spec-avatar');
   av.textContent = b.name.substring(0,2).toUpperCase();
   av.style.background = 'linear-gradient(135deg,#4A90D9,#7B5EA7)';
   document.getElementById('spec-name').textContent = b.name;
   document.getElementById('spec-badge').className = 'tag tag-b';
-  document.getElementById('spec-badge').textContent = '✓ DogFriend';
+  document.getElementById('spec-badge').textContent = typeLabels[b.type] || '✓ DogFriend';
   document.getElementById('spec-rating').textContent = `⭐ ${b.rating}`;
-  document.getElementById('spec-exp').textContent = b.type === 'trainer' ? '5+ лет опыта' : 'Работаем с 2020';
+
+  // Опыт/стаж — из реальных данных
+  const expText = b.experience || (b.type === 'clinic' ? (b.doctors ? b.doctors + ' врачей' : 'Клиника') : '');
+  document.getElementById('spec-exp').textContent = expText || '';
+
   document.getElementById('spec-location').textContent = `📍 ${b.address}`;
   document.getElementById('spec-bio').textContent = b.description || 'Профессиональные услуги для вашего питомца';
-  
+
+  // Теги услуг
   if (b.services && b.services.length) {
     document.getElementById('spec-tags').innerHTML = b.services.map(t => `<span class="tag tag-b">${t}</span>`).join('');
+  } else {
+    document.getElementById('spec-tags').innerHTML = '';
   }
-  
-  // Услуги
-  const defaultServices = b.services && b.services.length 
-    ? b.services.map((s,i) => ({name: s, desc: `Профессионально`, price: b.price_from || '3000 ₽', sel: i===0}))
-    : [{name: 'Консультация', desc: '60 минут', price: b.price_from || '3000 ₽', sel: true}];
-    
-  document.getElementById('spec-services').innerHTML = defaultServices.map((sv,i) => `
-    <div class="pr ${sv.sel?'sel':''}" onclick="selectSvc(${i+1})" id="svc${i+1}">
+
+  // Блок услуг и цен
+  const svcList = b.services && b.services.length
+    ? b.services.map((s, i) => ({ name: s, desc: 'Профессионально', price: b.price_from || 'По запросу', sel: i === 0 }))
+    : [{ name: 'Консультация', desc: 'Свяжитесь для уточнения', price: b.price_from || 'По запросу', sel: true }];
+
+  document.getElementById('spec-services').innerHTML = svcList.map((sv, i) => `
+    <div class="pr ${sv.sel ? 'sel' : ''}" onclick="selectSvc(${i+1})" id="svc${i+1}">
       <div><div class="pr-n">${sv.name}</div><div style="font-size:12px;color:var(--text-secondary);">${sv.desc}</div></div>
       <div class="pr-v">${sv.price}</div>
-    </div>
-  `).join('');
-  
-  // Отзывы заглушка
+    </div>`).join('');
+
+  // Блок "О нас" — дополнительная информация из всех полей
+  let infoHtml = '';
+
+  // Контакты
+  const contacts = [];
+  if (b.phone)     contacts.push(`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);"><span style="font-size:18px;">📞</span><div><div style="font-size:12px;color:var(--text-secondary);">Телефон</div><div style="font-weight:700;">${b.phone}</div></div></div>`);
+  if (b.phone2)    contacts.push(`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);"><span style="font-size:18px;">📞</span><div><div style="font-size:12px;color:var(--text-secondary);">Доп. телефон</div><div style="font-weight:700;">${b.phone2}</div></div></div>`);
+  if (b.telegram)  contacts.push(`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);"><span style="font-size:18px;">✈️</span><div><div style="font-size:12px;color:var(--text-secondary);">Telegram</div><div style="font-weight:700;">${b.telegram}</div></div></div>`);
+  if (b.instagram) contacts.push(`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);"><span style="font-size:18px;">📸</span><div><div style="font-size:12px;color:var(--text-secondary);">Instagram</div><div style="font-weight:700;">${b.instagram}</div></div></div>`);
+  if (b.website)   contacts.push(`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;"><span style="font-size:18px;">🌐</span><div><div style="font-size:12px;color:var(--text-secondary);">Сайт</div><div style="font-weight:700;color:var(--primary);">${b.website}</div></div></div>`);
+  if (b.email)     contacts.push(`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);"><span style="font-size:18px;">✉️</span><div><div style="font-size:12px;color:var(--text-secondary);">Email</div><div style="font-weight:700;">${b.email}</div></div></div>`);
+
+  if (contacts.length) {
+    infoHtml += `<div class="card" style="margin-top:12px;"><h3 style="margin-bottom:8px;">📞 Контакты</h3>${contacts.join('')}</div>`;
+  }
+
+  // Тип-специфичная информация
+  if (b.type === 'trainer') {
+    const rows = [];
+    if (b.experience)    rows.push(['🏅 Опыт', b.experience]);
+    if (b.education)     rows.push(['🎓 Образование', b.education]);
+    if (b.dog_breeds)    rows.push(['🐕 Породы', b.dog_breeds]);
+    if (b.lesson_format) rows.push(['📋 Формат занятий', b.lesson_format]);
+    if (b.area)          rows.push(['📍 Рабочая зона', b.area]);
+    if (b.schedule)      rows.push(['🕐 Расписание', b.schedule]);
+    if (rows.length) {
+      infoHtml += `<div class="card"><h3 style="margin-bottom:12px;">🐕 О кинологе</h3>` +
+        rows.map(([label, val]) => `<div style="margin-bottom:10px;"><div style="font-size:12px;color:var(--text-secondary);font-weight:600;">${label}</div><div style="font-size:14px;font-weight:600;margin-top:2px;">${val}</div></div>`).join('') +
+        `</div>`;
+    }
+  }
+
+  if (b.type === 'clinic') {
+    const rows = [];
+    if (b.experience) rows.push(['📅 На рынке', b.experience]);
+    if (b.doctors)    rows.push(['👨‍⚕️ Врачи', b.doctors]);
+    if (b.equipment)  rows.push(['🔬 Оборудование', b.equipment]);
+    if (b.emergency)  rows.push(['🚑 Скорая помощь', b.emergency]);
+    if (b.area)       rows.push(['📍 Районы', b.area]);
+    if (b.schedule)   rows.push(['🕐 Расписание', b.schedule]);
+    if (rows.length) {
+      infoHtml += `<div class="card"><h3 style="margin-bottom:12px;">🏥 О клинике</h3>` +
+        rows.map(([label, val]) => `<div style="margin-bottom:10px;"><div style="font-size:12px;color:var(--text-secondary);font-weight:600;">${label}</div><div style="font-size:14px;font-weight:600;margin-top:2px;">${val}</div></div>`).join('') +
+        `</div>`;
+    }
+  }
+
+  if (b.type === 'cafe') {
+    const rows = [];
+    if (b.dog_policy)    rows.push(['🐕 Политика для собак', b.dog_policy]);
+    if (b.max_dog_size)  rows.push(['📏 Макс. размер', b.max_dog_size]);
+    if (b.dog_menu)      rows.push(['🦴 Меню для собак', b.dog_menu]);
+    if (b.area)          rows.push(['🏡 Зона', b.area]);
+    if (b.schedule)      rows.push(['🕐 Часы работы', b.schedule]);
+    if (rows.length) {
+      infoHtml += `<div class="card"><h3 style="margin-bottom:12px;">☕ О заведении</h3>` +
+        rows.map(([label, val]) => `<div style="margin-bottom:10px;"><div style="font-size:12px;color:var(--text-secondary);font-weight:600;">${label}</div><div style="font-size:14px;font-weight:600;margin-top:2px;">${val}</div></div>`).join('') +
+        `</div>`;
+    }
+  }
+
+  // Вставляем доп. инфо перед гарантиями (в конец tc-spec-overview)
+  const overviewEl = document.getElementById('tc-spec-overview');
+  // Находим карточку "О себе" и вставляем доп. блоки после неё
+  const existingExtra = document.getElementById('spec-extra-info');
+  if (existingExtra) existingExtra.remove();
+  if (infoHtml) {
+    const extraDiv = document.createElement('div');
+    extraDiv.id = 'spec-extra-info';
+    extraDiv.innerHTML = infoHtml;
+    // Вставляем после карточки услуг (третья .card в overview)
+    const cards = overviewEl.querySelectorAll('.card');
+    if (cards.length >= 2) {
+      cards[1].insertAdjacentElement('afterend', extraDiv);
+    } else {
+      overviewEl.insertAdjacentElement('afterbegin', extraDiv);
+    }
+  }
+
+  // Отзывы
   document.getElementById('spec-reviews-block').innerHTML = `
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
       <div style="font-size:40px;font-weight:900;font-family:'Nunito',sans-serif;color:var(--primary);">${b.rating}</div>
       <div><div class="stars">${'⭐'.repeat(Math.round(b.rating))}</div><div style="font-size:13px;color:var(--text-secondary);">${b.reviews_count || 0} отзывов</div></div>
     </div>
     <p style="font-size:13px;color:var(--text-secondary);padding-top:14px;border-top:1px solid var(--border);">Отзывы скоро появятся</p>`;
-  
+
   nav('specialist');
 }
 
@@ -4710,19 +4795,18 @@ async function saveBizEdit() {
   const cfg = BIZ_FIELDS[currentBiz.type];
   if (!cfg) return;
 
-  const updates = {};
-
+  // Собираем все значения из формы
+  const formData = {};
   cfg.sections.forEach(sec => {
     if (sec.type === 'checkboxes') {
       const container = document.getElementById('biz-edit-checks-' + sec.id);
       if (container) {
-        const checked = Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map(i => i.value);
-        updates[sec.id] = checked;
+        formData[sec.id] = Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map(i => i.value);
       }
     } else {
       sec.fields.forEach(f => {
         const el = document.getElementById('biz-f-' + f.id);
-        if (el) updates[f.id] = el.value.trim();
+        if (el) formData[f.id] = el.value.trim();
       });
     }
   });
@@ -4730,29 +4814,84 @@ async function saveBizEdit() {
   // Валидация обязательных
   const allFields = cfg.sections.flatMap(s => s.fields || []);
   for (const f of allFields) {
-    if (f.required && !updates[f.id]) {
+    if (f.required && !formData[f.id]) {
       showToast('❌ Заполните: ' + f.label);
       return;
     }
   }
 
+  // Колонки которые точно есть в таблице businesses
+  const KNOWN_COLUMNS = ['name', 'description', 'address', 'phone', 'email', 'price_from', 'services'];
+
+  // Разделяем поля: известные идут прямо, остальные пакуем в extra_data JSON
+  const dbUpdate = {};
+  const extraData = { ...(currentBiz.extra_data || {}) };
+
+  Object.entries(formData).forEach(([key, val]) => {
+    if (KNOWN_COLUMNS.includes(key)) {
+      dbUpdate[key] = val;
+    } else {
+      extraData[key] = val;
+    }
+  });
+
+  // extra_data пробуем как отдельную колонку, если нет — пакуем в description
+  const hasExtraFields = Object.keys(extraData).length > 0;
+
+  console.log('Saving biz, dbUpdate keys:', Object.keys(dbUpdate), 'extraData keys:', Object.keys(extraData));
+
   try {
-    const { error } = await supabaseClient
+    // Сначала пробуем сохранить с extra_data (если колонка есть в БД)
+    let updatePayload = { ...dbUpdate, updated_at: new Date().toISOString() };
+    if (hasExtraFields) updatePayload.extra_data = extraData;
+
+    let { error } = await supabaseClient
       .from('businesses')
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update(updatePayload)
       .eq('id', currentBiz.id);
 
-    if (error) throw error;
+    if (error) {
+      console.warn('Update with extra_data failed:', error.message);
+
+      // Fallback 1: без extra_data, только известные колонки
+      let { error: e2 } = await supabaseClient
+        .from('businesses')
+        .update({ ...dbUpdate, updated_at: new Date().toISOString() })
+        .eq('id', currentBiz.id);
+
+      if (e2) {
+        console.warn('Update without extra_data also failed:', e2.message);
+
+        // Fallback 2: только name + description + services (минимум)
+        const minimal = {};
+        if (dbUpdate.name) minimal.name = dbUpdate.name;
+        if (dbUpdate.description !== undefined) minimal.description = dbUpdate.description;
+        if (dbUpdate.services) minimal.services = dbUpdate.services;
+
+        let { error: e3 } = await supabaseClient
+          .from('businesses')
+          .update(minimal)
+          .eq('id', currentBiz.id);
+
+        if (e3) throw e3;
+        console.log('Saved minimal fields only');
+      }
+    }
 
     // Обновляем локальный объект
-    Object.assign(currentBiz, updates);
+    Object.assign(currentBiz, formData);
+    if (hasExtraFields) currentBiz.extra_data = extraData;
+
+    // Обновляем в массиве userBusinesses
+    const idx = userBusinesses.findIndex(b => b.id === currentBiz.id);
+    if (idx !== -1) userBusinesses[idx] = { ...currentBiz };
+
     showToast('✅ Изменения сохранены!', '#7ED321');
     back();
-    // Обновляем дашборд
-    setTimeout(() => openBusinessDashboard(), 300);
+    setTimeout(() => renderBizDashboard(currentBiz), 300);
   } catch(e) {
-    console.error('Save biz error:', e);
-    showToast('❌ Ошибка сохранения');
+    console.error('Save biz final error:', e);
+    showToast('❌ ' + (e.message || 'Ошибка сохранения'));
   }
 }
 
