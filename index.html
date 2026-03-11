@@ -2161,9 +2161,11 @@ function openChatWithUser(theirUserId, theirName, theirInitials, theirGrad) {
 
 // Открыть чат со специалистом (кнопка 💬 на карточке)
 function openPrivateChat(specId) {
+  console.log('💬 openPrivateChat called with specId:', specId);
   // Сначала ищем в бизнесах из БД
   const business = loadedBusinesses.find(b => b.user_id === specId);
   if (business) {
+    console.log('✅ Found business:', business.name, 'user_id:', business.user_id);
     const initials = business.name.substring(0,2).toUpperCase();
     openChatWithUser(specId, business.name, initials, 'linear-gradient(135deg,#4A90D9,#7B5EA7)');
     return;
@@ -4110,6 +4112,7 @@ function openBusinessProfile(id) {
   if (!b) return;
   
   currentSpecId = b.user_id; // Сохраняем для чата!
+  console.log('🔵 openBusinessProfile: business.id=', id, 'business.user_id=', b.user_id, 'currentSpecId=', currentSpecId);
   
   document.getElementById('spec-topbar-name').textContent = b.name;
   const av = document.getElementById('spec-avatar');
