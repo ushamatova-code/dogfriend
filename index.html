@@ -2293,40 +2293,45 @@ function sendPrivateMessage() {
   const text = input.value.trim();
   if (!text || !currentPrivateChatId) return;
 
+  const chatId = currentPrivateChatId;
+  const isEventChat = String(chatId).startsWith('event_');
   const time = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   const myProfile = JSON.parse(localStorage.getItem('df_profile') || '{}');
   const myName = myProfile.name || 'Гость';
-
-  if (!privateChats[currentPrivateChatId]) privateChats[currentPrivateChatId] = [];
   const myUserId = currentUser?.id || userId;
-  console.log('💬 Sending private message, currentUser:', currentUser, 'myUserId:', myUserId);
-  privateChats[currentPrivateChatId].push({ text, sender: 'user', time, senderName: myName, senderId: myUserId });
-  localStorage.setItem('private_chats', JSON.stringify(privateChats));
-  savePrivateMsgToServer(currentPrivateChatId, text, time);
+
+  if (!privateChats[chatId]) privateChats[chatId] = [];
+
+  // Добавляем своё сообщение локально сразу (оптимистично)
+  const newMsg = { text, sender: 'user', time, senderName: myName, senderId: myUserId };
+  privateChats[chatId].push(newMsg);
+
+  // Для личных чатов — кэшируем в localStorage
+  if (!isEventChat) {
+    localStorage.setItem('private_chats', JSON.stringify(privateChats));
+  }
 
   input.value = '';
   input.style.height = 'auto';
-  renderPrivateChatMessages(currentPrivateChatId);
+  renderPrivateChatMessages(chatId);
   renderPrivateChats();
 
-  // Отправить через Supabase Realtime
-  if (supabaseClient) {
-    const roomId = [myUserId, String(currentPrivateChatId)].sort().join('__');
+  // Сохраняем в БД (savePrivateMsgToServer уже содержит broadcast)
+  // Для event-чатов roomId = chatId, для личных = sorted join
+  savePrivateMsgToServer(chatId, text, time);
+
+  // Для личных чатов — дополнительный broadcast через свой канал
+  if (!isEventChat && supabaseClient) {
+    const roomId = [myUserId, String(chatId)].sort().join('__');
     const channelName = 'dogfriend-dm-' + roomId;
-    
-    // Используем существующий канал или создаём и подписываемся
     let channel = supabasePrivateChannels[channelName];
     if (!channel) {
-      channel = supabaseClient.channel(channelName, {
-        config: { broadcast: { self: false } }
-      });
+      channel = supabaseClient.channel(channelName, { config: { broadcast: { self: false } } });
       channel.subscribe();
       supabasePrivateChannels[channelName] = channel;
     }
-    
     channel.send({
-      type: 'broadcast',
-      event: 'message',
+      type: 'broadcast', event: 'message',
       payload: { text, senderName: myName, senderId: myUserId, time }
     });
   }
@@ -2506,7 +2511,26 @@ function renderPrivateChats() {
 function loadPrivateChatsFromStorage() {
   loadContactBook();
   try { privateChats = JSON.parse(localStorage.getItem('private_chats') || '{}'); } catch(e) { privateChats = {}; }
+
+  // Удаляем event-чаты из localStorage — они всегда грузятся из БД
+  // чтобы устаревший кэш не показывался вместо актуальной истории
+  Object.keys(privateChats).forEach(key => {
+    if (key.startsWith('event_')) delete privateChats[key];
+  });
+
   renderPrivateChats();
+
+  // После инициализации Supabase — обновляем event-чаты из БД
+  // (делаем через setTimeout чтобы дать Supabase время подняться)
+  setTimeout(async () => {
+    if (!supabaseClient) return;
+    const eventChatIds = Object.keys(contactBook).filter(k => k.startsWith('event_'));
+    for (const chatId of eventChatIds) {
+      const roomId = chatId; // для event_ чатов chatId == roomId
+      await loadEventChatFromServer(chatId, roomId);
+    }
+    if (eventChatIds.length > 0) renderPrivateChats();
+  }, 2500);
 }
 
 // ============================================================
@@ -3306,6 +3330,11 @@ async function savePrivateMsgToServer(chatId, text, time) {
       event: 'message',
       payload: { text, time, senderId: myUserId, senderName: p.name || 'Гость' }
     });
+
+    // Для event-чатов НЕ сохраняем в localStorage — только в памяти
+    if (!isEventChat) {
+      localStorage.setItem('private_chats', JSON.stringify(privateChats));
+    }
   } catch(e) {
     console.error('❌ Save message error:', e);
   }
