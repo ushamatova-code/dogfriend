@@ -3263,21 +3263,11 @@ function filterPlaces(val, el) {
   _placesFilter = val;
   document.querySelectorAll('#dogmap .chips .chip').forEach(c=>c.classList.remove('on'));
   el.classList.add('on');
-  renderPlaces();
+  renderCafes(); // Загружаем из БД
 }
 function renderPlaces() {
-  const list = document.getElementById('places-list');
-  if (!list) return;
-  const data = _placesFilter==='Все' ? PLACES_DATA : PLACES_DATA.filter(p=>p.type===_placesFilter);
-  list.innerHTML = data.map(p=>`
-    <div class="card" style="display:flex;gap:12px;cursor:pointer;margin-bottom:10px;" onclick="openPlaceModal('${p.id}')">
-      <div style="width:54px;height:54px;background:${p.color};border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">${p.icon}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-weight:800;font-size:15px;">${p.name}</div>
-        <div style="font-size:12px;color:var(--text-secondary);margin:2px 0;">📍 ${p.addr} · ${p.dist}</div>
-        <div style="font-size:12px;color:var(--text-secondary);">⭐ ${p.rating} · 🕐 ${p.hours}</div>
-        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;">${p.tags.slice(0,2).map(t=>`<span class="tag tag-g" style="font-size:11px;">${t}</span>`).join('')}</div>
-      </div>
+  renderCafes(); // Используем новую функцию
+}
       <div style="color:var(--border);font-size:22px;align-self:center;">›</div>
     </div>`).join('')||'<div style="padding:40px;text-align:center;color:var(--text-secondary);">Ничего не найдено</div>';
 }
@@ -4059,6 +4049,8 @@ async function renderCafes() {
 function openBusinessProfile(id) {
   const b = loadedBusinesses.find(x => x.id === id);
   if (!b) return;
+  
+  currentSpecId = b.user_id; // Сохраняем для чата!
   
   document.getElementById('spec-topbar-name').textContent = b.name;
   const av = document.getElementById('spec-avatar');
