@@ -2237,6 +2237,7 @@ function subscribeToPrivateChat(theirId) {
       time: data.time,
       senderName: data.senderName,
       senderId: data.senderId,
+      created_at: new Date().toISOString(),
     });
     savePrivateChatsToStorage();
 
@@ -2312,7 +2313,7 @@ function sendPrivateMessage() {
   if (!privateChats[chatId]) privateChats[chatId] = [];
 
   // Добавляем своё сообщение локально сразу (оптимистично)
-  const newMsg = { text, sender: 'user', time, senderName: myName, senderId: myUserId };
+  const newMsg = { text, sender: 'user', time, senderName: myName, senderId: myUserId, created_at: new Date().toISOString() };
   privateChats[chatId].push(newMsg);
 
   // Для личных чатов — кэшируем в localStorage
@@ -2390,7 +2391,11 @@ function openUserProfile(nick) {
 let _lastClickedUser = null;
 
 function startPrivateChatWithUser(nick) {
-  openChatWithUser(nick, nick, nick.slice(0,2).toUpperCase(), 'linear-gradient(135deg,#4A90D9,#7B5EA7)');
+  // Если есть _lastClickedUser с senderId — используем его (Supabase UUID)
+  const msgData = _lastClickedUser || {};
+  const theirUserId = msgData.senderId || nick;
+  const theirName = msgData.senderName || nick;
+  openChatWithUser(theirUserId, theirName, theirName.slice(0,2).toUpperCase(), 'linear-gradient(135deg,#4A90D9,#7B5EA7)');
 }
 
 // Удалить чат только локально (БД не трогаем — собеседник ничего не теряет)
@@ -2442,9 +2447,16 @@ function renderPrivateChats() {
     const bMsgs = privateChats[b] || [];
     const aLast = aMsgs[aMsgs.length - 1];
     const bLast = bMsgs[bMsgs.length - 1];
-    const aTime = aLast?.created_at || aLast?.time || '00:00';
-    const bTime = bLast?.created_at || bLast?.time || '00:00';
-    return bTime.localeCompare(aTime);
+    // Используем created_at (ISO дата) если есть, иначе dbId, иначе порядок добавления
+    const aDate = aLast?.created_at || '';
+    const bDate = bLast?.created_at || '';
+    if (aDate && bDate) return bDate.localeCompare(aDate);
+    // Если есть dbId (из Supabase) — чем больше, тем новее
+    const aDbId = aLast?.dbId || 0;
+    const bDbId = bLast?.dbId || 0;
+    if (aDbId || bDbId) return bDbId - aDbId;
+    // Fallback: чаты с сообщениями выше пустых
+    return bMsgs.length - aMsgs.length;
   });
 
   list.innerHTML = keys.map(id => {
@@ -2940,6 +2952,12 @@ if (!userId) {
 // sessionId уникален для каждой вкладки — чтобы тестировать в двух вкладках
 const sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
 
+// Единый источник правды для ID текущего пользователя
+// Всегда Supabase UUID если залогинен, иначе локальный fallback
+function getMyId() {
+  return currentUser?.id || userId;
+}
+
 function getChatNick() {
   try {
     const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
@@ -3024,7 +3042,8 @@ function connectSupabaseRealtime() {
     supabasePublicChannel
       .on('broadcast', { event: 'message' }, (payload) => {
         const d = payload.payload;
-        if (d.nick !== chatNick) appendMessage(d.nick, d.text, d.time, false, d.senderId);
+        const myId = currentUser?.id || userId;
+        if (d.senderId !== myId) appendMessage(d.nick, d.text, d.time, false, d.senderId);
         typingUsers.delete(d.nick);
         renderTyping();
       })
@@ -3115,6 +3134,9 @@ function startIncomingMessagesPolling() {
         
         // Используем реальный Supabase userId если есть, иначе локальный
         const myEffectiveId = currentUser?.id || userId;
+        // Проверяем оба ID — на случай если собеседник использовал старый локальный ID
+        const myIds = [myEffectiveId];
+        if (currentUser?.id && userId && currentUser.id !== userId) myIds.push(userId);
         
         data.forEach(msg => {
           // Проверяем что не обрабатывали это сообщение
@@ -3126,11 +3148,11 @@ function startIncomingMessagesPolling() {
           const isEventRoom = msg.room_id && msg.room_id.startsWith('event_');
           if (isEventRoom) return; // event-чаты пропускаем здесь
 
-          const isMyRoom = msg.room_id && msg.room_id.includes(myEffectiveId);
+          const isMyRoom = msg.room_id && myIds.some(id => msg.room_id.includes(id));
           if (!isMyRoom) return;
 
           // Игнорируем свои сообщения
-          if (msg.sender_id === myEffectiveId) return;
+          if (myIds.includes(msg.sender_id)) return;
 
           const chatId = msg.sender_id;
           const roomId = msg.room_id;
@@ -3165,6 +3187,7 @@ function startIncomingMessagesPolling() {
             time: msg.time,
             senderName: msg.sender_name,
             senderId: msg.sender_id,
+            created_at: msg.created_at,
           });
           
           savePrivateChatsToStorage();
@@ -3217,7 +3240,7 @@ function sendChatMsg() {
   supabasePublicChannel.send({
     type: 'broadcast',
     event: 'message',
-    payload: { nick: chatNick, text, time, senderId: userId }
+    payload: { nick: chatNick, text, time, senderId: currentUser?.id || userId }
   });
   
   clearTimeout(typingTimer);
@@ -3237,9 +3260,12 @@ function appendMessage(nick, text, time, isMine, senderId) {
   const color    = colors[nick.charCodeAt(0) % colors.length];
   const grad = `linear-gradient(135deg,${color},${color}99)`;
   // клик по имени → запоминаем пользователя и открываем профиль
-  const clickHandler = senderId
-    ? `_lastClickedUser={senderId:'${senderId}',senderName:'${escHtml(nick)}'};openUserProfile('${escHtml(nick)}')`
-    : `openUserProfile('${escHtml(nick)}')`;
+  // senderId здесь — всегда Supabase UUID (или локальный fallback)
+  const safeSenderId = senderId ? String(senderId).replace(/'/g, "\\'") : '';
+  const safeNick = escHtml(nick).replace(/'/g, "\\'");
+  const clickHandler = safeSenderId
+    ? `_lastClickedUser={senderId:'${safeSenderId}',senderName:'${safeNick}'};openUserProfile('${safeNick}')`
+    : `openUserProfile('${safeNick}')`;
   row.innerHTML = `
     ${!isMine ? `<div class="cmsg-nick" style="cursor:pointer;color:var(--primary);" onclick="${clickHandler}">${escHtml(nick)}</div>` : ''}
     <div style="display:flex;align-items:flex-end;gap:6px;${isMine?'flex-direction:row-reverse':''}">
@@ -3322,6 +3348,8 @@ async function loadPrivateChatFromServer(chatId) {
         time: m.time,
         senderName: m.sender_name,
         senderId: m.sender_id,
+        created_at: m.created_at,
+        dbId: m.id,
       }));
       savePrivateChatsToStorage();
       if (currentPrivateChatId == chatId) renderPrivateChatMessages(chatId);
