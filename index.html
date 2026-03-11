@@ -807,7 +807,7 @@ async function sendBookingNotification() {
 
   // Отправляем ЛС бизнесу
   try {
-    const roomId = [currentUser.id, currentSpecId].sort().join('_');
+    const roomId = [currentUser.id, currentSpecId].sort().join('__'); // Исправлено: __ вместо _
     const now = new Date();
     const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
     
@@ -2160,6 +2160,15 @@ function openChatWithUser(theirUserId, theirName, theirInitials, theirGrad) {
 
 // Открыть чат со специалистом (кнопка 💬 на карточке)
 function openPrivateChat(specId) {
+  // Сначала ищем в бизнесах из БД
+  const business = loadedBusinesses.find(b => b.user_id === specId);
+  if (business) {
+    const initials = business.name.substring(0,2).toUpperCase();
+    openChatWithUser(specId, business.name, initials, 'linear-gradient(135deg,#4A90D9,#7B5EA7)');
+    return;
+  }
+  
+  // Если не нашли, ищем в старых специалистах (хардкод)
   const spec = SPECIALISTS.find(s => s.id === specId);
   if (!spec) return;
   openChatWithUser('spec_' + specId, spec.name, spec.initials, spec.grad);
