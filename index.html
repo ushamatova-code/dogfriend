@@ -2137,8 +2137,10 @@ function loadContactBook() {
 // Открыть чат с реальным пользователем
 function openChatWithUser(theirUserId, theirName, theirInitials, theirGrad) {
   const myUserId = currentUser?.id || userId;
+  console.log('👤 openChatWithUser: theirUserId=', theirUserId, 'myUserId=', myUserId);
   if (!theirUserId || theirUserId === myUserId) return;
   currentPrivateChatId = theirUserId;
+  console.log('✅ Set currentPrivateChatId =', currentPrivateChatId);
 
   // Запомним контакт
   contactBook[theirUserId] = { name: theirName, initials: theirInitials || theirName.slice(0,2).toUpperCase(), grad: theirGrad || 'linear-gradient(135deg,#4A90D9,#7B5EA7)' };
