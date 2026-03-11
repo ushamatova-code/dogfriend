@@ -780,10 +780,57 @@ h3 { font-size:17px; font-weight:700; }
     <div class="card" style="margin:0 0 12px;"><div style="display:flex;align-items:center;gap:12px;"><span style="font-size:28px;">💳</span><div><div style="font-size:14px;font-weight:700;">Карта •••• 4532</div><div style="font-size:12px;color:var(--text-secondary);">Mastercard • истекает 12/27</div></div></div></div>
   </div>
   <div style="padding:12px 16px 16px;background:var(--white);border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px;flex-shrink:0;">
-    <button class="btn btn-p" onclick="nav('success')">Оплатить 6 750 ₽ 🔒</button>
+    <button class="btn btn-p" onclick="sendBookingNotification()">Оплатить 6 750 ₽ 🔒</button>
     <button class="btn btn-g" onclick="back()">Отмена</button>
   </div>
 </div>
+
+<script>
+async function sendBookingNotification() {
+  if (!currentSpecId || !currentUser) {
+    nav('success');
+    return;
+  }
+  
+  // Собираем данные профиля
+  const profile = JSON.parse(localStorage.getItem('df_profile') || '{}');
+  const business = loadedBusinesses.find(b => b.user_id === currentSpecId);
+  
+  // Формируем сообщение
+  const message = `📅 Новая запись!
+
+Услуга: Пакет 10 занятий
+Дата: 15 марта, 14:00
+Клиент: ${profile.name || 'Не указано'}
+Телефон: ${profile.phone || 'Не указано'}
+Собака: ${profile.dogname || 'Не указано'}${profile.dogbreed ? ', ' + profile.dogbreed : ''}${profile.dogage ? ', ' + profile.dogage : ''}`;
+
+  // Отправляем ЛС бизнесу
+  try {
+    const roomId = [currentUser.id, currentSpecId].sort().join('_');
+    const now = new Date();
+    const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+    
+    await savePrivateMsgToServer(roomId, currentUser.id, profile.name || 'Клиент', message, time);
+    
+    // Отправляем через Realtime
+    const channelName = `dogfriend-dm-${roomId}`;
+    if (supabasePrivateChannels[channelName]) {
+      supabasePrivateChannels[channelName].send({
+        type: 'broadcast',
+        event: 'message',
+        payload: { senderId: currentUser.id, senderName: profile.name || 'Клиент', text: message, time }
+      });
+    }
+    
+    console.log('✅ Booking notification sent to business');
+  } catch(e) {
+    console.error('❌ Failed to send booking notification:', e);
+  }
+  
+  nav('success');
+}
+</script>
 
 <!-- SUCCESS -->
 <div class="screen" id="success">
