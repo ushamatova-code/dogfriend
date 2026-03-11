@@ -2182,7 +2182,7 @@ function subscribeToPrivateChat(theirId) {
   }
 
   // Канал одинаковый с обеих сторон — sorted IDs
-  const roomId = [userId, String(theirId)].sort().join('__');
+  const roomId = [currentUser?.id || userId, String(theirId)].sort().join('__');
   const channelName = 'dogfriend-dm-' + roomId;
 
   if (supabasePrivateChannels[channelName]) {
@@ -2291,7 +2291,8 @@ function sendPrivateMessage() {
   const myName = myProfile.name || 'Гость';
 
   if (!privateChats[currentPrivateChatId]) privateChats[currentPrivateChatId] = [];
-  privateChats[currentPrivateChatId].push({ text, sender: 'user', time, senderName: myName, senderId: userId });
+  const myUserId = currentUser?.id || userId;
+  privateChats[currentPrivateChatId].push({ text, sender: 'user', time, senderName: myName, senderId: myUserId });
   localStorage.setItem('private_chats', JSON.stringify(privateChats));
   savePrivateMsgToServer(currentPrivateChatId, text, time);
 
@@ -2302,7 +2303,7 @@ function sendPrivateMessage() {
 
   // Отправить через Supabase Realtime
   if (supabaseClient) {
-    const roomId = [userId, String(currentPrivateChatId)].sort().join('__');
+    const roomId = [myUserId, String(currentPrivateChatId)].sort().join('__');
     const channelName = 'dogfriend-dm-' + roomId;
     
     // Используем существующий канал или создаём и подписываемся
@@ -2318,7 +2319,7 @@ function sendPrivateMessage() {
     channel.send({
       type: 'broadcast',
       event: 'message',
-      payload: { text, senderName: myName, senderId: userId, time }
+      payload: { text, senderName: myName, senderId: myUserId, time }
     });
   }
 }
@@ -3143,13 +3144,14 @@ async function loadPrivateChatFromServer(chatId) {
 // Сохранить сообщение на сервере
 async function savePrivateMsgToServer(chatId, text, time) {
   if (!supabaseClient) return;
-  const roomId = getRoomId(userId, String(chatId));
+  const myUserId = currentUser?.id || userId;
+  const roomId = getRoomId(myUserId, String(chatId));
   const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
   
   try {
     const { data, error } = await supabaseClient.from('direct_messages').insert({
       room_id: roomId,
-      sender_id: userId,
+      sender_id: myUserId,
       sender_name: p.name || 'Гость',
       text: text,
       time: time
