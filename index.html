@@ -626,25 +626,11 @@ h3 { font-size:17px; font-weight:700; }
       <button class="btn btn-g" style="margin-top:12px;background:rgba(255,255,255,0.2);color:white;border:none;height:38px;" onclick="nav('profile')">Посмотреть отчёт →</button>
     </div>
 
-    <div class="sec-hd"><div class="sec-t">📅 Ближайшие события</div><div class="sec-l" onclick="nav('community')">Все</div></div>
-    <div class="scroll-row">
-      <div class="ec">
-        <div style="font-size:15px;font-weight:800;">🐕 Встреча биглей</div>
-        <div style="font-size:13px;color:var(--text-secondary);">📍 Сокольники, главная аллея</div>
-        <div style="font-size:13px;color:var(--text-secondary);">🕖 Завтра, 19:00</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
-          <span style="font-size:13px;">👥 12 собак</span>
-          <button class="btn btn-p btn-sm" onclick="openModal('m-event')">Записаться</button>
-        </div>
-      </div>
-      <div class="ec">
-        <div style="font-size:15px;font-weight:800;">🌅 Утренняя пробежка</div>
-        <div style="font-size:13px;color:var(--text-secondary);">📍 Парк Горького</div>
-        <div style="font-size:13px;color:var(--text-secondary);">🕖 Завтра, 7:30</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
-          <span style="font-size:13px;">👥 8 собак</span>
-          <button class="btn btn-p btn-sm" onclick="openModal('m-event')">Записаться</button>
-        </div>
+    <div class="sec-hd"><div class="sec-t">📅 Ближайшие события</div><div class="sec-l" onclick="nav('events')">Все</div></div>
+    <div class="scroll-row" id="home-events-row">
+      <div class="ec" style="align-items:center;justify-content:center;color:var(--text-secondary);">
+        <div style="font-size:28px;">📅</div>
+        <div style="font-size:13px;text-align:center;">Загружаем события...</div>
       </div>
     </div>
 
@@ -891,6 +877,7 @@ async function sendBookingNotification() {
       <div class="prof-row" onclick="openModal('m-orders')"><div class="prof-row-icon">📋</div><div class="prof-row-lbl">Мои заказы</div><div class="badge" style="margin-right:8px;">12</div><div class="prof-row-arr">›</div></div>
       <div class="prof-row" onclick="nav('payments')"><div class="prof-row-icon">💳</div><div class="prof-row-lbl">Способы оплаты</div><div class="prof-row-arr">›</div></div>
       <div class="prof-row" onclick="nav('myPets')"><div class="prof-row-icon">🐕</div><div class="prof-row-lbl">Мои собаки</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="nav('events')"><div class="prof-row-icon">📅</div><div class="prof-row-lbl">Мои события</div><div class="prof-row-arr">›</div></div>
       <div class="prof-row" onclick="nav('notifSettings')"><div class="prof-row-icon">🔔</div><div class="prof-row-lbl">Уведомления</div><div class="prof-row-arr">›</div></div>
       <div class="prof-row" onclick="nav('medRecords')"><div class="prof-row-icon">🏥</div><div class="prof-row-lbl">Медицинские записи</div><div class="prof-row-arr">›</div></div>
       <div class="prof-row" onclick="nav('lessons')"><div class="prof-row-icon">🎓</div><div class="prof-row-lbl">Уроки и тренировки</div><div class="badge" style="margin-right:8px;background:#7ED321;">FREE</div><div class="prof-row-arr">›</div></div>
@@ -1076,16 +1063,7 @@ async function sendBookingNotification() {
 </div>
 
 <!-- MODALS -->
-<div class="modal-ov" id="m-event" onclick="closeModal('m-event')">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="mhandle"></div>
-    <h3 style="margin-bottom:6px;">🐕 Встреча биглей</h3>
-    <p style="margin-bottom:16px;color:var(--text-secondary);">📍 Сокольники, главная аллея • 🕖 Завтра 19:00</p>
-    <p style="color:var(--text-secondary);margin-bottom:20px;">Дружеская встреча хозяев биглей! Берите своих питомцев и хорошее настроение.</p>
-    <button class="btn btn-p" onclick="closeModal('m-event')">Записаться ✓</button>
-    <button class="btn btn-g" style="margin-top:10px;" onclick="closeModal('m-event')">Отмена</button>
-  </div>
-</div>
+<!-- заменён на полноценный экран события -->
 
 <div class="modal-ov" id="m-orders" onclick="closeModal('m-orders')">
   <div class="modal" onclick="event.stopPropagation()">
@@ -4910,4 +4888,693 @@ async function saveBizEdit() {
     }
   };
 })();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- EVENTS SCREENS                                              -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<!-- EVENTS LIST -->
+<div class="screen" id="events">
+  <div class="top-bar" style="padding-top:0;">
+    <button class="back-btn" onclick="back()">←</button>
+    <div class="tbar-title">📅 События</div>
+    <button class="btn btn-sm btn-p" onclick="nav('createEvent')" style="height:36px;padding:0 14px;font-size:13px;">+ Создать</button>
+  </div>
+  <!-- Фильтры -->
+  <div style="display:flex;gap:8px;padding:0 16px 12px;overflow-x:auto;flex-shrink:0;" id="events-filters">
+    <button class="filter-btn active" onclick="filterEvents('all',this)">Все</button>
+    <button class="filter-btn" onclick="filterEvents('walk',this)">🐾 Прогулки</button>
+    <button class="filter-btn" onclick="filterEvents('training',this)">🎓 Тренировки</button>
+    <button class="filter-btn" onclick="filterEvents('meetup',this)">🐕 Встречи</button>
+    <button class="filter-btn" onclick="filterEvents('promo',this)">🎁 Акции</button>
+    <button class="filter-btn" onclick="filterEvents('openday',this)">🏥 Открытые дни</button>
+  </div>
+  <div class="scroll" id="events-list" style="padding:0 16px 24px;">
+    <div style="text-align:center;padding:40px 0;color:var(--text-secondary);">Загружаем события...</div>
+  </div>
+</div>
+
+<!-- EVENT DETAIL -->
+<div class="screen" id="eventDetail">
+  <div class="top-bar" style="padding-top:0;">
+    <button class="back-btn" onclick="back()">←</button>
+    <div class="tbar-title" id="ev-topbar-title">Событие</div>
+    <button class="back-btn" id="ev-edit-btn" style="display:none;" onclick="editCurrentEvent()">✏️</button>
+  </div>
+  <div class="scroll" style="padding:0 0 24px;">
+    <!-- Шапка события -->
+    <div id="ev-hero" style="padding:20px 16px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);color:white;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <span id="ev-type-icon" style="font-size:32px;">📅</span>
+        <div>
+          <div id="ev-title" style="font-size:20px;font-weight:800;"></div>
+          <div id="ev-type-label" style="font-size:13px;opacity:0.85;"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;">
+        <span id="ev-date-badge" style="background:rgba(255,255,255,0.2);border-radius:8px;padding:4px 10px;font-size:13px;font-weight:600;"></span>
+        <span id="ev-price-badge" style="background:rgba(255,255,255,0.2);border-radius:8px;padding:4px 10px;font-size:13px;font-weight:600;"></span>
+      </div>
+    </div>
+    <div style="padding:16px;">
+      <!-- Инфо -->
+      <div style="background:var(--white);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:12px;">
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;">
+          <span style="font-size:20px;">📍</span>
+          <div><div style="font-size:12px;color:var(--text-secondary);">Место</div><div id="ev-address" style="font-weight:700;font-size:14px;"></div></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <span style="font-size:20px;">🕐</span>
+          <div><div style="font-size:12px;color:var(--text-secondary);">Дата и время</div><div id="ev-datetime" style="font-weight:700;font-size:14px;"></div></div>
+        </div>
+      </div>
+      <!-- Описание -->
+      <div id="ev-desc-block" style="background:var(--white);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:12px;display:none;">
+        <div style="font-size:15px;font-weight:800;margin-bottom:8px;">О событии</div>
+        <div id="ev-desc" style="font-size:14px;color:var(--text-secondary);line-height:1.5;"></div>
+      </div>
+      <!-- Участники -->
+      <div style="background:var(--white);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div style="font-size:15px;font-weight:800;">👥 Участники</div>
+          <div id="ev-count" style="font-size:13px;color:var(--text-secondary);font-weight:600;"></div>
+        </div>
+        <div id="ev-participants-avatars" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>
+        <button id="ev-rsvp-btn" class="btn btn-p" onclick="toggleRSVP()">✓ Иду!</button>
+        <button id="ev-chat-btn" class="btn btn-g" style="margin-top:8px;" onclick="openEventChat()">💬 Чат события</button>
+      </div>
+      <!-- Фото с события (если есть) -->
+      <div id="ev-photo-block" style="display:none;background:var(--white);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:12px;">
+        <div style="font-size:15px;font-weight:800;margin-bottom:10px;">📸 Фото с события</div>
+        <img id="ev-photo" style="width:100%;border-radius:12px;object-fit:cover;" />
+        <div id="ev-photo-upload-btn" style="display:none;margin-top:10px;">
+          <label style="display:block;text-align:center;padding:10px;background:var(--bg);border-radius:10px;cursor:pointer;font-weight:700;font-size:14px;">
+            📤 Загрузить фото
+            <input type="file" accept="image/*" style="display:none;" onchange="uploadEventPhoto(this)">
+          </label>
+        </div>
+      </div>
+      <!-- Организатор -->
+      <div id="ev-organizer-block" style="background:var(--white);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:12px;display:none;">
+        <div style="font-size:15px;font-weight:800;margin-bottom:10px;">🏢 Организатор</div>
+        <div id="ev-organizer" style="display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="openOrganizerProfile()">
+          <div id="ev-org-avatar" class="avatar" style="width:46px;height:46px;font-size:18px;"></div>
+          <div>
+            <div id="ev-org-name" style="font-weight:700;font-size:14px;"></div>
+            <div id="ev-org-type" style="font-size:12px;color:var(--text-secondary);"></div>
+          </div>
+          <div style="margin-left:auto;color:var(--text-secondary);">›</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE EVENT -->
+<div class="screen" id="createEvent">
+  <div class="top-bar" style="padding-top:0;">
+    <button class="back-btn" onclick="back()">←</button>
+    <div class="tbar-title">Создать событие</div>
+    <div style="width:40px;"></div>
+  </div>
+  <div class="scroll" style="padding:0 16px 24px;">
+    <!-- Тип события -->
+    <div style="margin-bottom:16px;padding-top:16px;">
+      <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:10px;">Тип события</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;" id="event-type-picker">
+        <label class="ev-type-opt" data-type="walk">🐾 Прогулка</label>
+        <label class="ev-type-opt" data-type="meetup">🐕 Встреча</label>
+        <label class="ev-type-opt" data-type="training">🎓 Тренировка</label>
+        <label class="ev-type-opt" data-type="promo">🎁 Акция</label>
+        <label class="ev-type-opt" data-type="openday">🏥 Открытый день</label>
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px;"><label class="lbl">Название *</label><input class="input" id="ev-create-title" placeholder="Утренняя прогулка в Сокольниках"></div>
+    <div style="margin-bottom:12px;"><label class="lbl">Описание</label><textarea class="input" id="ev-create-desc" placeholder="Расскажите подробнее — породы, правила, что взять с собой..." style="min-height:80px;resize:none;"></textarea></div>
+    <div style="margin-bottom:12px;"><label class="lbl">Адрес / Место *</label><input class="input" id="ev-create-address" placeholder="Сокольники, главная аллея"></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div><label class="lbl">Дата *</label><input class="input" id="ev-create-date" type="date"></div>
+      <div><label class="lbl">Время *</label><input class="input" id="ev-create-time" type="time"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div><label class="lbl">Стоимость</label><input class="input" id="ev-create-price" placeholder="Бесплатно"></div>
+      <div><label class="lbl">Лимит мест</label><input class="input" id="ev-create-limit" type="number" placeholder="∞"></div>
+    </div>
+
+    <!-- Привязка к бизнесу (если есть) -->
+    <div id="ev-biz-attach" style="display:none;margin-bottom:12px;">
+      <label class="lbl">Организатор</label>
+      <div style="display:flex;gap:8px;" id="ev-biz-picker"></div>
+    </div>
+
+    <!-- Повторяемость -->
+    <div style="margin-bottom:20px;">
+      <label class="lbl">Повторяемость</label>
+      <select class="input" id="ev-create-recur">
+        <option value="">Разовое</option>
+        <option value="weekly">Каждую неделю</option>
+        <option value="biweekly">Раз в две недели</option>
+      </select>
+    </div>
+
+    <button class="btn btn-p" onclick="submitCreateEvent()">Создать событие 📅</button>
+    <button class="btn btn-g" style="margin-top:10px;" onclick="back()">Отмена</button>
+  </div>
+</div>
+
+<style>
+.ev-type-opt {
+  display:flex;align-items:center;gap:6px;padding:8px 14px;
+  border-radius:12px;border:2px solid var(--border);background:var(--white);
+  cursor:pointer;font-size:13px;font-weight:700;color:var(--text-secondary);
+  transition:all 0.15s;user-select:none;
+}
+.ev-type-opt.active {
+  border-color:var(--primary);background:rgba(74,144,217,0.08);color:var(--primary);
+}
+.ev-full-card {
+  background:var(--white);border-radius:var(--radius);padding:16px;
+  box-shadow:var(--shadow);margin-bottom:12px;cursor:pointer;
+  display:flex;flex-direction:column;gap:8px;transition:transform 0.15s;
+}
+.ev-full-card:active { transform:scale(0.98); }
+.ev-type-badge {
+  display:inline-block;padding:3px 10px;border-radius:8px;
+  font-size:11px;font-weight:700;
+}
+.filter-btn {
+  flex-shrink:0;padding:7px 14px;border-radius:20px;border:2px solid var(--border);
+  background:var(--white);font-size:13px;font-weight:700;color:var(--text-secondary);cursor:pointer;
+  white-space:nowrap;transition:all 0.15s;
+}
+.filter-btn.active {
+  background:var(--primary);border-color:var(--primary);color:white;
+}
+</style>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// EVENTS ENGINE
+// ════════════════════════════════════════════════════════════
+
+let allEvents = [];
+let currentEvent = null;
+let myParticipations = {}; // eventId -> status
+let currentEventFilter = 'all';
+
+const EVENT_TYPES = {
+  walk:     { icon: '🐾', label: 'Прогулка',      color: '#7ED321' },
+  meetup:   { icon: '🐕', label: 'Встреча',        color: '#F5A623' },
+  training: { icon: '🎓', label: 'Тренировка',     color: '#4A90D9' },
+  promo:    { icon: '🎁', label: 'Акция',           color: '#9B59B6' },
+  openday:  { icon: '🏥', label: 'Открытый день',  color: '#E74C3C' },
+};
+
+// ── Форматирование даты ──────────────────────────────────────
+function formatEventDate(dateStr) {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diff = d - now;
+  const days = Math.floor(diff / 86400000);
+  const time = d.toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' });
+  const dateOnly = d.toLocaleDateString('ru', { day: 'numeric', month: 'long' });
+  if (days === 0) return `Сегодня, ${time}`;
+  if (days === 1) return `Завтра, ${time}`;
+  if (days > 1 && days < 7) return `${dateOnly}, ${time}`;
+  return `${dateOnly} ${d.getFullYear()}, ${time}`;
+}
+
+function formatEventDateFull(dateStr) {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('ru', { weekday: 'long', day: 'numeric', month: 'long' }) +
+    ', ' + d.toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' });
+}
+
+// ── Загрузка событий ─────────────────────────────────────────
+async function loadEvents() {
+  if (!supabaseClient) return;
+  try {
+    const now = new Date().toISOString();
+    const { data, error } = await supabaseClient
+      .from('events')
+      .select('*, businesses(name, type)')
+      .gte('event_date', now)
+      .order('event_date', { ascending: true })
+      .limit(50);
+    if (error) throw error;
+    allEvents = data || [];
+    renderHomeEvents();
+    if (document.getElementById('events')?.classList.contains('active') ||
+        document.getElementById('events')?.style.display !== 'none') {
+      renderEventsList();
+    }
+    // Загружаем свои участия
+    if (currentUser) loadMyParticipations();
+  } catch(e) {
+    console.error('loadEvents error:', e);
+  }
+}
+
+async function loadMyParticipations() {
+  if (!supabaseClient || !currentUser) return;
+  try {
+    const { data } = await supabaseClient
+      .from('event_participants')
+      .select('event_id, status')
+      .eq('user_id', currentUser.id);
+    myParticipations = {};
+    (data || []).forEach(p => { myParticipations[p.event_id] = p.status; });
+  } catch(e) {}
+}
+
+// ── Блок на главной (горизонтальный скролл) ──────────────────
+function renderHomeEvents() {
+  const row = document.getElementById('home-events-row');
+  if (!row) return;
+  const upcoming = allEvents.slice(0, 6);
+  if (!upcoming.length) {
+    row.innerHTML = `<div class="ec" style="align-items:center;justify-content:center;color:var(--text-secondary);">
+      <div style="font-size:28px;">📅</div>
+      <div style="font-size:13px;text-align:center;">Событий пока нет.<br>Создайте первое!</div>
+      <button class="btn btn-p btn-sm" style="margin-top:6px;" onclick="nav('createEvent')">+ Создать</button>
+    </div>`;
+    return;
+  }
+  row.innerHTML = upcoming.map(ev => {
+    const t = EVENT_TYPES[ev.type] || EVENT_TYPES.meetup;
+    const going = myParticipations[ev.id] === 'going';
+    return `<div class="ec" onclick="openEventDetail('${ev.id}')">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
+        <span style="font-size:20px;">${t.icon}</span>
+        <span style="font-size:13px;font-weight:800;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ev.title}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-secondary);">📍 ${ev.address}</div>
+      <div style="font-size:12px;color:var(--text-secondary);">🕐 ${formatEventDate(ev.event_date)}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px;">
+        <span style="font-size:12px;color:var(--text-secondary);">👥 ${ev.participants_count || 0} идут</span>
+        <span style="font-size:11px;font-weight:700;color:${going ? 'var(--success)' : 'var(--primary)'};">${going ? '✓ Иду' : 'Записаться'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Список событий (отдельный экран) ─────────────────────────
+function filterEvents(type, btn) {
+  currentEventFilter = type;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderEventsList();
+}
+
+function renderEventsList() {
+  const list = document.getElementById('events-list');
+  if (!list) return;
+  const filtered = currentEventFilter === 'all'
+    ? allEvents
+    : allEvents.filter(ev => ev.type === currentEventFilter);
+
+  if (!filtered.length) {
+    list.innerHTML = `<div style="text-align:center;padding:60px 0;color:var(--text-secondary);">
+      <div style="font-size:48px;margin-bottom:12px;">📅</div>
+      <div style="font-size:16px;font-weight:700;">Событий нет</div>
+      <div style="font-size:13px;margin-top:6px;">Создайте первое в вашем районе!</div>
+      <button class="btn btn-p" style="margin-top:16px;max-width:200px;" onclick="nav('createEvent')">+ Создать событие</button>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(ev => {
+    const t = EVENT_TYPES[ev.type] || EVENT_TYPES.meetup;
+    const going = myParticipations[ev.id] === 'going';
+    const isFull = ev.max_participants && (ev.participants_count || 0) >= ev.max_participants;
+    const isOwn = currentUser && ev.creator_id === currentUser.id;
+    return `<div class="ev-full-card" onclick="openEventDetail('${ev.id}')">
+      <div style="display:flex;align-items:flex-start;gap:12px;">
+        <div style="width:48px;height:48px;border-radius:14px;background:${t.color}22;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${t.icon}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <span class="ev-type-badge" style="background:${t.color}22;color:${t.color};">${t.label}</span>
+            ${isOwn ? '<span class="ev-type-badge" style="background:#F5A62322;color:#F5A623;">Моё</span>' : ''}
+            ${going ? '<span class="ev-type-badge" style="background:#7ED32122;color:#7ED321;">✓ Иду</span>' : ''}
+          </div>
+          <div style="font-size:15px;font-weight:800;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ev.title}</div>
+          <div style="font-size:12px;color:var(--text-secondary);">📍 ${ev.address}</div>
+          <div style="font-size:12px;color:var(--text-secondary);">🕐 ${formatEventDate(ev.event_date)}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:13px;font-weight:700;">👥 ${ev.participants_count || 0}${ev.max_participants ? '/' + ev.max_participants : ''}</span>
+          ${ev.price && ev.price !== 'Бесплатно' ? `<span style="font-size:13px;color:var(--text-secondary);">· ${ev.price}</span>` : '<span style="font-size:12px;font-weight:700;color:var(--success);">Бесплатно</span>'}
+        </div>
+        <span style="font-size:13px;font-weight:700;color:${isFull ? 'var(--text-secondary)' : 'var(--primary)'};">${isFull ? 'Мест нет' : going ? '✓ Записан' : 'Подробнее →'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Детальный экран события ───────────────────────────────────
+async function openEventDetail(eventId) {
+  let ev = allEvents.find(e => e.id === eventId);
+  if (!ev) {
+    try {
+      const { data } = await supabaseClient.from('events').select('*, businesses(name,type)').eq('id', eventId).single();
+      ev = data;
+      if (ev) allEvents.push(ev);
+    } catch(e) { return; }
+  }
+  if (!ev) return;
+  currentEvent = ev;
+
+  const t = EVENT_TYPES[ev.type] || EVENT_TYPES.meetup;
+  document.getElementById('ev-topbar-title').textContent = ev.title;
+  document.getElementById('ev-type-icon').textContent = t.icon;
+  document.getElementById('ev-title').textContent = ev.title;
+  document.getElementById('ev-type-label').textContent = t.label;
+  document.getElementById('ev-date-badge').textContent = '🕐 ' + formatEventDate(ev.event_date);
+  document.getElementById('ev-price-badge').textContent = ev.price || 'Бесплатно';
+  document.getElementById('ev-address').textContent = ev.address;
+  document.getElementById('ev-datetime').textContent = formatEventDateFull(ev.event_date);
+
+  // Описание
+  const descBlock = document.getElementById('ev-desc-block');
+  if (ev.description) {
+    document.getElementById('ev-desc').textContent = ev.description;
+    descBlock.style.display = '';
+  } else {
+    descBlock.style.display = 'none';
+  }
+
+  // Кнопка редактирования для организатора
+  const editBtn = document.getElementById('ev-edit-btn');
+  editBtn.style.display = (currentUser && ev.creator_id === currentUser.id) ? '' : 'none';
+
+  // Фото блок — всегда показываем если есть фото или если организатор
+  const photoBlock = document.getElementById('ev-photo-block');
+  const photoImg = document.getElementById('ev-photo');
+  const photoUploadBtn = document.getElementById('ev-photo-upload-btn');
+  const eventPast = new Date(ev.event_date) < new Date();
+  if (ev.photo_url) {
+    photoImg.src = ev.photo_url;
+    photoBlock.style.display = '';
+    photoUploadBtn.style.display = 'none';
+  } else if (eventPast && currentUser && ev.creator_id === currentUser.id) {
+    photoBlock.style.display = '';
+    photoImg.style.display = 'none';
+    photoUploadBtn.style.display = '';
+  } else {
+    photoBlock.style.display = 'none';
+  }
+
+  // Организатор
+  const orgBlock = document.getElementById('ev-organizer-block');
+  if (ev.business_id && ev.businesses) {
+    const biz = ev.businesses;
+    const typeLabels = { trainer: 'Кинолог', clinic: 'Клиника', cafe: 'Кафе' };
+    document.getElementById('ev-org-avatar').textContent = (biz.name || '?').substring(0,2).toUpperCase();
+    document.getElementById('ev-org-name').textContent = biz.name;
+    document.getElementById('ev-org-type').textContent = typeLabels[biz.type] || '';
+    orgBlock.style.display = '';
+  } else {
+    orgBlock.style.display = 'none';
+  }
+
+  // Загружаем участников
+  await loadEventParticipants(ev.id);
+  nav('eventDetail');
+}
+
+async function loadEventParticipants(eventId) {
+  try {
+    const { data } = await supabaseClient
+      .from('event_participants')
+      .select('user_id, status')
+      .eq('event_id', eventId)
+      .eq('status', 'going');
+
+    const count = (data || []).length;
+    const ev = allEvents.find(e => e.id === eventId);
+    if (ev) ev.participants_count = count;
+
+    const isFull = currentEvent?.max_participants && count >= currentEvent.max_participants;
+    const going = myParticipations[eventId] === 'going';
+    const onWaitlist = myParticipations[eventId] === 'waitlist';
+
+    document.getElementById('ev-count').textContent =
+      `${count}${currentEvent?.max_participants ? '/' + currentEvent.max_participants : ''} идут`;
+
+    // Аватары участников
+    const avatarsEl = document.getElementById('ev-participants-avatars');
+    const shown = (data || []).slice(0, 12);
+    avatarsEl.innerHTML = shown.map((p, i) => {
+      const letters = p.user_id.substring(0, 2).toUpperCase();
+      const hue = (p.user_id.charCodeAt(0) * 47) % 360;
+      return `<div style="width:36px;height:36px;border-radius:50%;background:hsl(${hue},60%,60%);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:white;border:2px solid var(--white);">${letters}</div>`;
+    }).join('') + (count > 12 ? `<div style="width:36px;height:36px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text-secondary);">+${count - 12}</div>` : '');
+
+    // RSVP кнопка
+    const btn = document.getElementById('ev-rsvp-btn');
+    if (going) {
+      btn.textContent = '✓ Я иду (отменить)';
+      btn.className = 'btn btn-g';
+    } else if (onWaitlist) {
+      btn.textContent = '⏳ Лист ожидания';
+      btn.className = 'btn btn-g';
+    } else if (isFull) {
+      btn.textContent = 'Записаться в очередь';
+      btn.className = 'btn btn-o';
+    } else {
+      btn.textContent = '✓ Иду!';
+      btn.className = 'btn btn-p';
+    }
+  } catch(e) {
+    console.error('loadEventParticipants error:', e);
+  }
+}
+
+// ── RSVP ─────────────────────────────────────────────────────
+async function toggleRSVP() {
+  if (!currentUser) { showToast('Войдите чтобы записаться'); return; }
+  if (!currentEvent) return;
+
+  const eventId = currentEvent.id;
+  const going = myParticipations[eventId] === 'going';
+  const isFull = currentEvent.max_participants &&
+    (currentEvent.participants_count || 0) >= currentEvent.max_participants;
+
+  try {
+    if (going) {
+      // Отменяем запись
+      await supabaseClient.from('event_participants')
+        .delete().eq('event_id', eventId).eq('user_id', currentUser.id);
+      delete myParticipations[eventId];
+      showToast('Запись отменена');
+    } else if (isFull) {
+      // Лист ожидания
+      await supabaseClient.from('event_participants')
+        .upsert({ event_id: eventId, user_id: currentUser.id, status: 'waitlist' });
+      myParticipations[eventId] = 'waitlist';
+      showToast('⏳ Добавлены в лист ожидания');
+    } else {
+      // Записываемся
+      await supabaseClient.from('event_participants')
+        .upsert({ event_id: eventId, user_id: currentUser.id, status: 'going' });
+      myParticipations[eventId] = 'going';
+      showToast('✅ Вы записаны!', '#7ED321');
+    }
+    await loadEventParticipants(eventId);
+    renderHomeEvents();
+    renderEventsList();
+  } catch(e) {
+    console.error('RSVP error:', e);
+    showToast('❌ Ошибка. Попробуйте ещё раз.');
+  }
+}
+
+// ── Чат события ───────────────────────────────────────────────
+function openEventChat() {
+  if (!currentEvent) return;
+  if (!currentUser) { showToast('Войдите чтобы открыть чат'); return; }
+  const roomId = 'event_' + currentEvent.id;
+  const name = '📅 ' + currentEvent.title;
+  openChatWithUser(roomId, name, '📅', 'linear-gradient(135deg,#4A90D9,#7B5EA7)');
+}
+
+// ── Профиль организатора ──────────────────────────────────────
+function openOrganizerProfile() {
+  if (!currentEvent?.business_id) return;
+  openBusinessProfile(currentEvent.business_id);
+}
+
+// ── Создание события ─────────────────────────────────────────
+function initCreateEvent() {
+  // Тип-пикер
+  const opts = document.querySelectorAll('.ev-type-opt');
+  opts.forEach(opt => {
+    opt.addEventListener('click', () => {
+      opts.forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+    });
+  });
+  // Выбираем первый по умолчанию
+  if (opts[0]) opts[0].classList.add('active');
+
+  // Дата по умолчанию = завтра
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const dateInput = document.getElementById('ev-create-date');
+  if (dateInput) dateInput.value = tomorrow.toISOString().split('T')[0];
+  const timeInput = document.getElementById('ev-create-time');
+  if (timeInput) timeInput.value = '10:00';
+
+  // Привязка к бизнесу
+  const bizAttach = document.getElementById('ev-biz-attach');
+  const bizPicker = document.getElementById('ev-biz-picker');
+  if (userBusinesses.length > 0) {
+    bizAttach.style.display = '';
+    bizPicker.innerHTML = `<label class="ev-type-opt active" data-biz-id="">👤 Лично</label>` +
+      userBusinesses.map(b => `<label class="ev-type-opt" data-biz-id="${b.id}">${b.name}</label>`).join('');
+    bizPicker.querySelectorAll('.ev-type-opt').forEach(opt => {
+      opt.addEventListener('click', () => {
+        bizPicker.querySelectorAll('.ev-type-opt').forEach(o => o.classList.remove('active'));
+        opt.classList.add('active');
+      });
+    });
+  } else {
+    bizAttach.style.display = 'none';
+  }
+}
+
+async function submitCreateEvent() {
+  if (!currentUser) { showToast('Войдите чтобы создать событие'); return; }
+
+  const typeOpt = document.querySelector('.ev-type-opt.active');
+  const type = typeOpt?.dataset.type || 'meetup';
+  const title = document.getElementById('ev-create-title')?.value.trim();
+  const desc = document.getElementById('ev-create-desc')?.value.trim();
+  const address = document.getElementById('ev-create-address')?.value.trim();
+  const date = document.getElementById('ev-create-date')?.value;
+  const time = document.getElementById('ev-create-time')?.value;
+  const price = document.getElementById('ev-create-price')?.value.trim() || 'Бесплатно';
+  const limit = document.getElementById('ev-create-limit')?.value;
+  const recur = document.getElementById('ev-create-recur')?.value;
+
+  if (!title) { showToast('❌ Укажите название'); return; }
+  if (!address) { showToast('❌ Укажите место'); return; }
+  if (!date || !time) { showToast('❌ Укажите дату и время'); return; }
+
+  // Бизнес-организатор
+  const activeBizOpt = document.querySelector('#ev-biz-picker .ev-type-opt.active');
+  const businessId = activeBizOpt?.dataset.bizId || null;
+
+  const eventDate = new Date(date + 'T' + time);
+  if (eventDate < new Date()) { showToast('❌ Дата уже прошла'); return; }
+
+  try {
+    const { data, error } = await supabaseClient.from('events').insert({
+      creator_id: currentUser.id,
+      business_id: businessId || null,
+      type,
+      title,
+      description: desc,
+      address,
+      event_date: eventDate.toISOString(),
+      price,
+      max_participants: limit ? parseInt(limit) : null,
+      is_recurring: !!recur,
+      recur_rule: recur || null,
+    }).select().single();
+
+    if (error) throw error;
+
+    // Сразу записываемся сами
+    await supabaseClient.from('event_participants').insert({
+      event_id: data.id,
+      user_id: currentUser.id,
+      status: 'going'
+    });
+    myParticipations[data.id] = 'going';
+    allEvents.unshift({ ...data, participants_count: 1 });
+    allEvents.sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
+
+    showToast('✅ Событие создано!', '#7ED321');
+    renderHomeEvents();
+    nav('events');
+    renderEventsList();
+  } catch(e) {
+    console.error('createEvent error:', e);
+    showToast('❌ ' + (e.message || 'Ошибка создания'));
+  }
+}
+
+// ── Загрузка событий в профиле бизнеса ───────────────────────
+async function loadBusinessEvents(businessId) {
+  if (!supabaseClient) return [];
+  try {
+    const now = new Date().toISOString();
+    const { data } = await supabaseClient
+      .from('events')
+      .select('*')
+      .eq('business_id', businessId)
+      .gte('event_date', now)
+      .order('event_date', { ascending: true })
+      .limit(5);
+    return data || [];
+  } catch(e) { return []; }
+}
+
+// Патчим openBusinessProfile чтобы показывать события бизнеса
+const _origOpenBizProfile = window.openBusinessProfile;
+window.openBusinessProfile = async function(id) {
+  await _origOpenBizProfile(id);
+  // Добавляем блок событий
+  const bizObj = loadedBusinesses.find(b => b.id === id);
+  if (!bizObj?.id) return;
+  const events = await loadBusinessEvents(bizObj.id);
+  if (!events.length) return;
+  const overviewEl = document.getElementById('tc-spec-overview');
+  if (!overviewEl) return;
+  const old = document.getElementById('biz-events-block');
+  if (old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'biz-events-block';
+  div.className = 'card';
+  div.innerHTML = `<h3 style="margin-bottom:12px;">📅 Ближайшие события</h3>` +
+    events.map(ev => {
+      const t = EVENT_TYPES[ev.type] || EVENT_TYPES.meetup;
+      return `<div onclick="openEventDetail('${ev.id}')" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;">
+        <div style="width:40px;height:40px;border-radius:12px;background:${t.color}22;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">${t.icon}</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:700;">${ev.title}</div>
+          <div style="font-size:12px;color:var(--text-secondary);">🕐 ${formatEventDate(ev.event_date)}</div>
+        </div>
+        <span style="font-size:13px;color:var(--primary);font-weight:700;">›</span>
+      </div>`;
+    }).join('') +
+    `<button class="btn btn-o" style="margin-top:10px;" onclick="nav('createEvent')">+ Добавить событие</button>`;
+  overviewEl.appendChild(div);
+};
+
+// ── Nav патч — инициализация событий ─────────────────────────
+const _origNavEvents = window.nav;
+window.nav = function(id) {
+  _origNavEvents(id);
+  if (id === 'events') {
+    renderEventsList();
+    if (supabaseClient) loadEvents();
+  }
+  if (id === 'createEvent') {
+    setTimeout(initCreateEvent, 50);
+  }
+  if (id === 'home' && supabaseClient) {
+    loadEvents();
+  }
+};
+
+// Загружаем события при старте (после инициализации Supabase)
+setTimeout(() => { if (supabaseClient) loadEvents(); }, 2000);
 </script>
