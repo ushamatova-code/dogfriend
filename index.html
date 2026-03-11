@@ -2392,6 +2392,27 @@ function startPrivateChatWithUser(nick) {
   openChatWithUser(nick, nick, nick.slice(0,2).toUpperCase(), 'linear-gradient(135deg,#4A90D9,#7B5EA7)');
 }
 
+// Удалить чат только локально (БД не трогаем — собеседник ничего не теряет)
+function deleteLocalChat(chatId) {
+  delete privateChats[chatId];
+  localStorage.setItem('private_chats', JSON.stringify(privateChats));
+  if (unreadChats[chatId]) {
+    unreadCount -= unreadChats[chatId];
+    delete unreadChats[chatId];
+    localStorage.setItem('unread_chats', JSON.stringify(unreadChats));
+    updateChatBadge();
+  }
+  // Отписываемся от Realtime канала этого чата
+  const myUserId = currentUser?.id || userId;
+  const roomId = getRoomId(myUserId, String(chatId));
+  const channelName = 'dogfriend-dm-' + roomId;
+  if (supabasePrivateChannels[channelName]) {
+    supabasePrivateChannels[channelName].unsubscribe();
+    delete supabasePrivateChannels[channelName];
+  }
+  renderPrivateChats();
+}
+
 function renderPrivateChats() {
   const list = document.getElementById('private-chats-list');
   const noChats = document.getElementById('no-private-chats');
@@ -2404,7 +2425,6 @@ function renderPrivateChats() {
   }
   if (noChats) noChats.style.display = 'none';
 
-  // Сортируем чаты по времени последнего сообщения (новые сверху)
   keys.sort((a, b) => {
     const aLast = privateChats[a][privateChats[a].length - 1];
     const bLast = privateChats[b][privateChats[b].length - 1];
@@ -2418,20 +2438,75 @@ function renderPrivateChats() {
     const last = msgs[msgs.length - 1];
     const contact = contactBook[id] || { name: id, initials: id.slice(0,2).toUpperCase(), grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)' };
     const unread = unreadChats[id] || 0;
-    return `<div class="ci" onclick="openChatWithUser('${escHtml(id)}','${escHtml(contact.name)}','${escHtml(contact.initials)}','${escHtml(contact.grad)}')" style="gap:14px;">
-      <div class="avatar" style="width:52px;height:52px;font-size:20px;background:${contact.grad};flex-shrink:0;">${contact.initials}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <span style="font-weight:800;font-size:15px;">${escHtml(contact.name)}</span>
-          <span style="font-size:11px;color:var(--text-secondary);">${last?.time || ''}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:13px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">${escHtml(last?.text || '')}</span>
-          ${unread ? `<span class="badge">${unread}</span>` : ''}
+    const safeId = escHtml(id);
+    const safeName = escHtml(contact.name);
+    const safeInitials = escHtml(contact.initials);
+    const safeGrad = escHtml(contact.grad);
+    return `
+    <div style="position:relative;overflow:hidden;" id="ci-wrap-${safeId}">
+      <div style="position:absolute;right:0;top:0;bottom:0;width:80px;background:#FF3B30;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;cursor:pointer;" onclick="deleteLocalChat('${safeId}')">
+        <span style="font-size:18px;">🗑️</span>
+        <span style="color:white;font-size:11px;font-weight:700;">Удалить</span>
+      </div>
+      <div class="ci" id="ci-row-${safeId}" style="gap:14px;position:relative;background:var(--white);transform:translateX(0);transition:transform 0.25s ease;will-change:transform;">
+        <div class="avatar" style="width:52px;height:52px;font-size:20px;background:${contact.grad};flex-shrink:0;">${contact.initials}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="font-weight:800;font-size:15px;">${safeName}</span>
+            <span style="font-size:11px;color:var(--text-secondary);">${last?.time || ''}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:13px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">${escHtml(last?.text || '')}</span>
+            ${unread ? `<span class="badge">${unread}</span>` : ''}
+          </div>
         </div>
       </div>
     </div>`;
   }).join('');
+
+  // Свайп влево = показать кнопку удаления
+  keys.forEach(id => {
+    const row = document.getElementById('ci-row-' + id);
+    if (!row) return;
+    let startX = 0, curX = 0, dragging = false, open = false;
+
+    row.addEventListener('touchstart', e => {
+      startX = e.touches[0].clientX; curX = startX; dragging = true;
+    }, { passive: true });
+
+    row.addEventListener('touchmove', e => {
+      if (!dragging) return;
+      curX = e.touches[0].clientX;
+      const diff = startX - curX;
+      row.style.transition = 'none';
+      if (diff > 0) {
+        row.style.transform = 'translateX(-' + Math.min(diff, 80) + 'px)';
+      } else if (open) {
+        row.style.transform = 'translateX(-' + Math.max(0, 80 + diff) + 'px)';
+      }
+    }, { passive: true });
+
+    row.addEventListener('touchend', () => {
+      dragging = false;
+      const diff = startX - curX;
+      row.style.transition = 'transform 0.25s ease';
+      if (diff > 40) { row.style.transform = 'translateX(-80px)'; open = true; }
+      else { row.style.transform = 'translateX(0)'; open = false; }
+    });
+
+    // Клик по ряду — открыть чат (но сначала закрыть свайп если открыт)
+    row.addEventListener('click', e => {
+      if (open) {
+        e.stopPropagation();
+        row.style.transform = 'translateX(0)';
+        open = false;
+        return;
+      }
+      const safeId = escHtml(id);
+      const contact = contactBook[id] || { name: id, initials: id.slice(0,2).toUpperCase(), grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)' };
+      openChatWithUser(id, contact.name, contact.initials, contact.grad);
+    });
+  });
 }
 
 function loadPrivateChatsFromStorage() {
