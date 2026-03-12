@@ -793,7 +793,7 @@ async function sendBookingNotification() {
     return;
   }
 
-  const business = loadedBusinesses.find(b => b.user_id === currentSpecId);
+  const business = loadedBusinesses.find(b => b.id === currentSpecId);
   if (!business) {
     console.error('Business not found in DB');
     nav('success');
@@ -4495,7 +4495,7 @@ async function openBusinessProfile(id) {
   }
   if (!b) return;
 
-  currentSpecId = b.user_id;
+  currentSpecId = b.id;
 
   const typeIcons = { trainer: '🐕', clinic: '🏥', cafe: '☕' };
   const typeLabels = { trainer: 'Кинолог / Тренер', clinic: 'Ветеринарная клиника', cafe: 'Dog-friendly место' };
