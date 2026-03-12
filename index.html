@@ -781,61 +781,98 @@ h3 { font-size:17px; font-weight:700; }
 
 <script>
 async function sendBookingNotification() {
-  if (!currentSpecId || !currentUser) {
+  if (!currentUser) {
+    alert('Пожалуйста, войдите в систему для записи.');
+    return;
+  }
+
+  const spec = SPECIALISTS.find(s => s.id === currentSpecId);
+  if (!spec) {
+    console.error('Specialist not found');
     nav('success');
     return;
   }
-  
-  // Собираем данные профиля
-  const profile = JSON.parse(localStorage.getItem('df_profile') || '{}');
-  const business = loadedBusinesses.find(b => b.user_id === currentSpecId);
-  
-  // Формируем сообщение
-  const message = `📅 Новая запись!
 
-Услуга: Пакет 10 занятий
+  const business = loadedBusinesses.find(b => b.user_id === currentSpecId);
+  if (!business) {
+    console.error('Business not found in DB');
+    nav('success');
+    return;
+  }
+
+  const profile = JSON.parse(localStorage.getItem('df_profile') || '{}');
+  const selectedService = spec.services.find(s => s.sel) || spec.services[0];
+  const amount = parseInt(selectedService.price.replace(/[^0-9]/g, '')) || 0;
+
+  if (supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('bookings')
+        .insert({
+          user_id: currentUser.id,
+          business_id: business.id,
+          business_name: business.name,
+          service_name: selectedService.name,
+          amount: amount,
+          status: 'confirmed'
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Failed to save booking:', error);
+        showToast('Ошибка сохранения записи', '#D0021B');
+      } else {
+        console.log('Booking saved to Supabase:', data.id);
+        localStorage.setItem('last_booking_id', data.id);
+      }
+    } catch (e) {
+      console.error('Booking error:', e);
+    }
+  }
+
+  const message = `📅 Новая запись!
+Услуга: ${selectedService.name}
 Дата: 15 марта, 14:00
 Клиент: ${profile.name || 'Не указано'}
-Телефон: ${profile.phone || 'Не указано'}
-Собака: ${profile.dogname || 'Не указано'}${profile.dogbreed ? ', ' + profile.dogbreed : ''}${profile.dogage ? ', ' + profile.dogage : ''}`;
+Собака: ${profile.dogname || 'Не указано'}`;
 
-  // Отправляем ЛС бизнесу
   try {
     const now = new Date();
     const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
-    
-    // Сохраняем в локальный privateChats чтобы отображалось у отправителя
-    if (!privateChats[currentSpecId]) privateChats[currentSpecId] = [];
     const myUserId = currentUser?.id || userId;
-    privateChats[currentSpecId].push({ text: message, sender: 'user', time, senderName: profile.name || 'Клиент', senderId: myUserId });
+
+    if (!privateChats[currentSpecId]) privateChats[currentSpecId] = [];
+    privateChats[currentSpecId].push({
+      text: message,
+      sender: 'user',
+      time,
+      senderName: profile.name || 'Клиент',
+      senderId: myUserId
+    });
     savePrivateChatsToStorage();
-    
-    // Сохраняем в БД через правильную функцию (chatId = currentSpecId)
+
     await savePrivateMsgToServer(currentSpecId, message, time);
-    
-    // Отправляем через Realtime
+
     const roomId = getRoomId(myUserId, String(currentSpecId));
     const channelName = `dogfriend-dm-${roomId}`;
-    
-    // Создаём канал если не существует
     let channel = supabasePrivateChannels[channelName];
     if (!channel) {
       channel = supabaseClient.channel(channelName, { config: { broadcast: { self: false } } });
       channel.subscribe();
       supabasePrivateChannels[channelName] = channel;
     }
-    
     channel.send({
       type: 'broadcast',
       event: 'message',
       payload: { senderId: myUserId, senderName: profile.name || 'Клиент', text: message, time }
     });
-    
-    console.log('✅ Booking notification sent to business');
+
+    console.log('Booking notification sent to business');
   } catch(e) {
-    console.error('❌ Failed to send booking notification:', e);
+    console.error('Failed to send booking notification:', e);
   }
-  
+
   nav('success');
 }
 </script>
@@ -4639,6 +4676,110 @@ async function submitBusiness() {
 </script>
 
 </body>
+
+<script>
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+async function loadReviews(businessId){
+ if(!supabaseClient) return [];
+ try{
+  const {data,error}=await supabaseClient.from('reviews').select('*').eq('business_id',businessId).order('created_at',{ascending:false});
+  if(error) throw error;
+  return data||[];
+ }catch(e){console.error('loadReviews error:',e);return[];}
+}
+</script>
+
+
+<script>
+// ================================
+// RATING + TOP BUSINESSES SYSTEM
+// ================================
+
+async function getBusinessRating(businessId) {
+  if (!supabaseClient) return { rating: 0, count: 0 };
+
+  const { data, error } = await supabaseClient
+    .from('reviews')
+    .select('rating')
+    .eq('business_id', businessId);
+
+  if (error || !data) return { rating: 0, count: 0 };
+
+  const count = data.length;
+  const avg = count
+    ? (data.reduce((a, b) => a + b.rating, 0) / count).toFixed(1)
+    : 0;
+
+  return { rating: avg, count };
+}
+
+function renderStars(rating) {
+  const full = Math.round(rating);
+  return '⭐'.repeat(full);
+}
+
+// Insert rating into business cards
+async function injectRatings() {
+  if (!loadedBusinesses) return;
+
+  for (const b of loadedBusinesses) {
+    const rating = await getBusinessRating(b.id);
+
+    const el = document.querySelector(`[data-business-id="${b.id}"] .rating-box`);
+    if (el) {
+      if (rating.count === 0) {
+        el.innerHTML = "Новый бизнес";
+      } else {
+        el.innerHTML = `${renderStars(rating.rating)} ${rating.rating} (${rating.count})`;
+      }
+    }
+  }
+}
+
+// Sort businesses by rating
+async function sortBusinessesByRating() {
+  if (!loadedBusinesses) return;
+
+  const ratings = {};
+
+  for (const b of loadedBusinesses) {
+    const r = await getBusinessRating(b.id);
+    ratings[b.id] = r.rating;
+  }
+
+  loadedBusinesses.sort((a, b) => (ratings[b.id] || 0) - (ratings[a.id] || 0));
+
+  if (typeof renderBusinesses === "function") {
+    renderBusinesses();
+  }
+}
+
+// Auto refresh reviews realtime
+function subscribeReviewsRealtime() {
+  if (!supabaseClient) return;
+
+  supabaseClient
+    .channel('reviews-live')
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'reviews' },
+      payload => {
+        console.log('New review:', payload);
+        injectRatings();
+      }
+    )
+    .subscribe();
+}
+
+// Run after page load
+setTimeout(() => {
+  injectRatings();
+  subscribeReviewsRealtime();
+}, 1500);
+
+</script>
+
 </html>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
