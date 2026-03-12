@@ -2253,6 +2253,7 @@ function subscribeToPrivateChat(theirId) {
       playNotificationSound();
       showInAppNotification('💬 ' + data.senderName, data.text);
       showBrowserNotification('Новое от ' + data.senderName, { body: data.text.substring(0, 80) });
+      sendPushToUser(data.senderId, { title: '💬 ' + data.senderName, message: data.text.substring(0, 100), url: '/', chatId: chatId, type: 'message' });
     } else {
       renderPrivateChatMessages(chatId);
     }
@@ -2594,55 +2595,88 @@ if (!window.supabaseLoaded) {
   document.head.appendChild(script);
 }
 
-// Регистрируем Service Worker для PWA и push-уведомлений
-// Service Worker временно отключен (проблема с blob: URL на Vercel)
-// Базовая функциональность работает без него
-/*
-if ('serviceWorker' in navigator) {
-  // Создаём Service Worker inline
-  const swCode = `
-    self.addEventListener('install', (event) => {
-      console.log('Service Worker installing...');
-      self.skipWaiting();
-    });
+// ── PUSH-УВЕДОМЛЕНИЯ (Web Push API + Service Worker) ─────────────
+const VAPID_PUBLIC_KEY = 'BI8_NAdekNyDnzqz8NAqHvNeUzmFzjJZtZpybpxPOdszWLPUnaMJnJZNckK5vGDj0L-AN9DmkcC5DaCes2CHspg';
 
-    self.addEventListener('activate', (event) => {
-      console.log('Service Worker activated');
-      event.waitUntil(self.clients.claim());
-    });
+let swRegistration = null;
 
-    self.addEventListener('push', (event) => {
-      const data = event.data ? event.data.json() : {};
-      const title = data.title || 'DogFriend';
-      const options = {
-        body: data.body || 'Новое сообщение',
-        icon: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect width="100" height="100" fill="%234A90D9" rx="20"/%3E%3Ctext y="75" font-size="70" text-anchor="middle" x="50"%3E🐕🏻%3C/text%3E%3C/svg%3E',
-        badge: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Ctext y="75" font-size="75"%3E🐕%3C/text%3E%3C/svg%3E',
-        tag: 'dogfriend-message',
-        requireInteraction: false,
-        data: data
-      };
-      event.waitUntil(self.registration.showNotification(title, options));
+async function initServiceWorker() {
+  if (!('serviceWorker' in navigator)) return null;
+  try {
+    swRegistration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    console.log('[SW] ✅ Зарегистрирован');
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if (event.data?.type === 'NOTIFICATION_CLICK') {
+        const { chatId, type } = event.data.data || {};
+        if (chatId) openPrivateChat(chatId);
+        else if (type === 'event') nav('events');
+      }
     });
-
-    self.addEventListener('notificationclick', (event) => {
-      event.notification.close();
-      event.waitUntil(
-        clients.openWindow(event.notification.data?.url || '/')
-      );
-    });
-  `;
-  
-  const blob = new Blob([swCode], { type: 'application/javascript' });
-  const swUrl = URL.createObjectURL(blob);
-  
-  navigator.serviceWorker.register(swUrl).then((registration) => {
-    console.log('✅ Service Worker registered for PWA');
-  }).catch((error) => {
-    console.log('Service Worker registration failed:', error);
-  });
+    return swRegistration;
+  } catch (error) {
+    console.error('[SW] ❌ Ошибка:', error);
+    return null;
+  }
 }
-*/
+
+let pushSubscription = null;
+
+async function subscribeToPush() {
+  if (!swRegistration) swRegistration = await initServiceWorker();
+  if (!swRegistration) return null;
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') return null;
+  try {
+    pushSubscription = await swRegistration.pushManager.getSubscription();
+    if (!pushSubscription) {
+      pushSubscription = await swRegistration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+      console.log('[Push] ✅ Подписка создана');
+    }
+    await savePushSubscription(pushSubscription);
+    return pushSubscription;
+  } catch (error) {
+    console.error('[Push] ❌ Ошибка подписки:', error);
+    return null;
+  }
+}
+
+async function savePushSubscription(subscription) {
+  if (!supabaseClient || !currentUser) return;
+  const sub = subscription.toJSON();
+  const { error } = await supabaseClient.from('push_subscriptions').upsert({
+    user_id: currentUser.id,
+    endpoint: sub.endpoint,
+    p256dh: sub.keys.p256dh,
+    auth_key: sub.keys.auth,
+    user_agent: navigator.userAgent.substring(0, 200),
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'user_id,endpoint' });
+  if (error) console.error('[Push] ❌ Ошибка сохранения:', error);
+  else console.log('[Push] ✅ Подписка сохранена в Supabase');
+}
+
+async function sendPushToUser(targetUserId, { title, message, url, chatId, type }) {
+  if (!supabaseClient) return;
+  try {
+    await supabaseClient.functions.invoke('send-push', {
+      body: { target_user_id: targetUserId, title, message, url, chatId, type }
+    });
+  } catch (e) {
+    console.error('[Push] ❌ Ошибка отправки:', e);
+  }
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
 
 let supabaseClient = null;
 let currentUser = null;
@@ -2705,6 +2739,8 @@ async function checkAuth() {
       checkUserBusiness();
 
       nav('home');
+      // Инициализируем push-уведомления
+      setTimeout(async () => { await initServiceWorker(); if (currentUser) subscribeToPush(); }, 3000);
     } else {
       console.log('❌ No session found');
       const oldRegistered = localStorage.getItem('df_registered');
@@ -3217,6 +3253,7 @@ function startRealtimeDMSubscription() {
         playNotificationSound();
         showInAppNotification('💬 ' + msg.sender_name, msg.text);
         showBrowserNotification('Новое от ' + msg.sender_name, { body: msg.text.substring(0, 80) });
+        sendPushToUser(msg.sender_id, { title: '💬 ' + msg.sender_name, message: msg.text.substring(0, 100), url: '/', chatId: chatId, type: 'message' });
       } else {
         renderPrivateChatMessages(chatId);
       }
