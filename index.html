@@ -793,7 +793,7 @@ async function sendBookingNotification() {
     return;
   }
 
-  const business = loadedBusinesses.find(b => b.id === currentSpecId);
+  const business = loadedBusinesses.find(b => b.user_id === currentSpecId);
   if (!business) {
     console.error('Business not found in DB');
     nav('success');
@@ -801,7 +801,10 @@ async function sendBookingNotification() {
   }
 
   const profile = JSON.parse(localStorage.getItem('df_profile') || '{}');
-  const selectedService = spec.services.find(s => s.sel) || spec.services[0];
+  const business = (typeof loadedBusinesses !== 'undefined' && currentSpecId)
+  ? loadedBusinesses.find(b => b.id === currentSpecId) || spec
+  : spec;
+const selectedService = (business.services || spec.services || []).find(s => s.sel) || (business.services || spec.services || [])[0];
   const amount = parseInt(selectedService.price.replace(/[^0-9]/g, '')) || 0;
 
   if (supabaseClient) {
@@ -811,7 +814,7 @@ async function sendBookingNotification() {
         .insert({
           user_id: currentUser.id,
           business_id: business.id,
-          business_name: business.name,
+          business_name: business.name || business.business_name,
           service_name: selectedService.name,
           amount: amount,
           status: 'confirmed'
@@ -2214,9 +2217,9 @@ function openPrivateChat(specId) {
   // Сначала ищем в бизнесах из БД
   const business = loadedBusinesses.find(b => b.user_id === specId);
   if (business) {
-    console.log('✅ Found business:', business.name, 'user_id:', business.user_id);
-    const initials = business.name.substring(0,2).toUpperCase();
-    openChatWithUser(specId, business.name, initials, 'linear-gradient(135deg,#4A90D9,#7B5EA7)');
+    console.log('✅ Found business:', business.name || business.business_name, 'user_id:', business.user_id);
+    const initials = business.name || business.business_name.substring(0,2).toUpperCase();
+    openChatWithUser(specId, business.name || business.business_name, initials, 'linear-gradient(135deg,#4A90D9,#7B5EA7)');
     return;
   }
   
@@ -4495,7 +4498,7 @@ async function openBusinessProfile(id) {
   }
   if (!b) return;
 
-  currentSpecId = b.id;
+  currentSpecId = b.user_id;
 
   const typeIcons = { trainer: '🐕', clinic: '🏥', cafe: '☕' };
   const typeLabels = { trainer: 'Кинолог / Тренер', clinic: 'Ветеринарная клиника', cafe: 'Dog-friendly место' };
