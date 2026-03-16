@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
-<meta name="theme-color" content="#E8723A">
+<meta name="theme-color" content="#4A90D9">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DogFriend">
@@ -15,32 +15,31 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --primary: #E8723A;
-  --primary-dark: #D4612E;
-  --primary-light: #FFF3EC;
-  --secondary: #2BAE66;
-  --success: #2BAE66;
-  --error: #E74C3C;
-  --bg: #FAFAF7;
+  --primary: #4A90D9;
+  --primary-dark: #3A7BC8;
+  --secondary: #F5A623;
+  --success: #7ED321;
+  --error: #D0021B;
+  --bg: #F0F4F8;
   --white: #FFFFFF;
   --text-primary: #1A1A1A;
-  --text-secondary: #8E8E93;
-  --border: #F0EDE8;
-  --shadow: 0 1px 8px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 20px rgba(0,0,0,0.06);
-  --nav-h: 64px;
+  --text-secondary: #666666;
+  --border: #E0E0E0;
+  --shadow: 0 2px 12px rgba(74,144,217,0.12);
+  --nav-h: 68px;
   --radius: 16px;
-  --radius-sm: 12px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
+/* Отключаем double-tap zoom */
 body, html {
   touch-action: pan-y pan-x;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
 
+/* Разрешаем выделение в input полях */
 input, textarea {
   -webkit-user-select: text;
   touch-action: manipulation;
@@ -54,7 +53,6 @@ body {
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  color: var(--text-primary);
 }
 
 .phone-shell {
@@ -76,12 +74,13 @@ body {
 }
 .screen.active { display: flex; }
 
+/* Chat screen: позволяет клавиатуре поднимать контент */
 #chatConv {
   position: fixed !important;
   top: 0; left: 0; right: 0;
   bottom: env(safe-area-inset-bottom, 0);
   height: 100vh;
-  height: 100dvh;
+  height: 100dvh; /* dynamic viewport height для мобильных */
 }
 
 .scroll {
@@ -92,39 +91,39 @@ body {
 }
 .scroll::-webkit-scrollbar { display: none; }
 
-h1 { font-family:'Nunito',sans-serif; font-size:26px; font-weight:900; color:var(--text-primary); }
-h2 { font-family:'Nunito',sans-serif; font-size:22px; font-weight:800; color:var(--text-primary); }
-h3 { font-size:17px; font-weight:700; color:var(--text-primary); }
+h1 { font-family:'Nunito',sans-serif; font-size:26px; font-weight:900; }
+h2 { font-family:'Nunito',sans-serif; font-size:20px; font-weight:800; }
+h3 { font-size:17px; font-weight:700; }
 
 .btn {
   display:flex; align-items:center; justify-content:center;
-  height:52px; border-radius:var(--radius); border:none;
+  height:52px; border-radius:14px; border:none;
   font-family:'Manrope',sans-serif; font-size:16px; font-weight:700;
-  cursor:pointer; width:100%; transition:transform 0.1s, opacity 0.15s;
+  cursor:pointer; width:100%; transition:transform 0.1s;
 }
-.btn:active { transform:scale(0.97); }
-.btn-p { background:var(--primary); color:#fff; box-shadow:0 4px 16px rgba(232,114,58,0.3); }
-.btn-g { background:var(--primary-light); color:var(--primary); }
+.btn:active { transform:scale(0.96); }
+.btn-p { background:linear-gradient(135deg,var(--primary),var(--primary-dark)); color:#fff; box-shadow:0 4px 16px rgba(74,144,217,0.4); }
+.btn-g { background:rgba(74,144,217,0.1); color:var(--primary); }
 .btn-o { background:transparent; color:var(--primary); border:2px solid var(--primary); }
-.btn-s { background:var(--white); color:var(--text-primary); border:1.5px solid var(--border); }
+.btn-s { background:var(--white); color:var(--primary); border:2px solid var(--border); }
 .btn-sm { height:38px; font-size:13px; border-radius:10px; padding:0 16px; width:auto; }
 
 .back-btn {
-  width:40px; height:40px; border-radius:var(--radius-sm);
-  background:var(--white); border:1.5px solid var(--border); cursor:pointer;
+  width:38px; height:38px; border-radius:11px;
+  background:var(--white); border:none; cursor:pointer;
   display:flex; align-items:center; justify-content:center;
-  font-size:18px; flex-shrink:0;
+  font-size:18px; box-shadow:var(--shadow); flex-shrink:0;
   transition:transform 0.1s;
 }
 .back-btn:active { transform:scale(0.9); }
 
 .top-bar {
   display:flex; align-items:center; 
-  padding: env(safe-area-inset-top, 16px) 20px 12px 20px;
+  padding: env(safe-area-inset-top, 16px) 16px 12px 16px;
   gap:12px; flex-shrink:0;
-  background:var(--bg);
 }
 
+/* Для inline style="padding-top:0" тоже добавляем safe-area */
 .top-bar[style*="padding-top:0"],
 .top-bar[style*="padding-top: 0"] {
   padding-top: env(safe-area-inset-top, 16px) !important;
@@ -135,48 +134,48 @@ h3 { font-size:17px; font-weight:700; color:var(--text-primary); }
   padding-top: calc(16px + env(safe-area-inset-top, 0px)) !important;
 }
 
+/* Универсальный фикс: любой цветной блок первым в .screen растягивается до верха */
 .screen > [style*="background:linear-gradient"]:first-child,
 .screen > [style*="background: linear-gradient"]:first-child {
   padding-top: calc(20px + env(safe-area-inset-top, 0px)) !important;
 }
+/* Для бизнес-дашборда (hero внутри .scroll) — не трогаем, safe-area не нужна */
 .tbar-title { font-size:18px; font-weight:800; flex:1; }
 
 .card {
   background:var(--white); border-radius:var(--radius);
-  padding:16px; box-shadow:var(--shadow); margin:0 20px 12px;
-  border:1px solid var(--border);
+  padding:16px; box-shadow:var(--shadow); margin:0 16px 12px;
 }
 
 .input {
-  width:100%; height:52px; border:1.5px solid var(--border);
-  border-radius:var(--radius-sm); padding:0 16px; font-size:16px;
+  width:100%; height:52px; border:2px solid var(--border);
+  border-radius:12px; padding:0 16px; font-size:16px;
   font-family:'Manrope',sans-serif; background:var(--white);
   color:var(--text-primary); outline:none; transition:border-color 0.2s;
 }
 .input:focus { border-color:var(--primary); }
 .lbl { font-size:13px; font-weight:600; color:var(--text-secondary); margin-bottom:6px; display:block; }
 
-/* ── Bottom Nav ── */
 .bnav {
   height:var(--nav-h); background:var(--white);
   border-top:1px solid var(--border);
   display:flex; align-items:center; justify-content:space-around;
-  flex-shrink:0;
-  padding-bottom:env(safe-area-inset-bottom, 4px);
+  flex-shrink:0; box-shadow:0 -4px 20px rgba(0,0,0,0.06);
+  padding-bottom:6px;
 }
 .ni {
-  display:flex; flex-direction:column; align-items:center; gap:2px;
-  cursor:pointer; padding:6px 12px; border-radius:12px;
-  transition:all 0.18s; min-width:56px; position:relative;
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  cursor:pointer; padding:6px 8px; border-radius:12px;
+  transition:all 0.18s; min-width:52px;
 }
 .ni:active { transform:scale(0.88); }
 .ni-icon { font-size:22px; line-height:1; }
-.ni-lbl { font-size:10px; font-weight:600; color:var(--text-secondary); transition:color 0.18s; }
-.ni.on .ni-lbl { color:var(--primary); font-weight:700; }
-.ni.on .ni-icon { filter:none; }
+.ni-lbl { font-size:10px; font-weight:600; color:var(--text-secondary); }
+.ni.on { background:rgba(74,144,217,0.1); }
+.ni.on .ni-lbl { color:var(--primary); }
 
 .avatar {
-  border-radius:50%; background:linear-gradient(135deg,#E8723A,#F5A623);
+  border-radius:50%; background:linear-gradient(135deg,#4A90D9,#7B5EA7);
   display:flex; align-items:center; justify-content:center;
   color:white; font-weight:800; flex-shrink:0;
 }
@@ -184,9 +183,9 @@ h3 { font-size:17px; font-weight:700; color:var(--text-primary); }
   display:inline-flex; align-items:center;
   padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; white-space:nowrap;
 }
-.tag-b { background:var(--primary-light); color:var(--primary); }
-.tag-g { background:rgba(43,174,102,0.1); color:#2BAE66; }
-.tag-o { background:rgba(232,114,58,0.1); color:var(--primary); }
+.tag-b { background:rgba(74,144,217,0.12); color:var(--primary); }
+.tag-g { background:rgba(126,211,33,0.12); color:#5a9c18; }
+.tag-o { background:rgba(245,166,35,0.12); color:#c47d0a; }
 .badge {
   background:var(--error); color:white; font-size:10px; font-weight:700;
   min-width:18px; height:18px; border-radius:9px;
@@ -196,74 +195,73 @@ h3 { font-size:17px; font-weight:700; color:var(--text-primary); }
 .divider { height:8px; background:var(--bg); }
 .sec-hd {
   display:flex; align-items:center; justify-content:space-between;
-  padding:20px 20px 10px;
+  padding:14px 16px 8px;
 }
-.sec-t { font-size:18px; font-weight:800; }
-.sec-l { font-size:14px; color:var(--primary); font-weight:700; cursor:pointer; }
+.sec-t { font-size:17px; font-weight:800; }
+.sec-l { font-size:13px; color:var(--primary); font-weight:600; cursor:pointer; }
 .search-bar {
   display:flex; align-items:center; background:var(--white);
-  border-radius:var(--radius); padding:0 16px; gap:10px; height:48px;
-  border:1.5px solid var(--border); transition:border-color 0.2s;
+  border-radius:14px; padding:0 14px; gap:10px; height:48px;
+  box-shadow:var(--shadow); border:2px solid transparent; transition:border-color 0.2s;
 }
 .search-bar:focus-within { border-color:var(--primary); }
 .si { flex:1; border:none; outline:none; font-size:15px; font-family:'Manrope',sans-serif; background:transparent; }
 .si::placeholder { color:#bbb; }
-.chips { display:flex; gap:8px; padding:0 20px 12px; overflow-x:auto; }
+.chips { display:flex; gap:8px; padding:0 16px 12px; overflow-x:auto; }
 .chips::-webkit-scrollbar { display:none; }
 .chip {
-  padding:8px 18px; border-radius:24px; font-size:14px; font-weight:600;
-  cursor:pointer; white-space:nowrap; border:1.5px solid var(--border);
+  padding:6px 14px; border-radius:20px; font-size:13px; font-weight:600;
+  cursor:pointer; white-space:nowrap; border:2px solid var(--border);
   background:var(--white); color:var(--text-secondary); transition:all 0.18s; flex-shrink:0;
 }
 .chip.on { background:var(--primary); color:white; border-color:var(--primary); }
 .chip:active { transform:scale(0.94); }
 .scard {
   background:var(--white); border-radius:var(--radius);
-  padding:16px; margin:0 20px 12px; box-shadow:var(--shadow);
-  display:flex; gap:14px; cursor:pointer; transition:transform 0.15s;
-  border:1px solid var(--border);
+  padding:16px; margin:0 16px 12px; box-shadow:var(--shadow);
+  display:flex; gap:12px; cursor:pointer; transition:transform 0.15s;
 }
 .scard:active { transform:scale(0.98); }
 .scard-name { font-size:16px; font-weight:800; margin-bottom:4px; }
 .scard-meta { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
-.scard-price { font-size:16px; font-weight:800; color:var(--primary); margin-top:6px; }
-.scroll-row { display:flex; gap:12px; padding:0 20px 12px; overflow-x:auto; }
+.scard-price { font-size:15px; font-weight:700; color:var(--primary); margin-top:6px; }
+.scroll-row { display:flex; gap:12px; padding:0 16px 12px; overflow-x:auto; }
 .scroll-row::-webkit-scrollbar { display:none; }
 .qa {
-  display:flex; flex-direction:column; align-items:center; gap:8px;
-  cursor:pointer; flex-shrink:0; transition:transform 0.15s; min-width:72px;
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  cursor:pointer; flex-shrink:0; transition:transform 0.15s; min-width:68px;
 }
 .qa:active { transform:scale(0.9); }
 .qa-icon {
-  width:64px; height:64px; border-radius:20px;
+  width:60px; height:60px; border-radius:18px;
   display:flex; align-items:center; justify-content:center; font-size:26px;
 }
 .qa-lbl { font-size:12px; font-weight:600; color:var(--text-secondary); text-align:center; }
 .pbar { height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
 .pfill {
-  height:100%; background:linear-gradient(90deg,var(--primary),#F5A623);
+  height:100%; background:linear-gradient(90deg,var(--primary),var(--secondary));
   border-radius:3px; transition:width 0.5s;
 }
 .gr { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
 .gr-icon { font-size:20px; width:24px; text-align:center; }
 .gr-text { font-size:14px; font-weight:600; }
 
-.pt { border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; }
+.pt { border:1px solid var(--border); border-radius:12px; overflow:hidden; }
 .pr {
   display:flex; justify-content:space-between; align-items:center;
-  padding:14px 16px; border-bottom:1px solid var(--border);
+  padding:12px 16px; border-bottom:1px solid var(--border);
   cursor:pointer; transition:background 0.15s;
 }
 .pr:last-child { border-bottom:none; }
-.pr.sel { background:var(--primary-light); }
+.pr.sel { background:rgba(74,144,217,0.08); }
 .pr-n { font-size:14px; font-weight:600; }
 .pr-v { font-size:15px; font-weight:800; color:var(--primary); }
 
 .popt {
   display:flex; align-items:flex-start; gap:12px; padding:14px;
-  border:1.5px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; transition:all 0.2s;
+  border:2px solid var(--border); border-radius:12px; cursor:pointer; transition:all 0.2s;
 }
-.popt.sel { border-color:var(--primary); background:var(--primary-light); }
+.popt.sel { border-color:var(--primary); background:rgba(74,144,217,0.06); }
 .rdot {
   width:20px; height:20px; border-radius:50%; border:2px solid var(--border);
   display:flex; align-items:center; justify-content:center;
@@ -277,36 +275,35 @@ h3 { font-size:17px; font-weight:700; color:var(--text-primary); }
 .cal-wd { font-size:11px; font-weight:700; color:var(--text-secondary); text-align:center; }
 .cal-d {
   aspect-ratio:1; display:flex; align-items:center; justify-content:center;
-  font-size:13px; font-weight:600; border-radius:10px; cursor:pointer;
+  font-size:13px; font-weight:600; border-radius:8px; cursor:pointer;
   transition:all 0.15s; color:var(--text-secondary);
 }
 .cal-d.avail { color:var(--text-primary); }
-.cal-d.avail:hover { background:var(--primary-light); }
+.cal-d.avail:hover { background:rgba(74,144,217,0.1); }
 .cal-d.sel { background:var(--primary); color:white; }
 .cal-d.today { border:2px solid var(--primary); color:var(--primary); }
 .cal-d.dis { opacity:0.3; pointer-events:none; }
 
 .prof-row {
-  display:flex; align-items:center; gap:14px; padding:16px 20px;
+  display:flex; align-items:center; gap:14px; padding:16px;
   background:var(--white); cursor:pointer; border-bottom:1px solid var(--border);
   transition:background 0.15s;
 }
 .prof-row:active { background:var(--bg); }
 .prof-row-icon { font-size:20px; width:28px; text-align:center; }
 .prof-row-lbl { flex:1; font-size:15px; font-weight:600; }
-.prof-row-arr { color:var(--text-secondary); font-size:20px; }
+.prof-row-arr { color:var(--border); font-size:20px; }
 
-/* ── Header gradient — now warm orange ── */
 .ghdr {
-  background:var(--bg);
-  padding: calc(20px + env(safe-area-inset-top, 0px)) 20px 20px; 
-  flex-shrink:0;
+  background:linear-gradient(135deg,var(--primary),#6BB8F0);
+  padding: calc(20px + env(safe-area-inset-top, 0px)) 16px 20px; 
+  color:white; flex-shrink:0;
 }
-.ghdr h2, .ghdr h3 { color:var(--text-primary); }
-.ghdr p { color:var(--text-secondary); }
+.ghdr h2, .ghdr h3 { color:white; }
+.ghdr p { color:rgba(255,255,255,0.8); }
 
 .ci {
-  display:flex; gap:14px; padding:14px 20px; background:var(--white);
+  display:flex; gap:12px; padding:14px 16px; background:var(--white);
   cursor:pointer; transition:background 0.15s; border-bottom:1px solid var(--border);
 }
 .ci:active { background:var(--bg); }
@@ -314,63 +311,56 @@ h3 { font-size:17px; font-weight:700; color:var(--text-primary); }
 .pc {
   background:var(--white); border-radius:var(--radius);
   padding:14px; box-shadow:var(--shadow); flex:1; min-width:0; cursor:pointer;
-  border:1px solid var(--border);
 }
 .pc-img {
-  width:100%; aspect-ratio:1; border-radius:var(--radius-sm); margin-bottom:10px;
+  width:100%; aspect-ratio:1; border-radius:10px; margin-bottom:10px;
   display:flex; align-items:center; justify-content:center; font-size:48px;
 }
 .pc-name { font-size:14px; font-weight:700; margin-bottom:4px; }
 .pc-price { font-size:16px; font-weight:800; color:var(--primary); }
 
-/* ── Shelter/impact card — warm gradient ── */
 .ic {
-  background:linear-gradient(135deg,#E8723A,#F5A623);
-  border-radius:var(--radius); padding:16px; color:white; margin:0 20px 12px;
+  background:linear-gradient(135deg,#4A90D9,#7B5EA7);
+  border-radius:var(--radius); padding:16px; color:white; margin:0 16px 12px;
 }
 .ic h3 { color:white; font-size:15px; }
 .ic-amt { font-size:28px; font-weight:900; font-family:'Nunito',sans-serif; margin:4px 0; }
 
-/* ── Event cards ── */
 .ec {
-  background:var(--white); border-radius:var(--radius); padding:0;
+  background:var(--white); border-radius:var(--radius); padding:16px;
   box-shadow:var(--shadow); display:flex; flex-direction:column;
-  gap:0; flex-shrink:0; width:280px; cursor:pointer; transition:transform 0.15s;
-  overflow:hidden; border:1px solid var(--border);
+  gap:8px; flex-shrink:0; width:240px; cursor:pointer; transition:transform 0.15s;
 }
 .ec:active { transform:scale(0.97); }
 
 .wc {
   background:var(--white); border-radius:var(--radius); padding:14px;
-  box-shadow:var(--shadow); margin:0 20px 10px; cursor:pointer; transition:transform 0.15s;
-  border:1px solid var(--border);
+  box-shadow:var(--shadow); margin:0 16px 10px; cursor:pointer; transition:transform 0.15s;
 }
 .wc:active { transform:scale(0.98); }
 .wc-hd { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
-.wa { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#E8723A,#F5A623); border:2px solid white; margin-right:-8px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:white; }
+.wa { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#4A90D9,#7B5EA7); border:2px solid white; margin-right:-8px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:white; }
 .walks { display:flex; margin-top:8px; }
 
 .socbtn {
-  flex:1; height:48px; border-radius:var(--radius-sm); border:1.5px solid var(--border);
+  flex:1; height:48px; border-radius:12px; border:2px solid var(--border);
   background:var(--white); display:flex; align-items:center; justify-content:center;
   font-size:20px; cursor:pointer; transition:transform 0.15s;
 }
 .socbtn:active { transform:scale(0.93); border-color:var(--primary); }
 
-/* ── Profile hero — clean, no gradient ── */
 .prof-hero {
-  background:var(--bg);
-  padding:20px 20px 24px; text-align:center; flex-shrink:0;
+  background:linear-gradient(135deg,var(--primary),#7B5EA7);
+  padding:20px 16px 24px; text-align:center; color:white; flex-shrink:0;
   padding-top: calc(20px + env(safe-area-inset-top, 0px));
 }
 .imp-bar {
-  display:flex; background:var(--white); border-radius:var(--radius-sm); padding:12px; gap:0; margin-top:12px;
-  border:1px solid var(--border);
+  display:flex; background:rgba(255,255,255,0.15); border-radius:12px; padding:12px; gap:0; margin-top:12px;
 }
 .imp-stat { text-align:center; flex:1; }
-.imp-val { font-size:20px; font-weight:900; font-family:'Nunito',sans-serif; color:var(--text-primary); }
-.imp-lbl { font-size:11px; color:var(--text-secondary); }
-.imp-sep { width:1px; background:var(--border); }
+.imp-val { font-size:20px; font-weight:900; font-family:'Nunito',sans-serif; color:white; }
+.imp-lbl { font-size:11px; color:rgba(255,255,255,0.8); }
+.imp-sep { width:1px; background:rgba(255,255,255,0.3); }
 
 .tabs { display:flex; background:var(--white); border-bottom:1px solid var(--border); flex-shrink:0; }
 .tab {
@@ -388,7 +378,7 @@ h3 { font-size:17px; font-weight:700; color:var(--text-primary); }
   justify-content:center; text-align:center; padding:40px 24px; flex:1;
 }
 .succ-icon {
-  width:100px; height:100px; background:rgba(43,174,102,0.1);
+  width:100px; height:100px; background:rgba(126,211,33,0.12);
   border-radius:50%; display:flex; align-items:center; justify-content:center;
   font-size:50px; margin-bottom:24px;
   animation:succ-pop 0.5s cubic-bezier(.175,.885,.32,1.275);
@@ -396,9 +386,8 @@ h3 { font-size:17px; font-weight:700; color:var(--text-primary); }
 @keyframes succ-pop { from{transform:scale(0)} to{transform:scale(1)} }
 @keyframes slideDown { from{opacity:0;transform:translateX(-50%) translateY(-16px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 
-/* ── Splash — warm ── */
 #splash {
-  background:linear-gradient(145deg,#D4612E 0%,#E8723A 50%,#F5A623 100%);
+  background:linear-gradient(145deg,#2c3e7a 0%,#4A90D9 50%,#6BB8F0 100%);
   display:flex !important; justify-content:center; align-items:center;
 }
 .sp-logo { font-size:80px; margin-bottom:16px; animation:pulse 2s infinite; }
@@ -418,8 +407,8 @@ h3 { font-size:17px; font-weight:700; color:var(--text-primary); }
 .dot.on { width:24px; background:var(--primary); }
 
 .modal-ov {
-  position:absolute; inset:0; background:rgba(0,0,0,0.4);
-  display:none; align-items:flex-end; z-index:999; backdrop-filter:blur(6px);
+  position:absolute; inset:0; background:rgba(0,0,0,0.5);
+  display:none; align-items:flex-end; z-index:999; backdrop-filter:blur(4px);
 }
 .modal-ov.open { display:flex; animation:mfade 0.25s; }
 @keyframes mfade { from{opacity:0}to{opacity:1} }
@@ -438,15 +427,14 @@ h3 { font-size:17px; font-weight:700; color:var(--text-primary); }
 .cmsg-nick { font-size:11px; font-weight:700; color:var(--primary); margin-bottom:3px; padding:0 4px; }
 .cmsg-bubble {
   padding:10px 14px; border-radius:18px; font-size:14px; line-height:1.5;
-  word-break:break-word;
+  word-break:break-word; box-shadow:0 1px 4px rgba(0,0,0,0.08);
 }
 .cmsg-row.mine   .cmsg-bubble { background:var(--primary); color:#fff; border-bottom-right-radius:5px; }
-.cmsg-row.theirs .cmsg-bubble { background:var(--white); color:var(--text-primary); border-bottom-left-radius:5px; border:1px solid var(--border); }
+.cmsg-row.theirs .cmsg-bubble { background:var(--white); color:var(--text-primary); border-bottom-left-radius:5px; }
 .cmsg-time { font-size:10px; color:var(--text-secondary); margin-top:3px; padding:0 6px; }
 .cmsg-sys {
   align-self:center; font-size:11px; color:var(--text-secondary);
-  background:var(--white); padding:4px 12px; border-radius:20px; margin:2px 0;
-  border:1px solid var(--border);
+  background:rgba(255,255,255,0.8); padding:4px 12px; border-radius:20px; margin:2px 0;
 }
 .tdt { display:inline-flex; gap:2px; margin-left:4px; vertical-align:middle; }
 .tdt i { width:4px;height:4px;background:var(--text-secondary);border-radius:50%;animation:tdtb 1.2s infinite;font-style:normal; }
@@ -458,30 +446,20 @@ h3 { font-size:17px; font-weight:700; color:var(--text-primary); }
 .df-toggle{position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0}
 .df-toggle input{opacity:0;width:0;height:0}
 .df-slider{position:absolute;cursor:pointer;inset:0;background:var(--border);border-radius:26px;transition:.3s}
-.df-slider:before{content:"";position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.df-slider:before{content:"";position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .df-toggle input:checked+.df-slider{background:var(--primary)}
 .df-toggle input:checked+.df-slider:before{transform:translateX(22px)}
 /* ── lesson card ── */
-.lesson-card{background:var(--white);border-radius:var(--radius);margin:0 20px 12px;box-shadow:var(--shadow);cursor:pointer;overflow:hidden;transition:transform .15s;border:1px solid var(--border)}
+.lesson-card{background:var(--white);border-radius:var(--radius);margin:0 16px 12px;box-shadow:var(--shadow);cursor:pointer;overflow:hidden;transition:transform .15s}
 .lesson-card:active{transform:scale(.98)}
 .lesson-banner{height:80px;display:flex;align-items:center;justify-content:center;font-size:44px}
 .lesson-body{padding:12px 14px 14px}
 .lesson-title{font-size:15px;font-weight:800;margin-bottom:4px}
 .lesson-meta{font-size:12px;color:var(--text-secondary)}
 /* ── pet card ── */
-.pet-card{background:var(--white);border-radius:var(--radius);margin-bottom:12px;box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--border)}
+.pet-card{background:var(--white);border-radius:var(--radius);margin-bottom:12px;box-shadow:var(--shadow);overflow:hidden}
 .pet-hdr{padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer}
 .pet-bdy{padding:0 16px 14px;border-top:1px solid var(--border)}
-
-/* ── Event type options ── */
-.ev-type-opt { 
-  border-color: var(--border) !important;
-}
-.ev-type-opt.active {
-  border-color: var(--primary) !important;
-  background: var(--primary-light) !important;
-  color: var(--primary) !important;
-}
 </style>
 </head>
 <body>
@@ -501,7 +479,7 @@ h3 { font-size:17px; font-weight:700; color:var(--text-primary); }
 <!-- ONBOARDING 1 -->
 <div class="screen" id="onb1">
   <div class="scroll" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;">
-    <div class="onb-icon" style="background:linear-gradient(135deg,#FFF3EC,#FFE0CC);">🐕</div>
+    <div class="onb-icon" style="background:linear-gradient(135deg,#EEF6FF,#C9E4FA);">🐕</div>
     <h1 style="margin-bottom:16px;">Найди свою стаю</h1>
     <p style="color:var(--text-secondary);">Общайся с владельцами собак<br>в своём районе Москвы.<br>Вместе гулять веселее!</p>
     <div class="dots"><div class="dot on"></div><div class="dot"></div><div class="dot"></div></div>
@@ -592,49 +570,48 @@ h3 { font-size:17px; font-weight:700; color:var(--text-primary); }
 <!-- HOME -->
 <div class="screen" id="home">
   <div class="scroll">
-    <div style="padding:calc(16px + env(safe-area-inset-top, 0px)) 20px 0;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <div class="ghdr">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
         <div>
-          <h1 style="margin-bottom:2px;">Привет, <span id="home-name">Анна</span>! 👋</h1>
-          <div style="font-size:14px;color:var(--text-secondary);">Что нового у питомца?</div>
+          <div style="font-size:13px;opacity:0.85;margin-bottom:2px;">👋 Добрый день,</div>
+          <h2 id="home-name">Анна Козлова</h2>
         </div>
-        <div style="position:relative;cursor:pointer;" onclick="nav('profile')">
-          <div id="home-avatar" class="avatar" style="width:48px;height:48px;font-size:18px;border:2px solid var(--border);">АК</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div style="position:relative;cursor:pointer;" onclick="nav('chatList')">
+            <div style="width:40px;height:40px;background:rgba(255,255,255,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;">💬</div>
+            <div id="chat-nav-badge" class="badge" style="position:absolute;top:-4px;right:-4px;display:none;">3</div>
+          </div>
+          <div style="position:relative;cursor:pointer;" onclick="nav('profile')">
+            <div id="home-avatar" class="avatar" style="width:44px;height:44px;font-size:17px;border:2px solid rgba(255,255,255,0.4);">АК</div>
+          </div>
         </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);border-radius:10px;padding:8px 12px;cursor:pointer;" onclick="nav('profile')">
+        <span>📍</span><span id="home-geo-display" style="font-size:14px;font-weight:600;">Москва, Сокольники</span>
+        <span style="margin-left:auto;font-size:12px;opacity:0.8;text-decoration:underline;">Изменить</span>
       </div>
     </div>
 
-    <div class="ic" style="margin:0 20px 20px;">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div style="width:48px;height:48px;background:rgba(255,255,255,0.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">❤️</div>
-        <div style="flex:1;">
-          <div style="font-size:13px;opacity:0.9;">Помощь приютам</div>
-          <div class="ic-amt">1 250 ₽ собрано</div>
-        </div>
-      </div>
-      <div style="margin-top:12px;">
-        <div class="pbar" style="background:rgba(255,255,255,0.25);"><div class="pfill" style="width:62%;background:white;"></div></div>
-        <div style="font-size:12px;opacity:0.8;margin-top:6px;">50% комиссии с каждой оплаты идёт в приюты ❤️</div>
+    <div style="padding:16px 16px 8px;">
+      <div class="search-bar" onclick="nav('catalog')" style="cursor:pointer;">
+        <span style="font-size:18px;">🔍</span>
+        <input class="si" placeholder="Поиск услуг, кинологов..." readonly style="cursor:pointer;">
       </div>
     </div>
 
-    <div class="scroll-row" style="padding:0 20px 20px;gap:16px;">
-      <div class="qa" onclick="nav('catalog')"><div class="qa-icon" style="background:var(--primary-light);">🎓</div><div class="qa-lbl">Кинолог</div></div>
-      <div class="qa" onclick="nav('health')"><div class="qa-icon" style="background:#F0F7ED;">🏥</div><div class="qa-lbl">Здоровье</div></div>
-      <div class="qa" onclick="nav('breeds')"><div class="qa-icon" style="background:#FFF5E6;">🐕</div><div class="qa-lbl">Породы</div></div>
-      <div class="qa" onclick="nav('dogmap')"><div class="qa-icon" style="background:#FFF0F0;">📍</div><div class="qa-lbl">Места</div></div>
-      <div class="qa" onclick="nav('events')"><div class="qa-icon" style="background:var(--primary-light);">📅</div><div class="qa-lbl">События</div></div>
-      <div class="qa" onclick="nav('discounts')"><div class="qa-icon" style="background:#F9F0FF;">🎁</div><div class="qa-lbl">Скидки</div></div>
-    </div>
-
-    <div class="sec-hd"><div class="sec-t">Лучшие специалисты</div><div class="sec-l" onclick="nav('catalog')">Все</div></div>
-    <div class="scroll-row" id="home-specialists-row" style="padding-bottom:20px;">
+    <div class="sec-hd"><div class="sec-t">⚡ Быстрые действия</div></div>
+    <div class="scroll-row" style="padding-bottom:16px;">
+      <div class="qa" onclick="nav('catalog')"><div class="qa-icon" style="background:linear-gradient(135deg,#EEF6FF,#C9E4FA);">🎓</div><div class="qa-lbl">Кинолог</div></div>
+      <div class="qa" onclick="nav('health')"><div class="qa-icon" style="background:linear-gradient(135deg,#F0FFF4,#C6F6D5);">🏥</div><div class="qa-lbl">Здоровье</div></div>
+      <div class="qa" onclick="nav('breeds')"><div class="qa-icon" style="background:linear-gradient(135deg,#FFF5E6,#FFD9A0);">🐕</div><div class="qa-lbl">Породы</div></div>
+      <div class="qa" onclick="nav('dogmap')"><div class="qa-icon" style="background:linear-gradient(135deg,#FFF0F0,#FFCDD2);">📍</div><div class="qa-lbl">Места</div></div>
+      <div class="qa" onclick="nav('discounts')"><div class="qa-icon" style="background:linear-gradient(135deg,#F9F0FF,#E9D5FF);">🎁</div><div class="qa-lbl">Скидки</div></div>
     </div>
 
     <!-- КНОПКА ДЛЯ БИЗНЕСА -->
-    <div style="padding:0 20px 16px;">
-      <div onclick="nav('businessType')" style="background:linear-gradient(135deg,#E8723A,#F5A623);border-radius:var(--radius);padding:16px;cursor:pointer;display:flex;align-items:center;gap:12px;">
-        <div style="width:44px;height:44px;background:rgba(255,255,255,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">💼</div>
+    <div style="padding:0 16px 16px;">
+      <div onclick="nav('businessType')" style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:16px;padding:16px;cursor:pointer;box-shadow:0 4px 12px rgba(102,126,234,0.3);display:flex;align-items:center;gap:12px;">
+        <div style="width:48px;height:48px;background:rgba(255,255,255,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">💼</div>
         <div style="flex:1;">
           <div style="font-weight:800;font-size:15px;color:white;margin-bottom:2px;">Для бизнеса</div>
           <div style="font-size:12px;color:rgba(255,255,255,0.85);">Добавить свою клинику, услугу или кафе</div>
@@ -643,8 +620,22 @@ h3 { font-size:17px; font-weight:700; color:var(--text-primary); }
       </div>
     </div>
 
-    <div class="sec-hd"><div class="sec-t">Ближайшие события</div><div class="sec-l" onclick="nav('events')">Все</div></div>
-    <div class="scroll-row" id="home-events-row" style="padding-bottom:20px;">
+    <div class="divider"></div>
+
+    <div class="ic">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:18px;">❤️</span>
+        <div style="font-size:13px;font-weight:700;opacity:0.9;">Ваш вклад в помощь приютам</div>
+      </div>
+      <div class="ic-amt">1 250 ₽</div>
+      <div style="font-size:13px;opacity:0.8;margin-bottom:12px;">🏆 Уровень: Друг собак • 8 транзакций</div>
+      <div class="pbar"><div class="pfill" style="width:62%;"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:12px;opacity:0.8;"><span>1 250 ₽</span><span>До «Чемпиона»: 750 ₽</span></div>
+      <button class="btn btn-g" style="margin-top:12px;background:rgba(255,255,255,0.2);color:white;border:none;height:38px;" onclick="nav('profile')">Посмотреть отчёт →</button>
+    </div>
+
+    <div class="sec-hd"><div class="sec-t">📅 Ближайшие события</div><div class="sec-l" onclick="nav('events')">Все</div></div>
+    <div class="scroll-row" id="home-events-row">
       <div class="ec" style="align-items:center;justify-content:center;color:var(--text-secondary);">
         <div style="font-size:28px;">📅</div>
         <div style="font-size:13px;text-align:center;">Загружаем события...</div>
@@ -662,11 +653,11 @@ h3 { font-size:17px; font-weight:700; color:var(--text-primary); }
         <div class="scard-price">от 3 000 ₽</div>
       </div>
     </div>
-    <div style="padding:0 20px 20px;"></div>
+    <div style="padding:0 16px 12px;"><button class="btn btn-o" onclick="nav('catalog')">Все специалисты</button></div>
   </div>
   <nav class="bnav">
     <div class="ni on" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
-    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🔍</div><div class="ni-lbl">Услуги</div></div>
+    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
     <div class="ni" onclick="nav('chatList')"><div class="ni-icon">💬</div><div class="ni-lbl">Чат</div></div>
     <div class="ni" onclick="nav('health')"><div class="ni-icon">🏥</div><div class="ni-lbl">Здоровье</div></div>
     <div class="ni" onclick="nav('profile')"><div class="ni-icon">👤</div><div class="ni-lbl">Профиль</div></div>
@@ -675,27 +666,25 @@ h3 { font-size:17px; font-weight:700; color:var(--text-primary); }
 
 <!-- CATALOG -->
 <div class="screen" id="catalog">
-  <div style="padding:calc(16px + env(safe-area-inset-top, 0px)) 20px 0;flex-shrink:0;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-      <h1>Услуги</h1>
-      <button class="back-btn" onclick="back()" style="border:none;background:none;font-size:22px;">⚙️</button>
-    </div>
-    <div class="search-bar" style="margin-bottom:12px;">
-      <span style="font-size:18px;color:var(--text-secondary);">🔍</span>
-      <input class="si" id="catalog-search" placeholder="Найти специалиста..." oninput="renderCatalog()">
-    </div>
+  <div class="top-bar" style="padding-top:0;">
+    <button class="back-btn" onclick="back()">←</button>
+    <div class="tbar-title">Кинологи</div>
   </div>
-  <div class="chips" id="catalog-chips" style="flex-shrink:0;padding:0 20px 12px;">
+  <div style="padding:0 16px 12px;flex-shrink:0;">
+    <div class="search-bar"><span style="font-size:18px;">🔍</span><input class="si" id="catalog-search" placeholder="Иван, щенки, ОКД..." oninput="renderCatalog()"></div>
+  </div>
+  <div class="chips" id="catalog-chips" style="flex-shrink:0;">
     <div class="chip on" onclick="filterCatalog('Все',this)">Все</div>
-    <div class="chip" onclick="filterCatalog('Щенки',this)">Кинолог</div>
-    <div class="chip" onclick="filterCatalog('ОКД',this)">Грумер</div>
-    <div class="chip" onclick="filterCatalog('Аджилити',this)">Ветеринар</div>
-    <div class="chip" onclick="filterCatalog('Поведение',this)">Догситтер</div>
+    <div class="chip" onclick="filterCatalog('Щенки',this)">Щенки</div>
+    <div class="chip" onclick="filterCatalog('ОКД',this)">ОКД</div>
+    <div class="chip" onclick="filterCatalog('Аджилити',this)">Аджилити</div>
+    <div class="chip" onclick="filterCatalog('Поведение',this)">Поведение</div>
+    <div class="chip" onclick="filterCatalog('Групповые',this)">Групповые</div>
   </div>
   <div class="scroll" id="catalog-trainers-list"></div>
   <nav class="bnav">
     <div class="ni" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
-    <div class="ni on"><div class="ni-icon">🔍</div><div class="ni-lbl">Услуги</div></div>
+    <div class="ni on"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
     <div class="ni" onclick="nav('chatList')"><div class="ni-icon">💬</div><div class="ni-lbl">Чат</div></div>
     <div class="ni" onclick="nav('health')"><div class="ni-icon">🏥</div><div class="ni-lbl">Здоровье</div></div>
     <div class="ni" onclick="nav('profile')"><div class="ni-icon">👤</div><div class="ni-lbl">Профиль</div></div>
@@ -777,8 +766,8 @@ h3 { font-size:17px; font-weight:700; color:var(--text-primary); }
         <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="color:var(--text-secondary);">Сумма</span><span style="font-weight:700;" id="book-total">—</span></div>
         <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="color:var(--text-secondary);">Первый платёж</span><span style="font-weight:800;color:var(--primary);font-size:16px;" id="book-first-pay">—</span></div>
         <div style="height:1px;background:var(--border);"></div>
-        <div style="background:rgba(232,114,58,0.06);border-radius:10px;padding:10px;">
-          <div style="display:flex;justify-content:space-between;font-size:13px;color:#228B52;font-weight:700;"><span>→ ❤️ Приюту «Надежда»</span><span id="book-charity">—</span></div>
+        <div style="background:rgba(74,144,217,0.06);border-radius:10px;padding:10px;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#5a9c18;font-weight:700;"><span>→ ❤️ Приюту «Надежда»</span><span id="book-charity">—</span></div>
         </div>
       </div>
     </div>
@@ -903,24 +892,13 @@ async function sendBookingNotification() {
     const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
     const myUserId = currentUser?.id || userId;
 
-    // Сохраняем контакт бизнеса в contactBook чтобы в списке чатов было имя, а не UUID
-    if (!contactBook[currentSpecId]) {
-      contactBook[currentSpecId] = {
-        name: bizName,
-        initials: getInitials(bizName),
-        grad: 'linear-gradient(135deg,#E8723A,#F5A623)'
-      };
-      localStorage.setItem('df_contacts', JSON.stringify(contactBook));
-    }
-
     if (!privateChats[currentSpecId]) privateChats[currentSpecId] = [];
     privateChats[currentSpecId].push({
       text: message,
       sender: 'user',
       time,
       senderName: profile.name || 'Клиент',
-      senderId: myUserId,
-      created_at: now.toISOString()
+      senderId: myUserId
     });
     savePrivateChatsToStorage();
 
@@ -968,7 +946,7 @@ async function sendBookingNotification() {
       <p id="succ-text" style="color:var(--text-secondary);margin-bottom:24px;">Запись подтверждена.</p>
       <div style="background:rgba(126,211,33,0.1);border-radius:14px;padding:16px;width:100%;text-align:left;margin-bottom:24px;">
         <div style="font-size:14px;font-weight:700;margin-bottom:8px;">❤️ Вы помогли приюту!</div>
-        <div id="succ-charity" style="font-size:28px;font-weight:900;font-family:'Nunito',sans-serif;color:#228B52;">—</div>
+        <div id="succ-charity" style="font-size:28px;font-weight:900;font-family:'Nunito',sans-serif;color:#5a9c18;">—</div>
         <div style="font-size:13px;color:var(--text-secondary);">направлено в приют «Надежда»</div>
       </div>
       <div style="width:100%;display:flex;flex-direction:column;gap:10px;">
@@ -982,44 +960,40 @@ async function sendBookingNotification() {
 
 <!-- PROFILE -->
 <div class="screen" id="profile">
-  <div style="padding:calc(16px + env(safe-area-inset-top, 0px)) 20px 0;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-    <h1>Профиль</h1>
-    <button class="back-btn" style="border:none;background:none;font-size:22px;" onclick="nav('edit-profile');loadProfileForm()">⚙️</button>
+  <div class="prof-hero">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <span style="font-size:18px;font-weight:800;color:white;">Профиль</span>
+      <button class="back-btn" style="background:rgba(255,255,255,0.2);color:white;box-shadow:none;" onclick="nav('edit-profile');loadProfileForm()">✏️</button>
+    </div>
+    <div style="position:relative;width:80px;height:80px;margin:0 auto 12px;">
+      <div id="prof-avatar" class="avatar" style="width:80px;height:80px;font-size:32px;border:3px solid rgba(255,255,255,0.5);">АК</div>
+    </div>
+    <div id="prof-name" style="font-size:20px;font-weight:800;color:white;margin-bottom:4px;">Анна Козлова</div>
+    <div style="display:flex;align-items:center;justify-content:center;"><span class="tag" style="background:rgba(255,255,255,0.2);color:white;font-size:12px;">🏅 Уровень 3 — Друг</span></div>
+    <div class="imp-bar">
+      <div class="imp-stat"><div class="imp-val">1 250 ₽</div><div class="imp-lbl">приютам</div></div>
+      <div class="imp-sep"></div>
+      <div class="imp-stat"><div class="imp-val">8</div><div class="imp-lbl">транзакций</div></div>
+      <div class="imp-sep"></div>
+      <div class="imp-stat"><div class="imp-val">3</div><div class="imp-lbl">питомца</div></div>
+    </div>
   </div>
   <div class="scroll">
-    <div style="padding:8px 20px 20px;">
-      <div style="font-size:16px;font-weight:800;margin-bottom:12px;">Мои питомцы 🐾</div>
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:14px;display:flex;align-items:center;gap:14px;cursor:pointer;" onclick="nav('myPets')">
-          <div class="avatar" style="width:56px;height:56px;font-size:24px;background:linear-gradient(135deg,#F5A623,#E8723A);">🐕</div>
-          <div style="flex:1;">
-            <div style="font-weight:800;font-size:15px;" id="prof-dog-name">Питомец</div>
-            <div style="font-size:13px;color:var(--text-secondary);" id="prof-dog-info">Нажмите чтобы добавить</div>
-          </div>
-          <div style="color:var(--text-secondary);font-size:20px;">›</div>
-        </div>
-      </div>
+    <div style="background:var(--white);border-radius:var(--radius);margin:16px 16px 12px;box-shadow:var(--shadow);overflow:hidden;">
+      <div class="prof-row" onclick="openModal('m-orders')"><div class="prof-row-icon">📋</div><div class="prof-row-lbl">Мои заказы</div><div class="badge" style="margin-right:8px;">12</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="nav('payments')"><div class="prof-row-icon">💳</div><div class="prof-row-lbl">Способы оплаты</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="nav('myPets')"><div class="prof-row-icon">🐕</div><div class="prof-row-lbl">Мои собаки</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="nav('events')"><div class="prof-row-icon">📅</div><div class="prof-row-lbl">Мои события</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="nav('notifSettings')"><div class="prof-row-icon">🔔</div><div class="prof-row-lbl">Уведомления</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="nav('medRecords')"><div class="prof-row-icon">🏥</div><div class="prof-row-lbl">Медицинские записи</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="nav('lessons')"><div class="prof-row-icon">🎓</div><div class="prof-row-lbl">Уроки и тренировки</div><div class="badge" style="margin-right:8px;background:#7ED321;">FREE</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" id="biz-mgmt-row" onclick="openBusinessDashboard()" style="display:none;"><div class="prof-row-icon">💼</div><div class="prof-row-lbl">Управление бизнесом</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="localStorage.removeItem('df_registered');localStorage.removeItem('df_phone');nav('onb1')" style="border-bottom:none;"><div class="prof-row-icon">🚪</div><div class="prof-row-lbl" style="color:var(--error);">Выйти</div><div class="prof-row-arr">›</div></div>
     </div>
-
-    <div style="padding:0 20px 20px;">
-      <div style="font-size:16px;font-weight:800;margin-bottom:12px;">Меню</div>
-      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
-        <div class="prof-row" onclick="openModal('m-orders')"><div class="prof-row-icon">📋</div><div class="prof-row-lbl">Мои заказы</div><div class="badge" style="margin-right:8px;">12</div><div class="prof-row-arr">›</div></div>
-        <div class="prof-row" onclick="nav('payments')"><div class="prof-row-icon">💳</div><div class="prof-row-lbl">Способы оплаты</div><div class="prof-row-arr">›</div></div>
-        <div class="prof-row" onclick="nav('myPets')"><div class="prof-row-icon">🐕</div><div class="prof-row-lbl">Мои собаки</div><div class="prof-row-arr">›</div></div>
-        <div class="prof-row" onclick="nav('events')"><div class="prof-row-icon">📅</div><div class="prof-row-lbl">Мои события</div><div class="prof-row-arr">›</div></div>
-        <div class="prof-row" onclick="nav('notifSettings')"><div class="prof-row-icon">🔔</div><div class="prof-row-lbl">Уведомления</div><div class="prof-row-arr">›</div></div>
-        <div class="prof-row" onclick="nav('medRecords')"><div class="prof-row-icon">🏥</div><div class="prof-row-lbl">Медицинские записи</div><div class="prof-row-arr">›</div></div>
-        <div class="prof-row" onclick="nav('lessons')"><div class="prof-row-icon">🎓</div><div class="prof-row-lbl">Уроки и тренировки</div><div class="badge" style="margin-right:8px;background:var(--success);">FREE</div><div class="prof-row-arr">›</div></div>
-        <div class="prof-row" id="biz-mgmt-row" onclick="openBusinessDashboard()" style="display:none;"><div class="prof-row-icon">💼</div><div class="prof-row-lbl">Управление бизнесом</div><div class="prof-row-arr">›</div></div>
-        <div class="prof-row" onclick="localStorage.removeItem('df_registered');localStorage.removeItem('df_phone');nav('onb1')" style="border-bottom:none;"><div class="prof-row-icon">🚪</div><div class="prof-row-lbl" style="color:var(--error);">Выйти</div><div class="prof-row-arr">›</div></div>
-      </div>
-    </div>
-    <div style="height:20px;"></div>
   </div>
   <nav class="bnav">
     <div class="ni" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
-    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🔍</div><div class="ni-lbl">Услуги</div></div>
+    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
     <div class="ni" onclick="nav('chatList')"><div class="ni-icon">💬</div><div class="ni-lbl">Чат</div></div>
     <div class="ni" onclick="nav('health')"><div class="ni-icon">🏥</div><div class="ni-lbl">Здоровье</div></div>
     <div class="ni on"><div class="ni-icon">👤</div><div class="ni-lbl">Профиль</div></div>
@@ -1055,13 +1029,8 @@ async function sendBookingNotification() {
 
 <!-- HEALTH -->
 <div class="screen" id="health">
-  <div style="padding:calc(16px + env(safe-area-inset-top, 0px)) 20px 0;flex-shrink:0;">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-      <button class="back-btn" onclick="back()">←</button>
-      <h1>Здоровье</h1>
-    </div>
-  </div>
-  <div class="chips" id="health-chips" style="padding-top:0;flex-shrink:0;padding-left:20px;padding-right:20px;">
+  <div class="ghdr"><h2 style="margin-bottom:4px;">🏥 Здоровье</h2><p style="font-size:13px;">Специалисты и клиники Москвы</p></div>
+  <div class="chips" id="health-chips" style="padding-top:12px;flex-shrink:0;">
     <div class="chip on" onclick="filterHealth('Все',this)">Все</div>
     <div class="chip" onclick="filterHealth('Терапевт',this)">🩺 Терапевты</div>
     <div class="chip" onclick="filterHealth('Хирург',this)">🔪 Хирурги</div>
@@ -1072,7 +1041,7 @@ async function sendBookingNotification() {
   </div>
   <div class="scroll">
     <!-- SOS -->
-    <div style="margin:12px 20px 4px;background:linear-gradient(135deg,#D0021B,#FF5252);border-radius:var(--radius);padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="openEmergency()">
+    <div style="margin:12px 16px 4px;background:linear-gradient(135deg,#D0021B,#FF5252);border-radius:var(--radius);padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="openEmergency()">
       <div style="font-size:28px;">🚨</div>
       <div style="flex:1;"><div style="color:white;font-weight:800;font-size:15px;">Экстренная помощь</div><div style="color:rgba(255,255,255,0.85);font-size:13px;">Круглосуточно · Выезд за 30 мин</div></div>
       <div style="color:white;font-size:22px;">›</div>
@@ -1082,7 +1051,7 @@ async function sendBookingNotification() {
   </div>
   <nav class="bnav">
     <div class="ni" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
-    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🔍</div><div class="ni-lbl">Услуги</div></div>
+    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
     <div class="ni" onclick="nav('chatList')"><div class="ni-icon">💬</div><div class="ni-lbl">Чат</div></div>
     <div class="ni on"><div class="ni-icon">🏥</div><div class="ni-lbl">Здоровье</div></div>
     <div class="ni" onclick="nav('profile')"><div class="ni-icon">👤</div><div class="ni-lbl">Профиль</div></div>
@@ -1101,7 +1070,7 @@ async function sendBookingNotification() {
     <div class="chip" onclick="filterDiscounts('Кафе',this)">☕ Кафе</div>
   </div>
   <div class="scroll">
-    <div style="margin:8px 16px 12px;background:linear-gradient(135deg,#E8723A,#F5A623);border-radius:var(--radius);padding:14px;color:white;display:flex;align-items:center;gap:12px;">
+    <div style="margin:8px 16px 12px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);border-radius:var(--radius);padding:14px;color:white;display:flex;align-items:center;gap:12px;">
       <div style="font-size:32px;">🏠</div>
       <div><div style="font-size:15px;font-weight:800;">ЖК Сокольники Парк</div><div style="font-size:12px;opacity:0.85;margin-top:2px;">Эксклюзивные скидки для жителей</div></div>
     </div>
@@ -1128,11 +1097,11 @@ async function sendBookingNotification() {
         <div style="font-size:12px;font-weight:700;">Бигль</div><div style="font-size:11px;color:var(--text-secondary);">234 уч.</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;">
-        <div style="width:72px;height:72px;background:linear-gradient(135deg,#FFF3EC,#FFE0CC);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;">🦮</div>
+        <div style="width:72px;height:72px;background:linear-gradient(135deg,#EEF6FF,#C9E4FA);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;">🦮</div>
         <div style="font-size:12px;font-weight:700;">Лабрадор</div><div style="font-size:11px;color:var(--text-secondary);">512 уч.</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;">
-        <div style="width:72px;height:72px;background:linear-gradient(135deg,#F0F7ED,#D4EDDA);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;">🐕‍🦺</div>
+        <div style="width:72px;height:72px;background:linear-gradient(135deg,#F0FFF4,#C6F6D5);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;">🐕‍🦺</div>
         <div style="font-size:12px;font-weight:700;">Хаски</div><div style="font-size:11px;color:var(--text-secondary);">389 уч.</div>
       </div>
     </div>
@@ -1164,7 +1133,7 @@ async function sendBookingNotification() {
       <div style="font-size:13px;font-weight:700;color:#2e7d32;">8 мест рядом с вами</div>
       <div style="font-size:12px;color:#388e3c;">Сокольники и окрестности</div>
       <div style="position:absolute;top:18%;left:20%;background:var(--primary);color:white;border-radius:20px 20px 20px 0;padding:4px 9px;font-size:11px;font-weight:700;">☕ Кофе & Лапки</div>
-      <div style="position:absolute;top:45%;left:58%;background:#2BAE66;color:white;border-radius:20px 20px 20px 0;padding:4px 9px;font-size:11px;font-weight:700;">🌳 Сокольники</div>
+      <div style="position:absolute;top:45%;left:58%;background:#7ED321;color:white;border-radius:20px 20px 20px 0;padding:4px 9px;font-size:11px;font-weight:700;">🌳 Сокольники</div>
       <div style="position:absolute;top:65%;left:30%;background:#FF9800;color:white;border-radius:20px 20px 20px 0;padding:4px 9px;font-size:11px;font-weight:700;">✂️ PawStyle</div>
     </div>
     <div id="places-list"></div>
@@ -1184,7 +1153,7 @@ async function sendBookingNotification() {
   <div class="ghdr"><h2>Сообщество</h2></div>
   <div class="scroll">
     <div class="ci" onclick="openPublicChat()">
-      <div style="width:48px;height:48px;background:var(--bg);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🐕</div>
+      <div style="width:48px;height:48px;background:linear-gradient(135deg,var(--primary),#6BB8F0);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🐕</div>
       <div style="flex:1;"><div style="font-size:15px;font-weight:700;">Общий чат района</div><div style="font-size:13px;color:var(--text-secondary);margin-top:2px;">Открыть общий чат...</div></div>
       <div class="badge">4</div>
     </div>
@@ -1236,7 +1205,7 @@ async function sendBookingNotification() {
       
       <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px;">
         <!-- Информация из профиля (только для чтения) -->
-        <div style="background:rgba(232,114,58,0.06);border-radius:12px;padding:12px;border-left:4px solid var(--primary);">
+        <div style="background:rgba(74,144,217,0.08);border-radius:12px;padding:12px;border-left:4px solid var(--primary);">
           <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">📝 Ваши данные</div>
           <div style="font-size:15px;font-weight:700;margin-bottom:6px;" id="em-display-name">Анна Козлова</div>
           <div style="font-size:13px;color:var(--text-secondary);">🐕 <span id="em-display-pet">Рыжик</span></div>
@@ -1268,43 +1237,36 @@ async function sendBookingNotification() {
   </div>
 </div>
 <div class="screen" id="chatList">
-  <div style="padding:calc(16px + env(safe-area-inset-top, 0px)) 20px 0;flex-shrink:0;">
-    <h1 style="margin-bottom:16px;">Сообщество</h1>
-    <div class="search-bar" style="margin-bottom:12px;">
-      <span style="font-size:18px;color:var(--text-secondary);">🔍</span>
-      <input class="si" placeholder="Поиск по районам...">
-    </div>
-    <div style="display:flex;gap:0;margin-bottom:4px;">
-      <div style="flex:1;text-align:center;padding:10px;font-size:14px;font-weight:700;color:var(--primary);border-bottom:2px solid var(--primary);cursor:pointer;" onclick="openPublicChat()">👥 Чаты районов</div>
-      <div style="flex:1;text-align:center;padding:10px;font-size:14px;font-weight:600;color:var(--text-secondary);border-bottom:2px solid var(--border);cursor:pointer;" onclick="nav('events')">📅 События</div>
-    </div>
+  <div class="ghdr" style="padding-bottom:20px;">
+    <h2 style="color:white;">💬 Чат</h2>
+    <p style="color:rgba(255,255,255,0.8);font-size:13px;margin-top:4px;">Общайся со всеми владельцами</p>
   </div>
   <div class="scroll">
     <div class="ci" onclick="openPublicChat()" style="gap:14px;">
-      <div class="avatar" style="width:52px;height:52px;font-size:22px;background:linear-gradient(135deg,#E8723A,#F5A623);flex-shrink:0;">🐾</div>
+      <div class="avatar" style="width:56px;height:56px;font-size:24px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);flex-shrink:0;">🐾</div>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <span style="font-weight:800;font-size:15px;">Общий чат DogFriend</span>
+          <span style="font-weight:800;font-size:16px;">Общий чат DogFriend</span>
           <span style="font-size:11px;color:var(--text-secondary);">сейчас</span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <span style="font-size:13px;color:var(--text-secondary);">Все владельцы района онлайн 🐶</span>
-          <span style="width:8px;height:8px;background:var(--success);border-radius:50%;flex-shrink:0;"></span>
+          <span style="width:8px;height:8px;background:#7ED321;border-radius:50%;flex-shrink:0;"></span>
         </div>
       </div>
     </div>
-    <div style="padding:16px 20px 8px;">
-      <div style="font-size:15px;font-weight:800;">💌 Личные сообщения</div>
+    <div style="padding:16px 16px 8px;">
+      <div style="font-size:15px;font-weight:800;margin-bottom:12px;">💌 Личные сообщения</div>
     </div>
     <div id="private-chats-list"></div>
-    <div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:13px;" id="no-private-chats">
+    <div style="padding:20px 16px;text-align:center;color:var(--text-secondary);font-size:13px;" id="no-private-chats">
       Еще нет личных сообщений<br>Напишите специалисту чтобы начать чат
     </div>
   </div>
   <nav class="bnav">
     <div class="ni" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
-    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🔍</div><div class="ni-lbl">Услуги</div></div>
-    <div class="ni on"><div class="ni-icon">💬</div><div class="ni-lbl">Чат</div></div>
+    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
+    <div class="ni on"><div class="ni-icon">💬</div><div class="ni-lbl" style="color:var(--primary);">Чат</div></div>
     <div class="ni" onclick="nav('health')"><div class="ni-icon">🏥</div><div class="ni-lbl">Здоровье</div></div>
     <div class="ni" onclick="nav('profile')"><div class="ni-icon">👤</div><div class="ni-lbl">Профиль</div></div>
   </nav>
@@ -1335,7 +1297,7 @@ async function sendBookingNotification() {
   <!-- Fixed header -->
   <div style="background:var(--white);padding:12px 16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;flex-shrink:0;z-index:10;">
     <button class="back-btn" onclick="nav('chatList')">←</button>
-    <div class="avatar" id="chat-conv-av" style="width:40px;height:40px;font-size:18px;background:linear-gradient(135deg,#E8723A,#F5A623);">🐾</div>
+    <div class="avatar" id="chat-conv-av" style="width:40px;height:40px;font-size:18px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);">🐾</div>
     <div style="flex:1;min-width:0;">
       <div id="chat-conv-name" style="font-weight:800;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
       <div id="chat-conv-subtitle" style="font-size:12px;font-weight:600;color:#aaa;">● подключение...</div>
@@ -1354,7 +1316,7 @@ async function sendBookingNotification() {
       onfocus="this.style.borderColor='var(--primary)';scrollChatBottom();"
       onblur="this.style.borderColor='var(--border)'"></textarea>
     <button onclick="sendChatMsg()"
-      style="width:46px;height:46px;background:var(--primary);color:white;border:none;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(232,114,58,0.3);margin-bottom:1px;">➤</button>
+      style="width:46px;height:46px;background:var(--primary);color:white;border:none;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(74,144,217,0.4);margin-bottom:1px;">➤</button>
   </div>
 </div>
 
@@ -1499,22 +1461,21 @@ function loadProfile() {
   const savedAvatar = localStorage.getItem('df_avatar');
   if (savedAvatar) setTimeout(() => applyAvatar(savedAvatar), 50);
   const name = p.name || 'Гость';
-  const firstName = name.split(' ')[0];
   const initials = p.name ? getInitials(p.name) : '👤';
   const homeName = document.getElementById('home-name');
   const homeAvatar = document.getElementById('home-avatar');
-  if (homeName) homeName.textContent = firstName;
+  if (homeName) homeName.textContent = name;
   if (homeAvatar) homeAvatar.textContent = initials;
+  const profName = document.getElementById('prof-name');
+  const profAvatar = document.getElementById('prof-avatar');
+  if (profName) profName.textContent = name;
+  if (profAvatar) profAvatar.textContent = initials;
   
-  // Profile screen — pet info
-  const profDogName = document.getElementById('prof-dog-name');
-  const profDogInfo = document.getElementById('prof-dog-info');
-  if (profDogName) profDogName.textContent = p.dogname || 'Питомец';
-  if (profDogInfo) {
-    const parts = [];
-    if (p.dogbreed) parts.push(p.dogbreed);
-    if (p.dogage) parts.push(p.dogage);
-    profDogInfo.textContent = parts.length ? parts.join(' • ') : 'Нажмите чтобы добавить';
+  // Обновляем гео на главном экране
+  const geoDisplay = document.getElementById('home-geo-display');
+  if (geoDisplay) {
+    const geo = p.district || 'Москва, Сокольники';
+    geoDisplay.textContent = geo;
   }
 }
 
@@ -1597,7 +1558,7 @@ window.addEventListener('load', () => {
 // ============================================================
 const SPECIALISTS = [
   {
-    id:1, name:'Иван Петров', initials:'ИП', grad:'linear-gradient(135deg,#E8723A,#F5A623)',
+    id:1, name:'Иван Петров', initials:'ИП', grad:'linear-gradient(135deg,#4A90D9,#7B5EA7)',
     badge:'🏅 Проверен', badgeType:'tag-b', rating:'⭐ 4.9', reviews:127, exp:'5 лет опыта',
     location:'📍 Сокольники, 2.3 км', price:'от 3 000 ₽', insurance:true,
     tags:['Щенки','ОКД','Аджилити'],
@@ -1642,7 +1603,7 @@ const SPECIALISTS = [
       {name:'Сезонная программа ⭐', desc:'3 месяца • 24 занятия', price:'60 000 ₽', sel:true},
     ],
     reviewList:[
-      {name:'Дмитрий Р.', av:'ДР', grad:'linear-gradient(135deg,#E8723A,#F5A623)', stars:'⭐⭐⭐⭐⭐', text:'Алексей вывел нашу малинуа на уровень кандидата в мастера спорта. Невероятный тренер!'},
+      {name:'Дмитрий Р.', av:'ДР', grad:'linear-gradient(135deg,#4A90D9,#7B5EA7)', stars:'⭐⭐⭐⭐⭐', text:'Алексей вывел нашу малинуа на уровень кандидата в мастера спорта. Невероятный тренер!'},
       {name:'Светлана К.', av:'СК', grad:'linear-gradient(135deg,#9C27B0,#E91E63)', stars:'⭐⭐⭐⭐⭐', text:'Приехала из Питера специально заниматься у Алексея. Оно того стоило — золото на региональных.'},
     ],
     availDays:[4,6,11,13,18,20,25,27],
@@ -1981,37 +1942,27 @@ function reverseGeocode(lat, lng, input) {
 // ============================================================
 function renderCatalog() {
   const search = (document.getElementById('catalog-search')?.value || '').toLowerCase();
-  const list = document.getElementById('catalog-trainers-list');
+  const list = document.getElementById('catalog-list');
   if (!list) return;
   const filtered = SPECIALISTS.filter(s => {
     const matchFilter = catalogFilter === 'Все' || s.tags.includes(catalogFilter);
     const matchSearch = !search || s.name.toLowerCase().includes(search) || s.tags.join(' ').toLowerCase().includes(search);
     return matchFilter && matchSearch;
   });
-  list.innerHTML = filtered.map(s => {
-    const ratingNum = s.rating.replace('⭐ ','');
-    const expYears = s.exp.replace(/[^0-9]/g,'');
-    return `
-    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);margin:0 20px 10px;padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer;" onclick="openSpecialist(${s.id})">
-      <div class="avatar" style="width:60px;height:60px;font-size:22px;background:${s.grad};flex-shrink:0;position:relative;">${s.initials}
-        <div style="position:absolute;bottom:-2px;right:-2px;width:18px;height:18px;background:var(--primary);border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:9px;">✓</div>
-      </div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-weight:800;font-size:16px;margin-bottom:2px;">${s.name}</div>
-        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">${s.tags[0] || 'Кинолог'}</div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);">
-          <span class="stars">⭐</span><span style="font-weight:700;color:var(--text-primary);">${ratingNum}</span>
-          <span>(${s.reviews})</span>
-          <span>•</span>
-          <span>🕐 ${expYears} лет</span>
+  list.innerHTML = filtered.map(s => `
+    <div class="scard" onclick="openSpecialist(${s.id})">
+      <div class="avatar" style="width:56px;height:56px;font-size:22px;background:${s.grad};">${s.initials}</div>
+      <div style="flex:1;">
+        <div class="scard-name">${s.name}</div>
+        <div class="scard-meta"><span class="tag ${s.badgeType}">${s.badge}</span><span class="stars">${s.rating}</span><span style="font-size:12px;color:var(--text-secondary);">(${s.reviews})</span></div>
+        <div style="font-size:13px;color:var(--text-secondary);">${s.location} • ${s.tags.slice(0,2).join(', ')}</div>
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <span class="scard-price">${s.price}</span>
+          ${s.insurance ? '<span class="tag tag-g" style="font-size:11px;">🛡️ Страховка</span>' : ''}
         </div>
       </div>
-      <div style="text-align:right;flex-shrink:0;">
-        <div style="font-weight:800;font-size:16px;color:var(--primary);margin-bottom:4px;">${s.price.replace('от ','')}</div>
-        <div style="font-size:18px;color:var(--text-secondary);">›</div>
-      </div>
-    </div>`;
-  }).join('') || '<div style="padding:40px;text-align:center;color:var(--text-secondary);">Никого не найдено</div>';
+    </div>
+  `).join('') || '<div style="padding:40px;text-align:center;color:var(--text-secondary);">Никого не найдено</div>';
 }
 
 function filterCatalog(val, el) {
@@ -2300,7 +2251,7 @@ function openChatWithUser(theirUserId, theirName, theirInitials, theirGrad) {
   console.log('✅ Set currentPrivateChatId =', currentPrivateChatId);
 
   // Запомним контакт
-  contactBook[theirUserId] = { name: theirName, initials: theirInitials || theirName.slice(0,2).toUpperCase(), grad: theirGrad || 'linear-gradient(135deg,#E8723A,#F5A623)' };
+  contactBook[theirUserId] = { name: theirName, initials: theirInitials || theirName.slice(0,2).toUpperCase(), grad: theirGrad || 'linear-gradient(135deg,#4A90D9,#7B5EA7)' };
   localStorage.setItem('df_contacts', JSON.stringify(contactBook));
 
   if (!privateChats[theirUserId]) privateChats[theirUserId] = [];
@@ -2321,23 +2272,12 @@ function openChatWithUser(theirUserId, theirName, theirInitials, theirGrad) {
 // Открыть чат со специалистом (кнопка 💬 на карточке)
 function openPrivateChat(specId) {
   console.log('💬 openPrivateChat called with specId:', specId);
-  // Сначала ищем в бизнесах из БД по user_id
-  let business = loadedBusinesses.find(b => b.user_id === specId);
-  // Если не нашли — ищем по business id (UUID)
-  if (!business) business = loadedBusinesses.find(b => b.id === specId);
-  
+  // Сначала ищем в бизнесах из БД
+  const business = loadedBusinesses.find(b => b.user_id === specId);
   if (business) {
     console.log('✅ Found business:', business.name || business.business_name, 'user_id:', business.user_id);
-    const chatId = business.user_id || specId;
-    const initials = getInitials(business.name || business.business_name);
-    openChatWithUser(chatId, business.name || business.business_name, initials, 'linear-gradient(135deg,#E8723A,#F5A623)');
-    return;
-  }
-  
-  // Проверяем contactBook — может уже знаем этот контакт
-  if (contactBook[specId]) {
-    const c = contactBook[specId];
-    openChatWithUser(specId, c.name, c.initials, c.grad);
+    const initials = business.name || business.business_name.substring(0,2).toUpperCase();
+    openChatWithUser(specId, business.name || business.business_name, initials, 'linear-gradient(135deg,#4A90D9,#7B5EA7)');
     return;
   }
   
@@ -2401,7 +2341,7 @@ function subscribeToPrivateChat(theirId) {
 
     // Запоминаем контакт если не знаем
     if (!contactBook[chatId]) {
-      contactBook[chatId] = { name: data.senderName, initials: data.senderName.slice(0,2).toUpperCase(), grad: 'linear-gradient(135deg,#E8723A,#F5A623)' };
+      contactBook[chatId] = { name: data.senderName, initials: data.senderName.slice(0,2).toUpperCase(), grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)' };
       localStorage.setItem('df_contacts', JSON.stringify(contactBook));
     }
 
@@ -2522,7 +2462,7 @@ function openUserProfile(nick) {
   const msgData = _lastClickedUser || {};
   const theirUserId = msgData.senderId || nick;
   const theirName = msgData.senderName || nick;
-  const colors = ['#E8723A','#E91E63','#9C27B0','#00BCD4','#FF5722','#4CAF50'];
+  const colors = ['#4A90D9','#E91E63','#9C27B0','#00BCD4','#FF5722','#4CAF50'];
   const color = colors[nick.charCodeAt(0) % colors.length];
   const initials = nick.slice(0,2).toUpperCase();
 
@@ -2554,7 +2494,7 @@ function startPrivateChatWithUser(nick) {
   const msgData = _lastClickedUser || {};
   const theirUserId = msgData.senderId || nick;
   const theirName = msgData.senderName || nick;
-  openChatWithUser(theirUserId, theirName, theirName.slice(0,2).toUpperCase(), 'linear-gradient(135deg,#E8723A,#F5A623)');
+  openChatWithUser(theirUserId, theirName, theirName.slice(0,2).toUpperCase(), 'linear-gradient(135deg,#4A90D9,#7B5EA7)');
 }
 
 // Удалить чат только локально (БД не трогаем — собеседник ничего не теряет)
@@ -2588,26 +2528,6 @@ function deleteLocalChat(chatId) {
 function renderPrivateChats() {
   const list = document.getElementById('private-chats-list');
   const noChats = document.getElementById('no-private-chats');
-
-  // Резолвим неизвестные контакты из loadedBusinesses
-  Object.keys(privateChats).forEach(id => {
-    if (!contactBook[id] && !id.startsWith('event_') && !id.startsWith('spec_')) {
-      // Ищем бизнес где user_id = id
-      const biz = loadedBusinesses.find(b => b.user_id === id);
-      if (biz) {
-        contactBook[id] = { name: biz.name, initials: getInitials(biz.name), grad: 'linear-gradient(135deg,#E8723A,#F5A623)' };
-        localStorage.setItem('df_contacts', JSON.stringify(contactBook));
-      } else {
-        // Ищем бизнес где id = business id (UUID)
-        const biz2 = loadedBusinesses.find(b => b.id === id);
-        if (biz2) {
-          contactBook[id] = { name: biz2.name, initials: getInitials(biz2.name), grad: 'linear-gradient(135deg,#E8723A,#F5A623)' };
-          localStorage.setItem('df_contacts', JSON.stringify(contactBook));
-        }
-      }
-    }
-  });
-
   // Личные чаты: только непустые из памяти
   // Event-чаты: берём из contactBook (они могут быть пустыми в памяти до загрузки БД)
   const eventKeys = Object.keys(contactBook).filter(k => k.startsWith('event_'));
@@ -2641,7 +2561,7 @@ function renderPrivateChats() {
   list.innerHTML = keys.map(id => {
     const msgs = privateChats[id] || [];
     const last = msgs[msgs.length - 1];
-    const contact = contactBook[id] || { name: id, initials: id.slice(0,2).toUpperCase(), grad: 'linear-gradient(135deg,#E8723A,#F5A623)' };
+    const contact = contactBook[id] || { name: id, initials: id.slice(0,2).toUpperCase(), grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)' };
     const unread = unreadChats[id] || 0;
     const safeId = escHtml(id);
     const safeName = escHtml(contact.name);
@@ -2716,7 +2636,7 @@ function renderPrivateChats() {
           openEventGroupChat({ id: evId, title: evContact.name.replace('📅 ', '') });
         }
       } else {
-        const contact = contactBook[id] || { name: id, initials: id.slice(0,2).toUpperCase(), grad: 'linear-gradient(135deg,#E8723A,#F5A623)' };
+        const contact = contactBook[id] || { name: id, initials: id.slice(0,2).toUpperCase(), grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)' };
         openChatWithUser(id, contact.name, contact.initials, contact.grad);
       }
     });
@@ -3177,7 +3097,7 @@ function getChatNick() {
 function openPublicChat() {
   chatNick = getChatNick();
   document.getElementById('chat-conv-name').textContent = '🐾 Общий чат DogFriend';
-  document.getElementById('chat-conv-av').style.background = 'linear-gradient(135deg,#E8723A,#F5A623)';
+  document.getElementById('chat-conv-av').style.background = 'linear-gradient(135deg,#4A90D9,#7B5EA7)';
   document.getElementById('chat-conv-av').textContent = '💬';
   document.getElementById('chat-conv-subtitle').innerHTML = '<span style="color:#aaa">● подключение...</span>';
   
@@ -3418,7 +3338,7 @@ function startRealtimeDMSubscription() {
         contactBook[chatId] = { 
           name: msg.sender_name, 
           initials: msg.sender_name.slice(0,2).toUpperCase(), 
-          grad: 'linear-gradient(135deg,#E8723A,#F5A623)' 
+          grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)' 
         };
         localStorage.setItem('df_contacts', JSON.stringify(contactBook));
       }
@@ -3541,7 +3461,7 @@ function appendMessage(nick, text, time, isMine, senderId) {
   const row   = document.createElement('div');
   row.className = 'cmsg-row ' + (isMine ? 'mine' : 'theirs');
   const initials = nick.slice(0,2).toUpperCase();
-  const colors   = ['#E8723A','#E91E63','#9C27B0','#00BCD4','#FF5722','#4CAF50'];
+  const colors   = ['#4A90D9','#E91E63','#9C27B0','#00BCD4','#FF5722','#4CAF50'];
   const color    = colors[nick.charCodeAt(0) % colors.length];
   const grad = `linear-gradient(135deg,${color},${color}99)`;
   // клик по имени → запоминаем пользователя и открываем профиль
@@ -3586,7 +3506,7 @@ function renderTyping() {
 function setChatStatus(s) {
   const sub = document.getElementById('chat-conv-subtitle');
   if (!sub) return;
-  if (s === 'online')     sub.innerHTML = '<span style="color:#2BAE66">● онлайн</span>';
+  if (s === 'online')     sub.innerHTML = '<span style="color:#7ED321">● онлайн</span>';
   else if (s === 'error') sub.innerHTML = '<span style="color:#D0021B">● ошибка</span>';
   else                    sub.innerHTML = '<span style="color:#aaa">● подключение...</span>';
 }
@@ -3689,7 +3609,7 @@ async function savePrivateMsgToServer(chatId, text, time) {
 function refreshOnlineCount() {
   // Упрощённо: показываем статус онлайн
   const sub = document.getElementById('chat-conv-subtitle');
-  if (sub) sub.innerHTML = '<span style="color:#2BAE66">● онлайн</span>';
+  if (sub) sub.innerHTML = '<span style="color:#7ED321">● онлайн</span>';
 }
 
 // Экстренный вызов на сервер
@@ -3809,7 +3729,7 @@ function bookFromClinicModal() {
   document.getElementById('appt-success-text').textContent = 'Заявка на приём в «' + name + '» отправлена.';
   document.getElementById('appt-success-card').innerHTML =
     '<div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;">'
-    + '<div style="width:44px;height:44px;background:'+(item&&item.grad?item.grad:'linear-gradient(135deg,#E8723A,#F5A623)')+';border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">'+(item&&item.icon?item.icon:(item&&item.initials?item.initials:'🏥'))+'</div>'
+    + '<div style="width:44px;height:44px;background:'+(item&&item.grad?item.grad:'linear-gradient(135deg,#4A90D9,#7B5EA7)')+';border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">'+(item&&item.icon?item.icon:(item&&item.initials?item.initials:'🏥'))+'</div>'
     + '<div><div style="font-weight:800;font-size:15px;">'+name+'</div><div style="font-size:13px;color:var(--text-secondary);">'+(rec.spec)+'</div></div></div>'
     + '<div style="font-size:13px;color:var(--text-secondary);line-height:1.9;">'
     + '📅 Дата заявки: <strong>'+dateStr+'</strong><br>'
@@ -3860,7 +3780,7 @@ function openPlaceModal(id) {
       <div style="font-size:14px;">🕐 ${p.hours}</div>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">${p.tags.map(t=>`<span class="tag tag-b">${t}</span>`).join('')}</div>
-    ${p.promo?`<div style="background:rgba(126,211,33,0.12);border-radius:12px;padding:12px;"><div style="font-size:13px;font-weight:700;color:#228B52;">🎁 Промокод жителям ЖК:</div><div style="font-size:24px;font-weight:900;font-family:'Nunito',sans-serif;color:#228B52;letter-spacing:2px;">${p.promo}</div></div>`:''}
+    ${p.promo?`<div style="background:rgba(126,211,33,0.12);border-radius:12px;padding:12px;"><div style="font-size:13px;font-weight:700;color:#5a9c18;">🎁 Промокод жителям ЖК:</div><div style="font-size:24px;font-weight:900;font-family:'Nunito',sans-serif;color:#5a9c18;letter-spacing:2px;">${p.promo}</div></div>`:''}
   `;
   openModal('m-place');
 }
@@ -3926,7 +3846,7 @@ function openDiscountModal(id) {
     <div style="font-size:14px;color:var(--text-secondary);line-height:1.7;margin-bottom:14px;">${d.full}</div>
     <div style="font-size:14px;margin-bottom:6px;">📍 ${d.addr}</div>
     <div style="font-size:14px;margin-bottom:14px;">⏰ ${d.valid}</div>
-    <div style="background:rgba(232,114,58,0.06);border-radius:12px;padding:14px;text-align:center;">
+    <div style="background:rgba(74,144,217,0.08);border-radius:12px;padding:14px;text-align:center;">
       <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">Ваш промокод</div>
       <div style="font-size:26px;font-weight:900;font-family:'Nunito',sans-serif;color:var(--primary);letter-spacing:3px;">${d.code}</div>
     </div>
@@ -3936,7 +3856,7 @@ function openDiscountModal(id) {
 function copyPromoCode() {
   if (!_currentDisc) return;
   navigator.clipboard.writeText(_currentDisc.code)
-    .then(()=>showToast('✅ Промокод '+_currentDisc.code+' скопирован!','#2BAE66'))
+    .then(()=>showToast('✅ Промокод '+_currentDisc.code+' скопирован!','#7ED321'))
     .catch(()=>showToast('Промокод: '+_currentDisc.code));
 }
 
@@ -3954,13 +3874,13 @@ function savePet() {
   const breed = document.getElementById('new-pet-breed').value.trim();
   if (!name) { showToast('❌ Введите кличку'); return; }
   let pets = JSON.parse(localStorage.getItem('df_pets')||'[]');
-  const GRADS=['linear-gradient(135deg,#E8723A,#F5A623)','linear-gradient(135deg,#E91E63,#FF9800)','linear-gradient(135deg,#00BCD4,#4CAF50)','linear-gradient(135deg,#FF5722,#FF9800)','linear-gradient(135deg,#9C27B0,#E91E63)'];
+  const GRADS=['linear-gradient(135deg,#4A90D9,#7B5EA7)','linear-gradient(135deg,#E91E63,#FF9800)','linear-gradient(135deg,#00BCD4,#4CAF50)','linear-gradient(135deg,#FF5722,#FF9800)','linear-gradient(135deg,#9C27B0,#E91E63)'];
   const EMOJIS=['🐕','🦮','🐩','🐕‍🦺','🐶'];
   pets.push({id:Date.now(),name,breed,age:document.getElementById('new-pet-age').value.trim(),weight:document.getElementById('new-pet-weight').value.trim(),sex:_petSex,dob:document.getElementById('new-pet-dob').value,notes:document.getElementById('new-pet-notes').value.trim(),color:GRADS[pets.length%GRADS.length],emoji:EMOJIS[pets.length%EMOJIS.length]});
   localStorage.setItem('df_pets',JSON.stringify(pets));
   closeModal('m-add-pet');
   renderPets();
-  showToast('🐾 '+name+' добавлен!','#2BAE66');
+  showToast('🐾 '+name+' добавлен!','#7ED321');
 }
 function deletePet(id) {
   let pets = JSON.parse(localStorage.getItem('df_pets')||'[]').filter(p=>p.id!==id);
@@ -3980,7 +3900,7 @@ function renderPets() {
   // seed from profile if empty
   if (!pets.length) {
     const p=JSON.parse(localStorage.getItem('df_profile')||'{}');
-    if (p.dogname) pets=[{id:1,name:p.dogname,breed:p.dogbreed||'Порода не указана',age:p.dogage||'',sex:'м',color:'linear-gradient(135deg,#E8723A,#F5A623)',emoji:'🐕',weight:'',notes:''}];
+    if (p.dogname) pets=[{id:1,name:p.dogname,breed:p.dogbreed||'Порода не указана',age:p.dogage||'',sex:'м',color:'linear-gradient(135deg,#4A90D9,#7B5EA7)',emoji:'🐕',weight:'',notes:''}];
   }
   if (!pets.length) {
     list.innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--text-secondary);"><div style="font-size:64px;margin-bottom:16px;">🐾</div><div style="font-size:16px;font-weight:700;margin-bottom:8px;">Питомцев пока нет</div><div style="font-size:13px;">Нажмите «+ Добавить»</div></div>';
@@ -4027,7 +3947,7 @@ function saveMedRecord(){
   let recs=JSON.parse(localStorage.getItem('df_med_records')||'[]');
   recs.unshift({id:Date.now(),type:_medType,petName:document.getElementById('med-pet-name').value.trim(),title,date:document.getElementById('med-date').value,doctor:document.getElementById('med-doctor').value.trim(),notes:document.getElementById('med-notes').value.trim()});
   localStorage.setItem('df_med_records',JSON.stringify(recs));
-  closeModal('m-add-med');renderMedRecords();showToast('✅ Запись сохранена','#2BAE66');
+  closeModal('m-add-med');renderMedRecords();showToast('✅ Запись сохранена','#7ED321');
 }
 function renderMedRecords(){
   const list=document.getElementById('med-records-list');
@@ -4138,7 +4058,7 @@ function deleteMedRecord(id) {
 // LESSONS
 // ════════════════════════════════════════════════════════════
 const LESSONS=[
-  {id:'l1',cat:'Щенки',title:'Первые команды для щенка',emoji:'🐾',color:'linear-gradient(135deg,#FFF3EC,#FFE0CC)',duration:'15 мин',level:'Начинающий',
+  {id:'l1',cat:'Щенки',title:'Первые команды для щенка',emoji:'🐾',color:'linear-gradient(135deg,#EEF6FF,#C9E4FA)',duration:'15 мин',level:'Начинающий',
    content:'Начните с команды «Сидеть» — самой простой. Держите лакомство над носом, медленно ведите назад. Когда сядет — скажите «Сидеть» и дайте угощение. Короткие сессии 3–5 мин, 5–10 раз в день. Ключ к успеху — последовательность и позитивное подкрепление.',
    steps:['Возьмите лакомство между пальцами','Поднесите к носу щенка','Медленно ведите руку назад — щенок сядет','В момент посадки скажите «Сидеть!»','Дайте лакомство и похвалите']},
   {id:'l2',cat:'Послушание',title:'Команда «Место»: пошаговый урок',emoji:'🏠',color:'linear-gradient(135deg,#FFF5E6,#FFD9A0)',duration:'20 мин',level:'Средний',
@@ -4147,7 +4067,7 @@ const LESSONS=[
   {id:'l3',cat:'Поведение',title:'Как остановить прыжки на людей',emoji:'🚫',color:'linear-gradient(135deg,#FFF0F0,#FFCDD2)',duration:'10 мин',level:'Начинающий',
    content:'Прыжки случаются, потому что собака получает внимание. Решение: полностью игнорировать прыжок. Отворачивайтесь, скрещивайте руки, не смотрите. Когда встанет на 4 лапы — сразу приветствуйте. 4 лапы на полу = внимание.',
    steps:['При прыжке отвернитесь, скрестите руки','Не смотрите, не говорите ничего','Когда встанет — радостно поздоровайтесь','Попросите сесть перед приветствием','Повторяйте с каждым гостем']},
-  {id:'l4',cat:'Здоровье',title:'Уход за зубами: пошаговое руководство',emoji:'🦷',color:'linear-gradient(135deg,#F0F7ED,#D4EDDA)',duration:'12 мин',level:'Начинающий',
+  {id:'l4',cat:'Здоровье',title:'Уход за зубами: пошаговое руководство',emoji:'🦷',color:'linear-gradient(135deg,#F0FFF4,#C6F6D5)',duration:'12 мин',level:'Начинающий',
    content:'Чистка зубов 3 раза в неделю критически важна. Используйте только зубную пасту для собак. Начните с прикосновений пальцем к дёснам, постепенно переходя к щётке.',
    steps:['Дайте понюхать пасту','Нанесите на палец и потрите дёсны','Введите щётку под углом 45°','Чистите круговыми движениями 2 мин','Похвалите и дайте угощение']},
   {id:'l5',cat:'Аджилити',title:'Первые барьеры: введение в аджилити',emoji:'🏃',color:'linear-gradient(135deg,#E8EAF6,#C5CAE9)',duration:'25 мин',level:'Средний',
@@ -4452,7 +4372,7 @@ window.addEventListener('load',()=>{
   <div class="modal" onclick="event.stopPropagation()" style="max-height:88%;overflow-y:auto;">
     <div class="mhandle"></div>
     <div id="m-lesson-body"></div>
-    <button class="btn btn-p" style="margin-bottom:10px;" onclick="closeModal('m-lesson');showToast('✅ Урок отмечен как пройденный!','#2BAE66')">Отметить выполненным ✓</button>
+    <button class="btn btn-p" style="margin-bottom:10px;" onclick="closeModal('m-lesson');showToast('✅ Урок отмечен как пройденный!','#7ED321')">Отметить выполненным ✓</button>
     <button class="btn btn-g" onclick="closeModal('m-lesson')">Закрыть</button>
   </div>
 </div>
@@ -4469,12 +4389,12 @@ window.addEventListener('load',()=>{
   <div class="scroll" style="padding:20px;">
     <p style="margin-bottom:20px;color:var(--text-secondary);">Выберите тип вашего бизнеса:</p>
     <div onclick="selectBusinessType('trainer')" style="background:var(--white);border-radius:14px;padding:18px;margin-bottom:12px;cursor:pointer;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;">
-      <div style="width:56px;height:56px;background:linear-gradient(135deg,#FFF3EC,#FFE0CC);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;">🐕</div>
+      <div style="width:56px;height:56px;background:linear-gradient(135deg,#EEF6FF,#C9E4FA);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;">🐕</div>
       <div style="flex:1;"><div style="font-weight:800;font-size:15px;margin-bottom:2px;">Кинолог / Тренер</div><div style="font-size:12px;color:var(--text-secondary);">Дрессировка, воспитание, ОКД</div></div>
       <div style="font-size:20px;color:var(--text-secondary);">›</div>
     </div>
     <div onclick="selectBusinessType('clinic')" style="background:var(--white);border-radius:14px;padding:18px;margin-bottom:12px;cursor:pointer;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;">
-      <div style="width:56px;height:56px;background:linear-gradient(135deg,#F0F7ED,#D4EDDA);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;">🏥</div>
+      <div style="width:56px;height:56px;background:linear-gradient(135deg,#F0FFF4,#C6F6D5);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;">🏥</div>
       <div style="flex:1;"><div style="font-weight:800;font-size:15px;margin-bottom:2px;">Ветеринарная клиника</div><div style="font-size:12px;color:var(--text-secondary);">Лечение, консультации, операции</div></div>
       <div style="font-size:20px;color:var(--text-secondary);">›</div>
     </div>
@@ -4543,28 +4463,24 @@ async function renderCatalogTrainers() {
   if (!list) return;
   
   if (businesses.length === 0) {
-    list.innerHTML = '<p style="padding:40px;text-align:center;color:var(--text-secondary);">Пока нет кинологов. Станьте первым!</p>';
+    list.innerHTML = '<p style="padding:20px;text-align:center;color:var(--text-secondary);">Пока нет кинологов. Станьте первым!</p>';
     return;
   }
   
   list.innerHTML = businesses.map(b => `
-    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);margin:0 20px 10px;padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer;" onclick='openBusinessProfile("${b.id}")'>
-      <div class="avatar" style="width:60px;height:60px;font-size:18px;background:linear-gradient(135deg,#E8723A,#F5A623);flex-shrink:0;position:relative;">${b.name.substring(0,2).toUpperCase()}
-        <div style="position:absolute;bottom:-2px;right:-2px;width:18px;height:18px;background:var(--primary);border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:9px;">✓</div>
-      </div>
+    <div class="scard" onclick='openBusinessProfile("${b.id}")'>
+      <div class="avatar" style="width:54px;height:54px;font-size:18px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);">${b.name.substring(0,2).toUpperCase()}</div>
       <div style="flex:1;min-width:0;">
-        <div style="font-weight:800;font-size:16px;margin-bottom:2px;">${b.name}</div>
-        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">Кинолог</div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);">
-          <span class="stars">⭐</span><span style="font-weight:700;color:var(--text-primary);">${b.rating}</span>
-          <span>(${b.reviews_count || 0})</span>
-          <span>•</span>
-          <span>📍 ${b.address ? b.address.split(',')[0] : ''}</span>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+          <div style="font-weight:800;font-size:15px;">${b.name}</div>
+          <span class="tag tag-b">✓ DogFriend</span>
         </div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">⭐ ${b.rating} · ${b.reviews_count || 0} отзывов</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">📍 ${b.address}</div>
+        ${b.services && b.services.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;">${b.services.map(s => `<span class="tag tag-b" style="font-size:11px;">${s}</span>`).join('')}</div>` : ''}
       </div>
       <div style="text-align:right;flex-shrink:0;">
-        <div style="font-weight:800;font-size:16px;color:var(--primary);">${b.price_from || '—'}</div>
-        <div style="font-size:18px;color:var(--text-secondary);">›</div>
+        <div style="font-weight:800;font-size:14px;color:var(--primary);">${b.price_from || 'от 3000 ₽'}</div>
       </div>
     </div>
   `).join('');
@@ -4583,7 +4499,7 @@ async function renderHealthClinics() {
   
   list.innerHTML = businesses.map(b => `
     <div class="scard" onclick='openBusinessProfile("${b.id}")' style="margin:0 16px 12px;">
-      <div class="avatar" style="width:54px;height:54px;font-size:18px;background:linear-gradient(135deg,#F0F7ED,#D4EDDA);">🏥</div>
+      <div class="avatar" style="width:54px;height:54px;font-size:18px;background:linear-gradient(135deg,#F0FFF4,#C6F6D5);">🏥</div>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
           <div style="font-weight:800;font-size:15px;">${b.name}</div>
@@ -4649,7 +4565,7 @@ async function openBusinessProfile(id) {
   document.getElementById('spec-topbar-name').textContent = b.name;
   const av = document.getElementById('spec-avatar');
   av.textContent = b.name.substring(0,2).toUpperCase();
-  av.style.background = 'linear-gradient(135deg,#E8723A,#F5A623)';
+  av.style.background = 'linear-gradient(135deg,#4A90D9,#7B5EA7)';
   document.getElementById('spec-name').textContent = b.name;
   document.getElementById('spec-badge').className = 'tag tag-b';
   document.getElementById('spec-badge').textContent = typeLabels[b.type] || '✓ DogFriend';
@@ -5159,7 +5075,7 @@ function renderBizDashboard(biz) {
       userBusinesses.map((b, i) => {
         const icon = typeIcons[b.type] || '💼';
         const active = b.id === biz.id;
-        return `<div onclick="renderBizDashboard(userBusinesses[${i}])" style="flex-shrink:0;display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:12px;border:2px solid ${active ? 'var(--primary)' : 'var(--border)'};background:${active ? 'rgba(232,114,58,0.06)' : 'var(--white)'};cursor:pointer;font-size:13px;font-weight:700;color:${active ? 'var(--primary)' : 'var(--text-secondary)'};">
+        return `<div onclick="renderBizDashboard(userBusinesses[${i}])" style="flex-shrink:0;display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:12px;border:2px solid ${active ? 'var(--primary)' : 'var(--border)'};background:${active ? 'rgba(74,144,217,0.08)' : 'var(--white)'};cursor:pointer;font-size:13px;font-weight:700;color:${active ? 'var(--primary)' : 'var(--text-secondary)'};">
           <span>${icon}</span><span style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.name}</span>
         </div>`;
       }).join('') + `</div>`;
@@ -5168,7 +5084,7 @@ function renderBizDashboard(biz) {
   let html = switcherHtml;
 
   // Карточка бизнеса
-  html += `<div style="background:var(--bg);border-radius:var(--radius);padding:20px;color:white;margin-bottom:16px;">
+  html += `<div style="background:linear-gradient(135deg,var(--primary),#6BB8F0);border-radius:var(--radius);padding:20px;color:white;margin-bottom:16px;">
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
       <div style="width:60px;height:60px;background:rgba(255,255,255,0.2);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;">${typeIcons[biz.type] || '💼'}</div>
       <div style="flex:1;min-width:0;">
@@ -5244,7 +5160,7 @@ function openBizEdit() {
       html += `<div style="display:flex;flex-wrap:wrap;gap:8px;" id="biz-edit-checks-${sec.id}">`;
       sec.options.forEach(opt => {
         const checked = vals.includes(opt);
-        html += `<label style="display:flex;align-items:center;gap:6px;background:${checked ? 'rgba(232,114,58,0.08)' : 'var(--bg)'};border:2px solid ${checked ? 'var(--primary)' : 'var(--border)'};border-radius:10px;padding:6px 12px;cursor:pointer;transition:all 0.15s;" onclick="toggleBizCheck(this,'${sec.id}')">
+        html += `<label style="display:flex;align-items:center;gap:6px;background:${checked ? 'rgba(74,144,217,0.1)' : 'var(--bg)'};border:2px solid ${checked ? 'var(--primary)' : 'var(--border)'};border-radius:10px;padding:6px 12px;cursor:pointer;transition:all 0.15s;" onclick="toggleBizCheck(this,'${sec.id}')">
           <input type="checkbox" value="${opt}" ${checked ? 'checked' : ''} style="display:none;">
           <span style="font-size:13px;font-weight:600;">${opt}</span>
         </label>`;
@@ -5271,7 +5187,7 @@ function toggleBizCheck(label, fieldId) {
   const input = label.querySelector('input');
   input.checked = !input.checked;
   if (input.checked) {
-    label.style.background = 'rgba(232,114,58,0.08)';
+    label.style.background = 'rgba(74,144,217,0.1)';
     label.style.borderColor = 'var(--primary)';
   } else {
     label.style.background = 'var(--bg)';
@@ -5375,7 +5291,7 @@ async function saveBizEdit() {
     const idx = userBusinesses.findIndex(b => b.id === currentBiz.id);
     if (idx !== -1) userBusinesses[idx] = { ...currentBiz };
 
-    showToast('✅ Изменения сохранены!', '#2BAE66');
+    showToast('✅ Изменения сохранены!', '#7ED321');
     back();
     setTimeout(() => renderBizDashboard(currentBiz), 300);
   } catch(e) {
@@ -5435,7 +5351,7 @@ async function saveBizEdit() {
   </div>
   <div class="scroll" style="padding:0 0 24px;">
     <!-- Шапка события -->
-    <div id="ev-hero" style="padding:20px 16px;padding-top:calc(20px + env(safe-area-inset-top, 0px));background:linear-gradient(135deg,#E8723A,#F5A623);color:white;">
+    <div id="ev-hero" style="padding:20px 16px;padding-top:calc(20px + env(safe-area-inset-top, 0px));background:linear-gradient(135deg,#4A90D9,#7B5EA7);color:white;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
         <span id="ev-type-icon" style="font-size:32px;">📅</span>
         <div>
@@ -5565,7 +5481,7 @@ async function saveBizEdit() {
   transition:all 0.15s;user-select:none;
 }
 .ev-type-opt.active {
-  border-color:var(--primary);background:rgba(232,114,58,0.06);color:var(--primary);
+  border-color:var(--primary);background:rgba(74,144,217,0.08);color:var(--primary);
 }
 .ev-full-card {
   background:var(--white);border-radius:var(--radius);padding:16px;
@@ -5598,9 +5514,9 @@ let myParticipations = {}; // eventId -> status
 let currentEventFilter = 'all';
 
 const EVENT_TYPES = {
-  walk:     { icon: '🐾', label: 'Прогулка',      color: '#2BAE66' },
+  walk:     { icon: '🐾', label: 'Прогулка',      color: '#7ED321' },
   meetup:   { icon: '🐕', label: 'Встреча',        color: '#F5A623' },
-  training: { icon: '🎓', label: 'Тренировка',     color: '#E8723A' },
+  training: { icon: '🎓', label: 'Тренировка',     color: '#4A90D9' },
   promo:    { icon: '🎁', label: 'Акция',           color: '#9B59B6' },
   openday:  { icon: '🏥', label: 'Открытый день',  color: '#E74C3C' },
 };
@@ -5748,7 +5664,7 @@ function renderEventsList() {
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
             <span class="ev-type-badge" style="background:${t.color}22;color:${t.color};">${t.label}</span>
             ${isOwn ? '<span class="ev-type-badge" style="background:#F5A62322;color:#F5A623;">Моё</span>' : ''}
-            ${going ? '<span class="ev-type-badge" style="background:#2BAE6622;color:#2BAE66;">✓ Иду</span>' : ''}
+            ${going ? '<span class="ev-type-badge" style="background:#7ED32122;color:#7ED321;">✓ Иду</span>' : ''}
           </div>
           <div style="font-size:15px;font-weight:800;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ev.title}</div>
           <div style="font-size:12px;color:var(--text-secondary);">📍 ${ev.address}</div>
@@ -5913,7 +5829,7 @@ async function toggleRSVP() {
       await supabaseClient.from('event_participants')
         .upsert({ event_id: eventId, user_id: currentUser.id, status: 'going' });
       myParticipations[eventId] = 'going';
-      showToast('✅ Вы записаны!', '#2BAE66');
+      showToast('✅ Вы записаны!', '#7ED321');
     }
     await loadEventParticipants(eventId);
     renderHomeEvents();
@@ -5938,7 +5854,7 @@ function openEventGroupChat(ev) {
 
   contactBook[chatId] = {
     name: name, initials: '📅',
-    grad: 'linear-gradient(135deg,#E8723A,#F5A623)',
+    grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)',
     isEventChat: true, roomId: roomId
   };
   localStorage.setItem('df_contacts', JSON.stringify(contactBook));
@@ -5947,7 +5863,7 @@ function openEventGroupChat(ev) {
   privateChats[chatId] = []; // очищаем — сейчас загрузим из БД
 
   document.getElementById('pc-avatar').textContent = '📅';
-  document.getElementById('pc-avatar').style.background = 'linear-gradient(135deg,#E8723A,#F5A623)';
+  document.getElementById('pc-avatar').style.background = 'linear-gradient(135deg,#4A90D9,#7B5EA7)';
   document.getElementById('pc-name').textContent = name;
   document.getElementById('pc-online').textContent = '👥 Групповой чат';
 
@@ -6109,7 +6025,7 @@ async function submitCreateEvent() {
     allEvents.unshift({ ...data, participants_count: 1 });
     allEvents.sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
 
-    showToast('✅ Событие создано!', '#2BAE66');
+    showToast('✅ Событие создано!', '#7ED321');
     renderHomeEvents();
     nav('events');
     renderEventsList();
@@ -6349,7 +6265,7 @@ async function submitReview() {
     // но обновим локальный кеш
     await refreshBusinessRatingLocal(reviewModalBizId);
     
-    showToast('✅ Отзыв опубликован!', '#2BAE66');
+    showToast('✅ Отзыв опубликован!', '#7ED321');
     closeReviewModal();
     
     // Если мы на экране specialist — обновляем отзывы
@@ -6363,7 +6279,7 @@ async function submitReview() {
       const reviewBtn = document.getElementById('succ-review-btn');
       if (reviewBtn) {
         reviewBtn.style.display = 'none';
-        reviewBtn.insertAdjacentHTML('afterend', '<div style="padding:10px;background:rgba(126,211,33,0.1);border-radius:12px;text-align:center;font-size:13px;color:#228B52;font-weight:600;">✅ Спасибо за отзыв!</div>');
+        reviewBtn.insertAdjacentHTML('afterend', '<div style="padding:10px;background:rgba(126,211,33,0.1);border-radius:12px;text-align:center;font-size:13px;color:#5a9c18;font-weight:600;">✅ Спасибо за отзыв!</div>');
       }
     }
     
@@ -6483,11 +6399,11 @@ async function loadAndRenderReviews(bizId) {
   let reviewBtnHtml = '';
   if (currentUser && bizId) {
     if (alreadyReviewed) {
-      reviewBtnHtml = `<div style="padding:12px;background:rgba(126,211,33,0.1);border-radius:12px;margin-bottom:14px;text-align:center;font-size:13px;color:#228B52;font-weight:600;">✅ Вы уже оставили отзыв</div>`;
+      reviewBtnHtml = `<div style="padding:12px;background:rgba(126,211,33,0.1);border-radius:12px;margin-bottom:14px;text-align:center;font-size:13px;color:#5a9c18;font-weight:600;">✅ Вы уже оставили отзыв</div>`;
     } else if (canReview) {
       reviewBtnHtml = `<button class="btn btn-p" style="margin-bottom:14px;" onclick="openReviewForm('${bizId}', '${(biz?.name || '').replace(/'/g, "\\'")}')">⭐ Оставить отзыв</button>`;
     } else {
-      reviewBtnHtml = `<div style="padding:12px;background:rgba(232,114,58,0.06);border-radius:12px;margin-bottom:14px;text-align:center;font-size:13px;color:var(--text-secondary);">📋 Запишитесь на услугу, чтобы оставить отзыв</div>`;
+      reviewBtnHtml = `<div style="padding:12px;background:rgba(74,144,217,0.08);border-radius:12px;margin-bottom:14px;text-align:center;font-size:13px;color:var(--text-secondary);">📋 Запишитесь на услугу, чтобы оставить отзыв</div>`;
     }
   }
 
@@ -6515,7 +6431,7 @@ function renderReviewCard(r) {
   const stars = '⭐'.repeat(r.rating);
   const date = r.created_at ? new Date(r.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
   const gradients = [
-    'linear-gradient(135deg,#E8723A,#F5A623)',
+    'linear-gradient(135deg,#4A90D9,#7B5EA7)',
     'linear-gradient(135deg,#E91E63,#FF9800)',
     'linear-gradient(135deg,#00BCD4,#3F51B5)',
     'linear-gradient(135deg,#9C27B0,#E91E63)',
