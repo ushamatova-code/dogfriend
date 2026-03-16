@@ -6218,32 +6218,47 @@ async function submitReview() {
   }
   
   const profile = JSON.parse(localStorage.getItem('df_profile') || '{}');
+  const authorName = profile.name || 'Пользователь';
   
   try {
-    // Сохраняем отзыв
-    const { data, error } = await supabaseClient
+    // Сохраняем отзыв — пробуем с author_name, если колонки нет — без неё
+    let reviewData = {
+      user_id: currentUser.id,
+      business_id: reviewModalBizId,
+      rating: selectedReviewStars,
+      text: text
+    };
+    
+    let { data, error } = await supabaseClient
       .from('reviews')
-      .insert({
-        user_id: currentUser.id,
-        business_id: reviewModalBizId,
-        rating: selectedReviewStars,
-        text: text,
-        author_name: profile.name || 'Пользователь',
-        created_at: new Date().toISOString()
-      })
+      .insert({ ...reviewData, author_name: authorName })
       .select()
       .single();
     
+    // Если ошибка из-за отсутствия колонки author_name — пробуем без неё
+    if (error && (error.message || '').includes('author_name')) {
+      console.warn('author_name column missing, retrying without it');
+      ({ data, error } = await supabaseClient
+        .from('reviews')
+        .insert(reviewData)
+        .select()
+        .single());
+    }
+    
     if (error) {
-      // Если таблица не существует, создаём отзыв локально
       console.error('Review save error:', error);
       if (error.code === '42P01') {
         showToast('⚠️ Таблица отзывов не создана. Обратитесь к администратору.');
+      } else if ((error.message || '').includes('unique') || (error.message || '').includes('duplicate')) {
+        showToast('Вы уже оставляли отзыв этому специалисту');
       } else {
         showToast('❌ Ошибка: ' + (error.message || 'Не удалось сохранить'));
       }
       return;
     }
+    
+    // Добавляем author_name локально для рендера если его нет в ответе
+    if (data && !data.author_name) data.author_name = authorName;
     
     // Обновляем рейтинг бизнеса
     await updateBusinessRating(reviewModalBizId);
@@ -6255,6 +6270,15 @@ async function submitReview() {
     const specScreen = document.getElementById('specialist');
     if (specScreen && specScreen.classList.contains('active')) {
       await loadAndRenderReviews(reviewModalBizId);
+    }
+    // Если на success — обновляем тоже
+    const succScreen = document.getElementById('success');
+    if (succScreen && succScreen.classList.contains('active')) {
+      const reviewBtn = document.getElementById('succ-review-btn');
+      if (reviewBtn) {
+        reviewBtn.style.display = 'none';
+        reviewBtn.insertAdjacentHTML('afterend', '<div style="padding:10px;background:rgba(126,211,33,0.1);border-radius:12px;text-align:center;font-size:13px;color:#5a9c18;font-weight:600;">✅ Спасибо за отзыв!</div>');
+      }
     }
     
   } catch(e) {
@@ -6307,7 +6331,7 @@ async function loadAndRenderReviews(bizId) {
   let realReviews = [];
   
   // Загружаем из Supabase
-  if (supabaseClient && bizId) {
+    if (supabaseClient && bizId) {
     try {
       const { data, error } = await supabaseClient
         .from('reviews')
@@ -6318,6 +6342,27 @@ async function loadAndRenderReviews(bizId) {
       
       if (!error && data) {
         realReviews = data;
+        
+        // Если author_name отсутствует — подтягиваем имена из profiles
+        const needNames = realReviews.filter(r => !r.author_name);
+        if (needNames.length > 0) {
+          const userIds = [...new Set(needNames.map(r => r.user_id))];
+          try {
+            const { data: profiles } = await supabaseClient
+              .from('profiles')
+              .select('user_id, name')
+              .in('user_id', userIds);
+            if (profiles) {
+              const nameMap = {};
+              profiles.forEach(p => { nameMap[p.user_id] = p.name; });
+              realReviews.forEach(r => {
+                if (!r.author_name && nameMap[r.user_id]) {
+                  r.author_name = nameMap[r.user_id];
+                }
+              });
+            }
+          } catch(e) { /* profiles lookup optional */ }
+        }
       }
     } catch(e) {
       console.error('Load reviews error:', e);
@@ -6387,7 +6432,7 @@ async function loadAndRenderReviews(bizId) {
 }
 
 function renderReviewCard(r) {
-  const name = r.author_name || 'Пользователь';
+  const name = r.author_name || r.user_name || 'Пользователь';
   const initials = getInitials(name);
   const stars = '⭐'.repeat(r.rating);
   const date = r.created_at ? new Date(r.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
@@ -6399,7 +6444,7 @@ function renderReviewCard(r) {
     'linear-gradient(135deg,#FF5722,#FF9800)',
     'linear-gradient(135deg,#4CAF50,#009688)',
   ];
-  const grad = gradients[name.length % gradients.length];
+  const grad = gradients[(name.length + (r.rating || 0)) % gradients.length];
   
   return `
     <div style="display:flex;gap:12px;">
