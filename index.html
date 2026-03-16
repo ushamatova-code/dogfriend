@@ -6218,38 +6218,42 @@ async function submitReview() {
   }
   
   const profile = JSON.parse(localStorage.getItem('df_profile') || '{}');
-  const authorName = profile.name || 'Пользователь';
+  const userName = profile.name || 'Пользователь';
+  
+  // Находим booking_id для подтверждения что реальный клиент
+  let bookingId = lastBookingId || localStorage.getItem('last_booking_id') || null;
   
   try {
-    // Сохраняем отзыв — пробуем с author_name, если колонки нет — без неё
-    let reviewData = {
-      user_id: currentUser.id,
-      business_id: reviewModalBizId,
-      rating: selectedReviewStars,
-      text: text
-    };
+    // Если нет bookingId — пробуем найти в БД
+    if (!bookingId && supabaseClient && reviewModalBizId) {
+      const { data: bk } = await supabaseClient
+        .from('bookings')
+        .select('id')
+        .eq('user_id', currentUser.id)
+        .eq('business_id', reviewModalBizId)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (bk && bk.length) bookingId = bk[0].id;
+    }
     
-    let { data, error } = await supabaseClient
+    const { data, error } = await supabaseClient
       .from('reviews')
-      .insert({ ...reviewData, author_name: authorName })
+      .insert({
+        user_id: currentUser.id,
+        business_id: reviewModalBizId,
+        booking_id: bookingId,
+        user_name: userName,
+        rating: selectedReviewStars,
+        text: text
+      })
       .select()
       .single();
-    
-    // Если ошибка из-за отсутствия колонки author_name — пробуем без неё
-    if (error && (error.message || '').includes('author_name')) {
-      console.warn('author_name column missing, retrying without it');
-      ({ data, error } = await supabaseClient
-        .from('reviews')
-        .insert(reviewData)
-        .select()
-        .single());
-    }
     
     if (error) {
       console.error('Review save error:', error);
       if (error.code === '42P01') {
-        showToast('⚠️ Таблица отзывов не создана. Обратитесь к администратору.');
-      } else if ((error.message || '').includes('unique') || (error.message || '').includes('duplicate')) {
+        showToast('⚠️ Таблица отзывов не создана');
+      } else if ((error.message || '').includes('unique') || (error.message || '').includes('duplicate') || error.code === '23505') {
         showToast('Вы уже оставляли отзыв этому специалисту');
       } else {
         showToast('❌ Ошибка: ' + (error.message || 'Не удалось сохранить'));
@@ -6257,11 +6261,9 @@ async function submitReview() {
       return;
     }
     
-    // Добавляем author_name локально для рендера если его нет в ответе
-    if (data && !data.author_name) data.author_name = authorName;
-    
-    // Обновляем рейтинг бизнеса
-    await updateBusinessRating(reviewModalBizId);
+    // Рейтинг пересчитается триггером автоматически,
+    // но обновим локальный кеш
+    await refreshBusinessRatingLocal(reviewModalBizId);
     
     showToast('✅ Отзыв опубликован!', '#7ED321');
     closeReviewModal();
@@ -6287,33 +6289,25 @@ async function submitReview() {
   }
 }
 
-// Обновляем средний рейтинг бизнеса
-async function updateBusinessRating(bizId) {
+// Обновляем локальный кеш рейтинга (БД обновляет триггер автоматически)
+async function refreshBusinessRatingLocal(bizId) {
   if (!supabaseClient || !bizId) return;
   try {
-    const { data: reviews } = await supabaseClient
-      .from('reviews')
-      .select('rating')
-      .eq('business_id', bizId);
+    const { data } = await supabaseClient
+      .from('businesses')
+      .select('rating, reviews_count')
+      .eq('id', bizId)
+      .single();
     
-    if (reviews && reviews.length > 0) {
-      const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
-      const rounded = Math.round(avg * 10) / 10;
-      
-      await supabaseClient
-        .from('businesses')
-        .update({ rating: rounded, reviews_count: reviews.length })
-        .eq('id', bizId);
-      
-      // Обновляем локальный кеш
+    if (data) {
       const biz = loadedBusinesses.find(b => b.id === bizId);
       if (biz) {
-        biz.rating = rounded;
-        biz.reviews_count = reviews.length;
+        biz.rating = data.rating;
+        biz.reviews_count = data.reviews_count;
       }
     }
   } catch(e) {
-    console.error('Rating update error:', e);
+    console.error('Rating refresh error:', e);
   }
 }
 
@@ -6343,8 +6337,8 @@ async function loadAndRenderReviews(bizId) {
       if (!error && data) {
         realReviews = data;
         
-        // Если author_name отсутствует — подтягиваем имена из profiles
-        const needNames = realReviews.filter(r => !r.author_name);
+        // Если user_name отсутствует — подтягиваем имена из profiles
+        const needNames = realReviews.filter(r => !r.user_name);
         if (needNames.length > 0) {
           const userIds = [...new Set(needNames.map(r => r.user_id))];
           try {
@@ -6356,8 +6350,8 @@ async function loadAndRenderReviews(bizId) {
               const nameMap = {};
               profiles.forEach(p => { nameMap[p.user_id] = p.name; });
               realReviews.forEach(r => {
-                if (!r.author_name && nameMap[r.user_id]) {
-                  r.author_name = nameMap[r.user_id];
+                if (!r.user_name && nameMap[r.user_id]) {
+                  r.user_name = nameMap[r.user_id];
                 }
               });
             }
@@ -6432,7 +6426,7 @@ async function loadAndRenderReviews(bizId) {
 }
 
 function renderReviewCard(r) {
-  const name = r.author_name || r.user_name || 'Пользователь';
+  const name = r.user_name || r.author_name || 'Пользователь';
   const initials = getInitials(name);
   const stars = '⭐'.repeat(r.rating);
   const date = r.created_at ? new Date(r.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
