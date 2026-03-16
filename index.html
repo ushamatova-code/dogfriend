@@ -759,62 +759,109 @@ h3 { font-size:17px; font-weight:700; }
   <div class="scroll" style="padding:0 16px;">
     <div class="card" style="margin:0 0 12px;">
       <h3 style="margin-bottom:14px;">📋 Детали заказа</h3>
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="color:var(--text-secondary);">Кинолог</span><span style="font-weight:700;">Иван Петров</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="color:var(--text-secondary);">Услуга</span><span style="font-weight:700;">Пакет 10 занятий</span></div>
+      <div style="display:flex;flex-direction:column;gap:10px;" id="booking-details">
+        <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="color:var(--text-secondary);">Специалист</span><span style="font-weight:700;" id="book-spec-name">—</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="color:var(--text-secondary);">Услуга</span><span style="font-weight:700;" id="book-svc-name">—</span></div>
         <div style="height:1px;background:var(--border);"></div>
-        <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="color:var(--text-secondary);">Сумма</span><span style="font-weight:700;">27 000 ₽</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="color:var(--text-secondary);">Первый платёж</span><span style="font-weight:800;color:var(--primary);font-size:16px;">6 750 ₽</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="color:var(--text-secondary);">Сумма</span><span style="font-weight:700;" id="book-total">—</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="color:var(--text-secondary);">Первый платёж</span><span style="font-weight:800;color:var(--primary);font-size:16px;" id="book-first-pay">—</span></div>
         <div style="height:1px;background:var(--border);"></div>
         <div style="background:rgba(74,144,217,0.06);border-radius:10px;padding:10px;">
-          <div style="display:flex;justify-content:space-between;font-size:13px;color:#5a9c18;font-weight:700;"><span>→ ❤️ Приюту «Надежда»</span><span>675 ₽</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#5a9c18;font-weight:700;"><span>→ ❤️ Приюту «Надежда»</span><span id="book-charity">—</span></div>
         </div>
       </div>
     </div>
     <div class="card" style="margin:0 0 12px;"><div style="display:flex;align-items:center;gap:12px;"><span style="font-size:28px;">💳</span><div><div style="font-size:14px;font-weight:700;">Карта •••• 4532</div><div style="font-size:12px;color:var(--text-secondary);">Mastercard • истекает 12/27</div></div></div></div>
   </div>
   <div style="padding:12px 16px 16px;background:var(--white);border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px;flex-shrink:0;">
-    <button class="btn btn-p" onclick="sendBookingNotification()">Оплатить 6 750 ₽ 🔒</button>
+    <button class="btn btn-p" id="book-pay-btn" onclick="sendBookingNotification()">Оплатить 🔒</button>
     <button class="btn btn-g" onclick="back()">Отмена</button>
   </div>
 </div>
 
 <script>
+// ── Текущий бизнес для бронирования ──
+let currentBookingBiz = null;
+let currentBookingSvc = null;
+let lastBookingId = null;
+
+// Заполняем экран бронирования реальными данными при переходе
+function populateBookingScreen() {
+  // Определяем бизнес: сначала ищем в loadedBusinesses по currentSpecId (user_id), потом по id
+  let biz = loadedBusinesses.find(b => b.user_id === currentSpecId) || loadedBusinesses.find(b => b.id === currentSpecId);
+  const spec = SPECIALISTS.find(s => s.id === currentSpecId);
+  
+  // Ищем выбранную услугу
+  let selectedService = null;
+  let bizName = '';
+  
+  if (biz) {
+    bizName = biz.name;
+    // Найти выделенный сервис в UI
+    const selEl = document.querySelector('#spec-services .pr.sel');
+    const selIdx = selEl ? parseInt(selEl.id.replace('svc','')) - 1 : 0;
+    const svcList = biz.services && biz.services.length
+      ? biz.services.map(s => typeof s === 'string' ? { name: s, price: biz.price_from || 'По запросу' } : s)
+      : [{ name: 'Консультация', price: biz.price_from || 'По запросу' }];
+    selectedService = svcList[selIdx] || svcList[0];
+  } else if (spec) {
+    bizName = spec.name;
+    const selEl = document.querySelector('#spec-services .pr.sel');
+    const selIdx = selEl ? parseInt(selEl.id.replace('svc','')) - 1 : 0;
+    selectedService = spec.services[selIdx] || spec.services.find(s => s.sel) || spec.services[0];
+  }
+  
+  if (!selectedService) {
+    selectedService = { name: 'Услуга', price: 'По запросу' };
+  }
+  
+  currentBookingBiz = biz || spec;
+  currentBookingSvc = selectedService;
+  
+  const priceStr = selectedService.price || 'По запросу';
+  const amount = parseInt(priceStr.replace(/[^0-9]/g, '')) || 0;
+  const firstPay = Math.round(amount / 4);
+  const charity = Math.round(amount * 0.025);
+  
+  document.getElementById('book-spec-name').textContent = bizName || '—';
+  document.getElementById('book-svc-name').textContent = selectedService.name || '—';
+  document.getElementById('book-total').textContent = amount ? amount.toLocaleString('ru-RU') + ' ₽' : priceStr;
+  document.getElementById('book-first-pay').textContent = firstPay ? firstPay.toLocaleString('ru-RU') + ' ₽' : priceStr;
+  document.getElementById('book-charity').textContent = charity ? charity.toLocaleString('ru-RU') + ' ₽' : '—';
+  document.getElementById('book-pay-btn').textContent = firstPay ? `Оплатить ${firstPay.toLocaleString('ru-RU')} ₽ 🔒` : 'Оплатить 🔒';
+}
+
 async function sendBookingNotification() {
   if (!currentUser) {
     alert('Пожалуйста, войдите в систему для записи.');
     return;
   }
 
-  const spec = SPECIALISTS.find(s => s.id === currentSpecId);
-  if (!spec) {
-    console.error('Specialist not found');
-    nav('success');
+  const biz = currentBookingBiz;
+  const selectedService = currentBookingSvc;
+  
+  if (!biz || !selectedService) {
+    showToast('Ошибка: не выбран специалист или услуга');
     return;
   }
-
-  const business = loadedBusinesses.find(b => b.user_id === currentSpecId);
-  if (!business) {
-    console.error('Business not found in DB');
-    nav('success');
-    return;
-  }
+  
+  const bizName = biz.name || biz.business_name || 'Специалист';
+  const priceStr = selectedService.price || '0';
+  const amount = parseInt(priceStr.replace(/[^0-9]/g, '')) || 0;
+  const charity = Math.round(amount * 0.025);
 
   const profile = JSON.parse(localStorage.getItem('df_profile') || '{}');
-  const business = (typeof loadedBusinesses !== 'undefined' && currentSpecId)
-  ? loadedBusinesses.find(b => b.id === currentSpecId) || spec
-  : spec;
-const selectedService = (business.services || spec.services || []).find(s => s.sel) || (business.services || spec.services || [])[0];
-  const amount = parseInt(selectedService.price.replace(/[^0-9]/g, '')) || 0;
 
+  // Сохраняем бронирование в Supabase
   if (supabaseClient) {
     try {
+      const bizId = biz.id || null;
       const { data, error } = await supabaseClient
         .from('bookings')
         .insert({
           user_id: currentUser.id,
-          business_id: business.id,
-          business_name: business.name || business.business_name,
+          business_id: bizId,
+          business_name: bizName,
           service_name: selectedService.name,
           amount: amount,
           status: 'confirmed'
@@ -827,18 +874,18 @@ const selectedService = (business.services || spec.services || []).find(s => s.s
         showToast('Ошибка сохранения записи', '#D0021B');
       } else {
         console.log('Booking saved to Supabase:', data.id);
+        lastBookingId = data.id;
         localStorage.setItem('last_booking_id', data.id);
+        localStorage.setItem('last_booking_biz_id', bizId || '');
+        localStorage.setItem('last_booking_biz_name', bizName);
       }
     } catch (e) {
       console.error('Booking error:', e);
     }
   }
 
-  const message = `📅 Новая запись!
-Услуга: ${selectedService.name}
-Дата: 15 марта, 14:00
-Клиент: ${profile.name || 'Не указано'}
-Собака: ${profile.dogname || 'Не указано'}`;
+  // Отправляем сообщение в чат
+  const message = `📅 Новая запись!\nУслуга: ${selectedService.name}\nКлиент: ${profile.name || 'Не указано'}\nСобака: ${profile.dogname || 'Не указано'}`;
 
   try {
     const now = new Date();
@@ -870,10 +917,20 @@ const selectedService = (business.services || spec.services || []).find(s => s.s
       event: 'message',
       payload: { senderId: myUserId, senderName: profile.name || 'Клиент', text: message, time }
     });
-
-    console.log('Booking notification sent to business');
   } catch(e) {
     console.error('Failed to send booking notification:', e);
+  }
+
+  // Заполняем экран успеха
+  document.getElementById('succ-text').textContent = `Запись к ${bizName} подтверждена.`;
+  document.getElementById('succ-charity').textContent = charity ? charity.toLocaleString('ru-RU') + ' ₽' : '—';
+  
+  // Показываем кнопку "Оставить отзыв"
+  const reviewBtn = document.getElementById('succ-review-btn');
+  if (reviewBtn) {
+    reviewBtn.style.display = '';
+    reviewBtn.dataset.bizId = biz.id || '';
+    reviewBtn.dataset.bizName = bizName;
   }
 
   nav('success');
@@ -886,14 +943,15 @@ const selectedService = (business.services || spec.services || []).find(s => s.s
     <div class="succ-wrap">
       <div class="succ-icon">✅</div>
       <h1 style="margin-bottom:12px;">Всё готово!</h1>
-      <p style="color:var(--text-secondary);margin-bottom:24px;">Запись к Ивану Петрову подтверждена.</p>
+      <p id="succ-text" style="color:var(--text-secondary);margin-bottom:24px;">Запись подтверждена.</p>
       <div style="background:rgba(126,211,33,0.1);border-radius:14px;padding:16px;width:100%;text-align:left;margin-bottom:24px;">
         <div style="font-size:14px;font-weight:700;margin-bottom:8px;">❤️ Вы помогли приюту!</div>
-        <div style="font-size:28px;font-weight:900;font-family:'Nunito',sans-serif;color:#5a9c18;">675 ₽</div>
+        <div id="succ-charity" style="font-size:28px;font-weight:900;font-family:'Nunito',sans-serif;color:#5a9c18;">—</div>
         <div style="font-size:13px;color:var(--text-secondary);">направлено в приют «Надежда»</div>
       </div>
       <div style="width:100%;display:flex;flex-direction:column;gap:10px;">
         <button class="btn btn-p" onclick="nav('home')">На главную 🏠</button>
+        <button class="btn btn-g" id="succ-review-btn" onclick="openReviewForm()" style="display:none;">⭐ Оставить отзыв</button>
         <button class="btn btn-g" onclick="nav('community')">Поделиться в сообществе</button>
       </div>
     </div>
@@ -4617,13 +4675,13 @@ async function openBusinessProfile(id) {
     }
   }
 
-  // Отзывы
+  // Отзывы — показываем загрузку, реальные подтянутся через патч
   document.getElementById('spec-reviews-block').innerHTML = `
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
       <div style="font-size:40px;font-weight:900;font-family:'Nunito',sans-serif;color:var(--primary);">${b.rating}</div>
       <div><div class="stars">${'⭐'.repeat(Math.round(b.rating))}</div><div style="font-size:13px;color:var(--text-secondary);">${b.reviews_count || 0} отзывов</div></div>
     </div>
-    <p style="font-size:13px;color:var(--text-secondary);padding-top:14px;border-top:1px solid var(--border);">Отзывы скоро появятся</p>`;
+    <p style="font-size:13px;color:var(--text-secondary);padding-top:14px;border-top:1px solid var(--border);text-align:center;">⏳ Загружаем отзывы...</p>`;
 
   nav('specialist');
 }
@@ -6039,8 +6097,360 @@ window.nav = function(id) {
   if (id === 'home' && supabaseClient) {
     loadEvents();
   }
+  // Заполняем экран бронирования реальными данными
+  if (id === 'booking') {
+    setTimeout(populateBookingScreen, 30);
+  }
 };
 
 // Загружаем события при старте (после инициализации Supabase)
 setTimeout(() => { if (supabaseClient) loadEvents(); }, 2000);
+
+// ══════════════════════════════════════════════════════════════
+// ══  СИСТЕМА ОТЗЫВОВ  ════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
+
+let reviewModalBizId = null;
+let reviewModalBizName = '';
+
+// Создаём модальное окно для отзыва
+(function createReviewModal() {
+  const shell = document.querySelector('.phone-shell');
+  if (!shell) return;
+  const modal = document.createElement('div');
+  modal.id = 'review-modal';
+  modal.className = 'modal-ov';
+  modal.innerHTML = `
+    <div class="modal" style="padding:20px;">
+      <div class="mhandle"></div>
+      <h2 style="margin-bottom:4px;">⭐ Оставить отзыв</h2>
+      <p id="review-modal-biz" style="font-size:14px;color:var(--text-secondary);margin-bottom:16px;"></p>
+      
+      <div style="margin-bottom:16px;">
+        <label class="lbl">Ваша оценка</label>
+        <div id="review-stars-pick" style="display:flex;gap:6px;font-size:32px;cursor:pointer;">
+          <span data-star="1" onclick="pickReviewStar(1)">☆</span>
+          <span data-star="2" onclick="pickReviewStar(2)">☆</span>
+          <span data-star="3" onclick="pickReviewStar(3)">☆</span>
+          <span data-star="4" onclick="pickReviewStar(4)">☆</span>
+          <span data-star="5" onclick="pickReviewStar(5)">☆</span>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label class="lbl">Ваш отзыв</label>
+        <textarea id="review-text" class="input" style="height:100px;padding:12px 16px;resize:none;line-height:1.5;" placeholder="Расскажите о вашем опыте..."></textarea>
+      </div>
+
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-g" style="flex:1;" onclick="closeReviewModal()">Отмена</button>
+        <button class="btn btn-p" style="flex:1;" onclick="submitReview()">Отправить ⭐</button>
+      </div>
+    </div>
+  `;
+  shell.appendChild(modal);
+  
+  // Закрытие по тапу на фон
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeReviewModal();
+  });
+})();
+
+let selectedReviewStars = 0;
+
+function pickReviewStar(n) {
+  selectedReviewStars = n;
+  document.querySelectorAll('#review-stars-pick span').forEach(s => {
+    const v = parseInt(s.dataset.star);
+    s.textContent = v <= n ? '⭐' : '☆';
+  });
+}
+
+function openReviewForm(bizId, bizName) {
+  // Можно вызвать из success-экрана или из профиля бизнеса
+  if (!bizId && !bizName) {
+    // Из success-экрана
+    const btn = document.getElementById('succ-review-btn');
+    bizId = btn?.dataset.bizId || localStorage.getItem('last_booking_biz_id');
+    bizName = btn?.dataset.bizName || localStorage.getItem('last_booking_biz_name');
+  }
+  
+  if (!bizId && !bizName) {
+    showToast('Ошибка: бизнес не найден');
+    return;
+  }
+  
+  reviewModalBizId = bizId;
+  reviewModalBizName = bizName;
+  selectedReviewStars = 0;
+  
+  document.getElementById('review-modal-biz').textContent = bizName;
+  document.getElementById('review-text').value = '';
+  document.querySelectorAll('#review-stars-pick span').forEach(s => s.textContent = '☆');
+  
+  document.getElementById('review-modal').classList.add('open');
+}
+
+function closeReviewModal() {
+  document.getElementById('review-modal').classList.remove('open');
+}
+
+async function submitReview() {
+  if (!currentUser) {
+    showToast('Войдите чтобы оставить отзыв');
+    return;
+  }
+  
+  if (selectedReviewStars === 0) {
+    showToast('⭐ Поставьте оценку');
+    return;
+  }
+  
+  const text = document.getElementById('review-text').value.trim();
+  if (!text) {
+    showToast('✍️ Напишите отзыв');
+    return;
+  }
+
+  if (!supabaseClient) {
+    showToast('Нет подключения к серверу');
+    return;
+  }
+  
+  const profile = JSON.parse(localStorage.getItem('df_profile') || '{}');
+  
+  try {
+    // Сохраняем отзыв
+    const { data, error } = await supabaseClient
+      .from('reviews')
+      .insert({
+        user_id: currentUser.id,
+        business_id: reviewModalBizId,
+        rating: selectedReviewStars,
+        text: text,
+        author_name: profile.name || 'Пользователь',
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      // Если таблица не существует, создаём отзыв локально
+      console.error('Review save error:', error);
+      if (error.code === '42P01') {
+        showToast('⚠️ Таблица отзывов не создана. Обратитесь к администратору.');
+      } else {
+        showToast('❌ Ошибка: ' + (error.message || 'Не удалось сохранить'));
+      }
+      return;
+    }
+    
+    // Обновляем рейтинг бизнеса
+    await updateBusinessRating(reviewModalBizId);
+    
+    showToast('✅ Отзыв опубликован!', '#7ED321');
+    closeReviewModal();
+    
+    // Если мы на экране specialist — обновляем отзывы
+    const specScreen = document.getElementById('specialist');
+    if (specScreen && specScreen.classList.contains('active')) {
+      await loadAndRenderReviews(reviewModalBizId);
+    }
+    
+  } catch(e) {
+    console.error('Review submit error:', e);
+    showToast('❌ Ошибка отправки отзыва');
+  }
+}
+
+// Обновляем средний рейтинг бизнеса
+async function updateBusinessRating(bizId) {
+  if (!supabaseClient || !bizId) return;
+  try {
+    const { data: reviews } = await supabaseClient
+      .from('reviews')
+      .select('rating')
+      .eq('business_id', bizId);
+    
+    if (reviews && reviews.length > 0) {
+      const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
+      const rounded = Math.round(avg * 10) / 10;
+      
+      await supabaseClient
+        .from('businesses')
+        .update({ rating: rounded, reviews_count: reviews.length })
+        .eq('id', bizId);
+      
+      // Обновляем локальный кеш
+      const biz = loadedBusinesses.find(b => b.id === bizId);
+      if (biz) {
+        biz.rating = rounded;
+        biz.reviews_count = reviews.length;
+      }
+    }
+  } catch(e) {
+    console.error('Rating update error:', e);
+  }
+}
+
+// Загрузка и отрисовка отзывов для бизнеса
+async function loadAndRenderReviews(bizId) {
+  const rb = document.getElementById('spec-reviews-block');
+  if (!rb) return;
+  
+  // Ищем бизнес
+  const biz = loadedBusinesses.find(b => b.id === bizId);
+  const rating = biz?.rating || 0;
+  const reviewsCount = biz?.reviews_count || 0;
+  
+  let reviewsHtml = '';
+  let realReviews = [];
+  
+  // Загружаем из Supabase
+  if (supabaseClient && bizId) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('reviews')
+        .select('*')
+        .eq('business_id', bizId)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      if (!error && data) {
+        realReviews = data;
+      }
+    } catch(e) {
+      console.error('Load reviews error:', e);
+    }
+  }
+  
+  // Проверяем, может ли текущий пользователь оставить отзыв (есть бронирование)
+  let canReview = false;
+  let alreadyReviewed = false;
+  
+  if (currentUser && supabaseClient && bizId) {
+    try {
+      // Проверяем наличие бронирования
+      const { data: bookings } = await supabaseClient
+        .from('bookings')
+        .select('id')
+        .eq('user_id', currentUser.id)
+        .eq('business_id', bizId)
+        .limit(1);
+      
+      canReview = bookings && bookings.length > 0;
+      
+      // Проверяем, не оставлял ли уже отзыв
+      if (canReview) {
+        const { data: existing } = await supabaseClient
+          .from('reviews')
+          .select('id')
+          .eq('user_id', currentUser.id)
+          .eq('business_id', bizId)
+          .limit(1);
+        
+        alreadyReviewed = existing && existing.length > 0;
+      }
+    } catch(e) {
+      console.error('Check review eligibility error:', e);
+    }
+  }
+  
+  // Формируем блок кнопки
+  let reviewBtnHtml = '';
+  if (currentUser && bizId) {
+    if (alreadyReviewed) {
+      reviewBtnHtml = `<div style="padding:12px;background:rgba(126,211,33,0.1);border-radius:12px;margin-bottom:14px;text-align:center;font-size:13px;color:#5a9c18;font-weight:600;">✅ Вы уже оставили отзыв</div>`;
+    } else if (canReview) {
+      reviewBtnHtml = `<button class="btn btn-p" style="margin-bottom:14px;" onclick="openReviewForm('${bizId}', '${(biz?.name || '').replace(/'/g, "\\'")}')">⭐ Оставить отзыв</button>`;
+    } else {
+      reviewBtnHtml = `<div style="padding:12px;background:rgba(74,144,217,0.08);border-radius:12px;margin-bottom:14px;text-align:center;font-size:13px;color:var(--text-secondary);">📋 Запишитесь на услугу, чтобы оставить отзыв</div>`;
+    }
+  }
+
+  // Рендерим
+  const starsDisplay = rating > 0 ? '⭐'.repeat(Math.round(rating)) : '☆☆☆☆☆';
+  const totalReviews = realReviews.length || reviewsCount || 0;
+  
+  rb.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+      <div style="font-size:40px;font-weight:900;font-family:'Nunito',sans-serif;color:var(--primary);">${rating || '—'}</div>
+      <div>
+        <div class="stars">${starsDisplay}</div>
+        <div style="font-size:13px;color:var(--text-secondary);">${totalReviews} отзыв${getReviewWord(totalReviews)}</div>
+      </div>
+    </div>
+    ${reviewBtnHtml}
+    <div style="border-top:1px solid var(--border);padding-top:14px;display:flex;flex-direction:column;gap:16px;">
+      ${realReviews.length > 0 ? realReviews.map(r => renderReviewCard(r)).join('') : '<p style="font-size:13px;color:var(--text-secondary);text-align:center;">Пока нет отзывов. Будьте первым!</p>'}
+    </div>`;
+}
+
+function renderReviewCard(r) {
+  const name = r.author_name || 'Пользователь';
+  const initials = getInitials(name);
+  const stars = '⭐'.repeat(r.rating);
+  const date = r.created_at ? new Date(r.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+  const gradients = [
+    'linear-gradient(135deg,#4A90D9,#7B5EA7)',
+    'linear-gradient(135deg,#E91E63,#FF9800)',
+    'linear-gradient(135deg,#00BCD4,#3F51B5)',
+    'linear-gradient(135deg,#9C27B0,#E91E63)',
+    'linear-gradient(135deg,#FF5722,#FF9800)',
+    'linear-gradient(135deg,#4CAF50,#009688)',
+  ];
+  const grad = gradients[name.length % gradients.length];
+  
+  return `
+    <div style="display:flex;gap:12px;">
+      <div class="avatar" style="width:38px;height:38px;font-size:13px;background:${grad};flex-shrink:0;">${initials}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+          <div style="font-size:14px;font-weight:700;">${name}</div>
+          <div style="font-size:11px;color:var(--text-secondary);">${date}</div>
+        </div>
+        <div class="stars" style="font-size:12px;margin-bottom:4px;">${stars}</div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.5;">${escapeHtml(r.text)}</div>
+      </div>
+    </div>`;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function getReviewWord(n) {
+  if (n === 0) return 'ов';
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod100 >= 11 && mod100 <= 19) return 'ов';
+  if (mod10 === 1) return '';
+  if (mod10 >= 2 && mod10 <= 4) return 'а';
+  return 'ов';
+}
+
+// ── Патчим openBusinessProfile для загрузки реальных отзывов ──
+const _origOpenBizProfileReviews = window.openBusinessProfile;
+window.openBusinessProfile = async function(id) {
+  await _origOpenBizProfileReviews(id);
+  // Загружаем реальные отзывы вместо заглушки
+  await loadAndRenderReviews(id);
+};
+
+// ── Патчим openSpecialist для загрузки отзывов (фоллбэк для статических кинологов) ──
+const _origOpenSpecialist = window.openSpecialist;
+window.openSpecialist = function(id) {
+  _origOpenSpecialist(id);
+  // Для статических кинологов — ищем их бизнес в БД
+  const spec = SPECIALISTS.find(s => s.id === id);
+  if (spec) {
+    // Пытаемся найти бизнес с таким user_id
+    const biz = loadedBusinesses.find(b => b.user_id === id);
+    if (biz) {
+      loadAndRenderReviews(biz.id);
+    }
+    // Если бизнеса нет, оставляем статичные отзывы из SPECIALISTS
+  }
+};
 </script>
