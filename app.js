@@ -97,25 +97,114 @@ document.querySelectorAll('.chip').forEach(chip => {
 });
 
 // ============================================================
-// AVATAR
+// AVATAR (Supabase Storage)
 // ============================================================
-function handleAvatarUpload(event) {
+async function handleAvatarUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    localStorage.setItem('df_avatar', e.target.result);
-    applyAvatar(e.target.result);
-  };
-  reader.readAsDataURL(file);
+
+  // Валидация
+  if (!file.type.startsWith('image/')) { showToast('❌ Выберите изображение', '#FF3B30'); return; }
+  if (file.size > 5 * 1024 * 1024) { showToast('❌ Макс. размер 5 МБ', '#FF3B30'); return; }
+
+  // Сжимаем перед загрузкой
+  const compressed = await compressImage(file, 512, 0.8);
+
+  // Если есть Supabase и пользователь авторизован — загружаем в Storage
+  if (supabaseClient && currentUser) {
+    try {
+      showToast('⏳ Загрузка аватарки...', '#4A90D9');
+      const ext = file.name.split('.').pop() || 'jpg';
+      const filePath = `avatars/${currentUser.id}.${ext}`;
+
+      // Загружаем файл (перезаписываем если существует)
+      const { error: uploadError } = await supabaseClient.storage
+        .from('avatars')
+        .upload(filePath, compressed, { upsert: true, contentType: compressed.type });
+      if (uploadError) throw uploadError;
+
+      // Получаем публичный URL
+      const { data: urlData } = supabaseClient.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+      const publicUrl = urlData.publicUrl + '?t=' + Date.now(); // cache-bust
+
+      // Сохраняем URL в профиль
+      const { error: updateError } = await supabaseClient
+        .from('profiles')
+        .upsert({ id: currentUser.id, avatar_url: publicUrl, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+      if (updateError) console.error('❌ Avatar URL save error:', updateError);
+
+      // Обновляем UI и кэш
+      applyAvatar(publicUrl);
+      localStorage.setItem('df_avatar', publicUrl);
+      if (currentUserProfile) currentUserProfile.avatar_url = publicUrl;
+      showToast('✅ Аватарка обновлена!', '#34C759');
+    } catch(e) {
+      console.error('❌ Avatar upload error:', e);
+      showToast('❌ Ошибка загрузки', '#FF3B30');
+      // Fallback — сохраняем локально как base64
+      const reader = new FileReader();
+      reader.onload = (ev) => { localStorage.setItem('df_avatar', ev.target.result); applyAvatar(ev.target.result); };
+      reader.readAsDataURL(file);
+    }
+  } else {
+    // Нет Supabase — локальный fallback
+    const reader = new FileReader();
+    reader.onload = (ev) => { localStorage.setItem('df_avatar', ev.target.result); applyAvatar(ev.target.result); };
+    reader.readAsDataURL(file);
+  }
 }
 
-function applyAvatar(dataUrl) {
-  const img = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+// Сжатие изображения на клиенте (для аватарок и обложек)
+function compressImage(file, maxSize = 512, quality = 0.8) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if (w > h) { if (w > maxSize) { h = h * maxSize / w; w = maxSize; } }
+      else { if (h > maxSize) { w = w * maxSize / h; h = maxSize; } }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', quality);
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+function applyAvatar(url) {
+  const img = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.textContent='👤'">`;
   ['prof-avatar','home-avatar','ep-avatar'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.innerHTML = img; el.style.padding = '0'; }
   });
+}
+
+// Получить URL аватарки другого пользователя (с кэшем)
+const _avatarCache = {};
+async function getUserAvatarUrl(userId) {
+  if (_avatarCache[userId]) return _avatarCache[userId];
+  if (!supabaseClient) return null;
+  try {
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('avatar_url, name')
+      .eq('id', userId)
+      .single();
+    if (error || !data || !data.avatar_url) return null;
+    _avatarCache[userId] = data.avatar_url;
+    return data.avatar_url;
+  } catch(e) { return null; }
+}
+
+// Генерирует HTML для аватарки пользователя (используется в чатах, списках и т.д.)
+function userAvatarHtml(avatarUrl, initials, grad, size = 36) {
+  if (avatarUrl) {
+    return `<div style="width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;flex-shrink:0;">` +
+      `<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='${initials}'"></div>`;
+  }
+  return `<div class="avatar" style="width:${size}px;height:${size}px;font-size:${Math.round(size*0.36)}px;background:${grad||'var(--primary)'};flex-shrink:0;">${initials}</div>`;
 }
 
 // ============================================================
@@ -135,8 +224,11 @@ function getInitials(name) {
 // ============================================================
 function loadProfile() {
   const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
-  const savedAvatar = localStorage.getItem('df_avatar');
-  if (savedAvatar) setTimeout(() => applyAvatar(savedAvatar), 50);
+  
+  // Аватарка: приоритет — Supabase URL из профиля, затем localStorage
+  const avatarUrl = (currentUserProfile && currentUserProfile.avatar_url) || localStorage.getItem('df_avatar');
+  if (avatarUrl) setTimeout(() => applyAvatar(avatarUrl), 50);
+  
   const name = p.name || 'Гость';
   const initials = p.name ? getInitials(p.name) : '👤';
   const homeName = document.getElementById('home-name');
@@ -1663,6 +1755,11 @@ async function loadUserProfile() {
         dogage: data.dog_age || ''
       };
       localStorage.setItem('df_profile', JSON.stringify(profileData));
+      
+      // Аватарка из Supabase Storage
+      if (data.avatar_url) {
+        localStorage.setItem('df_avatar', data.avatar_url);
+      }
       
       // Обновляем UI
       loadProfile();

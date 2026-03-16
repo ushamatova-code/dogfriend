@@ -1,5 +1,6 @@
 let selectedBusinessType = '';
 let loadedBusinesses = []; // Бизнесы из БД
+let _businessCoverFile = null; // Файл обложки для загрузки
 
 // Загрузка бизнесов из Supabase
 async function loadBusinesses(type = null) {
@@ -17,6 +18,65 @@ async function loadBusinesses(type = null) {
   }
 }
 
+// HTML для аватарки/обложки бизнеса в карточках каталога
+function businessAvatarHtml(b, size = 54) {
+  if (b.cover_url) {
+    return `<div style="width:${size}px;height:${size}px;border-radius:14px;overflow:hidden;flex-shrink:0;">` +
+      `<img src="${b.cover_url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='${b.name.substring(0,2).toUpperCase()}'"></div>`;
+  }
+  const icons = { trainer: '🐕', clinic: '🏥', cafe: '☕' };
+  const grads = { trainer: 'linear-gradient(135deg,#4A90D9,#7B5EA7)', clinic: 'linear-gradient(135deg,#F0FFF4,#C6F6D5)', cafe: 'linear-gradient(135deg,#FFF5E6,#FFD9A0)' };
+  return `<div class="avatar" style="width:${size}px;height:${size}px;font-size:${Math.round(size*0.33)}px;background:${grads[b.type] || grads.trainer};">${b.name.substring(0,2).toUpperCase()}</div>`;
+}
+
+// Обработка выбора обложки бизнеса
+function handleBusinessCoverSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('❌ Выберите изображение', '#FF3B30'); return; }
+  if (file.size > 5 * 1024 * 1024) { showToast('❌ Макс. размер 5 МБ', '#FF3B30'); return; }
+  _businessCoverFile = file;
+  // Показываем превью
+  const preview = document.getElementById('bf-cover-preview');
+  if (preview) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      preview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:120px;object-fit:cover;border-radius:12px;">`;
+    };
+    reader.readAsDataURL(file);
+  }
+  showToast('✅ Обложка выбрана');
+}
+
+// Загрузка обложки бизнеса в Supabase Storage
+async function uploadBusinessCover(businessId) {
+  if (!_businessCoverFile || !supabaseClient) return null;
+  try {
+    const compressed = await compressImage(_businessCoverFile, 800, 0.8);
+    const ext = _businessCoverFile.name.split('.').pop() || 'jpg';
+    const filePath = `covers/${businessId}.${ext}`;
+
+    const { error: uploadError } = await supabaseClient.storage
+      .from('avatars')
+      .upload(filePath, compressed, { upsert: true, contentType: compressed.type });
+    if (uploadError) throw uploadError;
+
+    const { data: urlData } = supabaseClient.storage
+      .from('avatars')
+      .getPublicUrl(filePath);
+    const publicUrl = urlData.publicUrl + '?t=' + Date.now();
+
+    // Сохраняем URL обложки в запись бизнеса
+    await supabaseClient.from('businesses').update({ cover_url: publicUrl }).eq('id', businessId);
+
+    _businessCoverFile = null;
+    return publicUrl;
+  } catch(e) {
+    console.error('❌ Cover upload error:', e);
+    return null;
+  }
+}
+
 // Рендер каталога кинологов (загружаем из БД)
 async function renderCatalogTrainers() {
   const businesses = await loadBusinesses('trainer');
@@ -30,7 +90,7 @@ async function renderCatalogTrainers() {
   
   list.innerHTML = businesses.map(b => `
     <div class="scard" onclick='openBusinessProfile("${b.id}")'>
-      <div class="avatar" style="width:54px;height:54px;font-size:18px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);">${b.name.substring(0,2).toUpperCase()}</div>
+      ${businessAvatarHtml(b, 54)}
       <div style="flex:1;min-width:0;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
           <div style="font-weight:800;font-size:15px;">${b.name}</div>
@@ -60,7 +120,7 @@ async function renderHealthClinics() {
   
   list.innerHTML = businesses.map(b => `
     <div class="scard" onclick='openBusinessProfile("${b.id}")' style="margin:0 16px 12px;">
-      <div class="avatar" style="width:54px;height:54px;font-size:18px;background:linear-gradient(135deg,#F0FFF4,#C6F6D5);">🏥</div>
+      ${businessAvatarHtml(b, 54)}
       <div style="flex:1;min-width:0;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
           <div style="font-weight:800;font-size:15px;">${b.name}</div>
@@ -90,7 +150,9 @@ async function renderCafes() {
   
   list.innerHTML = businesses.map(b => `
     <div class="pc" onclick='openBusinessProfile("${b.id}")' style="margin:0 16px 12px;">
-      <div class="pc-img" style="background:linear-gradient(135deg,#FFF5E6,#FFD9A0);display:flex;align-items:center;justify-content:center;font-size:40px;">☕</div>
+      <div class="pc-img" style="${b.cover_url ? '' : 'background:linear-gradient(135deg,#FFF5E6,#FFD9A0);display:flex;align-items:center;justify-content:center;font-size:40px;'}overflow:hidden;">
+        ${b.cover_url ? `<img src="${b.cover_url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='☕'">` : '☕'}
+      </div>
       <div style="flex:1;padding:12px;">
         <div style="font-weight:800;font-size:15px;margin-bottom:4px;">${b.name}</div>
         <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">📍 ${b.address}</div>
@@ -125,8 +187,16 @@ async function openBusinessProfile(id) {
   // Шапка
   document.getElementById('spec-topbar-name').textContent = b.name;
   const av = document.getElementById('spec-avatar');
-  av.textContent = b.name.substring(0,2).toUpperCase();
-  av.style.background = 'linear-gradient(135deg,#4A90D9,#7B5EA7)';
+  if (b.cover_url) {
+    av.innerHTML = `<img src="${b.cover_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.textContent='${b.name.substring(0,2).toUpperCase()}'">`;
+    av.style.padding = '0';
+    av.style.overflow = 'hidden';
+    av.style.background = 'none';
+  } else {
+    av.innerHTML = '';
+    av.textContent = b.name.substring(0,2).toUpperCase();
+    av.style.background = 'linear-gradient(135deg,#4A90D9,#7B5EA7)';
+  }
   document.getElementById('spec-name').textContent = b.name;
   document.getElementById('spec-badge').className = 'tag tag-b';
   document.getElementById('spec-badge').textContent = typeLabels[b.type] || '✓ DogFriend';
@@ -249,6 +319,7 @@ async function openBusinessProfile(id) {
 
 function selectBusinessType(type) {
   selectedBusinessType = type;
+  _businessCoverFile = null;
   const titles = {trainer:'Анкета кинолога',clinic:'Анкета клиники',cafe:'Анкета кафе'};
   const services = {
     trainer:['ОКД','Щенки','Послушание','Аджилити','Коррекция поведения'],
@@ -256,6 +327,29 @@ function selectBusinessType(type) {
     cafe:['Веранда','Миски','Лакомства','Wi-Fi','Детская зона']
   };
   document.getElementById('bf-title').textContent = titles[type];
+  
+  // Добавляем поле обложки если его нет
+  let coverBlock = document.getElementById('bf-cover-block');
+  if (!coverBlock) {
+    coverBlock = document.createElement('div');
+    coverBlock.id = 'bf-cover-block';
+    coverBlock.style.cssText = 'margin-bottom:12px;';
+    coverBlock.innerHTML = `
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;">📷 Обложка (фото бизнеса)</div>
+      <div id="bf-cover-preview" style="margin-bottom:8px;"></div>
+      <label style="display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:var(--bg);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;">
+        📸 Выбрать фото
+        <input type="file" accept="image/*" onchange="handleBusinessCoverSelect(event)" style="display:none;">
+      </label>
+    `;
+    const formArea = document.getElementById('bf-services');
+    if (formArea && formArea.parentElement) {
+      formArea.parentElement.insertBefore(coverBlock, formArea);
+    }
+  } else {
+    document.getElementById('bf-cover-preview').innerHTML = '';
+  }
+  
   const servDiv = document.getElementById('bf-services');
   servDiv.innerHTML = '<div style="font-size:13px;font-weight:600;margin-bottom:8px;">Выберите услуги:</div>';
   services[type].forEach(s => {
@@ -276,7 +370,8 @@ async function submitBusiness() {
   const checks = document.querySelectorAll('#bf-services input[type="checkbox"]:checked');
   const services = Array.from(checks).map(c => c.value);
   try {
-    const {error} = await supabaseClient.from('businesses').insert({
+    showToast('⏳ Отправка анкеты...', '#4A90D9');
+    const {data, error} = await supabaseClient.from('businesses').insert({
       user_id: currentUser.id,
       type: selectedBusinessType,
       name: name,
@@ -287,8 +382,14 @@ async function submitBusiness() {
       price_from: price,
       services: services,
       is_approved: false
-    });
+    }).select().single();
     if (error) throw error;
+    
+    // Загружаем обложку если выбрана
+    if (_businessCoverFile && data && data.id) {
+      await uploadBusinessCover(data.id);
+    }
+    
     nav('businessPending');
   } catch(e) {
     console.error('Submit business error:',e);
