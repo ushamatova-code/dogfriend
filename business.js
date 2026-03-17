@@ -94,7 +94,7 @@ async function renderCatalogTrainers() {
       <div style="flex:1;min-width:0;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
           <div style="font-weight:800;font-size:15px;">${b.name}</div>
-          <span class="tag tag-b">✓ DogFriend</span>
+          <span class="tag tag-b">✓ Dogly</span>
         </div>
         <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">⭐ ${b.rating} · ${b.reviews_count || 0} отзывов</div>
         <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">📍 ${b.address}</div>
@@ -199,7 +199,7 @@ async function openBusinessProfile(id) {
   }
   document.getElementById('spec-name').textContent = b.name;
   document.getElementById('spec-badge').className = 'tag tag-b';
-  document.getElementById('spec-badge').textContent = typeLabels[b.type] || '✓ DogFriend';
+  document.getElementById('spec-badge').textContent = typeLabels[b.type] || '✓ Dogly';
   document.getElementById('spec-rating').textContent = `⭐ ${b.rating}`;
 
   // Опыт/стаж — из реальных данных
