@@ -2493,9 +2493,23 @@ function bookFromClinicModal() {
 
   // auto-add med record
   const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
-  let recs = JSON.parse(localStorage.getItem('df_med_records') || '[]');
-  recs.unshift({ id: Date.now()+1, type:'Приём', petName: p.dogname||'', title:'Запись: '+name, date: now.toISOString().split('T')[0], doctor: name, notes: 'Создано через Dogly' });
-  localStorage.setItem('df_med_records', JSON.stringify(recs));
+  if (supabaseClient && currentUser) {
+    try {
+      await supabaseClient.from('med_records').insert({
+        user_id: currentUser.id,
+        type: 'Приём',
+        pet_name: p.dogname || '',
+        title: 'Запись: ' + name,
+        date: now.toISOString().split('T')[0],
+        doctor: name,
+        notes: 'Создано через Dogly'
+      });
+    } catch(e) { console.error('Auto med record error:', e); }
+  } else {
+    let recs = JSON.parse(localStorage.getItem('df_med_records') || '[]');
+    recs.unshift({ id: Date.now()+1, type:'Приём', petName: p.dogname||'', title:'Запись: '+name, date: now.toISOString().split('T')[0], doctor: name, notes: 'Создано через Dogly' });
+    localStorage.setItem('df_med_records', JSON.stringify(recs));
+  }
 
   closeModal('m-clinic');
 
@@ -2714,33 +2728,87 @@ function renderPets() {
 const MED_ICONS={'Вакцинация':'💉','Приём':'🏥','Анализ':'🔬','Операция':'🔪','Другое':'📋'};
 const MED_BG={'Вакцинация':'rgba(74,144,217,.12)','Приём':'rgba(76,175,80,.12)','Анализ':'rgba(156,39,176,.12)','Операция':'rgba(208,2,27,.12)','Другое':'rgba(0,0,0,.06)'};
 let _medType='Вакцинация';
+let _medRecordsCache = [];
+
 function selectMedType(t,el){_medType=t;document.querySelectorAll('#med-type-chips .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');}
-function saveMedRecord(){
+
+async function saveMedRecord(){
   const title=document.getElementById('med-title').value.trim();
   if(!title){showToast('❌ Укажите название/диагноз');return;}
-  let recs=JSON.parse(localStorage.getItem('df_med_records')||'[]');
-  recs.unshift({id:Date.now(),type:_medType,petName:document.getElementById('med-pet-name').value.trim(),title,date:document.getElementById('med-date').value,doctor:document.getElementById('med-doctor').value.trim(),notes:document.getElementById('med-notes').value.trim()});
-  localStorage.setItem('df_med_records',JSON.stringify(recs));
-  closeModal('m-add-med');renderMedRecords();showToast('✅ Запись сохранена','#7ED321');
-}
-function renderMedRecords(){
-  const list=document.getElementById('med-records-list');
-  if(!list)return;
-  let recs=JSON.parse(localStorage.getItem('df_med_records')||'[]');
-  // seed sample data
-  if(!recs.length){
-    const p=JSON.parse(localStorage.getItem('df_profile')||'{}');
-    const pet=p.dogname||'Питомец';
-    recs=[
-      {id:1,type:'Вакцинация',petName:pet,title:'Нобивак DHPPi+L',date:'2025-09-15',doctor:'Др. Орлов, Статус-Вет',notes:'Следующая через 1 год — сентябрь 2026'},
-      {id:2,type:'Приём',petName:pet,title:'Плановый осмотр терапевта',date:'2025-11-20',doctor:'Др. Белова, Зоовет',notes:'Всё в норме, вес 8.2 кг'},
-      {id:3,type:'Анализ',petName:pet,title:'Общий анализ крови',date:'2025-11-20',doctor:'Зоовет, лаборатория',notes:'Результаты в норме'},
-    ];
-    // СОХРАНЯЕМ sample данные чтобы можно было удалять!
+  
+  const rec = {
+    type: _medType,
+    pet_name: document.getElementById('med-pet-name').value.trim(),
+    title: title,
+    date: document.getElementById('med-date').value,
+    doctor: document.getElementById('med-doctor').value.trim(),
+    notes: document.getElementById('med-notes').value.trim()
+  };
+
+  if (supabaseClient && currentUser) {
+    try {
+      const { error } = await supabaseClient.from('med_records').insert({
+        ...rec,
+        user_id: currentUser.id
+      });
+      if (error) throw error;
+    } catch(e) {
+      console.error('❌ Save med record error:', e);
+      // Fallback — localStorage
+      let recs = JSON.parse(localStorage.getItem('df_med_records')||'[]');
+      recs.unshift({ id: Date.now(), ...rec, petName: rec.pet_name });
+      localStorage.setItem('df_med_records', JSON.stringify(recs));
+    }
+  } else {
+    let recs = JSON.parse(localStorage.getItem('df_med_records')||'[]');
+    recs.unshift({ id: Date.now(), ...rec, petName: rec.pet_name });
     localStorage.setItem('df_med_records', JSON.stringify(recs));
   }
+  
+  closeModal('m-add-med');
+  await renderMedRecords();
+  showToast('✅ Запись сохранена','#7ED321');
+}
+
+async function renderMedRecords(){
+  const list=document.getElementById('med-records-list');
+  if(!list)return;
+  
+  let recs = [];
+  
+  if (supabaseClient && currentUser) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('med_records')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      recs = (data || []).map(r => ({
+        id: r.id,
+        type: r.type,
+        petName: r.pet_name,
+        title: r.title,
+        date: r.date,
+        doctor: r.doctor,
+        notes: r.notes
+      }));
+      _medRecordsCache = recs;
+    } catch(e) {
+      console.error('❌ Load med records error:', e);
+      recs = JSON.parse(localStorage.getItem('df_med_records')||'[]');
+    }
+  } else {
+    recs = JSON.parse(localStorage.getItem('df_med_records')||'[]');
+  }
+
+  if(!recs.length){
+    list.innerHTML = '<div style="padding:40px 20px;text-align:center;color:var(--text-secondary);"><div style="font-size:48px;margin-bottom:12px;">📋</div><div style="font-weight:700;margin-bottom:4px;">Нет записей</div><div style="font-size:13px;">Добавьте первую медицинскую запись</div></div>';
+    return;
+  }
+
   list.innerHTML=recs.map(r=>`
-    <div id="med-${r.id}" class="med-record-item" onclick="openMedRecord(${r.id})" style="background:var(--white);border-radius:var(--radius);margin-bottom:10px;box-shadow:var(--shadow);padding:14px 16px;display:flex;gap:12px;align-items:flex-start;cursor:pointer;position:relative;transition:transform 0.2s;">
+    <div id="med-${r.id}" class="med-record-item" onclick="openMedRecord('${r.id}')" style="background:var(--white);border-radius:var(--radius);margin-bottom:10px;box-shadow:var(--shadow);padding:14px 16px;display:flex;gap:12px;align-items:flex-start;cursor:pointer;position:relative;transition:transform 0.2s;">
       <div style="width:44px;height:44px;background:${MED_BG[r.type]||'rgba(0,0,0,.06)'};border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${MED_ICONS[r.type]||'📋'}</div>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
@@ -2751,7 +2819,7 @@ function renderMedRecords(){
         <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">📅 ${r.date}${r.doctor?' · '+r.doctor:''}</div>
         ${r.notes?`<div style="font-size:12px;color:var(--text-secondary);margin-top:3px;font-style:italic;">${r.notes}</div>`:''}
       </div>
-      <button onclick="event.stopPropagation();deleteMedRecord(${r.id})" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);background:#FF3B30;color:white;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;opacity:0;transition:opacity 0.2s;">Удалить</button>
+      <button onclick="event.stopPropagation();deleteMedRecord('${r.id}')" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);background:#FF3B30;color:white;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;opacity:0;transition:opacity 0.2s;">Удалить</button>
     </div>`).join('');
     
   // Добавляем свайп для удаления
@@ -2786,8 +2854,8 @@ function renderMedRecords(){
 }
 
 function openMedRecord(id) {
-  const recs = JSON.parse(localStorage.getItem('df_med_records')||'[]');
-  const rec = recs.find(r => r.id === id) || {id:1,type:'Вакцинация',petName:'Питомец',title:'Нобивак DHPPi+L',date:'2025-09-15',doctor:'Др. Орлов, Статус-Вет',notes:'Следующая через 1 год — сентябрь 2026'};
+  const rec = _medRecordsCache.find(r => String(r.id) === String(id));
+  if (!rec) return;
   
   let modal = document.getElementById('m-view-med');
   if (!modal) {
@@ -2819,12 +2887,23 @@ function openMedRecord(id) {
   openModal('m-view-med');
 }
 
-function deleteMedRecord(id) {
+async function deleteMedRecord(id) {
   if (!confirm('Удалить запись?')) return;
-  let recs = JSON.parse(localStorage.getItem('df_med_records')||'[]');
-  recs = recs.filter(r => r.id !== id);
-  localStorage.setItem('df_med_records', JSON.stringify(recs));
-  renderMedRecords();
+  
+  if (supabaseClient && currentUser) {
+    try {
+      const { error } = await supabaseClient.from('med_records').delete().eq('id', id).eq('user_id', currentUser.id);
+      if (error) throw error;
+    } catch(e) {
+      console.error('❌ Delete med record error:', e);
+    }
+  } else {
+    let recs = JSON.parse(localStorage.getItem('df_med_records')||'[]');
+    recs = recs.filter(r => String(r.id) !== String(id));
+    localStorage.setItem('df_med_records', JSON.stringify(recs));
+  }
+  
+  await renderMedRecords();
   showToast('🗑️ Запись удалена', '#FF3B30');
 }
 
