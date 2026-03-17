@@ -2494,17 +2494,15 @@ function bookFromClinicModal() {
   // auto-add med record
   const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
   if (supabaseClient && currentUser) {
-    try {
-      await supabaseClient.from('med_records').insert({
-        user_id: currentUser.id,
-        type: 'Приём',
-        pet_name: p.dogname || '',
-        title: 'Запись: ' + name,
-        date: now.toISOString().split('T')[0],
-        doctor: name,
-        notes: 'Создано через Dogly'
-      });
-    } catch(e) { console.error('Auto med record error:', e); }
+    supabaseClient.from('med_records').insert({
+      user_id: currentUser.id,
+      type: 'Приём',
+      pet_name: p.dogname || '',
+      title: 'Запись: ' + name,
+      date: now.toISOString().split('T')[0],
+      doctor: name,
+      notes: 'Создано через Dogly'
+    }).then(({ error }) => { if (error) console.error('Auto med record error:', error); });
   } else {
     let recs = JSON.parse(localStorage.getItem('df_med_records') || '[]');
     recs.unshift({ id: Date.now()+1, type:'Приём', petName: p.dogname||'', title:'Запись: '+name, date: now.toISOString().split('T')[0], doctor: name, notes: 'Создано через Dogly' });
