@@ -1028,8 +1028,20 @@ function openChatWithUser(theirUserId, theirName, theirInitials, theirGrad) {
   const av = document.getElementById('pc-avatar');
   av.textContent = contactBook[theirUserId].initials;
   av.style.background = contactBook[theirUserId].grad;
+  av.innerHTML = '';
   document.getElementById('pc-name').textContent = theirName;
   document.getElementById('pc-online').textContent = '🟢 онлайн';
+
+  // Подтягиваем аватарку из Supabase (асинхронно)
+  getUserAvatarUrl(theirUserId).then(url => {
+    if (url) {
+      av.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.textContent='${contactBook[theirUserId].initials}'">`;
+      av.style.padding = '0';
+      // Сохраняем в contactBook для переиспользования
+      contactBook[theirUserId].avatarUrl = url;
+      localStorage.setItem('df_contacts', JSON.stringify(contactBook));
+    }
+  });
 
   renderPrivateChatMessages(theirUserId);
   loadPrivateChatFromServer(theirUserId);
@@ -1343,7 +1355,10 @@ function renderPrivateChats() {
         <span style="color:white;font-size:11px;font-weight:700;">Удалить</span>
       </div>
       <div class="ci" id="ci-row-${safeId}" style="gap:14px;position:relative;background:var(--white);transform:translateX(0);transition:transform 0.25s ease;will-change:transform;">
-        <div class="avatar" style="width:52px;height:52px;font-size:20px;background:${contact.grad};flex-shrink:0;">${contact.initials}</div>
+        ${contact.avatarUrl
+          ? `<div style="width:52px;height:52px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="${escHtml(contact.avatarUrl)}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='${safeInitials}'"></div>`
+          : `<div class="avatar" style="width:52px;height:52px;font-size:20px;background:${contact.grad};flex-shrink:0;">${contact.initials}</div>`
+        }
         <div style="flex:1;min-width:0;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
             <span style="font-weight:800;font-size:15px;">${safeName}</span>
@@ -1407,6 +1422,27 @@ function renderPrivateChats() {
       } else {
         const contact = contactBook[id] || { name: id, initials: id.slice(0,2).toUpperCase(), grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)' };
         openChatWithUser(id, contact.name, contact.initials, contact.grad);
+      }
+    });
+  });
+
+  // Асинхронно подтягиваем аватарки для контактов из Supabase
+  keys.forEach(id => {
+    if (id.startsWith('event_') || id.startsWith('spec_')) return;
+    const contact = contactBook[id];
+    if (contact && contact.avatarUrl) return; // уже есть
+    getUserAvatarUrl(id).then(url => {
+      if (url && contactBook[id]) {
+        contactBook[id].avatarUrl = url;
+        localStorage.setItem('df_contacts', JSON.stringify(contactBook));
+        // Обновляем аватарку в уже отрисованном списке
+        const row = document.getElementById('ci-row-' + id);
+        if (row) {
+          const avEl = row.querySelector('.avatar, div[style*="border-radius:50%"]');
+          if (avEl) {
+            avEl.outerHTML = `<div style="width:52px;height:52px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="${url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='${(contact.initials||'').replace(/'/g,'')}'"></div>`;
+          }
+        }
       }
     });
   });

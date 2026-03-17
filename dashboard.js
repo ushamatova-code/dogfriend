@@ -210,7 +210,9 @@ function renderBizDashboard(biz) {
   // Карточка бизнеса
   html += `<div style="background:linear-gradient(135deg,var(--primary),#6BB8F0);border-radius:var(--radius);padding:20px;color:white;margin-bottom:16px;">
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
-      <div style="width:60px;height:60px;background:rgba(255,255,255,0.2);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;">${typeIcons[biz.type] || '💼'}</div>
+      <div style="width:60px;height:60px;background:rgba(255,255,255,0.2);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden;">
+        ${biz.cover_url ? `<img src="${biz.cover_url}" style="width:100%;height:100%;object-fit:cover;">` : (typeIcons[biz.type] || '💼')}
+      </div>
       <div style="flex:1;min-width:0;">
         <div style="font-size:18px;font-weight:800;margin-bottom:2px;">${biz.name}</div>
         <div style="font-size:13px;opacity:0.85;">${typeLabels[biz.type] || ''}</div>
@@ -275,6 +277,18 @@ function openBizEdit() {
   document.getElementById('biz-edit-title').textContent = 'Редактировать: ' + currentBiz.name;
 
   let html = '';
+  
+  // Блок загрузки обложки
+  html += `<div style="margin-bottom:20px;">
+    <div style="font-size:15px;font-weight:800;margin-bottom:12px;padding-top:16px;border-top:2px solid var(--border);">📷 Обложка бизнеса</div>
+    <div id="biz-cover-preview" style="margin-bottom:8px;">
+      ${currentBiz.cover_url ? `<img src="${currentBiz.cover_url}" style="width:100%;height:120px;object-fit:cover;border-radius:12px;">` : '<div style="background:var(--bg);border-radius:12px;padding:20px;text-align:center;color:var(--text-secondary);font-size:13px;">Нет обложки</div>'}
+    </div>
+    <label style="display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:var(--bg);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;">
+      📸 Выбрать фото
+      <input type="file" accept="image/*" onchange="handleBusinessCoverSelect(event); document.getElementById('biz-cover-preview').innerHTML='<div style=\\'padding:12px;text-align:center;color:var(--primary);font-weight:700;\\'>✅ Фото выбрано</div>'" style="display:none;">
+    </label>
+  </div>`;
   cfg.sections.forEach(sec => {
     html += `<div style="margin-bottom:20px;">
       <div style="font-size:15px;font-weight:800;margin-bottom:12px;padding-top:16px;border-top:2px solid var(--border);">${sec.title}</div>`;
@@ -350,66 +364,43 @@ async function saveBizEdit() {
   }
 
   // Колонки которые точно есть в таблице businesses
-  const KNOWN_COLUMNS = ['name', 'description', 'address', 'phone', 'email', 'price_from', 'services'];
+  const KNOWN_COLUMNS = [
+    'name', 'description', 'address', 'phone', 'phone2', 'email', 'website',
+    'price_from', 'services', 'telegram', 'instagram',
+    'area', 'schedule', 'experience', 'education', 'dog_breeds', 'lesson_format',
+    'doctors', 'equipment', 'emergency', 'dog_policy', 'max_dog_size', 'dog_menu',
+    'cover_url'
+  ];
 
-  // Разделяем поля: известные идут прямо, остальные пакуем в extra_data JSON
+  // Разделяем поля: известные идут прямо, остальные игнорируем
   const dbUpdate = {};
-  const extraData = { ...(currentBiz.extra_data || {}) };
 
   Object.entries(formData).forEach(([key, val]) => {
     if (KNOWN_COLUMNS.includes(key)) {
       dbUpdate[key] = val;
-    } else {
-      extraData[key] = val;
     }
   });
 
-  // extra_data пробуем как отдельную колонку, если нет — пакуем в description
-  const hasExtraFields = Object.keys(extraData).length > 0;
-
-  console.log('Saving biz, dbUpdate keys:', Object.keys(dbUpdate), 'extraData keys:', Object.keys(extraData));
+  console.log('Saving biz, dbUpdate keys:', Object.keys(dbUpdate));
 
   try {
-    // Сначала пробуем сохранить с extra_data (если колонка есть в БД)
     let updatePayload = { ...dbUpdate, updated_at: new Date().toISOString() };
-    if (hasExtraFields) updatePayload.extra_data = extraData;
 
     let { error } = await supabaseClient
       .from('businesses')
       .update(updatePayload)
       .eq('id', currentBiz.id);
 
-    if (error) {
-      console.warn('Update with extra_data failed:', error.message);
+    if (error) throw error;
 
-      // Fallback 1: без extra_data, только известные колонки
-      let { error: e2 } = await supabaseClient
-        .from('businesses')
-        .update({ ...dbUpdate, updated_at: new Date().toISOString() })
-        .eq('id', currentBiz.id);
-
-      if (e2) {
-        console.warn('Update without extra_data also failed:', e2.message);
-
-        // Fallback 2: только name + description + services (минимум)
-        const minimal = {};
-        if (dbUpdate.name) minimal.name = dbUpdate.name;
-        if (dbUpdate.description !== undefined) minimal.description = dbUpdate.description;
-        if (dbUpdate.services) minimal.services = dbUpdate.services;
-
-        let { error: e3 } = await supabaseClient
-          .from('businesses')
-          .update(minimal)
-          .eq('id', currentBiz.id);
-
-        if (e3) throw e3;
-        console.log('Saved minimal fields only');
-      }
+    // Загружаем обложку если была выбрана
+    if (_businessCoverFile) {
+      const coverUrl = await uploadBusinessCover(currentBiz.id);
+      if (coverUrl) currentBiz.cover_url = coverUrl;
     }
 
     // Обновляем локальный объект
     Object.assign(currentBiz, formData);
-    if (hasExtraFields) currentBiz.extra_data = extraData;
 
     // Обновляем в массиве userBusinesses
     const idx = userBusinesses.findIndex(b => b.id === currentBiz.id);
