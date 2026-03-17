@@ -2994,7 +2994,7 @@ function saveNotif(key,val){
 // Initial render on DOMContentLoaded (after main listener)
 window.addEventListener('load',()=>{
   setTimeout(()=>{
-    renderPlaces();renderDiscounts();renderLessons();renderPets();renderMedRecords();
+    renderPlaces();renderDiscounts();renderLessons();renderPets();
   },200);
 });
 
