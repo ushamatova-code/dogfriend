@@ -243,7 +243,7 @@ function loadProfile() {
   // Обновляем гео на главном экране
   const geoDisplay = document.getElementById('home-geo-display');
   if (geoDisplay) {
-    const geo = p.district || 'Москва, Сокольники';
+    const geo = p.district || '';
     geoDisplay.textContent = geo;
   }
 }
@@ -302,6 +302,13 @@ async function saveProfile() {
   
   loadProfile();
   back();
+  
+  // Обновляем геолокацию по новому району
+  if (p.district) {
+    localStorage.removeItem('df_user_location'); // сброс кэша
+    getUserLocation(); // переопределит по новому району
+  }
+  
   setTimeout(() => {
     const toast = document.createElement('div');
     toast.textContent = '✅ Профиль сохранён!';
@@ -2327,53 +2334,100 @@ function bookFromClinicModal() {
 
 // ════════════════════════════════════════════════════════════
 // GEOLOCATION — определение позиции пользователя
+// Приоритет: 1) район из профиля  2) GPS  3) попросить указать
 // ════════════════════════════════════════════════════════════
 let userLat = null;
 let userLng = null;
 let userLocationName = '';
 
+async function geocodeAddress(address) {
+  try {
+    const resp = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(address + ', Россия') + '&limit=1');
+    const data = await resp.json();
+    if (data && data[0]) {
+      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    }
+  } catch(e) { console.warn('Geocode error:', e); }
+  return null;
+}
+
 function getUserLocation() {
-  return new Promise((resolve) => {
-    // Пробуем из кэша
+  return new Promise(async (resolve) => {
+    // 1. Пробуем из кэша (свежий — до 1 часа)
     const cached = localStorage.getItem('df_user_location');
     if (cached) {
       try {
         const loc = JSON.parse(cached);
-        if (loc.lat && loc.lng && (Date.now() - loc.ts) < 3600000) { // кэш на 1 час
+        if (loc.lat && loc.lng && (Date.now() - loc.ts) < 3600000) {
           userLat = loc.lat; userLng = loc.lng; userLocationName = loc.name || '';
+          updateGeoUI();
           resolve({lat: loc.lat, lng: loc.lng});
           return;
         }
       } catch(e) {}
     }
 
-    if (!navigator.geolocation) { resolve(null); return; }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        userLat = pos.coords.latitude;
-        userLng = pos.coords.longitude;
+    // 2. Пробуем район из профиля (приоритет — в РФ GPS часто не работает)
+    const profile = JSON.parse(localStorage.getItem('df_profile') || '{}');
+    const district = profile.district || localStorage.getItem('df_user_geo') || '';
+    
+    if (district) {
+      const coords = await geocodeAddress(district);
+      if (coords) {
+        userLat = coords.lat;
+        userLng = coords.lng;
+        userLocationName = district;
         localStorage.setItem('df_user_location', JSON.stringify({
           lat: userLat, lng: userLng, ts: Date.now(), name: userLocationName
         }));
-        // Обратное геокодирование для названия района
-        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLat}&lon=${userLng}&zoom=14&addressdetails=1`)
-          .then(r=>r.json())
-          .then(data => {
+        updateGeoUI();
+        resolve(coords);
+        return;
+      }
+    }
+
+    // 3. Пробуем GPS (может не сработать в Москве)
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          userLat = pos.coords.latitude;
+          userLng = pos.coords.longitude;
+          // Обратное геокодирование
+          try {
+            const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLat}&lon=${userLng}&zoom=14&addressdetails=1`);
+            const data = await resp.json();
             const a = data.address || {};
             userLocationName = a.suburb || a.city_district || a.town || a.city || '';
-            const geoDisplay = document.getElementById('home-geo-display');
-            if (geoDisplay && userLocationName) geoDisplay.textContent = userLocationName;
-            localStorage.setItem('df_user_location', JSON.stringify({
-              lat: userLat, lng: userLng, ts: Date.now(), name: userLocationName
-            }));
-          }).catch(()=>{});
-        resolve({lat: userLat, lng: userLng});
-      },
-      () => resolve(null),
-      { timeout: 8000, maximumAge: 300000 }
-    );
+          } catch(e) {}
+          localStorage.setItem('df_user_location', JSON.stringify({
+            lat: userLat, lng: userLng, ts: Date.now(), name: userLocationName
+          }));
+          updateGeoUI();
+          resolve({lat: userLat, lng: userLng});
+        },
+        () => {
+          // GPS не сработал — показываем подсказку
+          updateGeoUI();
+          resolve(null);
+        },
+        { timeout: 5000, maximumAge: 300000 }
+      );
+    } else {
+      updateGeoUI();
+      resolve(null);
+    }
   });
+}
+
+function updateGeoUI() {
+  const geoDisplay = document.getElementById('home-geo-display');
+  if (geoDisplay) {
+    if (userLocationName) {
+      geoDisplay.textContent = userLocationName;
+    } else {
+      geoDisplay.textContent = '📍 Укажите район →';
+    }
+  }
 }
 
 // Расстояние между двумя точками (км)
@@ -2396,15 +2450,15 @@ getUserLocation();
 
 // ════════════════════════════════════════════════════════════
 // PLACES — загрузка из Supabase + карта
+// (только кафе, клиники и подобные места — НЕ кинологи)
 // ════════════════════════════════════════════════════════════
 let _placesFilter = 'Все';
 let _currentPlace = null;
 let _loadedPlaces = [];
 
-const PLACE_TYPE_MAP = { trainer: 'Кинолог', clinic: 'Клиника', cafe: 'Кафе' };
-const PLACE_ICON_MAP = { trainer: '🎓', clinic: '🏥', cafe: '☕' };
+const PLACE_TYPE_MAP = { clinic: 'Клиника', cafe: 'Кафе' };
+const PLACE_ICON_MAP = { clinic: '🏥', cafe: '☕' };
 const PLACE_GRAD_MAP = {
-  trainer: 'linear-gradient(135deg,#4A90D9,#7B5EA7)',
   clinic: 'linear-gradient(135deg,#4CAF50,#009688)',
   cafe: 'linear-gradient(135deg,#FF9800,#FFD54F)'
 };
@@ -2421,16 +2475,24 @@ async function renderPlaces() {
   const list = document.getElementById('places-list');
   if (!list) return;
 
+  // Дожидаемся геолокации если ещё нет
+  if (!userLat) await getUserLocation();
+
   try {
-    let query = supabaseClient.from('businesses').select('*').eq('is_approved', true);
-    const { data, error } = await query.order('rating', { ascending: false });
+    // Загружаем только кафе и клиники (НЕ кинологов — они в каталоге)
+    const { data, error } = await supabaseClient
+      .from('businesses')
+      .select('*')
+      .eq('is_approved', true)
+      .in('type', ['cafe', 'clinic'])
+      .order('rating', { ascending: false });
     if (error) throw error;
 
     let businesses = data || [];
 
-    // Фильтр по типу
+    // Фильтр по типу через чипсы
     if (_placesFilter !== 'Все') {
-      const typeMap = { 'Кафе': 'cafe', 'Клиника': 'clinic', 'Кинолог': 'trainer' };
+      const typeMap = { 'Кафе': 'cafe', 'Клиника': 'clinic' };
       const t = typeMap[_placesFilter];
       if (t) businesses = businesses.filter(b => b.type === t);
     }
@@ -2532,6 +2594,9 @@ function filterDiscounts(val, el) {
 async function renderDiscounts() {
   const list = document.getElementById('discounts-list');
   if (!list) return;
+
+  // Дожидаемся геолокации если ещё нет
+  if (!userLat) await getUserLocation();
 
   // Обновляем плашку с локацией
   const locBanner = document.getElementById('discounts-location-banner');
