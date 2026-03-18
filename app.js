@@ -244,7 +244,15 @@ function loadProfile() {
   const geoDisplay = document.getElementById('home-geo-display');
   if (geoDisplay) {
     const geo = p.district || '';
-    geoDisplay.textContent = geo;
+    if (geo) {
+      geoDisplay.textContent = geo;
+      // Также обновляем глобальную переменную если район указан
+      if (!userLocationName) userLocationName = geo;
+    } else if (userLocationName) {
+      geoDisplay.textContent = userLocationName;
+    } else {
+      geoDisplay.textContent = 'Укажите район →';
+    }
   }
 }
 
@@ -2425,7 +2433,7 @@ function updateGeoUI() {
     if (userLocationName) {
       geoDisplay.textContent = userLocationName;
     } else {
-      geoDisplay.textContent = '📍 Укажите район →';
+      geoDisplay.textContent = 'Укажите район →';
     }
   }
 }
