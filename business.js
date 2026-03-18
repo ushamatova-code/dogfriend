@@ -371,6 +371,21 @@ async function submitBusiness() {
   const services = Array.from(checks).map(c => c.value);
   try {
     showToast('⏳ Отправка анкеты...', '#4A90D9');
+
+    // Геокодирование адреса — определяем координаты
+    let location_lat = null, location_lng = null;
+    try {
+      const geoResp = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(address + ', Россия') + '&limit=1');
+      const geoData = await geoResp.json();
+      if (geoData && geoData[0]) {
+        location_lat = parseFloat(geoData[0].lat);
+        location_lng = parseFloat(geoData[0].lon);
+        console.log('📍 Geocoded:', address, '→', location_lat, location_lng);
+      }
+    } catch(geoErr) {
+      console.warn('Geocoding failed:', geoErr);
+    }
+
     const {data, error} = await supabaseClient.from('businesses').insert({
       user_id: currentUser.id,
       type: selectedBusinessType,
@@ -381,6 +396,8 @@ async function submitBusiness() {
       email: email,
       price_from: price,
       services: services,
+      location_lat: location_lat,
+      location_lng: location_lng,
       is_approved: false
     }).select().single();
     if (error) throw error;

@@ -2326,51 +2326,201 @@ function bookFromClinicModal() {
 }
 
 // ════════════════════════════════════════════════════════════
-// PLACES DATA & RENDER
+// GEOLOCATION — определение позиции пользователя
 // ════════════════════════════════════════════════════════════
-const PLACES_DATA = [];
+let userLat = null;
+let userLng = null;
+let userLocationName = '';
+
+function getUserLocation() {
+  return new Promise((resolve) => {
+    // Пробуем из кэша
+    const cached = localStorage.getItem('df_user_location');
+    if (cached) {
+      try {
+        const loc = JSON.parse(cached);
+        if (loc.lat && loc.lng && (Date.now() - loc.ts) < 3600000) { // кэш на 1 час
+          userLat = loc.lat; userLng = loc.lng; userLocationName = loc.name || '';
+          resolve({lat: loc.lat, lng: loc.lng});
+          return;
+        }
+      } catch(e) {}
+    }
+
+    if (!navigator.geolocation) { resolve(null); return; }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        userLat = pos.coords.latitude;
+        userLng = pos.coords.longitude;
+        localStorage.setItem('df_user_location', JSON.stringify({
+          lat: userLat, lng: userLng, ts: Date.now(), name: userLocationName
+        }));
+        // Обратное геокодирование для названия района
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLat}&lon=${userLng}&zoom=14&addressdetails=1`)
+          .then(r=>r.json())
+          .then(data => {
+            const a = data.address || {};
+            userLocationName = a.suburb || a.city_district || a.town || a.city || '';
+            const geoDisplay = document.getElementById('home-geo-display');
+            if (geoDisplay && userLocationName) geoDisplay.textContent = userLocationName;
+            localStorage.setItem('df_user_location', JSON.stringify({
+              lat: userLat, lng: userLng, ts: Date.now(), name: userLocationName
+            }));
+          }).catch(()=>{});
+        resolve({lat: userLat, lng: userLng});
+      },
+      () => resolve(null),
+      { timeout: 8000, maximumAge: 300000 }
+    );
+  });
+}
+
+// Расстояние между двумя точками (км)
+function calcDistance(lat1, lng1, lat2, lng2) {
+  if (!lat1 || !lng1 || !lat2 || !lng2) return 999;
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function formatDist(km) {
+  if (km < 1) return Math.round(km * 1000) + ' м';
+  return km.toFixed(1) + ' км';
+}
+
+// Инициализация геолокации при старте
+getUserLocation();
+
+// ════════════════════════════════════════════════════════════
+// PLACES — загрузка из Supabase + карта
+// ════════════════════════════════════════════════════════════
 let _placesFilter = 'Все';
 let _currentPlace = null;
+let _loadedPlaces = [];
+
+const PLACE_TYPE_MAP = { trainer: 'Кинолог', clinic: 'Клиника', cafe: 'Кафе' };
+const PLACE_ICON_MAP = { trainer: '🎓', clinic: '🏥', cafe: '☕' };
+const PLACE_GRAD_MAP = {
+  trainer: 'linear-gradient(135deg,#4A90D9,#7B5EA7)',
+  clinic: 'linear-gradient(135deg,#4CAF50,#009688)',
+  cafe: 'linear-gradient(135deg,#FF9800,#FFD54F)'
+};
 
 function filterPlaces(val, el) {
   _placesFilter = val;
   document.querySelectorAll('#dogmap .chips .chip').forEach(c=>c.classList.remove('on'));
   el.classList.add('on');
-  renderCafes(); // Загружаем из БД
+  renderPlaces();
 }
-function renderPlaces() {
-  renderCafes(); // Используем новую функцию
+
+async function renderPlaces() {
+  if (!supabaseClient) return;
+  const list = document.getElementById('places-list');
+  if (!list) return;
+
+  try {
+    let query = supabaseClient.from('businesses').select('*').eq('is_approved', true);
+    const { data, error } = await query.order('rating', { ascending: false });
+    if (error) throw error;
+
+    let businesses = data || [];
+
+    // Фильтр по типу
+    if (_placesFilter !== 'Все') {
+      const typeMap = { 'Кафе': 'cafe', 'Клиника': 'clinic', 'Кинолог': 'trainer' };
+      const t = typeMap[_placesFilter];
+      if (t) businesses = businesses.filter(b => b.type === t);
+    }
+
+    // Считаем расстояние и сортируем
+    businesses = businesses.map(b => ({
+      ...b,
+      _dist: calcDistance(userLat, userLng, b.location_lat, b.location_lng)
+    })).sort((a, b) => a._dist - b._dist);
+
+    _loadedPlaces = businesses;
+
+    // Обновляем карту-плашку
+    const mapBlock = document.getElementById('dogmap-map-block');
+    if (mapBlock) {
+      const count = businesses.length;
+      mapBlock.innerHTML = `
+        <div style="font-size:32px;">📍</div>
+        <div style="font-size:14px;font-weight:800;color:#2e7d32;">${count} ${count === 0 ? 'мест' : count === 1 ? 'место' : count < 5 ? 'места' : 'мест'} рядом с вами</div>
+        <div style="font-size:12px;color:#388e3c;">${userLocationName || 'Определяем...'}</div>
+      `;
+    }
+
+    if (businesses.length === 0) {
+      list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-secondary);">📍 Пока нет мест рядом.<br>Бизнесы могут добавить себя через раздел «Для бизнеса»</div>';
+      return;
+    }
+
+    list.innerHTML = businesses.map(b => `
+      <div class="card" style="cursor:pointer;margin:0 16px 10px;display:flex;gap:12px;align-items:center;" onclick='openPlaceModal("${b.id}")'>
+        <div style="width:50px;height:50px;background:${PLACE_GRAD_MAP[b.type] || PLACE_GRAD_MAP.cafe};border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;overflow:hidden;">
+          ${b.cover_url ? `<img src="${b.cover_url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.textContent='${PLACE_ICON_MAP[b.type]||'📍'}'">` : (PLACE_ICON_MAP[b.type] || '📍')}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:800;font-size:15px;">${b.name}</div>
+          <div style="font-size:12px;color:var(--text-secondary);">${PLACE_TYPE_MAP[b.type] || b.type} · ⭐ ${b.rating}</div>
+          <div style="font-size:12px;color:var(--text-secondary);">📍 ${b.address}${b._dist < 100 ? ' · ' + formatDist(b._dist) : ''}</div>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    console.error('renderPlaces error:', e);
+    list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-secondary);">Ошибка загрузки</div>';
+  }
 }
 
 function openPlaceModal(id) {
-  _currentPlace = PLACES_DATA.find(x=>x.id===id);
-  if (!_currentPlace) return;
-  const p = _currentPlace;
+  _currentPlace = _loadedPlaces.find(x => x.id === id);
+  if (!_currentPlace) {
+    // Попробуем открыть как бизнес-профиль
+    if (typeof openBusinessProfile === 'function') openBusinessProfile(id);
+    return;
+  }
+  const b = _currentPlace;
+  const dist = b._dist < 100 ? formatDist(b._dist) : '';
+  const services = b.services || [];
+
   document.getElementById('m-place-body').innerHTML = `
     <div style="display:flex;gap:12px;align-items:center;margin-bottom:14px;">
-      <div style="width:56px;height:56px;background:${p.color};border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;">${p.icon}</div>
-      <div><div style="font-size:18px;font-weight:800;">${p.name}</div><div style="font-size:13px;color:var(--text-secondary);">${p.type} · ⭐ ${p.rating}</div></div>
+      <div style="width:56px;height:56px;background:${PLACE_GRAD_MAP[b.type] || '#4A90D9'};border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden;">
+        ${b.cover_url ? `<img src="${b.cover_url}" style="width:100%;height:100%;object-fit:cover;">` : (PLACE_ICON_MAP[b.type] || '📍')}
+      </div>
+      <div>
+        <div style="font-size:18px;font-weight:800;">${b.name}</div>
+        <div style="font-size:13px;color:var(--text-secondary);">${PLACE_TYPE_MAP[b.type] || b.type} · ⭐ ${b.rating}</div>
+      </div>
     </div>
-    <div style="font-size:14px;color:var(--text-secondary);line-height:1.7;margin-bottom:14px;">${p.desc}</div>
+    ${b.description ? `<div style="font-size:14px;color:var(--text-secondary);line-height:1.7;margin-bottom:14px;">${b.description}</div>` : ''}
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
-      <div style="font-size:14px;">📍 ${p.addr} · ${p.dist} от вас</div>
-      <div style="font-size:14px;">🕐 ${p.hours}</div>
+      <div style="font-size:14px;">📍 ${b.address}${dist ? ' · ' + dist : ''}</div>
+      ${b.schedule ? `<div style="font-size:14px;">🕐 ${b.schedule}</div>` : ''}
+      ${b.phone ? `<div style="font-size:14px;">📞 <a href="tel:${b.phone}" style="color:var(--primary);text-decoration:none;font-weight:700;">${b.phone}</a></div>` : ''}
     </div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">${p.tags.map(t=>`<span class="tag tag-b">${t}</span>`).join('')}</div>
-    ${p.promo?`<div style="background:rgba(126,211,33,0.12);border-radius:12px;padding:12px;"><div style="font-size:13px;font-weight:700;color:#5a9c18;">🎁 Промокод жителям ЖК:</div><div style="font-size:24px;font-weight:900;font-family:'Nunito',sans-serif;color:#5a9c18;letter-spacing:2px;">${p.promo}</div></div>`:''}
+    ${services.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">${services.map(t=>`<span class="tag tag-b">${t}</span>`).join('')}</div>` : ''}
   `;
   openModal('m-place');
 }
+
 function openYandexMap() {
-  if (_currentPlace) window.open(_currentPlace.ymaps,'_blank');
+  if (!_currentPlace) return;
+  const addr = encodeURIComponent(_currentPlace.address || _currentPlace.name);
+  window.open('https://yandex.ru/maps/?text=' + addr, '_blank');
 }
 
 // ════════════════════════════════════════════════════════════
-// DISCOUNTS DATA & RENDER
+// DISCOUNTS — загрузка из Supabase (таблица promotions)
 // ════════════════════════════════════════════════════════════
-const DISCOUNTS_DATA = [];
 let _discFilter = 'Все';
 let _currentDisc = null;
+let _loadedPromotions = [];
 
 function filterDiscounts(val, el) {
   _discFilter = val;
@@ -2378,56 +2528,123 @@ function filterDiscounts(val, el) {
   el.classList.add('on');
   renderDiscounts();
 }
-function renderDiscounts() {
+
+async function renderDiscounts() {
   const list = document.getElementById('discounts-list');
   if (!list) return;
-  const data = _discFilter==='Все' ? DISCOUNTS_DATA : DISCOUNTS_DATA.filter(d=>d.cat===_discFilter);
-  list.innerHTML = data.map(d=>`
-    <div class="card" style="cursor:pointer;margin-bottom:10px;" onclick="openDiscountModal('${d.id}')">
-      <div style="display:flex;gap:12px;align-items:flex-start;">
-        <div style="width:52px;height:52px;background:${d.color};border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${d.icon}</div>
-        <div style="flex:1;min-width:0;">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
-            <div style="font-weight:800;font-size:15px;">${d.partner}</div>
-            <div style="background:var(--secondary);color:white;border-radius:10px;padding:4px 10px;font-size:14px;font-weight:900;font-family:'Nunito',sans-serif;flex-shrink:0;">${d.pct}</div>
-          </div>
-          <div style="font-size:13px;color:var(--text-secondary);margin:4px 0;">${d.short}</div>
-          <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
-            <span class="tag tag-b" style="font-size:11px;letter-spacing:1px;">${d.code}</span>
-            <span style="font-size:11px;color:var(--text-secondary);">⏰ ${d.valid}</span>
-          </div>
-        </div>
+
+  // Обновляем плашку с локацией
+  const locBanner = document.getElementById('discounts-location-banner');
+  if (locBanner) {
+    locBanner.innerHTML = `
+      <div style="font-size:32px;">🎁</div>
+      <div>
+        <div style="font-size:15px;font-weight:800;">Скидки рядом с вами</div>
+        <div style="font-size:12px;opacity:0.85;margin-top:2px;">${userLocationName || 'Определяем местоположение...'}</div>
       </div>
-    </div>`).join('')||'<div style="padding:40px;text-align:center;color:var(--text-secondary);">Ничего не найдено</div>';
+    `;
+  }
+
+  if (!supabaseClient) {
+    list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-secondary);">Загрузка...</div>';
+    return;
+  }
+
+  try {
+    // Загружаем промоакции с данными бизнеса
+    const { data, error } = await supabaseClient
+      .from('promotions')
+      .select('*, businesses(name, address, type, location_lat, location_lng, cover_url, rating)')
+      .eq('is_active', true);
+
+    if (error) throw error;
+
+    let promos = (data || []).map(p => ({
+      ...p,
+      biz: p.businesses,
+      _dist: p.businesses ? calcDistance(userLat, userLng, p.businesses.location_lat, p.businesses.location_lng) : 999
+    })).sort((a, b) => a._dist - b._dist);
+
+    // Фильтр по категории
+    if (_discFilter !== 'Все') {
+      promos = promos.filter(p => p.category === _discFilter);
+    }
+
+    _loadedPromotions = promos;
+
+    if (promos.length === 0) {
+      list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-secondary);">🎁 Пока нет акций рядом.<br>Бизнесы могут добавить скидки в своём профиле</div>';
+      return;
+    }
+
+    list.innerHTML = promos.map(p => {
+      const biz = p.biz || {};
+      const icon = PLACE_ICON_MAP[biz.type] || '🎁';
+      const grad = PLACE_GRAD_MAP[biz.type] || 'linear-gradient(135deg,#4A90D9,#7B5EA7)';
+      const dist = p._dist < 100 ? ' · ' + formatDist(p._dist) : '';
+      return `
+        <div class="card" style="cursor:pointer;margin-bottom:10px;" onclick="openDiscountModal('${p.id}')">
+          <div style="display:flex;gap:12px;align-items:flex-start;">
+            <div style="width:52px;height:52px;background:${grad};border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${icon}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+                <div style="font-weight:800;font-size:15px;">${biz.name || 'Партнёр'}</div>
+                ${p.discount_percent ? `<div style="background:var(--secondary);color:white;border-radius:10px;padding:4px 10px;font-size:14px;font-weight:900;flex-shrink:0;">-${p.discount_percent}%</div>` : ''}
+              </div>
+              <div style="font-size:13px;color:var(--text-secondary);margin:4px 0;">${p.title}</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+                ${p.promo_code ? `<span class="tag tag-b" style="font-size:11px;letter-spacing:1px;">${p.promo_code}</span>` : ''}
+                <span style="font-size:11px;color:var(--text-secondary);">📍 ${(biz.address || '').substring(0, 30)}${dist}</span>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    console.error('renderDiscounts error:', e);
+    list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-secondary);">Ошибка загрузки</div>';
+  }
 }
+
 function openDiscountModal(id) {
-  _currentDisc = DISCOUNTS_DATA.find(x=>x.id===id);
+  _currentDisc = _loadedPromotions.find(x => x.id === id);
   if (!_currentDisc) return;
-  const d = _currentDisc;
+  const p = _currentDisc;
+  const biz = p.biz || {};
+  const icon = PLACE_ICON_MAP[biz.type] || '🎁';
+  const grad = PLACE_GRAD_MAP[biz.type] || 'linear-gradient(135deg,#4A90D9,#7B5EA7)';
+
   document.getElementById('m-discount-body').innerHTML = `
     <div style="display:flex;gap:12px;align-items:center;margin-bottom:14px;">
-      <div style="width:56px;height:56px;background:${d.color};border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;">${d.icon}</div>
-      <div><div style="font-size:18px;font-weight:800;">${d.partner}</div><div style="font-size:13px;color:var(--text-secondary);">${d.cat}</div></div>
+      <div style="width:56px;height:56px;background:${grad};border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;">${icon}</div>
+      <div>
+        <div style="font-size:18px;font-weight:800;">${biz.name || 'Партнёр'}</div>
+        <div style="font-size:13px;color:var(--text-secondary);">${p.category || ''}</div>
+      </div>
     </div>
+    ${p.discount_percent ? `
     <div style="background:rgba(245,166,35,0.12);border-radius:12px;padding:12px;text-align:center;margin-bottom:14px;">
       <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">Скидка</div>
-      <div style="font-size:36px;font-weight:900;font-family:'Nunito',sans-serif;color:var(--secondary);">${d.pct}</div>
-    </div>
-    <div style="font-size:14px;color:var(--text-secondary);line-height:1.7;margin-bottom:14px;">${d.full}</div>
-    <div style="font-size:14px;margin-bottom:6px;">📍 ${d.addr}</div>
-    <div style="font-size:14px;margin-bottom:14px;">⏰ ${d.valid}</div>
+      <div style="font-size:36px;font-weight:900;font-family:'Nunito',sans-serif;color:var(--secondary);">-${p.discount_percent}%</div>
+    </div>` : ''}
+    <div style="font-size:15px;font-weight:700;margin-bottom:8px;">${p.title}</div>
+    ${p.description ? `<div style="font-size:14px;color:var(--text-secondary);line-height:1.7;margin-bottom:14px;">${p.description}</div>` : ''}
+    ${biz.address ? `<div style="font-size:14px;margin-bottom:6px;">📍 ${biz.address}</div>` : ''}
+    ${p.valid_until ? `<div style="font-size:14px;margin-bottom:14px;">⏰ ${p.valid_until}</div>` : ''}
+    ${p.promo_code ? `
     <div style="background:rgba(74,144,217,0.08);border-radius:12px;padding:14px;text-align:center;">
-      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">Ваш промокод</div>
-      <div style="font-size:26px;font-weight:900;font-family:'Nunito',sans-serif;color:var(--primary);letter-spacing:3px;">${d.code}</div>
-    </div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">Промокод</div>
+      <div style="font-size:26px;font-weight:900;font-family:'Nunito',sans-serif;color:var(--primary);letter-spacing:3px;">${p.promo_code}</div>
+    </div>` : ''}
   `;
   openModal('m-discount');
 }
+
 function copyPromoCode() {
-  if (!_currentDisc) return;
-  navigator.clipboard.writeText(_currentDisc.code)
-    .then(()=>showToast('✅ Промокод '+_currentDisc.code+' скопирован!','#7ED321'))
-    .catch(()=>showToast('Промокод: '+_currentDisc.code));
+  if (!_currentDisc || !_currentDisc.promo_code) return;
+  navigator.clipboard.writeText(_currentDisc.promo_code)
+    .then(()=>showToast('✅ Промокод ' + _currentDisc.promo_code + ' скопирован!','#7ED321'))
+    .catch(()=>showToast('Промокод: ' + _currentDisc.promo_code));
 }
 
 // ════════════════════════════════════════════════════════════
