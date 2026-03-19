@@ -1092,73 +1092,60 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function openUserProfile(nick) {
-  // Вызывается из общего чата (nick = имя) или из личного чата (nick = undefined)
+  // Вызывается из общего чата (с ником) или из личного чата (без аргумента)
   const msgData = _lastClickedUser || {};
-  const userId = (nick ? (msgData.senderId || nick) : currentPrivateChatId);
-  const displayName = nick ? (msgData.senderName || nick) : (contactBook[currentPrivateChatId]?.name || 'Пользователь');
+  const userId   = nick ? (msgData.senderId || nick) : currentPrivateChatId;
+  const dispName = nick ? (msgData.senderName || nick) : (contactBook[currentPrivateChatId]?.name || 'Пользователь');
 
   if (!userId) { showToast('Профиль недоступен', '#888'); return; }
 
-  // Инициалы и цвет для заглушки
   const colors = ['#4A90D9','#E91E63','#9C27B0','#00BCD4','#FF5722','#4CAF50'];
-  const color = colors[(displayName.charCodeAt(0) || 0) % colors.length];
-  const initials = displayName.slice(0,2).toUpperCase();
-  const grad = `linear-gradient(135deg,${color},${color}99)`;
+  const color   = colors[(dispName.charCodeAt(0)||0) % colors.length];
+  const initials = dispName.slice(0,2).toUpperCase();
+  const grad    = `linear-gradient(135deg,${color},${color}99)`;
 
-  // Показываем модалку сразу с заглушкой
+  // Показываем модалку сразу — заглушка пока грузятся данные
   const body = document.getElementById('m-user-profile-body');
   if (!body) return;
   body.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:20px;">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:16px;">
       <div class="avatar" style="width:80px;height:80px;font-size:28px;box-shadow:0 4px 16px rgba(0,0,0,0.1);background:${grad};color:white;font-weight:700;">${initials}</div>
-      <div style="font-size:20px;font-weight:900;font-family:'Nunito',sans-serif;">${escHtml(displayName)}</div>
+      <div style="font-size:20px;font-weight:900;font-family:'Nunito',sans-serif;">${escHtml(dispName)}</div>
     </div>
     <div style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Загружаем данные...</div>
   `;
   openModal('m-user-profile');
 
-  if (!supabaseClient) {
-    // Без Supabase — просто кнопка написать
-    body.innerHTML += `<button class="btn btn-p" style="margin-bottom:8px;" onclick="openChatWithUser('${escHtml(userId)}','${escHtml(displayName)}','${initials}','${grad}');closeModal('m-user-profile')">💬 Написать</button>
-    <button class="btn btn-g" onclick="closeModal('m-user-profile')">Закрыть</button>`;
-    return;
-  }
-
-  try {
-    const [{ data: profile }, { data: pets }, { data: bookings }] = await Promise.all([
-      supabaseClient.from('profiles').select('*').eq('id', userId).single(),
-      supabaseClient.from('pets').select('*').eq('user_id', userId),
-      supabaseClient.from('bookings').select('id').eq('user_id', userId)
-    ]);
-
-    const name = profile?.name || displayName;
-    const avatarUrl = profile?.avatar_url || null;
-    const district = profile?.district || '';
+  const renderProfile = (profile, pets, bookings) => {
+    const name        = profile?.name || dispName;
+    const avatarUrl   = profile?.avatar_url || null;
+    const district    = profile?.district || '';
     const ordersCount = (bookings || []).length;
-    const charityAmount = ordersCount * 150;
-    const petsList = pets || [];
-    const finalInitials = name.slice(0,2).toUpperCase();
+    const charityAmt  = ordersCount * 150;
+    const petsList    = pets || [];
+    const fin         = name.slice(0,2).toUpperCase();
 
     body.innerHTML = `
-      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:20px;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:16px;">
         <div class="avatar" style="width:80px;height:80px;font-size:28px;box-shadow:0 4px 16px rgba(0,0,0,0.1);overflow:hidden;background:${grad};color:white;font-weight:700;">
-          ${avatarUrl ? `<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='${finalInitials}'">` : finalInitials}
+          ${avatarUrl
+            ? `<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='${fin}'">`
+            : fin}
         </div>
         <div style="font-size:20px;font-weight:900;font-family:'Nunito',sans-serif;">${escHtml(name)}</div>
         ${district ? `<div style="display:flex;align-items:center;gap:4px;color:var(--text-secondary);font-size:13px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          ${escHtml(district)}
-        </div>` : ''}
+          ${escHtml(district)}</div>` : ''}
       </div>
 
-      <div style="display:flex;gap:0;background:var(--bg);border-radius:14px;padding:12px;margin-bottom:16px;">
+      <div style="display:flex;background:var(--bg);border-radius:14px;padding:12px;margin-bottom:16px;">
         <div style="flex:1;text-align:center;">
           <div style="font-size:18px;font-weight:900;color:var(--primary);">${ordersCount}</div>
           <div style="font-size:11px;color:var(--text-secondary);">транзакций</div>
         </div>
         <div style="width:1px;background:var(--border);"></div>
         <div style="flex:1;text-align:center;">
-          <div style="font-size:18px;font-weight:900;color:var(--primary);">${charityAmount} ₽</div>
+          <div style="font-size:18px;font-weight:900;color:var(--primary);">${charityAmt} ₽</div>
           <div style="font-size:11px;color:var(--text-secondary);">приютам</div>
         </div>
         <div style="width:1px;background:var(--border);"></div>
@@ -1180,25 +1167,36 @@ async function openUserProfile(nick) {
                 <div style="font-weight:700;font-size:14px;">${escHtml(p.name)} ${p.sex==='ж'?'♀':'♂'}</div>
                 <div style="font-size:12px;color:var(--text-secondary);">${escHtml(p.breed||'')}${p.age?' · '+p.age:''}</div>
               </div>
-            </div>
-          `).join('')}
+            </div>`).join('')}
         </div>
       ` : '<div style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Питомцы не добавлены</div>'}
 
-      <button class="btn btn-p" style="margin-bottom:8px;" onclick="openChatWithUser('${escHtml(userId)}','${escHtml(name)}','${finalInitials}','${grad}');closeModal('m-user-profile')">
+      <button class="btn btn-p" style="margin-bottom:8px;" onclick="openChatWithUser('${escHtml(userId)}','${escHtml(name)}','${fin}','${grad}');closeModal('m-user-profile')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:6px;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
         Написать
       </button>
       <button class="btn btn-g" onclick="closeModal('m-user-profile')">Закрыть</button>
     `;
+  };
+
+  if (!supabaseClient) {
+    renderProfile(null, [], []);
+    return;
+  }
+
+  try {
+    const [{ data: profile }, { data: pets, error: petsErr }, { data: bookings }] = await Promise.all([
+      supabaseClient.from('profiles').select('*').eq('id', userId).single(),
+      supabaseClient.from('pets').select('*').eq('user_id', userId),
+      supabaseClient.from('bookings').select('id').eq('user_id', userId)
+    ]);
+
+    // Если питомцы не загрузились из-за RLS — показываем профиль без них
+    if (petsErr) console.warn('[openUserProfile] pets RLS error:', petsErr.message, '— run update_pets_rls.sql in Supabase');
+    renderProfile(profile, pets, bookings);
   } catch(e) {
     console.error('[openUserProfile] error:', e);
-    body.innerHTML = `
-      <div style="padding:20px;text-align:center;">
-        <div style="color:var(--text-secondary);margin-bottom:16px;">Не удалось загрузить профиль</div>
-        <button class="btn btn-p" style="margin-bottom:8px;" onclick="openChatWithUser('${escHtml(userId)}','${escHtml(displayName)}','${initials}','${grad}');closeModal('m-user-profile')">💬 Написать</button>
-        <button class="btn btn-g" onclick="closeModal('m-user-profile')">Закрыть</button>
-      </div>`;
+    renderProfile(null, [], []);
   }
 }
 
