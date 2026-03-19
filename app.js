@@ -230,10 +230,13 @@ function loadProfile() {
   if (avatarUrl) setTimeout(() => applyAvatar(avatarUrl), 50);
   
   const name = p.name || 'Гость';
+  const firstName = name.split(' ')[0];
   const initials = p.name ? getInitials(p.name) : '👤';
-  const homeName = document.getElementById('home-name');
+  const homeGreeting = document.getElementById('home-greeting');
+  const homeNameSub = document.getElementById('home-name-sub');
   const homeAvatar = document.getElementById('home-avatar');
-  if (homeName) homeName.textContent = name;
+  if (homeGreeting) homeGreeting.textContent = 'Привет, ' + firstName + '! 👋';
+  if (homeNameSub) homeNameSub.textContent = p.dogname ? 'Что нового у ' + p.dogname + '?' : 'Что нового у вашего питомца?';
   if (homeAvatar) homeAvatar.textContent = initials;
   const profName = document.getElementById('prof-name');
   const profAvatar = document.getElementById('prof-avatar');
