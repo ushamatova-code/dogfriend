@@ -384,15 +384,7 @@ window.addEventListener('load', () => {
   splash.classList.add('active');
   splash.style.display = 'flex';
   
-  // Закрываем результаты поиска районов при клике вне
-  document.addEventListener('click', (e) => {
-    const results = document.getElementById('district-search-results');
-    const search = document.getElementById('district-search');
-    if (results && !results.contains(e.target) && e.target !== search) {
-      results.style.display = 'none';
-    }
-  });
-
+  // Ждём инициализации — checkAuth сама обработает любой случай
   setTimeout(() => checkAuth(), 2500);
 });
 
@@ -1803,23 +1795,52 @@ function openDistrictChat() {
 // Подключение к каналу района
 function connectDistrictRealtime(district) {
   if (!supabaseClient) { setTimeout(() => connectDistrictRealtime(district), 500); return; }
+  
+  // Отписываемся от предыдущего районного канала
   if (supabaseDistrictChannel) {
     supabaseDistrictChannel.unsubscribe();
     supabaseDistrictChannel = null;
   }
-  const channelName = 'dogfriend-district-' + district.toLowerCase().replace(/\s+/g, '-');
+
+  const channelName = 'dogfriend-district-' + district.toLowerCase().replace(/\s+/g, '-').replace(/[^a-zа-я0-9-]/gi, '');
+  
+  const connectionTimeout = setTimeout(() => {
+    setChatStatus('error');
+    setTimeout(() => connectDistrictRealtime(district), 3000);
+  }, 10000);
+
   supabaseDistrictChannel = supabaseClient.channel(channelName, {
     config: { broadcast: { self: false, ack: false } }
   });
+
   supabaseDistrictChannel
     .on('broadcast', { event: 'message' }, (payload) => {
       const d = payload.payload;
       const myId = currentUser?.id || userId;
       if (d.senderId !== myId) appendMessage(d.nick, d.text, d.time, false, d.senderId);
+      typingUsers.delete(d.nick);
+      renderTyping();
+    })
+    .on('broadcast', { event: 'typing' }, (payload) => {
+      const d = payload.payload;
+      if (d.nick === chatNick) return;
+      if (d.isTyping) typingUsers.add(d.nick);
+      else typingUsers.delete(d.nick);
+      renderTyping();
+    })
+    .on('broadcast', { event: 'system' }, (payload) => {
+      const d = payload.payload;
+      if (d.nick !== chatNick) appendSysMsg(d.text);
     })
     .subscribe((status) => {
-      if (status === 'SUBSCRIBED') setChatStatus('online');
-      else if (status === 'CHANNEL_ERROR') setChatStatus('error');
+      clearTimeout(connectionTimeout);
+      if (status === 'SUBSCRIBED') {
+        setChatStatus('online');
+        scrollChatBottom();
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        setChatStatus('error');
+        setTimeout(() => connectDistrictRealtime(district), 3000);
+      }
     });
 }
 
@@ -3274,89 +3295,68 @@ window.addEventListener('load',()=>{
     updateDistrictChatLabel();
     renderSavedDistrictChats();
   },200);
+
+  // Закрываем результаты поиска при клике вне
+  document.addEventListener('click', (e) => {
+    const results = document.getElementById('district-search-results');
+    const search = document.getElementById('district-search');
+    if (results && !results.contains(e.target) && e.target !== search) {
+      results.style.display = 'none';
+    }
+  });
 });
 
 // ════════════════════════════════════════════════════════════
-// DISTRICT SEARCH
+// DISTRICT SEARCH — реальные данные из БД
 // ════════════════════════════════════════════════════════════
 
-// Список популярных районов Москвы и других городов для подсказок
-const KNOWN_DISTRICTS = [
-  'Путилково','Химки','Митино','Тушино','Строгино','Щукино','Сходня',
-  'Куркино','Красногорск','Зеленоград','Солнечногорск','Лобня','Долгопрудный',
-  'Медведково','Бибирево','Отрадное','Бутово','Ясенево','Чертаново','Царицыно',
-  'Марьино','Люблино','Кузьминки','Выхино','Новогиреево','Измайлово','Сокольники',
-  'Преображенское','Перово','Жулебино','Реутов','Балашиха','Железнодорожный',
-  'Некрасовка','Котельники','Люберцы','Дзержинский','Лыткарино','Раменское',
-  'Одинцово','Кунцево','Крылатское','Фили','Дорогомилово','Хамовники',
-  'Якиманка','Замоскворечье','Таганский','Лефортово','Нижегородский',
-  'Санкт-Петербург','Екатеринбург','Новосибирск','Казань','Краснодар','Сочи',
-  'Ростов-на-Дону','Нижний Новгород','Самара','Уфа','Воронеж','Пермь'
-];
+// Кэш районов загруженных из БД
+let _districtCache = null;
 
-// Сохранённые районные чаты (localStorage)
-function getSavedDistrictChats() {
-  try { return JSON.parse(localStorage.getItem('saved_district_chats') || '[]'); } catch(e) { return []; }
-}
-function saveDistrictChat(districtName) {
-  const saved = getSavedDistrictChats();
-  if (!saved.includes(districtName)) {
-    saved.push(districtName);
-    localStorage.setItem('saved_district_chats', JSON.stringify(saved));
-    renderSavedDistrictChats();
+async function loadDistrictsFromDB() {
+  if (_districtCache) return _districtCache;
+  if (!supabaseClient) return [];
+  try {
+    const { data } = await supabaseClient
+      .from('profiles')
+      .select('district')
+      .not('district', 'is', null)
+      .neq('district', '');
+    const unique = [...new Set((data || []).map(r => r.district).filter(Boolean))].sort();
+    _districtCache = unique;
+    return unique;
+  } catch(e) {
+    console.error('loadDistrictsFromDB error:', e);
+    return [];
   }
 }
-function removeDistrictChat(districtName) {
-  const saved = getSavedDistrictChats().filter(d => d !== districtName);
-  localStorage.setItem('saved_district_chats', JSON.stringify(saved));
-  renderSavedDistrictChats();
-}
 
-function renderSavedDistrictChats() {
-  const container = document.getElementById('saved-district-chats');
-  if (!container) return;
-  const saved = getSavedDistrictChats();
-  const myDistrict = userLocationName || localStorage.getItem('df_user_geo') || '';
-  // Не показываем свой район — он уже отображается выше
-  const others = saved.filter(d => d !== myDistrict);
-  if (!others.length) { container.innerHTML = ''; return; }
-
-  container.innerHTML = others.map(district => `
-    <div class="ci" style="gap:14px;position:relative;" onclick="openNamedDistrictChat('${district.replace(/'/g,"\\'")}')">
-      <div class="avatar" style="width:52px;height:52px;font-size:20px;background:linear-gradient(135deg,#9C27B0,#673AB7);flex-shrink:0;">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-      </div>
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-          <span style="font-weight:800;font-size:15px;">📍 ${district}</span>
-          <button onclick="event.stopPropagation();removeDistrictChat('${district.replace(/'/g,"\\'")}');" 
-            style="background:none;border:none;color:var(--text-secondary);font-size:18px;cursor:pointer;padding:0 4px;line-height:1;">×</button>
-        </div>
-        <div style="font-size:13px;color:var(--text-secondary);">Чат района</div>
-      </div>
-    </div>
-  `).join('');
-}
-
-function searchDistricts(query) {
-  const input = document.getElementById('district-search');
+async function searchDistricts(query) {
   const results = document.getElementById('district-search-results');
   const clearBtn = document.getElementById('district-search-clear');
   if (!results) return;
-
   if (clearBtn) clearBtn.style.display = query ? '' : 'none';
+  if (!query || query.length < 1) { results.style.display = 'none'; return; }
 
-  if (!query || query.length < 1) {
-    results.style.display = 'none';
-    return;
-  }
+  results.innerHTML = '<div style="padding:12px 16px;color:var(--text-secondary);font-size:13px;">Ищем...</div>';
+  results.style.display = 'block';
 
+  const all = await loadDistrictsFromDB();
   const q = query.toLowerCase();
-  const matches = KNOWN_DISTRICTS.filter(d => d.toLowerCase().includes(q)).slice(0, 8);
+  const matches = all.filter(d => d.toLowerCase().includes(q)).slice(0, 10);
 
   if (!matches.length) {
-    results.innerHTML = `<div style="padding:14px 16px;color:var(--text-secondary);font-size:14px;">Район не найден — попробуйте другое название</div>`;
-    results.style.display = 'block';
+    // Если в БД не нашли — предлагаем открыть чат с любым введённым названием
+    results.innerHTML = `
+      <div onclick="selectDistrictFromSearch('${query.replace(/'/g,"\\'")}');"
+        style="padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;"
+        onmousedown="event.preventDefault()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <div>
+          <div style="font-size:14px;font-weight:700;">${query}</div>
+          <div style="font-size:12px;color:var(--text-secondary);">Открыть чат этого района</div>
+        </div>
+      </div>`;
     return;
   }
 
@@ -3368,19 +3368,15 @@ function searchDistricts(query) {
       <span style="font-size:14px;font-weight:600;">${district}</span>
     </div>
   `).join('');
-  results.style.display = 'block';
 }
 
 function selectDistrictFromSearch(district) {
-  // Скрываем результаты и очищаем поиск
   const input = document.getElementById('district-search');
   const results = document.getElementById('district-search-results');
   const clearBtn = document.getElementById('district-search-clear');
   if (input) input.value = '';
   if (results) results.style.display = 'none';
   if (clearBtn) clearBtn.style.display = 'none';
-
-  // Сохраняем и открываем чат
   saveDistrictChat(district);
   openNamedDistrictChat(district);
 }
@@ -3394,7 +3390,47 @@ function clearDistrictSearch() {
   if (clearBtn) clearBtn.style.display = 'none';
 }
 
-// Открыть чат конкретного района по имени
+// Сохранённые районные чаты
+function getSavedDistrictChats() {
+  try { return JSON.parse(localStorage.getItem('saved_district_chats') || '[]'); } catch(e) { return []; }
+}
+function saveDistrictChat(district) {
+  const saved = getSavedDistrictChats();
+  if (!saved.includes(district)) {
+    saved.push(district);
+    localStorage.setItem('saved_district_chats', JSON.stringify(saved));
+    renderSavedDistrictChats();
+  }
+}
+function removeDistrictChat(district) {
+  const saved = getSavedDistrictChats().filter(d => d !== district);
+  localStorage.setItem('saved_district_chats', JSON.stringify(saved));
+  renderSavedDistrictChats();
+}
+function renderSavedDistrictChats() {
+  const container = document.getElementById('saved-district-chats');
+  if (!container) return;
+  const myDistrict = userLocationName || localStorage.getItem('df_user_geo') || '';
+  const others = getSavedDistrictChats().filter(d => d !== myDistrict);
+  if (!others.length) { container.innerHTML = ''; return; }
+  container.innerHTML = others.map(district => `
+    <div class="ci" style="gap:14px;" onclick="openNamedDistrictChat('${district.replace(/'/g,"\\'")}')">
+      <div class="avatar" style="width:52px;height:52px;background:linear-gradient(135deg,#9C27B0,#673AB7);flex-shrink:0;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+          <span style="font-weight:800;font-size:15px;">📍 ${district}</span>
+          <button onclick="event.stopPropagation();removeDistrictChat('${district.replace(/'/g,"\\'")}');"
+            style="background:none;border:none;color:var(--text-secondary);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;">×</button>
+        </div>
+        <div style="font-size:13px;color:var(--text-secondary);">Чат района</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Открыть чат любого района по имени
 function openNamedDistrictChat(district) {
   currentChatType = 'district';
   chatNick = getChatNick();
