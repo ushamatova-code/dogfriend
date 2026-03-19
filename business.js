@@ -426,16 +426,15 @@ async function renderHomeSpecialists() {
       .from('businesses')
       .select('*')
       .eq('is_approved', true)
+      .eq('type', 'trainer')
       .order('rating', { ascending: false })
       .limit(8);
     if (error) throw error;
     
     if (!data || data.length === 0) {
-      row.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:13px;width:100%;">Пока нет специалистов</div>';
+      row.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-secondary);font-size:13px;width:100%;">Пока нет кинологов</div>';
       return;
     }
-    
-    const typeLabels = { trainer: 'Кинолог', clinic: 'Клиника', cafe: 'Кафе' };
     
     row.innerHTML = data.map(b => {
       const initials = b.name ? b.name.substring(0,2).toUpperCase() : '??';
@@ -444,23 +443,22 @@ async function renderHomeSpecialists() {
         : initials;
       
       return `
-        <div onclick='openBusinessProfile("${b.id}")' style="display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;flex-shrink:0;width:100px;">
+        <div onclick='openBusinessProfile("${b.id}")' style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;width:85px;">
           <div style="position:relative;">
-            <div class="avatar" style="width:72px;height:72px;font-size:22px;border:3px solid var(--white);box-shadow:0 3px 14px rgba(0,0,0,0.1);">${avatarHtml}</div>
-            <div style="position:absolute;bottom:0;right:0;width:20px;height:20px;background:var(--primary);border-radius:50%;border:2.5px solid var(--white);display:flex;align-items:center;justify-content:center;">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <div class="avatar" style="width:60px;height:60px;font-size:18px;border:2.5px solid var(--white);box-shadow:0 2px 10px rgba(0,0,0,0.08);">${avatarHtml}</div>
+            <div style="position:absolute;bottom:-1px;right:-1px;width:18px;height:18px;background:var(--primary);border-radius:50%;border:2px solid var(--white);display:flex;align-items:center;justify-content:center;">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
           </div>
           <div style="text-align:center;width:100%;">
-            <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${b.name}</div>
-            <div style="font-size:11px;color:var(--text-secondary);">${typeLabels[b.type] || b.type}</div>
-            <div style="font-size:12px;color:var(--secondary);font-weight:700;margin-top:2px;">⭐ ${b.rating}</div>
-            <div style="font-size:12px;color:var(--primary);font-weight:700;">${b.price_from || ''}</div>
+            <div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${b.name}</div>
+            <div style="font-size:11px;color:var(--text-secondary);">Кинолог</div>
+            <div style="font-size:11px;color:var(--secondary);font-weight:700;">⭐ ${b.rating}</div>
+            <div style="font-size:11px;color:var(--primary);font-weight:700;">${b.price_from || ''}</div>
           </div>
         </div>`;
     }).join('');
   } catch(e) {
     console.error('renderHomeSpecialists error:', e);
-    row.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:13px;">Ошибка загрузки</div>';
   }
 }
