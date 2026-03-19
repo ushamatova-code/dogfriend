@@ -10,7 +10,14 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   console.log('[SW] Activated');
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    self.clients.claim().then(() => {
+      // Сообщаем всем открытым вкладкам — есть обновление, перезагрузись
+      return self.clients.matchAll({ type: 'window' }).then(clients => {
+        clients.forEach(client => client.postMessage({ type: 'SW_UPDATED' }));
+      });
+    })
+  );
 });
 
 // ── Обработка входящих Push-уведомлений ──────────────────────────
