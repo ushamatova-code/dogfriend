@@ -3058,6 +3058,7 @@ function saveNotif(key,val){
   const _orig=window.nav;
   window.nav=function(id){
     _orig(id);
+    if(id==='home')      { if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); }
     if(id==='dogmap')    renderPlaces();
     if(id==='discounts') renderDiscounts();
     if(id==='lessons')   renderLessons();
@@ -3069,6 +3070,7 @@ function saveNotif(key,val){
 // Initial render on DOMContentLoaded (after main listener)
 window.addEventListener('load',()=>{
   setTimeout(()=>{
+    if(typeof renderHomeSpecialists==='function') renderHomeSpecialists();
     renderPlaces();renderDiscounts();renderLessons();renderPets();
   },200);
 });

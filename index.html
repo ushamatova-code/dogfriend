@@ -140,16 +140,17 @@
       </div>
     </div>
 
-    <!-- Impact card — charity -->
+    <!-- Impact card — charity (full width) -->
     <div style="padding:12px 16px 4px;">
-      <div class="ic" style="border-radius:24px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="#FF6B8A" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-          <div style="font-size:14px;font-weight:700;opacity:0.95;">Помощь приютам</div>
+      <div class="ic" style="border-radius:24px;padding:24px 20px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="#FF6B8A" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          <div style="font-size:15px;font-weight:700;opacity:0.95;">Помощь приютам</div>
         </div>
-        <div class="ic-amt">1 250 ₽</div>
-        <div style="font-size:12px;opacity:0.75;margin-bottom:10px;">50% комиссии с каждой оплаты идёт в приюты</div>
-        <div class="pbar"><div class="pfill" style="width:62%;"></div></div>
+        <div style="font-size:36px;font-weight:900;font-family:'Nunito',sans-serif;margin-bottom:4px;">1 250 ₽ собрано</div>
+        <div style="font-size:13px;opacity:0.8;margin-bottom:14px;">50% комиссии с каждой оплаты идёт в приюты</div>
+        <div class="pbar" style="height:8px;border-radius:4px;margin-bottom:8px;"><div class="pfill" style="width:62%;border-radius:4px;"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;opacity:0.7;"><span>1 250 ₽</span><span>Цель: 2 000 ₽</span></div>
       </div>
     </div>
 
@@ -240,7 +241,7 @@
 <!-- CATALOG -->
 <div class="screen" id="catalog">
   <div class="top-bar" style="padding-top:0;">
-    <button class="back-btn" onclick="back()">←</button>
+    <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
     <div class="tbar-title">Кинологи</div>
   </div>
   <div style="padding:0 16px 12px;flex-shrink:0;">
@@ -256,18 +257,29 @@
   </div>
   <div class="scroll" id="catalog-trainers-list"></div>
   <nav class="bnav">
-    <div class="ni" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
-    <div class="ni on"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
-    <div class="ni" onclick="nav('chatList')"><div class="ni-icon">💬</div><div class="ni-lbl">Чат</div></div>
-    <div class="ni" onclick="nav('health')"><div class="ni-icon">🏥</div><div class="ni-lbl">Здоровье</div></div>
-    <div class="ni" onclick="nav('profile')"><div class="ni-icon">👤</div><div class="ni-lbl">Профиль</div></div>
+    <div class="ni on" onclick="nav('home')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
+      <div class="ni-lbl">Главная</div>
+    </div>
+    <div class="ni" onclick="nav('catalog')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+      <div class="ni-lbl">Услуги</div>
+    </div>
+    <div class="ni" onclick="nav('chatList')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
+      <div class="ni-lbl">Сообщество</div>
+    </div>
+    <div class="ni" onclick="nav('profile')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <div class="ni-lbl">Профиль</div>
+    </div>
   </nav>
 </div>
 
 <!-- SPECIALIST (dynamic) -->
 <div class="screen" id="specialist">
   <div class="top-bar" style="padding-top:0;">
-    <button class="back-btn" onclick="back()">←</button>
+    <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
     <div class="tbar-title" id="spec-topbar-name"></div>
     <button class="back-btn" style="font-size:16px;">⋮</button>
   </div>
@@ -328,7 +340,7 @@
 
 <!-- BOOKING -->
 <div class="screen" id="booking">
-  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()">←</button><div class="tbar-title">Подтверждение</div></div>
+  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="tbar-title">Подтверждение</div></div>
   <div class="scroll" style="padding:0 16px;">
     <div class="card" style="margin:0 0 12px;">
       <h3 style="margin-bottom:14px;">📋 Детали заказа</h3>
@@ -376,16 +388,18 @@
 
 <!-- PROFILE -->
 <div class="screen" id="profile">
-  <div class="prof-hero">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+  <div class="prof-hero" style="border-radius:0 0 32px 32px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
       <span style="font-size:18px;font-weight:800;color:white;">Профиль</span>
-      <button class="back-btn" style="background:rgba(255,255,255,0.2);color:white;box-shadow:none;" onclick="nav('edit-profile');loadProfileForm()">✏️</button>
+      <button class="back-btn" style="background:rgba(255,255,255,0.15);color:white;box-shadow:none;border-radius:12px;" onclick="nav('edit-profile');loadProfileForm()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
     </div>
-    <div style="position:relative;width:80px;height:80px;margin:0 auto 12px;">
-      <div id="prof-avatar" class="avatar" style="width:80px;height:80px;font-size:32px;border:3px solid rgba(255,255,255,0.5);">АК</div>
+    <div style="position:relative;width:88px;height:88px;margin:0 auto 14px;">
+      <div id="prof-avatar" class="avatar" style="width:88px;height:88px;font-size:34px;border:3px solid rgba(255,255,255,0.4);box-shadow:0 4px 20px rgba(0,0,0,0.15);">АК</div>
     </div>
-    <div id="prof-name" style="font-size:20px;font-weight:800;color:white;margin-bottom:4px;">Анна Козлова</div>
-    <div style="display:flex;align-items:center;justify-content:center;"><span class="tag" style="background:rgba(255,255,255,0.2);color:white;font-size:12px;">🏅 Уровень 3 — Друг</span></div>
+    <div id="prof-name" style="font-size:22px;font-weight:900;color:white;margin-bottom:6px;font-family:'Nunito',sans-serif;">Анна Козлова</div>
+    <div style="display:flex;align-items:center;justify-content:center;margin-bottom:4px;"><span class="tag" style="background:rgba(255,255,255,0.15);color:white;font-size:12px;backdrop-filter:blur(4px);">🏅 Уровень 3 — Друг</span></div>
     <div class="imp-bar">
       <div class="imp-stat"><div class="imp-val">1 250 ₽</div><div class="imp-lbl">приютам</div></div>
       <div class="imp-sep"></div>
@@ -396,29 +410,40 @@
   </div>
   <div class="scroll">
     <div style="background:var(--white);border-radius:var(--radius);margin:16px 16px 12px;box-shadow:var(--shadow);overflow:hidden;">
-      <div class="prof-row" onclick="openModal('m-orders')"><div class="prof-row-icon">📋</div><div class="prof-row-lbl">Мои заказы</div><div class="badge" style="margin-right:8px;">12</div><div class="prof-row-arr">›</div></div>
-      <div class="prof-row" onclick="nav('payments')"><div class="prof-row-icon">💳</div><div class="prof-row-lbl">Способы оплаты</div><div class="prof-row-arr">›</div></div>
-      <div class="prof-row" onclick="nav('myPets')"><div class="prof-row-icon">🐕</div><div class="prof-row-lbl">Мои собаки</div><div class="prof-row-arr">›</div></div>
-      <div class="prof-row" onclick="nav('events')"><div class="prof-row-icon">📅</div><div class="prof-row-lbl">Мои события</div><div class="prof-row-arr">›</div></div>
-      <div class="prof-row" onclick="nav('notifSettings')"><div class="prof-row-icon">🔔</div><div class="prof-row-lbl">Уведомления</div><div class="prof-row-arr">›</div></div>
-      <div class="prof-row" onclick="nav('medRecords')"><div class="prof-row-icon">🏥</div><div class="prof-row-lbl">Медицинские записи</div><div class="prof-row-arr">›</div></div>
-      <div class="prof-row" onclick="nav('lessons')"><div class="prof-row-icon">🎓</div><div class="prof-row-lbl">Уроки и тренировки</div><div class="badge" style="margin-right:8px;background:#7ED321;">FREE</div><div class="prof-row-arr">›</div></div>
-      <div class="prof-row" id="biz-mgmt-row" onclick="openBusinessDashboard()" style="display:none;"><div class="prof-row-icon">💼</div><div class="prof-row-lbl">Управление бизнесом</div><div class="prof-row-arr">›</div></div>
-      <div class="prof-row" onclick="localStorage.removeItem('df_registered');localStorage.removeItem('df_phone');nav('onb1')" style="border-bottom:none;"><div class="prof-row-icon">🚪</div><div class="prof-row-lbl" style="color:var(--error);">Выйти</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="openModal('m-orders')"><div class="prof-row-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div class="prof-row-lbl">Мои заказы</div><div class="badge" style="margin-right:8px;">12</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="nav('payments')"><div class="prof-row-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><div class="prof-row-lbl">Способы оплаты</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="nav('myPets')"><div class="prof-row-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div><div class="prof-row-lbl">Мои собаки</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="nav('events')"><div class="prof-row-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="prof-row-lbl">Мои события</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="nav('notifSettings')"><div class="prof-row-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div><div class="prof-row-lbl">Уведомления</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="nav('medRecords')"><div class="prof-row-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><div class="prof-row-lbl">Медицинские записи</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="nav('lessons')"><div class="prof-row-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg></div><div class="prof-row-lbl">Уроки и тренировки</div><div class="badge" style="margin-right:8px;background:#7ED321;">FREE</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" id="biz-mgmt-row" onclick="openBusinessDashboard()" style="display:none;"><div class="prof-row-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg></div><div class="prof-row-lbl">Управление бизнесом</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="localStorage.removeItem('df_registered');localStorage.removeItem('df_phone');nav('onb1')" style="border-bottom:none;"><div class="prof-row-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--error)" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div><div class="prof-row-lbl" style="color:var(--error);">Выйти</div><div class="prof-row-arr">›</div></div>
     </div>
   </div>
   <nav class="bnav">
-    <div class="ni" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
-    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
-    <div class="ni" onclick="nav('chatList')"><div class="ni-icon">💬</div><div class="ni-lbl">Чат</div></div>
-    <div class="ni" onclick="nav('health')"><div class="ni-icon">🏥</div><div class="ni-lbl">Здоровье</div></div>
-    <div class="ni on"><div class="ni-icon">👤</div><div class="ni-lbl">Профиль</div></div>
+    <div class="ni on" onclick="nav('home')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
+      <div class="ni-lbl">Главная</div>
+    </div>
+    <div class="ni" onclick="nav('catalog')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+      <div class="ni-lbl">Услуги</div>
+    </div>
+    <div class="ni" onclick="nav('chatList')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
+      <div class="ni-lbl">Сообщество</div>
+    </div>
+    <div class="ni" onclick="nav('profile')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <div class="ni-lbl">Профиль</div>
+    </div>
   </nav>
 </div>
 
 <!-- EDIT PROFILE -->
 <div class="screen" id="edit-profile">
-  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()">←</button><div class="tbar-title">Редактировать профиль</div></div>
+  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="tbar-title">Редактировать профиль</div></div>
   <div class="scroll" style="padding:0 16px;">
     <div style="text-align:center;padding:20px 0 24px;">
       <div id="ep-avatar" class="avatar" onclick="document.getElementById('avatar-input').click()" style="width:80px;height:80px;font-size:32px;margin:0 auto 12px;cursor:pointer;">👤</div>
@@ -445,7 +470,10 @@
 
 <!-- HEALTH -->
 <div class="screen" id="health">
-  <div class="ghdr"><h2 style="margin-bottom:4px;">🏥 Здоровье</h2><p style="font-size:13px;">Специалисты и клиники Москвы</p></div>
+  <div style="padding:calc(16px + env(safe-area-inset-top, 0px)) 20px 16px;background:var(--white);">
+      <h1 style="margin-bottom:4px;">Здоровье</h1>
+      <p style="font-size:14px;color:var(--text-secondary);">Специалисты и клиники рядом с вами</p>
+    </div>
   <div class="chips" id="health-chips" style="padding-top:12px;flex-shrink:0;">
     <div class="chip on" onclick="filterHealth('Все',this)">Все</div>
     <div class="chip" onclick="filterHealth('Терапевт',this)">🩺 Терапевты</div>
@@ -466,17 +494,28 @@
     <div style="height:16px;"></div>
   </div>
   <nav class="bnav">
-    <div class="ni" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
-    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
-    <div class="ni" onclick="nav('chatList')"><div class="ni-icon">💬</div><div class="ni-lbl">Чат</div></div>
-    <div class="ni on"><div class="ni-icon">🏥</div><div class="ni-lbl">Здоровье</div></div>
-    <div class="ni" onclick="nav('profile')"><div class="ni-icon">👤</div><div class="ni-lbl">Профиль</div></div>
+    <div class="ni on" onclick="nav('home')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
+      <div class="ni-lbl">Главная</div>
+    </div>
+    <div class="ni" onclick="nav('catalog')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+      <div class="ni-lbl">Услуги</div>
+    </div>
+    <div class="ni" onclick="nav('chatList')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
+      <div class="ni-lbl">Сообщество</div>
+    </div>
+    <div class="ni" onclick="nav('profile')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <div class="ni-lbl">Профиль</div>
+    </div>
   </nav>
 </div>
 
 <!-- DISCOUNTS -->
 <div class="screen" id="discounts">
-  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()">←</button><div class="tbar-title">🎁 Скидки и партнёры</div></div>
+  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="tbar-title">🎁 Скидки и партнёры</div></div>
   <div class="chips" style="padding-top:8px;flex-shrink:0;">
     <div class="chip on" onclick="filterDiscounts('Все',this)">Все</div>
     <div class="chip" onclick="filterDiscounts('Груминг',this)">✂️ Груминг</div>
@@ -494,17 +533,28 @@
     <div style="height:16px;"></div>
   </div>
   <nav class="bnav">
-    <div class="ni" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
-    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
-    <div class="ni" onclick="nav('chatList')"><div class="ni-icon">💬</div><div class="ni-lbl">Чат</div></div>
-    <div class="ni" onclick="nav('health')"><div class="ni-icon">🏥</div><div class="ni-lbl">Здоровье</div></div>
-    <div class="ni" onclick="nav('profile')"><div class="ni-icon">👤</div><div class="ni-lbl">Профиль</div></div>
+    <div class="ni on" onclick="nav('home')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
+      <div class="ni-lbl">Главная</div>
+    </div>
+    <div class="ni" onclick="nav('catalog')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+      <div class="ni-lbl">Услуги</div>
+    </div>
+    <div class="ni" onclick="nav('chatList')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
+      <div class="ni-lbl">Сообщество</div>
+    </div>
+    <div class="ni" onclick="nav('profile')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <div class="ni-lbl">Профиль</div>
+    </div>
   </nav>
 </div>
 
 <!-- BREEDS -->
 <div class="screen" id="breeds">
-  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()">←</button><div class="tbar-title">🐕 Сообщества по породам</div></div>
+  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="tbar-title">🐕 Сообщества по породам</div></div>
   <div class="scroll">
     <div class="sec-hd"><div class="sec-t">🔥 Популярные</div></div>
     <div class="scroll-row">
@@ -524,17 +574,28 @@
     <div style="height:16px;"></div>
   </div>
   <nav class="bnav">
-    <div class="ni" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
-    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
-    <div class="ni on" onclick="nav('chatList')"><div class="ni-icon">💬</div><div class="ni-lbl">Чат</div></div>
-    <div class="ni" onclick="nav('health')"><div class="ni-icon">🏥</div><div class="ni-lbl">Здоровье</div></div>
-    <div class="ni" onclick="nav('profile')"><div class="ni-icon">👤</div><div class="ni-lbl">Профиль</div></div>
+    <div class="ni on" onclick="nav('home')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
+      <div class="ni-lbl">Главная</div>
+    </div>
+    <div class="ni" onclick="nav('catalog')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+      <div class="ni-lbl">Услуги</div>
+    </div>
+    <div class="ni" onclick="nav('chatList')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
+      <div class="ni-lbl">Сообщество</div>
+    </div>
+    <div class="ni" onclick="nav('profile')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <div class="ni-lbl">Профиль</div>
+    </div>
   </nav>
 </div>
 
 <!-- DOG MAP -->
 <div class="screen" id="dogmap">
-  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()">←</button><div class="tbar-title">📍 Dog-friendly места</div></div>
+  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="tbar-title">📍 Dog-friendly места</div></div>
   <div class="chips" style="padding-top:8px;flex-shrink:0;">
     <div class="chip on" onclick="filterPlaces('Все',this)">Все</div>
     <div class="chip" onclick="filterPlaces('Кафе',this)">☕ Кафе</div>
@@ -552,11 +613,22 @@
     <div style="height:16px;"></div>
   </div>
   <nav class="bnav">
-    <div class="ni" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
-    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
-    <div class="ni" onclick="nav('chatList')"><div class="ni-icon">💬</div><div class="ni-lbl">Чат</div></div>
-    <div class="ni" onclick="nav('health')"><div class="ni-icon">🏥</div><div class="ni-lbl">Здоровье</div></div>
-    <div class="ni" onclick="nav('profile')"><div class="ni-icon">👤</div><div class="ni-lbl">Профиль</div></div>
+    <div class="ni on" onclick="nav('home')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
+      <div class="ni-lbl">Главная</div>
+    </div>
+    <div class="ni" onclick="nav('catalog')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+      <div class="ni-lbl">Услуги</div>
+    </div>
+    <div class="ni" onclick="nav('chatList')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
+      <div class="ni-lbl">Сообщество</div>
+    </div>
+    <div class="ni" onclick="nav('profile')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <div class="ni-lbl">Профиль</div>
+    </div>
   </nav>
 </div>
 
@@ -572,11 +644,22 @@
     <div style="height:16px;"></div>
   </div>
   <nav class="bnav">
-    <div class="ni" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
-    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
-    <div class="ni on" onclick="nav('chatList')"><div class="ni-icon">💬</div><div class="ni-lbl">Чат</div></div>
-    <div class="ni" onclick="nav('health')"><div class="ni-icon">🏥</div><div class="ni-lbl">Здоровье</div></div>
-    <div class="ni" onclick="nav('profile')"><div class="ni-icon">👤</div><div class="ni-lbl">Профиль</div></div>
+    <div class="ni on" onclick="nav('home')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
+      <div class="ni-lbl">Главная</div>
+    </div>
+    <div class="ni" onclick="nav('catalog')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+      <div class="ni-lbl">Услуги</div>
+    </div>
+    <div class="ni" onclick="nav('chatList')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
+      <div class="ni-lbl">Сообщество</div>
+    </div>
+    <div class="ni" onclick="nav('profile')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <div class="ni-lbl">Профиль</div>
+    </div>
   </nav>
 </div>
 
@@ -649,9 +732,9 @@
   </div>
 </div>
 <div class="screen" id="chatList">
-  <div class="ghdr" style="padding-bottom:20px;">
-    <h2 style="color:white;">💬 Чат</h2>
-    <p style="color:rgba(255,255,255,0.8);font-size:13px;margin-top:4px;">Общайся со всеми владельцами</p>
+  <div style="padding:calc(16px + env(safe-area-inset-top, 0px)) 20px 16px;background:var(--white);">
+    <h1 style="margin-bottom:4px;">Сообщество</h1>
+    <p style="font-size:14px;color:var(--text-secondary);">Чаты районов и специалистов</p>
   </div>
   <div class="scroll">
     <div class="ci" onclick="openPublicChat()" style="gap:14px;">
@@ -676,11 +759,22 @@
     </div>
   </div>
   <nav class="bnav">
-    <div class="ni" onclick="nav('home')"><div class="ni-icon">🏠</div><div class="ni-lbl">Главная</div></div>
-    <div class="ni" onclick="nav('catalog')"><div class="ni-icon">🎓</div><div class="ni-lbl">Услуги</div></div>
-    <div class="ni on"><div class="ni-icon">💬</div><div class="ni-lbl" style="color:var(--primary);">Чат</div></div>
-    <div class="ni" onclick="nav('health')"><div class="ni-icon">🏥</div><div class="ni-lbl">Здоровье</div></div>
-    <div class="ni" onclick="nav('profile')"><div class="ni-icon">👤</div><div class="ni-lbl">Профиль</div></div>
+    <div class="ni on" onclick="nav('home')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
+      <div class="ni-lbl">Главная</div>
+    </div>
+    <div class="ni" onclick="nav('catalog')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+      <div class="ni-lbl">Услуги</div>
+    </div>
+    <div class="ni" onclick="nav('chatList')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
+      <div class="ni-lbl">Сообщество</div>
+    </div>
+    <div class="ni" onclick="nav('profile')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <div class="ni-lbl">Профиль</div>
+    </div>
   </nav>
 </div>
 
@@ -688,7 +782,7 @@
 <!-- PRIVATE CHAT -->
 <div class="screen" id="privateChat" style="display:none;position:fixed;inset:0;flex-direction:column;background:var(--bg);">
   <div class="top-bar" style="padding-top:0;">
-    <button class="back-btn" onclick="back()">←</button>
+    <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
     <div style="flex:1;display:flex;align-items:center;gap:12px;">
       <div class="avatar" id="pc-avatar" style="width:40px;height:40px;font-size:16px;"></div>
       <div>
@@ -708,7 +802,7 @@
 <div class="screen" id="chatConv" style="display:none;position:fixed;inset:0;flex-direction:column;background:var(--bg);">
   <!-- Fixed header -->
   <div style="background:var(--white);padding:12px 16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;flex-shrink:0;z-index:10;">
-    <button class="back-btn" onclick="nav('chatList')">←</button>
+    <button class="back-btn" onclick="nav('chatList')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
     <div class="avatar" id="chat-conv-av" style="width:40px;height:40px;font-size:18px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);">🐾</div>
     <div style="flex:1;min-width:0;">
       <div id="chat-conv-name" style="font-weight:800;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
@@ -739,7 +833,7 @@
 
 <!-- PAYMENTS -->
 <div class="screen" id="payments">
-  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()">←</button><div class="tbar-title">💳 Способы оплаты</div></div>
+  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="tbar-title">💳 Способы оплаты</div></div>
   <div class="scroll" style="padding:0 16px;">
     <div class="card" style="margin:12px 0 12px;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><span style="font-size:22px;">💳</span><h3>Привязанные карты</h3></div>
@@ -799,7 +893,7 @@
 <!-- MY PETS -->
 <div class="screen" id="myPets">
   <div class="top-bar" style="padding-top:0;">
-    <button class="back-btn" onclick="back()">←</button>
+    <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
     <div class="tbar-title">🐕 Мои питомцы</div>
     <button class="btn btn-p" style="width:auto;height:36px;padding:0 14px;font-size:13px;border-radius:10px;" onclick="openModal('m-add-pet')">+ Добавить</button>
   </div>
@@ -808,7 +902,7 @@
 
 <!-- NOTIF SETTINGS -->
 <div class="screen" id="notifSettings">
-  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()">←</button><div class="tbar-title">🔔 Уведомления</div></div>
+  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="tbar-title">🔔 Уведомления</div></div>
   <div class="scroll" style="padding:0 16px;">
     <div class="card" style="margin:12px 0 12px;">
       <h3 style="margin-bottom:14px;">Общие уведомления</h3>
@@ -839,7 +933,7 @@
 <!-- MEDICAL RECORDS -->
 <div class="screen" id="medRecords">
   <div class="top-bar" style="padding-top:0;">
-    <button class="back-btn" onclick="back()">←</button>
+    <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
     <div class="tbar-title">🏥 Медицинские записи</div>
     <button class="btn btn-p" style="width:auto;height:36px;padding:0 14px;font-size:13px;border-radius:10px;" onclick="openModal('m-add-med')">+ Добавить</button>
   </div>
@@ -849,7 +943,7 @@
 <!-- LESSONS -->
 <div class="screen" id="lessons">
   <div class="top-bar" style="padding-top:0;">
-    <button class="back-btn" onclick="back()">←</button>
+    <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
     <div class="tbar-title">🎓 Уроки и тренировки</div>
     <div style="width:40px;"></div>
   </div>
@@ -968,7 +1062,7 @@
 <!-- BUSINESS TYPE SELECT -->
 <div class="screen" id="businessType">
   <div class="top-bar">
-    <button class="back-btn" onclick="back()">←</button>
+    <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
     <div class="tbar-title">💼 Регистрация бизнеса</div>
     <div style="width:40px;"></div>
   </div>
@@ -995,7 +1089,7 @@
 <!-- BUSINESS FORM -->
 <div class="screen" id="businessForm">
   <div class="top-bar">
-    <button class="back-btn" onclick="back()">←</button>
+    <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
     <div class="tbar-title" id="bf-title">Анкета кинолога</div>
     <div style="width:40px;"></div>
   </div>
@@ -1033,7 +1127,7 @@
 <!-- ═══════════════════════════════════════════════════════════ -->
 <div class="screen" id="bizDashboard">
   <div class="top-bar" style="padding-top:0;">
-    <button class="back-btn" onclick="back()">←</button>
+    <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
     <div class="tbar-title" id="biz-dash-title">💼 Мой бизнес</div>
     <button class="btn btn-sm btn-p" id="biz-dash-edit-btn" onclick="openBizEdit()" style="height:36px;padding:0 14px;font-size:13px;">✏️ Изменить</button>
   </div>
@@ -1045,7 +1139,7 @@
 <!-- BUSINESS EDIT FORM -->
 <div class="screen" id="bizEdit">
   <div class="top-bar" style="padding-top:0;">
-    <button class="back-btn" onclick="back()">←</button>
+    <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
     <div class="tbar-title" id="biz-edit-title">Редактировать</div>
     <div style="width:40px;"></div>
   </div>
@@ -1066,7 +1160,7 @@
 <!-- EVENTS LIST -->
 <div class="screen" id="events">
   <div class="top-bar" style="padding-top:0;">
-    <button class="back-btn" onclick="back()">←</button>
+    <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
     <div class="tbar-title">📅 События</div>
     <button class="btn btn-sm btn-p" onclick="nav('createEvent')" style="height:36px;padding:0 14px;font-size:13px;">+ Создать</button>
   </div>
@@ -1087,7 +1181,7 @@
 <!-- EVENT DETAIL -->
 <div class="screen" id="eventDetail">
   <div class="top-bar" style="padding-top:0;">
-    <button class="back-btn" onclick="back()">←</button>
+    <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
     <div class="tbar-title" id="ev-topbar-title">Событие</div>
     <button class="back-btn" id="ev-edit-btn" style="display:none;" onclick="editCurrentEvent()">✏️</button>
   </div>
@@ -1163,7 +1257,7 @@
 <!-- CREATE EVENT -->
 <div class="screen" id="createEvent">
   <div class="top-bar" style="padding-top:0;">
-    <button class="back-btn" onclick="back()">←</button>
+    <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
     <div class="tbar-title">Создать событие</div>
     <div style="width:40px;"></div>
   </div>
