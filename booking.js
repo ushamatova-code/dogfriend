@@ -75,25 +75,23 @@ async function startSBPPayment() {
   const amount = parseInt(priceStr.replace(/[^0-9]/g, '')) || 0;
   const bizName = biz.name || biz.business_name || 'Специалист';
 
-  // Сначала сохраняем заказ со статусом pending_payment
-  await createBookingRecord('pending_payment');
-
-  if (phone && amount) {
-    // СБП диплинк — открывает банковское приложение
-    const sbpUrl = `https://qr.nspk.ru/pay?phone=%2B${phone}&amount=${amount * 100}&purpose=${encodeURIComponent(svc.name + ' — ' + bizName)}`;
-    window.open(sbpUrl, '_blank');
-  } else if (phone) {
-    // Нет суммы — просто показываем номер
-    showToast('Переведите на номер: ' + formatPhone(phone), '#4A90D9');
-  } else {
-    showToast('Номер СБП не указан. Уточните у специалиста.', '#888');
-  }
-
-  // Показываем кнопку «Я оплатил»
+  // Показываем кнопку «Я оплатил» СРАЗУ
   const payBtn = document.getElementById('book-pay-btn');
   const paidBtn = document.getElementById('book-paid-btn');
   if (payBtn) payBtn.style.display = 'none';
   if (paidBtn) paidBtn.style.display = '';
+
+  // Открываем банк через location.href — работает на мобильном без блокировки
+  if (phone) {
+    const normalizedPhone = phone.startsWith('7') ? phone : '7' + phone.slice(-10);
+    const sbpUrl = `https://qr.nspk.ru/pay?phone=%2B${normalizedPhone}&amount=${amount * 100}&purpose=${encodeURIComponent(svc.name + ' — ' + bizName)}`;
+    setTimeout(() => { window.location.href = sbpUrl; }, 100);
+  } else {
+    showToast('Номер СБП не указан — уточните у специалиста', '#888');
+  }
+
+  // Сохраняем заказ в фоне
+  await createBookingRecord('pending_payment');
 }
 
 // Шаг 2 — пользователь подтверждает что оплатил
