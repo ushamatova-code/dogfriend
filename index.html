@@ -742,21 +742,18 @@
   </div>
 </div>
 <div class="screen" id="chatList">
-  <div style="padding:calc(16px + env(safe-area-inset-top, 0px)) 20px 16px;background:var(--white);">
+  <div style="padding:calc(16px + env(safe-area-inset-top, 0px)) 20px 12px;background:var(--white);">
     <h1 style="margin-bottom:4px;">Сообщество</h1>
-    <p style="font-size:14px;color:var(--text-secondary);">Чаты районов и специалистов</p>
+    <p style="font-size:14px;color:var(--text-secondary);margin-bottom:14px;">Чаты районов и специалистов</p>
+    <!-- Search inside header -->
+    <div class="search-bar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="si" placeholder="Поиск по районам..." readonly>
+    </div>
   </div>
   <div class="scroll">
-    <!-- Search -->
-    <div style="padding:0 16px 12px;">
-      <div class="search-bar">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input class="si" placeholder="Поиск по районам..." readonly>
-      </div>
-    </div>
-    
-    <!-- Tabs: Districts / Events -->
-    <div style="display:flex;gap:0;padding:0 16px 14px;">
+    <!-- Tabs: Districts / DMs -->
+    <div style="display:flex;gap:0;padding:8px 16px 14px;">
       <div id="comm-tab-districts" onclick="switchCommTab('districts')" style="flex:1;text-align:center;padding:10px;font-size:14px;font-weight:700;color:var(--primary);border-bottom:2.5px solid var(--primary);cursor:pointer;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:4px;"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
         Чаты районов
@@ -820,19 +817,32 @@
 <div class="screen" id="privateChat" style="display:none;position:fixed;inset:0;flex-direction:column;background:var(--bg);">
   <div class="top-bar" style="padding-top:0;">
     <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-    <div style="flex:1;display:flex;align-items:center;gap:12px;">
+    <div style="flex:1;display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="openUserProfile()">
       <div class="avatar" id="pc-avatar" style="width:40px;height:40px;font-size:16px;"></div>
       <div>
         <div style="font-weight:800;font-size:15px;" id="pc-name">Специалист</div>
         <div id="pc-online" style="font-size:11px;color:var(--text-secondary);"><span style="color:#34C759;">●</span> онлайн</div>
       </div>
     </div>
-    <button class="back-btn" style="font-size:16px;">⋮</button>
+    <button class="back-btn" onclick="openUserProfile()" style="font-size:16px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+    </button>
   </div>
   <div class="scroll" id="pc-messages" style="padding:12px 16px;display:flex;flex-direction:column;gap:12px;"></div>
   <div style="padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));background:var(--white);border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;">
     <textarea class="input" id="pc-input" placeholder="Напишите сообщение..." style="flex:1;min-height:44px;max-height:100px;padding:10px 12px;resize:vertical;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
     <button class="btn btn-p" style="width:44px;height:44px;padding:0;flex-shrink:0;" onclick="sendPrivateMessage()">➤</button>
+  </div>
+</div>
+
+<!-- USER PROFILE MODAL (from chat) -->
+<div class="modal-ov" id="m-user-profile" onclick="closeModal('m-user-profile')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:85%;overflow-y:auto;">
+    <div class="mhandle"></div>
+    <div id="m-user-profile-body" style="text-align:center;padding:8px 0 16px;">
+      <!-- Заполняется из JS -->
+    </div>
+    <button class="btn btn-g" onclick="closeModal('m-user-profile')">Закрыть</button>
   </div>
 </div>
 
