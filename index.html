@@ -140,22 +140,20 @@
       </div>
     </div>
 
-    <!-- Impact card — charity (full width, compact) -->
-    <div style="padding:10px 16px 4px;">
-      <div class="ic" style="border-radius:20px;padding:16px 18px;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="#FF6B8A" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-          <div style="font-size:13px;font-weight:700;opacity:0.9;">Помощь приютам</div>
-        </div>
-        <div style="font-size:26px;font-weight:900;font-family:'Nunito',sans-serif;margin-bottom:2px;">1 250 ₽ собрано</div>
-        <div style="font-size:12px;opacity:0.75;margin-bottom:10px;">50% комиссии с каждой оплаты идёт в приюты</div>
-        <div class="pbar" style="height:5px;"><div class="pfill" style="width:62%;"></div></div>
+    <!-- Impact card — charity (edge to edge) -->
+    <div class="ic" style="border-radius:20px;padding:16px 18px;margin:10px 16px 4px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#FF6B8A" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        <div style="font-size:13px;font-weight:700;opacity:0.9;">Помощь приютам</div>
       </div>
+      <div style="font-size:26px;font-weight:900;font-family:'Nunito',sans-serif;margin-bottom:2px;">1 250 ₽ собрано</div>
+      <div style="font-size:12px;opacity:0.75;margin-bottom:10px;">50% комиссии с каждой оплаты идёт в приюты</div>
+      <div class="pbar" style="height:5px;"><div class="pfill" style="width:62%;"></div></div>
     </div>
 
-    <!-- Quick Actions — compact -->
+    <!-- Quick Actions — compact, 5 items -->
     <div class="sec-hd" style="padding:12px 16px 6px;"><div class="sec-t" style="font-size:16px;">Услуги</div></div>
-    <div class="scroll-row" style="padding-bottom:12px;gap:12px;">
+    <div style="display:flex;justify-content:space-between;padding:0 16px 12px;">
       <div class="qa" onclick="nav('catalog')">
         <div class="qa-icon" style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,#EEF6FF,#DBEAFE);">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4A90D9" stroke-width="2" stroke-linecap="round"><path d="M12 14l9-5-9-5-9 5 9 5z"/><path d="M12 14l6.16-3.42A12.08 12.08 0 0121 17.58C18.28 20.43 15.28 22 12 22c-3.28 0-6.28-1.57-9-4.42a12.08 12.08 0 012.84-6.58L12 14z"/></svg>
@@ -173,6 +171,12 @@
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5A623" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
         </div>
         <div class="qa-lbl">Соседи</div>
+      </div>
+      <div class="qa" onclick="nav('dogmap')">
+        <div class="qa-icon" style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,#FFF0F0,#FECDD3);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <div class="qa-lbl">Места</div>
       </div>
       <div class="qa" onclick="nav('events')">
         <div class="qa-icon" style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,#FFF0F3,#FCE7F3);">
