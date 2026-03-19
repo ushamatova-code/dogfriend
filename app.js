@@ -262,10 +262,17 @@ function loadProfile() {
 }
 
 async function loadProfileStats() {
-  // Питомцы — из localStorage
-  const pets = JSON.parse(localStorage.getItem('df_pets') || '[]');
+  // Питомцы — из localStorage, с учётом seed из профиля
+  let pets = JSON.parse(localStorage.getItem('df_pets') || '[]');
+  if (!pets.length) {
+    const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
+    if (p.dogname) pets = [{ name: p.dogname }];
+  }
   const petsStat = document.getElementById('prof-stat-pets');
   if (petsStat) petsStat.textContent = pets.length;
+  
+  let ordersCount = 0;
+  let charityAmount = 0;
   
   // Заказы и приюты — из Supabase если есть
   if (supabaseClient && currentUser) {
@@ -274,15 +281,27 @@ async function loadProfileStats() {
         .from('bookings')
         .select('id')
         .eq('user_id', currentUser.id);
-      const ordersStat = document.getElementById('prof-stat-orders');
-      if (ordersStat) ordersStat.textContent = (bookings || []).length;
-      
-      // Сумма приютам — примерно 5% от каждого заказа
-      const charityStat = document.getElementById('prof-stat-charity');
-      if (charityStat) charityStat.textContent = ((bookings || []).length * 150) + ' ₽';
+      ordersCount = (bookings || []).length;
+      charityAmount = ordersCount * 150;
     } catch(e) {
       console.warn('Profile stats error:', e);
     }
+  }
+  
+  const ordersStat = document.getElementById('prof-stat-orders');
+  if (ordersStat) ordersStat.textContent = ordersCount;
+  
+  const charityStat = document.getElementById('prof-stat-charity');
+  if (charityStat) charityStat.textContent = charityAmount.toLocaleString('ru-RU') + ' ₽';
+  
+  // Также обновляем плашку на главной
+  const homeCharity = document.getElementById('home-charity-amount');
+  if (homeCharity) homeCharity.textContent = charityAmount.toLocaleString('ru-RU') + ' ₽ собрано';
+  
+  const homeCharityBar = document.getElementById('home-charity-bar');
+  if (homeCharityBar) {
+    const pct = Math.min(100, (charityAmount / 2000) * 100);
+    homeCharityBar.style.width = pct + '%';
   }
 }
 
