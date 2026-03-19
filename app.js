@@ -3250,20 +3250,34 @@ function switchCommTab(tab) {
 // ════════════════════════════════════════════════════════════
 async function openUserProfile() {
   const userId = currentPrivateChatId;
-  if (!userId || !supabaseClient) return;
-  
+  console.log('openUserProfile called, userId:', userId);
+  if (!userId) { showToast('Профиль недоступен', '#888'); return; }
+
   const body = document.getElementById('m-user-profile-body');
   if (!body) return;
-  
-  body.innerHTML = '<div style="padding:20px;color:var(--text-secondary);">Загружаем профиль...</div>';
+
+  // Сразу показываем данные из contactBook пока загружается Supabase
+  const cachedContact = contactBook[userId] || {};
+  const cachedName = cachedContact.name || 'Пользователь';
+  const cachedInitials = cachedContact.initials || cachedName.substring(0,2).toUpperCase();
+  const cachedGrad = cachedContact.grad || 'linear-gradient(135deg,#4A90D9,#7B5EA7)';
+  body.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:20px;">
+      <div class="avatar" style="width:80px;height:80px;font-size:28px;box-shadow:0 4px 16px rgba(0,0,0,0.1);overflow:hidden;background:${cachedGrad};color:white;font-weight:700;">${cachedInitials}</div>
+      <div style="font-size:20px;font-weight:900;font-family:'Nunito',sans-serif;">${cachedName}</div>
+    </div>
+    <div style="color:var(--text-secondary);font-size:13px;margin-bottom:12px;">Загружаем данные...</div>
+  `;
   openModal('m-user-profile');
+
+  if (!supabaseClient) return;
   
   try {
     // Загружаем профиль пользователя
     const { data: profile } = await supabaseClient
       .from('profiles')
       .select('*')
-      .eq('user_id', userId)
+      .eq('id', userId)
       .single();
     
     // Загружаем питомцев
