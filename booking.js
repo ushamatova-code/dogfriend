@@ -56,6 +56,12 @@ function populateBookingScreen() {
   if (paidBtn) paidBtn.style.display = 'none';
 }
 
+function copyPhone(phone) {
+  const formatted = '+' + phone;
+  navigator.clipboard?.writeText(formatted).catch(() => {});
+  showToast('Номер скопирован: ' + formatted, '#34C759');
+}
+
 function formatPhone(phone) {
   const digits = phone.replace(/\D/g, '');
   if (digits.length === 11) {
@@ -81,11 +87,30 @@ async function startSBPPayment() {
   if (payBtn) payBtn.style.display = 'none';
   if (paidBtn) paidBtn.style.display = '';
 
-  // Открываем банк через location.href — работает на мобильном без блокировки
+  // Открываем банк — показываем выбор способа
   if (phone) {
     const normalizedPhone = phone.startsWith('7') ? phone : '7' + phone.slice(-10);
-    const sbpUrl = `https://qr.nspk.ru/pay?phone=%2B${normalizedPhone}&amount=${amount * 100}&purpose=${encodeURIComponent(svc.name + ' — ' + bizName)}`;
-    setTimeout(() => { window.location.href = sbpUrl; }, 100);
+    const purpose = encodeURIComponent(svc.name + ' — ' + bizName);
+    
+    // Создаём кнопку выбора банка прямо на экране
+    if (paidBtn) {
+      paidBtn.insertAdjacentHTML('beforebegin', `
+        <div id="sbp-banks" style="background:var(--bg);border-radius:14px;padding:12px;margin-bottom:4px;">
+          <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text-secondary);">Выберите банк для оплаты:</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <a href="bank100000000004://qr.nspk.ru/pay?phone=%2B${normalizedPhone}&amount=${amount * 100}&purpose=${purpose}" 
+               class="btn btn-g" style="text-decoration:none;text-align:center;">Сбербанк</a>
+            <a href="bank100000000005://qr.nspk.ru/pay?phone=%2B${normalizedPhone}&amount=${amount * 100}&purpose=${purpose}"
+               class="btn btn-g" style="text-decoration:none;text-align:center;">Тинькофф</a>
+            <a href="bank100000000008://qr.nspk.ru/pay?phone=%2B${normalizedPhone}&amount=${amount * 100}&purpose=${purpose}"
+               class="btn btn-g" style="text-decoration:none;text-align:center;">Альфа-Банк</a>
+            <a href="bank100000000007://qr.nspk.ru/pay?phone=%2B${normalizedPhone}&amount=${amount * 100}&purpose=${purpose}"
+               class="btn btn-g" style="text-decoration:none;text-align:center;">ВТБ</a>
+            <button class="btn btn-g" onclick="copyPhone('${normalizedPhone}')">📋 Скопировать номер</button>
+          </div>
+        </div>
+      `);
+    }
   } else {
     showToast('Номер СБП не указан — уточните у специалиста', '#888');
   }
