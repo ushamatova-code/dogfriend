@@ -3,6 +3,23 @@
 // ============================================================
 const histStack = [];
 
+// Карта: какой экран → какой таб подсвечивать (индекс 0-3)
+const SCREEN_TO_TAB = {
+  home: 0, catalog: 1, specialist: 1, health: 1, dogmap: 1, discounts: 1, lessons: 1,
+  chatList: 2, chatConv: 2, privateChat: 2,
+  profile: 3, myPets: 3, medRecords: 3, editProfile: 3
+};
+
+function updateBottomNav(screenId) {
+  const tabIndex = SCREEN_TO_TAB[screenId] ?? -1;
+  // Обновляем все .bnav на странице
+  document.querySelectorAll('.bnav').forEach(nav => {
+    nav.querySelectorAll('.ni').forEach((ni, i) => {
+      ni.classList.toggle('on', i === tabIndex);
+    });
+  });
+}
+
 function nav(id) {
   const curr = document.querySelector('.screen.active');
   const next = document.getElementById(id);
@@ -10,7 +27,6 @@ function nav(id) {
   
   // Сбрасываем currentPrivateChatId когда уходим с экрана личного чата
   if (curr && curr.id === 'privateChat' && id !== 'privateChat') {
-    console.log('🔄 Closing private chat, resetting currentPrivateChatId');
     currentPrivateChatId = null;
   }
   
@@ -27,8 +43,8 @@ function nav(id) {
   curr.classList.remove('active');
   curr.style.display = 'none';
   next.classList.add('active');
-  // chatConv uses position:fixed flex
   next.style.display = 'flex';
+  updateBottomNav(id);
 }
 
 function back() {
@@ -40,7 +56,6 @@ function back() {
   
   // Сбрасываем currentPrivateChatId когда уходим с экрана личного чата назад
   if (curr && curr.id === 'privateChat' && prevId !== 'privateChat') {
-    console.log('🔄 Going back from private chat, resetting currentPrivateChatId');
     currentPrivateChatId = null;
   }
   
@@ -48,7 +63,40 @@ function back() {
   curr.style.display = 'none';
   prev.classList.add('active');
   prev.style.display = 'flex';
+  updateBottomNav(prevId);
 }
+
+// Глобальный свайп вправо → назад (как в нативных приложениях)
+(function() {
+  let touchStartX = 0, touchStartY = 0, tracking = false;
+  const EDGE = 40;       // зона от левого края в px
+  const MIN_SWIPE = 80;  // минимальное расстояние свайпа
+  const MAX_VERT = 60;   // максимальное вертикальное смещение
+
+  document.addEventListener('touchstart', e => {
+    const x = e.touches[0].clientX;
+    if (x <= EDGE) {
+      touchStartX = x;
+      touchStartY = e.touches[0].clientY;
+      tracking = true;
+    } else {
+      tracking = false;
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchend', e => {
+    if (!tracking) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+    tracking = false;
+    if (dx > MIN_SWIPE && dy < MAX_VERT) {
+      // Не закрываем модалки свайпом — только экраны
+      const openModal = document.querySelector('.modal-ov.open');
+      if (openModal) return;
+      back();
+    }
+  }, { passive: true });
+})();
 
 // Fix: scroll messages up when keyboard appears on iOS/Android
 if (window.visualViewport) {
@@ -383,6 +431,7 @@ window.addEventListener('load', () => {
   const splash = document.getElementById('splash');
   splash.classList.add('active');
   splash.style.display = 'flex';
+  updateBottomNav('home');
   
   // Ждём инициализации — checkAuth сама обработает любой случай
   setTimeout(() => checkAuth(), 2500);
@@ -1091,113 +1140,35 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-async function openUserProfile(nick) {
-  // Вызывается из общего чата (с ником) или из личного чата (без аргумента)
+function openUserProfile(nick) {
+  // nick — имя из общего чата, msgData содержит senderId
+  // Вызываем с данными из сообщения
   const msgData = _lastClickedUser || {};
-  const userId   = nick ? (msgData.senderId || nick) : currentPrivateChatId;
-  const dispName = nick ? (msgData.senderName || nick) : (contactBook[currentPrivateChatId]?.name || 'Пользователь');
-
-  if (!userId) { showToast('Профиль недоступен', '#888'); return; }
-
+  const theirUserId = msgData.senderId || nick;
+  const theirName = msgData.senderName || nick;
   const colors = ['#4A90D9','#E91E63','#9C27B0','#00BCD4','#FF5722','#4CAF50'];
-  const color   = colors[(dispName.charCodeAt(0)||0) % colors.length];
-  const initials = dispName.slice(0,2).toUpperCase();
-  const grad    = `linear-gradient(135deg,${color},${color}99)`;
+  const color = colors[nick.charCodeAt(0) % colors.length];
+  const initials = nick.slice(0,2).toUpperCase();
 
-  // Показываем модалку сразу — заглушка пока грузятся данные
-  const body = document.getElementById('m-user-profile-body');
-  if (!body) return;
-  body.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:16px;">
-      <div class="avatar" style="width:80px;height:80px;font-size:28px;box-shadow:0 4px 16px rgba(0,0,0,0.1);background:${grad};color:white;font-weight:700;">${initials}</div>
-      <div style="font-size:20px;font-weight:900;font-family:'Nunito',sans-serif;">${escHtml(dispName)}</div>
-    </div>
-    <div style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Загружаем данные...</div>
-  `;
-  openModal('m-user-profile');
-
-  const renderProfile = (profile, pets, bookings) => {
-    const name        = profile?.name || dispName;
-    const avatarUrl   = profile?.avatar_url || null;
-    const district    = profile?.district || '';
-    const ordersCount = (bookings || []).length;
-    const charityAmt  = ordersCount * 150;
-    const petsList    = pets || [];
-    const fin         = name.slice(0,2).toUpperCase();
-
-    body.innerHTML = `
-      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:16px;">
-        <div class="avatar" style="width:80px;height:80px;font-size:28px;box-shadow:0 4px 16px rgba(0,0,0,0.1);overflow:hidden;background:${grad};color:white;font-weight:700;">
-          ${avatarUrl
-            ? `<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='${fin}'">`
-            : fin}
-        </div>
-        <div style="font-size:20px;font-weight:900;font-family:'Nunito',sans-serif;">${escHtml(name)}</div>
-        ${district ? `<div style="display:flex;align-items:center;gap:4px;color:var(--text-secondary);font-size:13px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          ${escHtml(district)}</div>` : ''}
-      </div>
-
-      <div style="display:flex;background:var(--bg);border-radius:14px;padding:12px;margin-bottom:16px;">
-        <div style="flex:1;text-align:center;">
-          <div style="font-size:18px;font-weight:900;color:var(--primary);">${ordersCount}</div>
-          <div style="font-size:11px;color:var(--text-secondary);">транзакций</div>
-        </div>
-        <div style="width:1px;background:var(--border);"></div>
-        <div style="flex:1;text-align:center;">
-          <div style="font-size:18px;font-weight:900;color:var(--primary);">${charityAmt} ₽</div>
-          <div style="font-size:11px;color:var(--text-secondary);">приютам</div>
-        </div>
-        <div style="width:1px;background:var(--border);"></div>
-        <div style="flex:1;text-align:center;">
-          <div style="font-size:18px;font-weight:900;color:var(--primary);">${petsList.length}</div>
-          <div style="font-size:11px;color:var(--text-secondary);">питомцев</div>
-        </div>
-      </div>
-
-      ${petsList.length ? `
-        <div style="text-align:left;margin-bottom:16px;">
-          <div style="font-size:15px;font-weight:800;margin-bottom:10px;">Питомцы</div>
-          ${petsList.map(p => `
-            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
-              <div style="width:44px;height:44px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#4A90D9,#7B5EA7);color:white;font-weight:700;font-size:16px;flex-shrink:0;">
-                ${p.photo_url ? `<img src="${p.photo_url}" style="width:100%;height:100%;object-fit:cover;">` : p.name.substring(0,1).toUpperCase()}
-              </div>
-              <div>
-                <div style="font-weight:700;font-size:14px;">${escHtml(p.name)} ${p.sex==='ж'?'♀':'♂'}</div>
-                <div style="font-size:12px;color:var(--text-secondary);">${escHtml(p.breed||'')}${p.age?' · '+p.age:''}</div>
-              </div>
-            </div>`).join('')}
-        </div>
-      ` : '<div style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">Питомцы не добавлены</div>'}
-
-      <button class="btn btn-p" style="margin-bottom:8px;" onclick="openChatWithUser('${escHtml(userId)}','${escHtml(name)}','${fin}','${grad}');closeModal('m-user-profile')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:6px;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-        Написать
-      </button>
+  let modal = document.getElementById('m-user-profile');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'm-user-profile';
+    modal.className = 'modal-ov';
+    modal.onclick = function(e) { if (e.target === this) closeModal('m-user-profile'); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `<div class="modal" onclick="event.stopPropagation()" style="max-height:80%;overflow-y:auto;">
+    <div class="mhandle"></div>
+    <div style="text-align:center;padding:20px;">
+      <div class="avatar" style="width:72px;height:72px;font-size:28px;margin:0 auto 12px;background:linear-gradient(135deg,${color},${color}99);">${initials}</div>
+      <h2 style="margin-bottom:4px;">${escHtml(theirName)}</h2>
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;">👤 Участник сообщества</div>
+      <button class="btn btn-p" style="margin-bottom:10px;" onclick="openChatWithUser('${escHtml(theirUserId)}','${escHtml(theirName)}','${initials}','linear-gradient(135deg,${color},${color}99)');closeModal('m-user-profile')">💬 Написать</button>
       <button class="btn btn-g" onclick="closeModal('m-user-profile')">Закрыть</button>
-    `;
-  };
-
-  if (!supabaseClient) {
-    renderProfile(null, [], []);
-    return;
-  }
-
-  try {
-    const [{ data: profile }, { data: pets, error: petsErr }, { data: bookings }] = await Promise.all([
-      supabaseClient.from('profiles').select('*').eq('id', userId).single(),
-      supabaseClient.from('pets').select('*').eq('user_id', userId),
-      supabaseClient.from('bookings').select('id').eq('user_id', userId)
-    ]);
-
-    // Если питомцы не загрузились из-за RLS — показываем профиль без них
-    if (petsErr) console.warn('[openUserProfile] pets RLS error:', petsErr.message, '— run update_pets_rls.sql in Supabase');
-    renderProfile(profile, pets, bookings);
-  } catch(e) {
-    console.error('[openUserProfile] error:', e);
-    renderProfile(null, [], []);
-  }
+    </div>
+  </div>`;
+  openModal('m-user-profile');
 }
 
 let _lastClickedUser = null;
@@ -3320,6 +3291,106 @@ function switchCommTab(tab) {
     tabDM.style.borderBottom = '2.5px solid var(--primary)';
     tabD.style.color = 'var(--text-secondary)';
     tabD.style.borderBottom = '2.5px solid var(--border)';
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// USER PROFILE (from chat — shows avatar, district, pets, stats)
+// ════════════════════════════════════════════════════════════
+async function openUserProfile() {
+  const userId = currentPrivateChatId;
+  if (!userId || !supabaseClient) return;
+  
+  const body = document.getElementById('m-user-profile-body');
+  if (!body) return;
+  
+  body.innerHTML = '<div style="padding:20px;color:var(--text-secondary);">Загружаем профиль...</div>';
+  openModal('m-user-profile');
+  
+  try {
+    // Загружаем профиль пользователя
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+    
+    // Загружаем питомцев
+    const { data: pets } = await supabaseClient
+      .from('pets')
+      .select('*')
+      .eq('user_id', userId);
+    
+    // Загружаем заказы для статистики
+    const { data: bookings } = await supabaseClient
+      .from('bookings')
+      .select('id')
+      .eq('user_id', userId);
+    
+    const name = profile?.name || contactBook[userId]?.name || 'Пользователь';
+    const initials = name.substring(0,2).toUpperCase();
+    const district = profile?.district || '';
+    const avatarUrl = profile?.avatar_url;
+    const ordersCount = (bookings || []).length;
+    const charityAmount = ordersCount * 150;
+    const petsList = pets || [];
+    
+    body.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:20px;">
+        <div class="avatar" style="width:80px;height:80px;font-size:28px;box-shadow:0 4px 16px rgba(0,0,0,0.1);overflow:hidden;">
+          ${avatarUrl ? `<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.textContent='${initials}'">` : initials}
+        </div>
+        <div style="font-size:20px;font-weight:900;font-family:'Nunito',sans-serif;">${name}</div>
+        ${district ? `<div style="display:flex;align-items:center;gap:4px;color:var(--text-secondary);font-size:13px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          ${district}
+        </div>` : ''}
+      </div>
+      
+      <!-- Stats -->
+      <div style="display:flex;gap:0;background:var(--bg);border-radius:14px;padding:12px;margin-bottom:16px;">
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:18px;font-weight:900;color:var(--primary);">${ordersCount}</div>
+          <div style="font-size:11px;color:var(--text-secondary);">транзакций</div>
+        </div>
+        <div style="width:1px;background:var(--border);"></div>
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:18px;font-weight:900;color:var(--primary);">${charityAmount} ₽</div>
+          <div style="font-size:11px;color:var(--text-secondary);">приютам</div>
+        </div>
+        <div style="width:1px;background:var(--border);"></div>
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:18px;font-weight:900;color:var(--primary);">${petsList.length}</div>
+          <div style="font-size:11px;color:var(--text-secondary);">питомцев</div>
+        </div>
+      </div>
+      
+      <!-- Pets -->
+      ${petsList.length ? `
+        <div style="text-align:left;margin-bottom:12px;">
+          <div style="font-size:15px;font-weight:800;margin-bottom:10px;">Питомцы</div>
+          ${petsList.map(p => `
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+              <div style="width:44px;height:44px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#4A90D9,#7B5EA7);color:white;font-weight:700;font-size:16px;flex-shrink:0;">
+                ${p.photo_url ? `<img src="${p.photo_url}" style="width:100%;height:100%;object-fit:cover;">` : p.name.substring(0,1).toUpperCase()}
+              </div>
+              <div>
+                <div style="font-weight:700;font-size:14px;">${p.name} ${p.sex==='ж'?'♀':'♂'}</div>
+                <div style="font-size:12px;color:var(--text-secondary);">${p.breed || ''}${p.age ? ' · '+p.age : ''}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      ` : '<div style="color:var(--text-secondary);font-size:13px;margin-bottom:12px;">Питомцы не добавлены</div>'}
+      
+      <button class="btn btn-p" style="margin-bottom:8px;" onclick="closeModal('m-user-profile')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:6px;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        Написать
+      </button>
+    `;
+  } catch(e) {
+    console.error('User profile error:', e);
+    body.innerHTML = '<div style="padding:20px;color:var(--text-secondary);">Не удалось загрузить профиль</div>';
   }
 }
 
