@@ -262,21 +262,20 @@ function loadProfile() {
 }
 
 async function loadProfileStats() {
-  // Питомцы — из localStorage, с учётом seed из профиля
-  let pets = JSON.parse(localStorage.getItem('df_pets') || '[]');
-  if (!pets.length) {
-    const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
-    if (p.dogname) pets = [{ name: p.dogname }];
-  }
-  const petsStat = document.getElementById('prof-stat-pets');
-  if (petsStat) petsStat.textContent = pets.length;
-  
+  let petsCount = 0;
   let ordersCount = 0;
   let charityAmount = 0;
   
-  // Заказы и приюты — из Supabase если есть
   if (supabaseClient && currentUser) {
     try {
+      // Питомцы из Supabase
+      const { data: pets } = await supabaseClient
+        .from('pets')
+        .select('id')
+        .eq('user_id', currentUser.id);
+      petsCount = (pets || []).length;
+      
+      // Заказы
       const { data: bookings } = await supabaseClient
         .from('bookings')
         .select('id')
@@ -287,6 +286,9 @@ async function loadProfileStats() {
       console.warn('Profile stats error:', e);
     }
   }
+  
+  const petsStat = document.getElementById('prof-stat-pets');
+  if (petsStat) petsStat.textContent = petsCount;
   
   const ordersStat = document.getElementById('prof-stat-orders');
   if (ordersStat) ordersStat.textContent = ordersCount;
@@ -2770,77 +2772,169 @@ function copyPromoCode() {
 }
 
 // ════════════════════════════════════════════════════════════
-// PETS
+// PETS — Supabase (таблица pets + Storage для фото)
 // ════════════════════════════════════════════════════════════
 let _petSex = 'м';
+let _petsCache = [];
+
 function selectPetSex(s) {
   _petSex = s;
   document.getElementById('pet-sex-m').classList.toggle('on', s==='м');
   document.getElementById('pet-sex-f').classList.toggle('on', s==='ж');
 }
-function savePet() {
-  const name  = document.getElementById('new-pet-name').value.trim();
+
+async function savePet() {
+  if (!currentUser) { showToast('Войдите в аккаунт'); return; }
+  const name = document.getElementById('new-pet-name').value.trim();
   const breed = document.getElementById('new-pet-breed').value.trim();
-  if (!name) { showToast('❌ Введите кличку'); return; }
-  let pets = JSON.parse(localStorage.getItem('df_pets')||'[]');
-  const GRADS=['linear-gradient(135deg,#4A90D9,#7B5EA7)','linear-gradient(135deg,#E91E63,#FF9800)','linear-gradient(135deg,#00BCD4,#4CAF50)','linear-gradient(135deg,#FF5722,#FF9800)','linear-gradient(135deg,#9C27B0,#E91E63)'];
-  const EMOJIS=['🐕','🦮','🐩','🐕‍🦺','🐶'];
-  pets.push({id:Date.now(),name,breed,age:document.getElementById('new-pet-age').value.trim(),weight:document.getElementById('new-pet-weight').value.trim(),sex:_petSex,dob:document.getElementById('new-pet-dob').value,notes:document.getElementById('new-pet-notes').value.trim(),color:GRADS[pets.length%GRADS.length],emoji:EMOJIS[pets.length%EMOJIS.length]});
-  localStorage.setItem('df_pets',JSON.stringify(pets));
-  closeModal('m-add-pet');
-  renderPets();
-  showToast('🐾 '+name+' добавлен!','#7ED321');
+  if (!name) { showToast('Введите кличку'); return; }
+
+  showToast('Сохраняем...', 'var(--primary)');
+
+  try {
+    // 1. Создаём запись в Supabase
+    const { data: pet, error } = await supabaseClient.from('pets').insert({
+      user_id: currentUser.id,
+      name: name,
+      breed: breed,
+      age: document.getElementById('new-pet-age').value.trim(),
+      weight: document.getElementById('new-pet-weight').value.trim(),
+      sex: _petSex,
+      dob: document.getElementById('new-pet-dob').value || null,
+      notes: document.getElementById('new-pet-notes').value.trim()
+    }).select().single();
+    if (error) throw error;
+
+    // 2. Загружаем фото если есть
+    if (_newPetPhotoData && pet) {
+      await uploadPetPhoto(pet.id, _newPetPhotoData);
+    }
+
+    closeModal('m-add-pet');
+    _newPetPhotoData = null;
+    const preview = document.getElementById('new-pet-photo-preview');
+    if (preview) {
+      preview.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+      preview.style.border = '2px dashed var(--border)';
+    }
+    // Очищаем поля
+    document.getElementById('new-pet-name').value = '';
+    document.getElementById('new-pet-breed').value = '';
+    document.getElementById('new-pet-age').value = '';
+    document.getElementById('new-pet-weight').value = '';
+    document.getElementById('new-pet-dob').value = '';
+    document.getElementById('new-pet-notes').value = '';
+
+    renderPets();
+    showToast(name + ' добавлен!', '#34C759');
+  } catch(e) {
+    console.error('Save pet error:', e);
+    showToast('Ошибка сохранения');
+  }
 }
-function deletePet(id) {
-  let pets = JSON.parse(localStorage.getItem('df_pets')||'[]').filter(p=>p.id!==id);
-  localStorage.setItem('df_pets',JSON.stringify(pets));
-  renderPets();
-  showToast('Питомец удалён');
+
+async function uploadPetPhoto(petId, base64Data) {
+  if (!supabaseClient || !petId) return;
+  try {
+    // Конвертируем base64 в blob
+    const resp = await fetch(base64Data);
+    const blob = await resp.blob();
+    const ext = blob.type.includes('png') ? 'png' : 'jpg';
+    const filePath = `pets/${petId}.${ext}`;
+
+    const { error: uploadError } = await supabaseClient.storage
+      .from('avatars')
+      .upload(filePath, blob, { upsert: true, contentType: blob.type });
+    if (uploadError) throw uploadError;
+
+    const { data: urlData } = supabaseClient.storage
+      .from('avatars')
+      .getPublicUrl(filePath);
+    const photoUrl = urlData.publicUrl + '?t=' + Date.now();
+
+    // Обновляем запись питомца
+    await supabaseClient.from('pets').update({ photo_url: photoUrl }).eq('id', petId);
+  } catch(e) {
+    console.error('Pet photo upload error:', e);
+  }
 }
+
+async function deletePet(id) {
+  if (!supabaseClient) return;
+  try {
+    const { error } = await supabaseClient.from('pets').delete().eq('id', id);
+    if (error) throw error;
+    renderPets();
+    showToast('Питомец удалён');
+  } catch(e) {
+    console.error('Delete pet error:', e);
+    showToast('Ошибка удаления');
+  }
+}
+
 function togglePetCard(idx) {
   const b=document.getElementById('pet-bdy-'+idx), a=document.getElementById('pet-arr-'+idx);
   const open=b.style.display==='none';
   b.style.display=open?'block':'none'; a.textContent=open?'⌄':'›';
 }
-function renderPets() {
+
+async function renderPets() {
   const list = document.getElementById('pets-list');
   if (!list) return;
-  let pets = JSON.parse(localStorage.getItem('df_pets')||'[]');
-  // seed from profile if empty
-  if (!pets.length) {
-    const p=JSON.parse(localStorage.getItem('df_profile')||'{}');
-    if (p.dogname) pets=[{id:1,name:p.dogname,breed:p.dogbreed||'Порода не указана',age:p.dogage||'',sex:'м',color:'linear-gradient(135deg,#4A90D9,#7B5EA7)',emoji:'🐕',weight:'',notes:''}];
-  }
-  if (!pets.length) {
-    list.innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--text-secondary);"><div style="font-size:64px;margin-bottom:16px;">🐾</div><div style="font-size:16px;font-weight:700;margin-bottom:8px;">Питомцев пока нет</div><div style="font-size:13px;">Нажмите «+ Добавить»</div></div>';
+
+  if (!supabaseClient || !currentUser) {
+    list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text-secondary);font-size:14px;">Войдите чтобы увидеть питомцев</div>';
     return;
   }
-  const recs=JSON.parse(localStorage.getItem('df_med_records')||'[]');
-  list.innerHTML=pets.map((pet,i)=>{
-    const cnt=recs.filter(r=>r.petName===pet.name).length;
-    return `<div class="pet-card">
-      <div class="pet-hdr" onclick="togglePetCard(${i})">
-        <div style="width:52px;height:52px;background:${pet.color};border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">${pet.emoji}</div>
-        <div style="flex:1;">
-          <div style="font-size:16px;font-weight:800;">${pet.name} ${pet.sex==='ж'?'♀':'♂'}</div>
-          <div style="font-size:13px;color:var(--text-secondary);">${pet.breed}${pet.age?' · '+pet.age:''}</div>
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('pets')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+
+    _petsCache = data || [];
+
+    if (!_petsCache.length) {
+      list.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--text-secondary);"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round" style="margin-bottom:16px;"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg><div style="font-size:16px;font-weight:700;margin-bottom:8px;">Питомцев пока нет</div><div style="font-size:13px;">Нажмите «+ Добавить»</div></div>';
+      return;
+    }
+
+    const GRADS = ['linear-gradient(135deg,#4A90D9,#7B5EA7)','linear-gradient(135deg,#E91E63,#FF9800)','linear-gradient(135deg,#00BCD4,#4CAF50)','linear-gradient(135deg,#FF5722,#FF9800)','linear-gradient(135deg,#9C27B0,#E91E63)'];
+
+    list.innerHTML = _petsCache.map((pet, i) => {
+      const color = GRADS[i % GRADS.length];
+      const initials = pet.name ? pet.name.substring(0,1).toUpperCase() : '?';
+      return `<div class="pet-card">
+        <div class="pet-hdr" onclick="togglePetCard(${i})">
+          <div style="width:56px;height:56px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0;${pet.photo_url ? '' : 'background:'+color+';color:white;font-size:22px;font-weight:800;'}">
+            ${pet.photo_url ? `<img src="${pet.photo_url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.style.background='${color}';this.parentElement.textContent='${initials}'">` : initials}
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:16px;font-weight:800;">${pet.name} ${pet.sex==='ж'?'♀':'♂'}</div>
+            <div style="font-size:13px;color:var(--text-secondary);">${pet.breed || 'Порода не указана'}${pet.age ? ' · '+pet.age : ''}</div>
+          </div>
+          <div style="font-size:22px;color:var(--border);" id="pet-arr-${i}">›</div>
         </div>
-        <div style="font-size:22px;color:var(--border);" id="pet-arr-${i}">›</div>
-      </div>
-      <div id="pet-bdy-${i}" class="pet-bdy" style="display:none;">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;padding-top:12px;">
-          ${pet.weight?`<div style="background:var(--bg);border-radius:10px;padding:8px 12px;text-align:center;"><div style="font-size:16px;font-weight:800;">${pet.weight} кг</div><div style="font-size:11px;color:var(--text-secondary);">Вес</div></div>`:''}
-          ${pet.dob?`<div style="background:var(--bg);border-radius:10px;padding:8px 12px;text-align:center;"><div style="font-size:13px;font-weight:800;">${pet.dob}</div><div style="font-size:11px;color:var(--text-secondary);">Дата рожд.</div></div>`:''}
-          <div style="background:var(--bg);border-radius:10px;padding:8px 12px;text-align:center;"><div style="font-size:16px;font-weight:800;">${cnt}</div><div style="font-size:11px;color:var(--text-secondary);">Мед. записей</div></div>
+        <div id="pet-bdy-${i}" class="pet-bdy" style="display:none;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;padding-top:12px;">
+            ${pet.weight ? `<div style="background:var(--bg);border-radius:10px;padding:8px 12px;text-align:center;"><div style="font-size:16px;font-weight:800;">${pet.weight} кг</div><div style="font-size:11px;color:var(--text-secondary);">Вес</div></div>` : ''}
+            ${pet.dob ? `<div style="background:var(--bg);border-radius:10px;padding:8px 12px;text-align:center;"><div style="font-size:13px;font-weight:800;">${pet.dob}</div><div style="font-size:11px;color:var(--text-secondary);">Дата рожд.</div></div>` : ''}
+          </div>
+          ${pet.notes ? `<div style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;">${pet.notes}</div>` : ''}
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-g btn-sm" style="flex:1;" onclick="nav('medRecords')">Мед. записи</button>
+            <button class="btn btn-sm" style="flex:1;background:rgba(208,2,27,0.08);color:var(--error);border-radius:10px;height:38px;font-size:13px;font-weight:700;" onclick="deletePet('${pet.id}')">Удалить</button>
+          </div>
         </div>
-        ${pet.notes?`<div style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;">⚠️ ${pet.notes}</div>`:''}
-        <div style="display:flex;gap:8px;">
-          <button class="btn btn-g btn-sm" style="flex:1;" onclick="nav('medRecords')">🏥 Мед. записи</button>
-          <button class="btn btn-sm" style="flex:1;background:rgba(208,2,27,0.08);color:var(--error);border-radius:10px;height:38px;font-size:13px;font-weight:700;" onclick="deletePet(${pet.id})">🗑️ Удалить</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+      </div>`;
+    }).join('');
+  } catch(e) {
+    console.error('Render pets error:', e);
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);">Ошибка загрузки</div>';
+  }
 }
 
 // ════════════════════════════════════════════════════════════
@@ -3118,6 +3212,56 @@ window.addEventListener('load',()=>{
   setTimeout(()=>{
     if(typeof renderHomeSpecialists==='function') renderHomeSpecialists();
     renderPlaces();renderDiscounts();renderLessons();renderPets();
+    // Update community district name
+    const distName = document.getElementById('community-district-name');
+    if (distName && userLocationName) distName.textContent = userLocationName;
   },200);
 });
+
+// ════════════════════════════════════════════════════════════
+// COMMUNITY TABS (Districts / DMs)
+// ════════════════════════════════════════════════════════════
+function switchCommTab(tab) {
+  const districts = document.getElementById('comm-panel-districts');
+  const dms = document.getElementById('comm-panel-dms');
+  const tabD = document.getElementById('comm-tab-districts');
+  const tabDM = document.getElementById('comm-tab-dms');
+  if (!districts || !dms) return;
+  
+  if (tab === 'districts') {
+    districts.style.display = 'block';
+    dms.style.display = 'none';
+    tabD.style.color = 'var(--primary)';
+    tabD.style.borderBottom = '2.5px solid var(--primary)';
+    tabDM.style.color = 'var(--text-secondary)';
+    tabDM.style.borderBottom = '2.5px solid var(--border)';
+  } else {
+    districts.style.display = 'none';
+    dms.style.display = 'block';
+    tabDM.style.color = 'var(--primary)';
+    tabDM.style.borderBottom = '2.5px solid var(--primary)';
+    tabD.style.color = 'var(--text-secondary)';
+    tabD.style.borderBottom = '2.5px solid var(--border)';
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// PET PHOTO
+// ════════════════════════════════════════════════════════════
+let _newPetPhotoData = null;
+
+function previewPetPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    _newPetPhotoData = e.target.result;
+    const preview = document.getElementById('new-pet-photo-preview');
+    if (preview) {
+      preview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;">`;
+      preview.style.border = 'none';
+    }
+  };
+  reader.readAsDataURL(file);
+}
 

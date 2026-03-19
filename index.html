@@ -747,25 +747,52 @@
     <p style="font-size:14px;color:var(--text-secondary);">Чаты районов и специалистов</p>
   </div>
   <div class="scroll">
-    <div class="ci" onclick="openPublicChat()" style="gap:14px;">
-      <div class="avatar" style="width:56px;height:56px;font-size:24px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);flex-shrink:0;">🐾</div>
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <span style="font-weight:800;font-size:16px;">Общий чат Dogly</span>
-          <span style="font-size:11px;color:var(--text-secondary);">сейчас</span>
+    <!-- Search -->
+    <div style="padding:0 16px 12px;">
+      <div class="search-bar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="si" placeholder="Поиск по районам..." readonly>
+      </div>
+    </div>
+    
+    <!-- Tabs: Districts / Events -->
+    <div style="display:flex;gap:0;padding:0 16px 14px;">
+      <div id="comm-tab-districts" onclick="switchCommTab('districts')" style="flex:1;text-align:center;padding:10px;font-size:14px;font-weight:700;color:var(--primary);border-bottom:2.5px solid var(--primary);cursor:pointer;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:4px;"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Чаты районов
+      </div>
+      <div id="comm-tab-dms" onclick="switchCommTab('dms')" style="flex:1;text-align:center;padding:10px;font-size:14px;font-weight:700;color:var(--text-secondary);border-bottom:2.5px solid var(--border);cursor:pointer;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:4px;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        Личные
+      </div>
+    </div>
+    
+    <!-- District chats tab -->
+    <div id="comm-panel-districts">
+      <div class="ci" onclick="openPublicChat()" style="gap:14px;">
+        <div class="avatar" style="width:52px;height:52px;font-size:20px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);flex-shrink:0;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:13px;color:var(--text-secondary);">Все владельцы района онлайн 🐶</span>
-          <span style="width:8px;height:8px;background:#7ED321;border-radius:50%;flex-shrink:0;"></span>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+            <span style="font-weight:800;font-size:15px;" id="community-district-name">Общий чат</span>
+            <span style="font-size:11px;color:var(--text-secondary);">сейчас</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:13px;color:var(--text-secondary);">Все владельцы района онлайн</span>
+            <span style="width:8px;height:8px;background:#34C759;border-radius:50%;flex-shrink:0;"></span>
+          </div>
         </div>
       </div>
     </div>
-    <div style="padding:16px 16px 8px;">
-      <div style="font-size:15px;font-weight:800;margin-bottom:12px;">Личные сообщения</div>
-    </div>
-    <div id="private-chats-list"></div>
-    <div style="padding:20px 16px;text-align:center;color:var(--text-secondary);font-size:13px;" id="no-private-chats">
-      Еще нет личных сообщений<br>Напишите специалисту чтобы начать чат
+    
+    <!-- DMs tab (hidden by default) -->
+    <div id="comm-panel-dms" style="display:none;">
+      <div id="private-chats-list"></div>
+      <div style="padding:24px 16px;text-align:center;color:var(--text-secondary);font-size:13px;" id="no-private-chats">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round" style="margin-bottom:12px;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        <br>Ещё нет личных сообщений<br><span style="font-size:12px;">Напишите специалисту чтобы начать чат</span>
+      </div>
     </div>
   </div>
   <nav class="bnav">
@@ -999,6 +1026,14 @@
   <div class="modal" onclick="event.stopPropagation()" style="max-height:90%;overflow-y:auto;">
     <div class="mhandle"></div>
     <h3 style="margin-bottom:16px;">Добавить питомца</h3>
+    <!-- Pet photo upload -->
+    <div style="text-align:center;margin-bottom:16px;">
+      <div id="new-pet-photo-preview" onclick="document.getElementById('new-pet-photo-input').click()" style="width:80px;height:80px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;cursor:pointer;overflow:hidden;border:2px dashed var(--border);">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      </div>
+      <div style="font-size:12px;color:var(--primary);font-weight:600;cursor:pointer;" onclick="document.getElementById('new-pet-photo-input').click()">Добавить фото</div>
+      <input type="file" id="new-pet-photo-input" accept="image/*" style="display:none;" onchange="previewPetPhoto(this)">
+    </div>
     <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
       <div><label class="lbl">Кличка *</label><input class="input" id="new-pet-name" placeholder="Например: Рыжик"></div>
       <div><label class="lbl">Порода *</label><input class="input" id="new-pet-breed" placeholder="Например: Бигль"></div>
@@ -1015,7 +1050,7 @@
       <div><label class="lbl">Дата рождения</label><input class="input" id="new-pet-dob" type="date"></div>
       <div><label class="lbl">Особенности / аллергии</label><input class="input" id="new-pet-notes" placeholder="Аллергия на курицу..."></div>
     </div>
-    <button class="btn btn-p" onclick="savePet()" style="margin-bottom:10px;">Сохранить питомца 🐾</button>
+    <button class="btn btn-p" onclick="savePet()" style="margin-bottom:10px;">Сохранить питомца</button>
     <button class="btn btn-g" onclick="closeModal('m-add-pet')">Отмена</button>
   </div>
 </div>
@@ -1024,7 +1059,7 @@
 <div class="modal-ov" id="m-add-med" onclick="closeModal('m-add-med')">
   <div class="modal" onclick="event.stopPropagation()" style="max-height:90%;overflow-y:auto;">
     <div class="mhandle"></div>
-    <h3 style="margin-bottom:16px;">➕ Новая запись</h3>
+    <h3 style="margin-bottom:16px;">Новая запись</h3>
     <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
       <div><label class="lbl">Тип записи</label>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;" id="med-type-chips">
