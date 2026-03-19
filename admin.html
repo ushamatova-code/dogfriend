@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dogly Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #4A90D9;
+  --primary-dark: #3A7BC8;
+  --bg: #F6F4F1;
+  --white: #fff;
+  --text: #1A1A1A;
+  --muted: #8E8E93;
+  --border: #EBE8E4;
+  --success: #34C759;
+  --error: #FF3B30;
+  --warning: #F5A623;
+  --radius: 16px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.02), 0 4px 16px rgba(0,0,0,0.04);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* Login */
+#login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+.login-card { background: var(--white); border-radius: 24px; padding: 40px; max-width: 400px; width: 100%; box-shadow: var(--shadow); text-align: center; }
+.login-card h1 { font-family: 'Nunito', sans-serif; font-size: 28px; margin-bottom: 8px; }
+.login-card p { color: var(--muted); margin-bottom: 24px; }
+.login-card input { width: 100%; height: 50px; border: 1.5px solid var(--border); border-radius: 12px; padding: 0 16px; font-size: 15px; font-family: inherit; margin-bottom: 12px; outline: none; }
+.login-card input:focus { border-color: var(--primary); }
+.login-card button { width: 100%; height: 50px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; }
+
+/* Layout */
+#admin-panel { display: none; }
+.sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 240px; background: var(--white); border-right: 1px solid var(--border); padding: 20px 0; z-index: 10; }
+.sidebar-logo { padding: 0 20px 24px; font-family: 'Nunito', sans-serif; font-size: 22px; font-weight: 900; color: var(--primary); }
+.sidebar-logo span { color: var(--muted); font-size: 12px; font-weight: 500; display: block; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 20px; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.15s; border-left: 3px solid transparent; }
+.nav-item:hover { background: var(--bg); color: var(--text); }
+.nav-item.active { color: var(--primary); background: rgba(74,144,217,0.06); border-left-color: var(--primary); }
+.nav-item svg { flex-shrink: 0; }
+.main { margin-left: 240px; padding: 24px; min-height: 100vh; }
+.topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.topbar h1 { font-family: 'Nunito', sans-serif; font-size: 24px; font-weight: 800; }
+.topbar-user { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+
+/* Cards */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: var(--white); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+.stat-card .label { font-size: 13px; color: var(--muted); font-weight: 500; margin-bottom: 4px; }
+.stat-card .value { font-size: 28px; font-weight: 800; font-family: 'Nunito', sans-serif; }
+.stat-card .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+.card { background: var(--white); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 16px; }
+.card h2 { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+
+/* Table */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; padding: 10px 12px; color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tr:hover { background: var(--bg); }
+.badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.badge-pending { background: rgba(245,166,35,0.12); color: var(--warning); }
+.badge-approved { background: rgba(52,199,89,0.1); color: var(--success); }
+.badge-rejected { background: rgba(255,59,48,0.1); color: var(--error); }
+.btn { padding: 8px 14px; border-radius: 10px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.btn:active { transform: scale(0.96); }
+.btn-approve { background: var(--success); color: white; }
+.btn-reject { background: rgba(255,59,48,0.1); color: var(--error); }
+.btn-sm { padding: 6px 10px; font-size: 12px; }
+
+/* Tabs */
+.tabs { display: flex; gap: 0; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+.tab { padding: 10px 16px; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2.5px solid transparent; }
+.tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+/* Mobile */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <h1>Dogly Admin</h1>
+    <p>Панель управления</p>
+    <input id="adm-email" type="email" placeholder="Email">
+    <input id="adm-pass" type="password" placeholder="Пароль">
+    <button onclick="adminLogin()">Войти</button>
+    <div id="adm-error" style="color:#FF3B30;font-size:13px;margin-top:12px;"></div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="admin-panel">
+  <div class="sidebar">
+    <div class="sidebar-logo">Dogly <span>Админ-панель</span></div>
+    <div class="nav-item active" onclick="showSection('dashboard',this)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Статистика
+    </div>
+    <div class="nav-item" onclick="showSection('businesses',this)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+      Бизнесы
+    </div>
+    <div class="nav-item" onclick="showSection('users',this)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      Пользователи
+    </div>
+    <div class="nav-item" onclick="showSection('events',this)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      События
+    </div>
+    <div class="nav-item" onclick="showSection('promotions',this)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      Акции
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <h1 id="section-title">Статистика</h1>
+      <div class="topbar-user" id="adm-user-info"></div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="sec-dashboard">
+      <div class="stat-grid" id="stats-grid"></div>
+      <div class="card">
+        <h2>Последние регистрации бизнесов</h2>
+        <div class="table-wrap"><table id="recent-businesses"><thead><tr><th>Название</th><th>Тип</th><th>Дата</th><th>Статус</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- BUSINESSES -->
+    <div id="sec-businesses" style="display:none;">
+      <div class="tabs">
+        <div class="tab active" onclick="filterBiz('all',this)">Все</div>
+        <div class="tab" onclick="filterBiz('pending',this)">Ожидают</div>
+        <div class="tab" onclick="filterBiz('approved',this)">Одобрены</div>
+      </div>
+      <div class="card">
+        <div class="table-wrap"><table id="biz-table"><thead><tr><th>Название</th><th>Тип</th><th>Адрес</th><th>Телефон</th><th>Статус</th><th>Действия</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div id="sec-users" style="display:none;">
+      <div class="card">
+        <div class="table-wrap"><table id="users-table"><thead><tr><th>Имя</th><th>Email</th><th>Район</th><th>Питомцы</th><th>Регистрация</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- EVENTS -->
+    <div id="sec-events" style="display:none;">
+      <div class="card">
+        <div class="table-wrap"><table id="events-table"><thead><tr><th>Название</th><th>Тип</th><th>Дата</th><th>Место</th><th>Участники</th><th>Действия</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- PROMOTIONS -->
+    <div id="sec-promotions" style="display:none;">
+      <div class="card">
+        <div class="table-wrap"><table id="promo-table"><thead><tr><th>Бизнес</th><th>Акция</th><th>Скидка</th><th>Промокод</th><th>Активна</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL = 'https://nxrztljcxphkdfbfubba.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cnp0bGpjeHBoa2RmYmZ1YmJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwNDkzNzQsImV4cCI6MjA4ODYyNTM3NH0.nCunfVYOwBKAMbbuDu4zTQ0tZhjNoWk680VFSWPwuUk';
+
+// ADMIN EMAILS — добавьте сюда email-ы админов
+const ADMIN_EMAILS = [
+  'frate.roc@gmail.com',
+];
+
+let sb, adminUser;
+
+async function adminLogin() {
+  const email = document.getElementById('adm-email').value.trim();
+  const pass = document.getElementById('adm-pass').value;
+  const err = document.getElementById('adm-error');
+
+  if (!email || !pass) { err.textContent = 'Заполните все поля'; return; }
+
+  try {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) throw error;
+
+    // Проверяем admin доступ (если ADMIN_EMAILS пуст — пускаем всех, для первой настройки)
+    if (ADMIN_EMAILS.length > 0 && !ADMIN_EMAILS.includes(email.toLowerCase())) {
+      err.textContent = 'Нет прав администратора';
+      await sb.auth.signOut();
+      return;
+    }
+
+    adminUser = data.user;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'block';
+    document.getElementById('adm-user-info').textContent = email;
+    loadDashboard();
+  } catch(e) {
+    err.textContent = e.message || 'Ошибка входа';
+  }
+}
+
+function showSection(id, el) {
+  document.querySelectorAll('[id^="sec-"]').forEach(s => s.style.display = 'none');
+  document.getElementById('sec-' + id).style.display = 'block';
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  const titles = { dashboard: 'Статистика', businesses: 'Бизнесы', users: 'Пользователи', events: 'События', promotions: 'Акции' };
+  document.getElementById('section-title').textContent = titles[id];
+
+  if (id === 'dashboard') loadDashboard();
+  if (id === 'businesses') loadBusinesses();
+  if (id === 'users') loadUsers();
+  if (id === 'events') loadEvents();
+  if (id === 'promotions') loadPromotions();
+}
+
+// ═══ DASHBOARD ═══
+async function loadDashboard() {
+  const [biz, users, events, promos, pets] = await Promise.all([
+    sb.from('businesses').select('id, is_approved, created_at'),
+    sb.from('profiles').select('id, created_at'),
+    sb.from('events').select('id'),
+    sb.from('promotions').select('id, is_active'),
+    sb.from('pets').select('id'),
+  ]);
+
+  const bizData = biz.data || [];
+  const usersData = users.data || [];
+  const eventsData = events.data || [];
+  const promosData = promos.data || [];
+  const petsData = pets.data || [];
+  const pending = bizData.filter(b => !b.is_approved).length;
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="label">Пользователи</div><div class="value">${usersData.length}</div></div>
+    <div class="stat-card"><div class="label">Бизнесы</div><div class="value">${bizData.length}</div><div class="sub">${pending} ожидают одобрения</div></div>
+    <div class="stat-card"><div class="label">События</div><div class="value">${eventsData.length}</div></div>
+    <div class="stat-card"><div class="label">Питомцы</div><div class="value">${petsData.length}</div></div>
+    <div class="stat-card"><div class="label">Акции</div><div class="value">${promosData.length}</div><div class="sub">${promosData.filter(p=>p.is_active).length} активных</div></div>
+  `;
+
+  // Recent businesses
+  const recent = bizData.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5);
+  const { data: recentFull } = await sb.from('businesses').select('*').in('id', recent.map(r=>r.id));
+  const tbody = document.querySelector('#recent-businesses tbody');
+  tbody.innerHTML = (recentFull || []).map(b => `<tr>
+    <td><strong>${b.name}</strong></td>
+    <td>${b.type}</td>
+    <td>${new Date(b.created_at).toLocaleDateString('ru')}</td>
+    <td><span class="badge ${b.is_approved ? 'badge-approved' : 'badge-pending'}">${b.is_approved ? 'Одобрен' : 'Ожидает'}</span></td>
+  </tr>`).join('');
+}
+
+// ═══ BUSINESSES ═══
+let _bizFilter = 'all';
+function filterBiz(f, el) {
+  _bizFilter = f;
+  document.querySelectorAll('#sec-businesses .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  loadBusinesses();
+}
+
+async function loadBusinesses() {
+  let query = sb.from('businesses').select('*').order('created_at', { ascending: false });
+  if (_bizFilter === 'pending') query = query.eq('is_approved', false);
+  if (_bizFilter === 'approved') query = query.eq('is_approved', true);
+  const { data } = await query;
+
+  document.querySelector('#biz-table tbody').innerHTML = (data || []).map(b => `<tr>
+    <td><strong>${b.name}</strong></td>
+    <td><span class="badge ${b.type==='trainer'?'badge-approved':b.type==='clinic'?'badge-pending':'badge-rejected'}">${b.type}</span></td>
+    <td>${b.address || '—'}</td>
+    <td>${b.phone || '—'}</td>
+    <td><span class="badge ${b.is_approved ? 'badge-approved' : 'badge-pending'}">${b.is_approved ? 'Одобрен' : 'Ожидает'}</span></td>
+    <td>
+      ${!b.is_approved ? `<button class="btn btn-approve btn-sm" onclick="approveBiz('${b.id}')">Одобрить</button>` : ''}
+      <button class="btn btn-reject btn-sm" onclick="rejectBiz('${b.id}')" style="margin-left:4px;">Удалить</button>
+    </td>
+  </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:40px;">Нет бизнесов</td></tr>';
+}
+
+async function approveBiz(id) {
+  await sb.from('businesses').update({ is_approved: true }).eq('id', id);
+  loadBusinesses();
+  loadDashboard();
+}
+
+async function rejectBiz(id) {
+  if (!confirm('Удалить этот бизнес?')) return;
+  await sb.from('businesses').delete().eq('id', id);
+  loadBusinesses();
+  loadDashboard();
+}
+
+// ═══ USERS ═══
+async function loadUsers() {
+  const { data: profiles } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+  const { data: pets } = await sb.from('pets').select('user_id');
+  const petCounts = {};
+  (pets || []).forEach(p => { petCounts[p.user_id] = (petCounts[p.user_id] || 0) + 1; });
+
+  document.querySelector('#users-table tbody').innerHTML = (profiles || []).map(u => `<tr>
+    <td><strong>${u.name || 'Без имени'}</strong></td>
+    <td style="color:var(--muted);font-size:13px;">${u.user_id ? u.user_id.substring(0,8)+'...' : '—'}</td>
+    <td>${u.district || '—'}</td>
+    <td>${petCounts[u.user_id] || 0}</td>
+    <td style="font-size:13px;color:var(--muted);">${u.created_at ? new Date(u.created_at).toLocaleDateString('ru') : '—'}</td>
+  </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:40px;">Нет пользователей</td></tr>';
+}
+
+// ═══ EVENTS ═══
+async function loadEvents() {
+  const { data } = await sb.from('events').select('*').order('date', { ascending: false });
+
+  document.querySelector('#events-table tbody').innerHTML = (data || []).map(e => `<tr>
+    <td><strong>${e.title}</strong></td>
+    <td><span class="badge badge-approved">${e.type || '—'}</span></td>
+    <td>${e.date || '—'} ${e.time || ''}</td>
+    <td>${e.address || '—'}</td>
+    <td>${e.participants_count || 0}</td>
+    <td><button class="btn btn-reject btn-sm" onclick="deleteEvent('${e.id}')">Удалить</button></td>
+  </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:40px;">Нет событий</td></tr>';
+}
+
+async function deleteEvent(id) {
+  if (!confirm('Удалить событие?')) return;
+  await sb.from('events').delete().eq('id', id);
+  loadEvents();
+}
+
+// ═══ PROMOTIONS ═══
+async function loadPromotions() {
+  const { data } = await sb.from('promotions').select('*, businesses(name)').order('created_at', { ascending: false });
+
+  document.querySelector('#promo-table tbody').innerHTML = (data || []).map(p => `<tr>
+    <td><strong>${p.businesses?.name || '—'}</strong></td>
+    <td>${p.title}</td>
+    <td>${p.discount_percent ? '-'+p.discount_percent+'%' : '—'}</td>
+    <td style="font-family:monospace;font-weight:700;">${p.promo_code || '—'}</td>
+    <td><span class="badge ${p.is_active ? 'badge-approved' : 'badge-rejected'}">${p.is_active ? 'Да' : 'Нет'}</span></td>
+  </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:40px;">Нет акций</td></tr>';
+}
+
+// Auto-login check
+window.addEventListener('load', async () => {
+  try {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      const email = session.user.email;
+      if (ADMIN_EMAILS.length === 0 || ADMIN_EMAILS.includes(email.toLowerCase())) {
+        adminUser = session.user;
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('admin-panel').style.display = 'block';
+        document.getElementById('adm-user-info').textContent = email;
+        loadDashboard();
+      }
+    }
+  } catch(e) {}
+});
+</script>
+</body>
+</html>
