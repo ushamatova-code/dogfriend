@@ -249,12 +249,39 @@ function loadProfile() {
     const geo = p.district || '';
     if (geo) {
       geoDisplay.textContent = geo;
-      // Также обновляем глобальную переменную если район указан
       if (!userLocationName) userLocationName = geo;
     } else if (userLocationName) {
       geoDisplay.textContent = userLocationName;
     } else {
       geoDisplay.textContent = 'Укажите район →';
+    }
+  }
+  
+  // Обновляем статистику профиля из реальных данных
+  loadProfileStats();
+}
+
+async function loadProfileStats() {
+  // Питомцы — из localStorage
+  const pets = JSON.parse(localStorage.getItem('df_pets') || '[]');
+  const petsStat = document.getElementById('prof-stat-pets');
+  if (petsStat) petsStat.textContent = pets.length;
+  
+  // Заказы и приюты — из Supabase если есть
+  if (supabaseClient && currentUser) {
+    try {
+      const { data: bookings } = await supabaseClient
+        .from('bookings')
+        .select('id')
+        .eq('user_id', currentUser.id);
+      const ordersStat = document.getElementById('prof-stat-orders');
+      if (ordersStat) ordersStat.textContent = (bookings || []).length;
+      
+      // Сумма приютам — примерно 5% от каждого заказа
+      const charityStat = document.getElementById('prof-stat-charity');
+      if (charityStat) charityStat.textContent = ((bookings || []).length * 150) + ' ₽';
+    } catch(e) {
+      console.warn('Profile stats error:', e);
     }
   }
 }

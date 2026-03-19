@@ -391,24 +391,28 @@
 
 <!-- PROFILE -->
 <div class="screen" id="profile">
-  <div class="prof-hero" style="border-radius:0 0 32px 32px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-      <span style="font-size:18px;font-weight:800;color:white;">Профиль</span>
+  <div style="background:linear-gradient(145deg,var(--primary),#7B5EA7);padding:calc(16px + env(safe-area-inset-top, 0px)) 20px 20px;flex-shrink:0;border-radius:0 0 24px 24px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <span style="font-size:17px;font-weight:800;color:white;">Профиль</span>
       <button class="back-btn" style="background:rgba(255,255,255,0.15);color:white;box-shadow:none;border-radius:12px;" onclick="nav('edit-profile');loadProfileForm()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       </button>
     </div>
-    <div style="position:relative;width:88px;height:88px;margin:0 auto 14px;">
-      <div id="prof-avatar" class="avatar" style="width:88px;height:88px;font-size:34px;border:3px solid rgba(255,255,255,0.4);box-shadow:0 4px 20px rgba(0,0,0,0.15);">АК</div>
+    <!-- Compact: avatar + name inline -->
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+      <div id="prof-avatar" class="avatar" style="width:64px;height:64px;font-size:24px;border:2.5px solid rgba(255,255,255,0.4);box-shadow:0 3px 12px rgba(0,0,0,0.12);">АК</div>
+      <div>
+        <div id="prof-name" style="font-size:20px;font-weight:900;color:white;font-family:'Nunito',sans-serif;">Анна Козлова</div>
+        <div style="margin-top:4px;"><span class="tag" style="background:rgba(255,255,255,0.15);color:white;font-size:11px;">🏅 Уровень 3 — Друг</span></div>
+      </div>
     </div>
-    <div id="prof-name" style="font-size:22px;font-weight:900;color:white;margin-bottom:6px;font-family:'Nunito',sans-serif;">Анна Козлова</div>
-    <div style="display:flex;align-items:center;justify-content:center;margin-bottom:4px;"><span class="tag" style="background:rgba(255,255,255,0.15);color:white;font-size:12px;backdrop-filter:blur(4px);">🏅 Уровень 3 — Друг</span></div>
-    <div class="imp-bar">
-      <div class="imp-stat"><div class="imp-val">1 250 ₽</div><div class="imp-lbl">приютам</div></div>
+    <!-- Stats bar -->
+    <div class="imp-bar" style="border-radius:14px;padding:12px;">
+      <div class="imp-stat"><div class="imp-val" id="prof-stat-charity">0 ₽</div><div class="imp-lbl">приютам</div></div>
       <div class="imp-sep"></div>
-      <div class="imp-stat"><div class="imp-val">8</div><div class="imp-lbl">транзакций</div></div>
+      <div class="imp-stat"><div class="imp-val" id="prof-stat-orders">0</div><div class="imp-lbl">транзакций</div></div>
       <div class="imp-sep"></div>
-      <div class="imp-stat"><div class="imp-val">3</div><div class="imp-lbl">питомца</div></div>
+      <div class="imp-stat"><div class="imp-val" id="prof-stat-pets">0</div><div class="imp-lbl">питомца</div></div>
     </div>
   </div>
   <div class="scroll">
