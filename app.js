@@ -1344,11 +1344,6 @@ async function initServiceWorker() {
         if (chatId) openPrivateChat(chatId);
         else if (type === 'event') nav('events');
       }
-      // Новая версия задеплоена — перезагружаем страницу автоматически
-      if (event.data?.type === 'SW_UPDATED') {
-        console.log('[SW] Новая версия — обновляем...');
-        window.location.reload();
-      }
     });
     return swRegistration;
   } catch (error) {
@@ -1739,42 +1734,93 @@ function getChatNick() {
   } catch { return 'Гость'; }
 }
 
-function openPublicChat() {
+// Текущий тип открытого чата: 'global' или 'district'
+let currentChatType = 'global';
+let supabaseDistrictChannel = null;
+
+function getDistrictRoomId() {
+  const district = userLocationName || localStorage.getItem('df_user_geo') || '';
+  if (!district) return 'district_general';
+  return 'district_' + district.toLowerCase().replace(/\s+/g, '_').replace(/[^a-zа-я0-9_]/gi, '');
+}
+
+// Обновляем название района в списке чатов
+function updateDistrictChatLabel() {
+  const district = userLocationName || localStorage.getItem('df_user_geo') || '';
+  const nameEl = document.getElementById('community-district-name');
+  const subEl  = document.getElementById('community-district-sub');
+  if (nameEl) nameEl.textContent = district ? '📍 ' + district : '📍 Мой район';
+  if (subEl)  subEl.textContent  = district ? 'Владельцы района ' + district : 'Укажите район в профиле';
+}
+
+// Открыть общий чат (все пользователи)
+function openGlobalChat() {
+  currentChatType = 'global';
   chatNick = getChatNick();
-  document.getElementById('chat-conv-name').textContent = '🐾 Общий чат Dogly';
+  document.getElementById('chat-conv-name').textContent = '🌍 Общий чат Dogly';
   document.getElementById('chat-conv-av').style.background = 'linear-gradient(135deg,#4A90D9,#7B5EA7)';
-  document.getElementById('chat-conv-av').textContent = '💬';
+  document.getElementById('chat-conv-av').textContent = '🌍';
   document.getElementById('chat-conv-subtitle').innerHTML = '<span style="color:#aaa">● подключение...</span>';
-  
-  // Очищаем старые сообщения и загружаем историю из БД
   const wrap = document.getElementById('chat-messages');
   if (wrap) wrap.innerHTML = '';
-  loadPublicChatHistory();
-  
+  loadPublicChatHistory('public_chat');
   nav('chatConv');
-  
-  // Запрашиваем разрешение на уведомления при первом открытии
   requestNotificationPermission();
-  
-  // Всегда проверяем подключение
-  if (!chatInited) {
-    initSupabaseChat();
-  } else if (!supabasePublicChannel) {
-    // Если канал отключился - переподключаем
-    console.log('🔄 Reconnecting to public chat...');
-    connectSupabaseRealtime();
-  } else {
-    scrollChatBottom();
-  }
+  if (!chatInited) initSupabaseChat();
+  else if (!supabasePublicChannel) connectSupabaseRealtime();
+  else scrollChatBottom();
 }
+
+// Открыть чат района
+function openDistrictChat() {
+  const district = userLocationName || localStorage.getItem('df_user_geo') || '';
+  if (!district) {
+    showToast('Укажите район в профиле → Редактировать', '#F5A623');
+    return;
+  }
+  currentChatType = 'district';
+  chatNick = getChatNick();
+  document.getElementById('chat-conv-name').textContent = '📍 ' + district;
+  document.getElementById('chat-conv-av').style.background = 'linear-gradient(135deg,#F5A623,#F07B3F)';
+  document.getElementById('chat-conv-av').textContent = '📍';
+  document.getElementById('chat-conv-subtitle').innerHTML = '<span style="color:#aaa">● подключение...</span>';
+  const wrap = document.getElementById('chat-messages');
+  if (wrap) wrap.innerHTML = '';
+  loadPublicChatHistory(getDistrictRoomId());
+  nav('chatConv');
+  requestNotificationPermission();
+  connectDistrictRealtime(district);
+}
+
+// Подключение к каналу района
+function connectDistrictRealtime(district) {
+  if (!supabaseClient) { setTimeout(() => connectDistrictRealtime(district), 500); return; }
+  if (supabaseDistrictChannel) {
+    supabaseDistrictChannel.unsubscribe();
+    supabaseDistrictChannel = null;
+  }
+  const channelName = 'dogfriend-district-' + district.toLowerCase().replace(/\s+/g, '-');
+  supabaseDistrictChannel = supabaseClient.channel(channelName, {
+    config: { broadcast: { self: false, ack: false } }
+  });
+  supabaseDistrictChannel
+    .on('broadcast', { event: 'message' }, (payload) => {
+      const d = payload.payload;
+      const myId = currentUser?.id || userId;
+      if (d.senderId !== myId) appendMessage(d.nick, d.text, d.time, false, d.senderId);
+    })
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') setChatStatus('online');
+      else if (status === 'CHANNEL_ERROR') setChatStatus('error');
+    });
+}
+
+// Обратная совместимость
+function openPublicChat() { openGlobalChat(); }
 
 function initSupabaseChat() {
   chatInited = true;
-  if (!supabaseClient) {
-    setTimeout(initSupabaseChat, 500);
-    return;
-  }
-  
+  if (!supabaseClient) { setTimeout(initSupabaseChat, 500); return; }
   connectSupabaseRealtime();
 }
 
@@ -2039,33 +2085,32 @@ function startIncomingMessagesPolling() {
 function sendChatMsg() {
   const input = document.getElementById('chat-input');
   const text  = input.value.trim();
-  if (!text || !supabasePublicChannel) return;
+  const activeChannel = currentChatType === 'district' ? supabaseDistrictChannel : supabasePublicChannel;
+  if (!text || !activeChannel) return;
   const now  = new Date();
   const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
   appendMessage(chatNick, text, time, true, currentUser?.id || userId);
   input.value = '';
   chatInputResize(input);
   
-  // Broadcast для мгновенной доставки (typing + сообщение)
-  supabasePublicChannel.send({
-    type: 'broadcast',
-    event: 'message',
+  activeChannel.send({
+    type: 'broadcast', event: 'message',
     payload: { nick: chatNick, text, time, senderId: currentUser?.id || userId }
   });
   
   clearTimeout(typingTimer);
-  supabasePublicChannel.send({
-    type: 'broadcast',
-    event: 'typing',
+  activeChannel.send({
+    type: 'broadcast', event: 'typing',
     payload: { nick: chatNick, isTyping: false }
   });
 
-  // Сохраняем в БД для истории общего чата
+  // Сохраняем в БД для истории
   if (supabaseClient) {
     const myUserId = currentUser?.id || userId;
     const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
+    const roomId = currentChatType === 'district' ? getDistrictRoomId() : 'public_chat';
     supabaseClient.from('direct_messages').insert({
-      room_id: 'public_chat',
+      room_id: roomId,
       sender_id: myUserId,
       sender_name: p.name || chatNick,
       text: text,
@@ -2076,14 +2121,14 @@ function sendChatMsg() {
   }
 }
 
-// Загрузка истории общего чата из БД
-async function loadPublicChatHistory() {
+// Загрузка истории чата из БД (общий или районный)
+async function loadPublicChatHistory(roomId = 'public_chat') {
   if (!supabaseClient) return;
   try {
     const { data } = await supabaseClient
       .from('direct_messages')
       .select('*')
-      .eq('room_id', 'public_chat')
+      .eq('room_id', roomId)
       .order('created_at', { ascending: true })
       .limit(100);
     
@@ -2492,6 +2537,7 @@ function updateGeoUI() {
       geoDisplay.textContent = 'Укажите район →';
     }
   }
+  updateDistrictChatLabel();
 }
 
 // Расстояние между двумя точками (км)
@@ -3217,9 +3263,7 @@ window.addEventListener('load',()=>{
   setTimeout(()=>{
     if(typeof renderHomeSpecialists==='function') renderHomeSpecialists();
     renderPlaces();renderDiscounts();renderLessons();renderPets();
-    // Update community district name
-    const distName = document.getElementById('community-district-name');
-    if (distName && userLocationName) distName.textContent = userLocationName;
+    updateDistrictChatLabel();
   },200);
 });
 
