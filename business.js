@@ -315,6 +315,61 @@ async function openBusinessProfile(id) {
     <p style="font-size:13px;color:var(--text-secondary);padding-top:14px;border-top:1px solid var(--border);text-align:center;">⏳ Загружаем отзывы...</p>`;
 
   nav('specialist');
+  
+  // Загружаем акции бизнеса и вставляем после "О себе"
+  loadBusinessPromos(b);
+}
+
+async function loadBusinessPromos(b) {
+  if (!supabaseClient) return;
+  try {
+    const { data: promos } = await supabaseClient
+      .from('promotions')
+      .select('*')
+      .eq('business_id', b.id)
+      .eq('is_active', true);
+    
+    if (!promos || !promos.length) return;
+    
+    // Удаляем старый блок если есть
+    const old = document.getElementById('spec-promos-block');
+    if (old) old.remove();
+    
+    const promoDiv = document.createElement('div');
+    promoDiv.id = 'spec-promos-block';
+    promoDiv.innerHTML = `<div class="card" style="margin-top:12px;border:1.5px solid rgba(46,125,50,0.15);background:linear-gradient(135deg,rgba(232,245,233,0.5),rgba(200,230,201,0.3));">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2" stroke-linecap="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        <h3 style="margin:0;">Акции и скидки</h3>
+      </div>
+      ${promos.map(p => `
+        <div style="padding:12px;background:var(--white);border-radius:12px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+            <div style="font-weight:700;font-size:14px;">${p.title}</div>
+            ${p.discount_percent ? `<div style="background:#2E7D32;color:white;border-radius:8px;padding:2px 8px;font-size:13px;font-weight:800;flex-shrink:0;">-${p.discount_percent}%</div>` : ''}
+          </div>
+          ${p.description ? `<div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;">${p.description}</div>` : ''}
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            ${p.promo_code ? `<span style="font-family:monospace;font-weight:800;font-size:14px;color:#2E7D32;background:rgba(46,125,50,0.08);padding:4px 10px;border-radius:8px;">${p.promo_code}</span>` : ''}
+            ${p.valid_until ? `<span style="font-size:12px;color:var(--text-secondary);">до ${p.valid_until}</span>` : ''}
+          </div>
+        </div>
+      `).join('')}
+      <button class="btn btn-p" style="margin-top:4px;background:#2E7D32;" onclick="openPrivateChat(currentSpecId)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:8px;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        Получить скидку
+      </button>
+    </div>`;
+    
+    // Вставляем после первой карточки (О себе)
+    const overviewEl = document.getElementById('tc-spec-overview');
+    const firstCard = overviewEl?.querySelector('.card');
+    if (firstCard) {
+      firstCard.insertAdjacentElement('afterend', promoDiv);
+    }
+  } catch(e) {
+    console.error('Load business promos error:', e);
+  }
 }
 
 function selectBusinessType(type) {

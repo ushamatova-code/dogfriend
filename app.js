@@ -2815,31 +2815,42 @@ function openDiscountModal(id) {
   if (!_currentDisc) return;
   const p = _currentDisc;
   const biz = p.biz || {};
-  const icon = PLACE_ICON_MAP[biz.type] || '🎁';
-  const grad = PLACE_GRAD_MAP[biz.type] || 'linear-gradient(135deg,#4A90D9,#7B5EA7)';
+  const initials = (biz.name || 'XX').substring(0,2).toUpperCase();
 
   document.getElementById('m-discount-body').innerHTML = `
-    <div style="display:flex;gap:12px;align-items:center;margin-bottom:14px;">
-      <div style="width:56px;height:56px;background:${grad};border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;">${icon}</div>
-      <div>
-        <div style="font-size:18px;font-weight:800;">${biz.name || 'Партнёр'}</div>
-        <div style="font-size:13px;color:var(--text-secondary);">${p.category || ''}</div>
-      </div>
-    </div>
+    <!-- Discount badge -->
     ${p.discount_percent ? `
-    <div style="background:rgba(245,166,35,0.12);border-radius:12px;padding:12px;text-align:center;margin-bottom:14px;">
-      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">Скидка</div>
-      <div style="font-size:36px;font-weight:900;font-family:'Nunito',sans-serif;color:var(--secondary);">-${p.discount_percent}%</div>
+    <div style="background:linear-gradient(135deg,#2E7D32,#43A047);border-radius:16px;padding:20px;text-align:center;margin-bottom:16px;color:white;">
+      <div style="font-size:14px;font-weight:600;opacity:0.85;margin-bottom:4px;">Скидка</div>
+      <div style="font-size:42px;font-weight:900;font-family:'Nunito',sans-serif;">-${p.discount_percent}%</div>
     </div>` : ''}
-    <div style="font-size:15px;font-weight:700;margin-bottom:8px;">${p.title}</div>
-    ${p.description ? `<div style="font-size:14px;color:var(--text-secondary);line-height:1.7;margin-bottom:14px;">${p.description}</div>` : ''}
-    ${biz.address ? `<div style="font-size:14px;margin-bottom:6px;">📍 ${biz.address}</div>` : ''}
-    ${p.valid_until ? `<div style="font-size:14px;margin-bottom:14px;">⏰ ${p.valid_until}</div>` : ''}
+    
+    <!-- Title & description -->
+    <div style="font-size:17px;font-weight:800;margin-bottom:6px;">${p.title}</div>
+    ${p.description ? `<div style="font-size:14px;color:var(--text-secondary);line-height:1.6;margin-bottom:14px;">${p.description}</div>` : '<div style="height:8px;"></div>'}
+    
+    <!-- Promo code -->
     ${p.promo_code ? `
-    <div style="background:rgba(74,144,217,0.06);border-radius:14px;padding:16px;text-align:center;margin-bottom:14px;">
-      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">Промокод</div>
-      <div style="font-size:26px;font-weight:900;font-family:'Nunito',sans-serif;color:var(--primary);letter-spacing:3px;">${p.promo_code}</div>
+    <div style="background:var(--bg);border-radius:14px;padding:16px;text-align:center;margin-bottom:14px;cursor:pointer;" onclick="copyPromoCode()">
+      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">Промокод (нажмите чтобы скопировать)</div>
+      <div style="font-size:24px;font-weight:900;font-family:'Nunito',sans-serif;color:var(--primary);letter-spacing:3px;">${p.promo_code}</div>
     </div>` : ''}
+    
+    <!-- Business info -->
+    <div style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--bg);border-radius:14px;margin-bottom:14px;cursor:pointer;" onclick="closeModal('m-discount');if('${p.business_id}')openBusinessProfile('${p.business_id}')">
+      <div class="avatar" style="width:44px;height:44px;font-size:16px;flex-shrink:0;${biz.cover_url ? 'overflow:hidden;padding:0;background:none;' : ''}">
+        ${biz.cover_url ? `<img src="${biz.cover_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : initials}
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:14px;">${biz.name || 'Партнёр'}</div>
+        ${biz.address ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${biz.address}</div>` : ''}
+      </div>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    
+    ${p.valid_until ? `<div style="font-size:13px;color:var(--text-secondary);text-align:center;margin-bottom:14px;">Действует до ${p.valid_until}</div>` : ''}
+    
+    <!-- Action button -->
     <button class="btn btn-p" style="margin-bottom:8px;" onclick="closeModal('m-discount');contactBizFromPromo()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:8px;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
       Получить скидку
