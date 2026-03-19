@@ -262,6 +262,58 @@ function renderBizDashboard(biz) {
   }
 
   document.getElementById('biz-dash-content').innerHTML = html;
+  renderBizPromos(biz);
+}
+
+async function renderBizPromos(biz) {
+  const container = document.getElementById('biz-dash-content');
+  if (!container || !supabaseClient) return;
+  const { data: promos } = await supabaseClient.from('promotions').select('*').eq('business_id', biz.id).order('created_at', { ascending: false });
+  let h = `<div style="background:var(--white);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-size:15px;font-weight:800;">Мои акции</div>
+      <button class="btn btn-p" style="width:auto;height:34px;padding:0 14px;font-size:12px;border-radius:10px;" onclick="openCreatePromo()">+ Создать</button>
+    </div>`;
+  if (promos && promos.length) {
+    h += promos.map(p => `<div style="padding:12px 0;border-top:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div><div style="font-weight:700;font-size:14px;">${p.title}</div><div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${p.discount_percent?'-'+p.discount_percent+'%':''} ${p.promo_code?'· Код: '+p.promo_code:''} ${p.valid_until?'· До '+p.valid_until:''}</div></div>
+        <span class="tag ${p.is_active?'tag-g':'tag-o'}" style="font-size:11px;">${p.is_active?'Активна':'Выкл'}</span>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button class="btn btn-sm btn-g" onclick="toggleMyPromo('${p.id}',${!p.is_active})">${p.is_active?'Выключить':'Включить'}</button>
+        <button class="btn btn-sm" style="background:rgba(208,2,27,0.08);color:var(--error);border-radius:10px;" onclick="deleteMyPromo('${p.id}')">Удалить</button>
+      </div></div>`).join('');
+  } else { h += '<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:13px;">Нет акций. Создайте первую!</div>'; }
+  h += '</div>';
+  container.insertAdjacentHTML('beforeend', h);
+}
+async function toggleMyPromo(id,active){await supabaseClient.from('promotions').update({is_active:active}).eq('id',id);showToast(active?'Включена':'Выключена');renderBizDashboard(currentBiz)}
+async function deleteMyPromo(id){if(!confirm('Удалить акцию?'))return;await supabaseClient.from('promotions').delete().eq('id',id);showToast('Удалена');renderBizDashboard(currentBiz)}
+function openCreatePromo(){
+  if(!currentBiz)return;
+  let m=document.getElementById('m-create-promo');
+  if(!m){m=document.createElement('div');m.className='modal-ov';m.id='m-create-promo';m.onclick=()=>closeModal('m-create-promo');
+  m.innerHTML=`<div class="modal" onclick="event.stopPropagation()" style="max-height:90%;overflow-y:auto;"><div class="mhandle"></div><div id="m-promo-body"></div></div>`;
+  document.querySelector('.phone-shell').appendChild(m);}
+  document.getElementById('m-promo-body').innerHTML=`
+    <h3 style="margin-bottom:16px;">Новая акция</h3>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;">
+      <div><label class="lbl">Название *</label><input class="input" id="promo-title" placeholder="Скидка 20% на первое занятие"></div>
+      <div><label class="lbl">Описание</label><textarea class="input" id="promo-desc" placeholder="Подробности..." style="min-height:60px;padding:12px;"></textarea></div>
+      <div style="display:flex;gap:10px;"><div style="flex:1;"><label class="lbl">Скидка %</label><input class="input" id="promo-pct" type="number" placeholder="20"></div><div style="flex:1;"><label class="lbl">Промокод</label><input class="input" id="promo-code" placeholder="DOGLY20" style="text-transform:uppercase;"></div></div>
+      <div><label class="lbl">Категория</label><select class="input" id="promo-cat" style="padding:0 12px;"><option value="">Выберите</option><option value="Груминг">Груминг</option><option value="Питание">Питание</option><option value="Аксессуары">Аксессуары</option><option value="Ветеринар">Ветеринар</option><option value="Кафе">Кафе</option><option value="Другое">Другое</option></select></div>
+      <div><label class="lbl">Действует до</label><input class="input" id="promo-until" placeholder="31 декабря 2026"></div>
+    </div>
+    <button class="btn btn-p" onclick="submitPromo()" style="margin-bottom:8px;">Создать акцию</button>
+    <button class="btn btn-g" onclick="closeModal('m-create-promo')">Отмена</button>`;
+  openModal('m-create-promo');
+}
+async function submitPromo(){
+  if(!currentBiz||!supabaseClient)return;
+  const t=document.getElementById('promo-title').value.trim();if(!t){showToast('Введите название');return}
+  try{const{error}=await supabaseClient.from('promotions').insert({business_id:currentBiz.id,title:t,description:document.getElementById('promo-desc').value.trim(),discount_percent:parseInt(document.getElementById('promo-pct').value)||null,promo_code:(document.getElementById('promo-code').value.trim().toUpperCase())||null,category:document.getElementById('promo-cat').value||null,valid_until:document.getElementById('promo-until').value.trim()||null,is_active:true});
+  if(error)throw error;closeModal('m-create-promo');showToast('Акция создана!','#34C759');renderBizDashboard(currentBiz)}catch(e){showToast('Ошибка: '+(e.message||''))}
 }
 
 function openBusinessDashboard() {

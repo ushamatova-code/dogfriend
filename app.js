@@ -2836,12 +2836,36 @@ function openDiscountModal(id) {
     ${biz.address ? `<div style="font-size:14px;margin-bottom:6px;">📍 ${biz.address}</div>` : ''}
     ${p.valid_until ? `<div style="font-size:14px;margin-bottom:14px;">⏰ ${p.valid_until}</div>` : ''}
     ${p.promo_code ? `
-    <div style="background:rgba(74,144,217,0.08);border-radius:12px;padding:14px;text-align:center;">
+    <div style="background:rgba(74,144,217,0.06);border-radius:14px;padding:16px;text-align:center;margin-bottom:14px;">
       <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">Промокод</div>
       <div style="font-size:26px;font-weight:900;font-family:'Nunito',sans-serif;color:var(--primary);letter-spacing:3px;">${p.promo_code}</div>
     </div>` : ''}
+    <button class="btn btn-p" style="margin-bottom:8px;" onclick="closeModal('m-discount');contactBizFromPromo()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:8px;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      Получить скидку
+    </button>
   `;
   openModal('m-discount');
+}
+
+function contactBizFromPromo() {
+  if (!_currentDisc) return;
+  const biz = _currentDisc.biz;
+  if (!biz) return;
+  // Ищем business в loadedBusinesses чтобы получить user_id
+  if (typeof openBusinessProfile === 'function') {
+    // Загружаем бизнес и открываем чат
+    if (supabaseClient) {
+      supabaseClient.from('businesses').select('user_id,name').eq('id', _currentDisc.business_id).single()
+        .then(({ data }) => {
+          if (data && data.user_id) {
+            openChatWithUser(data.user_id, data.name || biz.name || 'Бизнес', (data.name || 'BZ').substring(0,2).toUpperCase());
+          } else {
+            showToast('Не удалось найти контакт бизнеса');
+          }
+        });
+    }
+  }
 }
 
 function copyPromoCode() {
