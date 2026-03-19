@@ -20,52 +20,58 @@
 <!-- SPLASH -->
 <div class="screen" id="splash">
   <div style="text-align:center;">
-    <div class="sp-logo">🐕</div>
+    <div style="margin-bottom:20px;"><img src="icon-192.png" style="width:96px;height:96px;border-radius:24px;box-shadow:0 8px 32px rgba(0,0,0,0.2);" onerror="this.style.display='none'"></div>
     <div class="sp-title">Dogly</div>
-    <div class="sp-sub">Безопасные платежи<br>+ помощь приютам</div>
+    <div class="sp-sub">Всё для вашей собаки<br>в одном приложении</div>
     <div class="loader"><div class="loader-bar"></div></div>
   </div>
 </div>
 
 <!-- ONBOARDING 1 -->
 <div class="screen" id="onb1">
-  <div class="scroll" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;">
-    <div class="onb-icon" style="background:linear-gradient(135deg,#EEF6FF,#C9E4FA);">🐕</div>
-    <h1 style="margin-bottom:16px;">Найди свою стаю</h1>
-    <p style="color:var(--text-secondary);">Общайся с владельцами собак<br>в своём районе Москвы.<br>Вместе гулять веселее!</p>
+  <div class="scroll" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;">
+    <div class="onb-icon" style="background:linear-gradient(135deg,#EEF6FF,#C9E4FA);box-shadow:0 8px 32px rgba(74,144,217,0.15);">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#4A90D9" stroke-width="1.5" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+    </div>
+    <h1 style="margin-bottom:12px;font-size:26px;">Найди свою стаю</h1>
+    <p style="color:var(--text-secondary);font-size:15px;line-height:1.6;">Общайся с владельцами собак<br>в своём районе.<br>Вместе гулять веселее!</p>
     <div class="dots"><div class="dot on"></div><div class="dot"></div><div class="dot"></div></div>
   </div>
   <div style="padding:16px 24px 32px;display:flex;flex-direction:column;gap:10px;">
-    <button class="btn btn-p" onclick="nav('onb2')">Далее →</button>
+    <button class="btn btn-p" onclick="nav('onb2')">Далее</button>
     <button class="btn btn-g" onclick="nav('register')">Пропустить</button>
   </div>
 </div>
 
 <!-- ONBOARDING 2 -->
 <div class="screen" id="onb2">
-  <div class="scroll" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;">
-    <div class="onb-icon" style="background:linear-gradient(135deg,#FFF5E6,#FFD9A0);">🛡️</div>
-    <h1 style="margin-bottom:16px;">Плати безопасно</h1>
-    <p style="color:var(--text-secondary);">Оплата частями без переплат.<br>Страховка на каждую услугу<br>уже включена в стоимость.</p>
+  <div class="scroll" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;">
+    <div class="onb-icon" style="background:linear-gradient(135deg,#FFF5E6,#FFD9A0);box-shadow:0 8px 32px rgba(245,166,35,0.15);">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#F5A623" stroke-width="1.5" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10" stroke-width="2"/></svg>
+    </div>
+    <h1 style="margin-bottom:12px;font-size:26px;">Плати безопасно</h1>
+    <p style="color:var(--text-secondary);font-size:15px;line-height:1.6;">Оплата частями без переплат.<br>Страховка на каждую услугу<br>уже включена.</p>
     <div class="dots"><div class="dot"></div><div class="dot on"></div><div class="dot"></div></div>
   </div>
   <div style="padding:16px 24px 32px;display:flex;flex-direction:column;gap:10px;">
-    <button class="btn btn-p" onclick="nav('onb3')">Далее →</button>
-    <button class="btn btn-g" onclick="nav('onb1')">← Назад</button>
+    <button class="btn btn-p" onclick="nav('onb3')">Далее</button>
+    <button class="btn btn-g" onclick="nav('onb1')">Назад</button>
   </div>
 </div>
 
 <!-- ONBOARDING 3 -->
 <div class="screen" id="onb3">
-  <div class="scroll" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;">
-    <div class="onb-icon" style="background:linear-gradient(135deg,#FFF0F0,#FFCDD2);">❤️</div>
-    <h1 style="margin-bottom:16px;">Помогай приютам</h1>
-    <p style="color:var(--text-secondary);">50% комиссии платформы идёт<br>напрямую в приюты для животных.<br>Каждая оплата — маленький подвиг!</p>
+  <div class="scroll" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;">
+    <div class="onb-icon" style="background:linear-gradient(135deg,#FFF0F3,#FFCDD2);box-shadow:0 8px 32px rgba(233,30,99,0.12);">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#E91E63" stroke-width="1.5" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+    </div>
+    <h1 style="margin-bottom:12px;font-size:26px;">Помогай приютам</h1>
+    <p style="color:var(--text-secondary);font-size:15px;line-height:1.6;">50% комиссии платформы идёт<br>напрямую в приюты для животных.<br>Каждая оплата — маленький подвиг!</p>
     <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot on"></div></div>
   </div>
   <div style="padding:16px 24px 32px;display:flex;flex-direction:column;gap:10px;">
-    <button class="btn btn-p" onclick="nav('register')">Начать! 🐾</button>
-    <button class="btn btn-g" onclick="nav('onb2')">← Назад</button>
+    <button class="btn btn-p" onclick="nav('register')">Начать</button>
+    <button class="btn btn-g" onclick="nav('onb2')">Назад</button>
   </div>
 </div>
 
@@ -73,9 +79,9 @@
 <div class="screen" id="login">
   <div class="scroll" style="padding:24px;">
     <div style="margin-bottom:28px;text-align:center;">
-      <div style="font-size:60px;margin-bottom:16px;">🐕</div>
-      <h1 style="margin-bottom:6px;">Добро пожаловать<br>в Dogly</h1>
-      <p style="color:var(--text-secondary);">Войдите для продолжения</p>
+      <div style="margin-bottom:16px;"><img src="icon-192.png" style="width:72px;height:72px;border-radius:18px;box-shadow:0 4px 20px rgba(74,144,217,0.15);" onerror="this.style.display='none'"></div>
+      <h1 style="margin-bottom:6px;font-size:24px;">Добро пожаловать<br>в Dogly</h1>
+      <p style="color:var(--text-secondary);font-size:14px;">Войдите для продолжения</p>
     </div>
     <div style="margin-bottom:20px;">
       <label class="lbl">Email</label>
@@ -93,7 +99,7 @@
 <!-- REGISTER -->
 <div class="screen" id="register">
   <div class="top-bar" style="padding-top:0;">
-    <button class="back-btn" onclick="nav('login')">←</button>
+    <button class="back-btn" onclick="nav('login')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
     <div class="tbar-title"></div>
   </div>
   <div class="scroll" style="padding:0 24px;">
@@ -248,7 +254,7 @@
     <div class="tbar-title">Кинологи</div>
   </div>
   <div style="padding:0 16px 12px;flex-shrink:0;">
-    <div class="search-bar"><span style="font-size:18px;">🔍</span><input class="si" id="catalog-search" placeholder="Иван, щенки, ОКД..." oninput="renderCatalog()"></div>
+    <div class="search-bar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input class="si" id="catalog-search" placeholder="Иван, щенки, ОКД..." oninput="renderCatalog()"></div>
   </div>
   <div class="chips" id="catalog-chips" style="flex-shrink:0;">
     <div class="chip on" onclick="filterCatalog('Все',this)">Все</div>
@@ -303,25 +309,25 @@
     </div>
     <div class="tc on" id="tc-spec-overview">
       <div class="card" style="margin-top:12px;">
-        <h3 style="margin-bottom:8px;">📝 О себе</h3>
+        <h3 style="margin-bottom:8px;">О себе</h3>
         <p id="spec-bio" style="font-size:14px;color:var(--text-secondary);line-height:1.6;"></p>
       </div>
       <div class="card">
-        <h3 style="margin-bottom:12px;">💼 Услуги и цены</h3>
+        <h3 style="margin-bottom:12px;">Услуги и цены</h3>
         <div class="pt" id="spec-services"></div>
       </div>
       <div class="card">
-        <h3 style="margin-bottom:12px;">💳 Способ оплаты</h3>
+        <h3 style="margin-bottom:12px;">Способ оплаты</h3>
         <div style="display:flex;flex-direction:column;gap:10px;">
           <div class="popt" id="pf" onclick="selectPay('full')"><div class="rdot"><div class="rfill"></div></div><div><div style="font-size:14px;font-weight:700;">Полная оплата</div><div style="font-size:13px;color:var(--text-secondary);" id="pay-full-desc"></div></div></div>
           <div class="popt sel" id="ps" onclick="selectPay('split')"><div class="rdot"><div class="rfill"></div></div><div><div style="font-size:14px;font-weight:700;">Частями без переплат</div><div style="font-size:13px;color:var(--text-secondary);" id="pay-split-desc"></div></div></div>
         </div>
       </div>
       <div class="card" style="margin-bottom:90px;">
-        <h3 style="margin-bottom:12px;">🛡️ Гарантии Dogly</h3>
-        <div class="gr"><div class="gr-icon">🛡️</div><div><div class="gr-text">Страховка 100 000 ₽</div><div style="font-size:12px;color:var(--text-secondary);">На каждое занятие</div></div></div>
-        <div class="gr"><div class="gr-icon">❤️</div><div><div class="gr-text">150 ₽ → приютам</div><div style="font-size:12px;color:var(--text-secondary);">С каждой оплаты</div></div></div>
-        <div class="gr"><div class="gr-icon">↩️</div><div><div class="gr-text">Возврат денег</div><div style="font-size:12px;color:var(--text-secondary);">Если что-то пойдёт не так</div></div></div>
+        <h3 style="margin-bottom:12px;">Гарантии Dogly</h3>
+        <div class="gr"><div class="gr-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div><div class="gr-text">Страховка 100 000 ₽</div><div style="font-size:12px;color:var(--text-secondary);">На каждое занятие</div></div></div>
+        <div class="gr"><div class="gr-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E91E63" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div><div><div class="gr-text">150 ₽ → приютам</div><div style="font-size:12px;color:var(--text-secondary);">С каждой оплаты</div></div></div>
+        <div class="gr"><div class="gr-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg></div><div><div class="gr-text">Возврат денег</div><div style="font-size:12px;color:var(--text-secondary);">Если что-то пойдёт не так</div></div></div>
       </div>
     </div>
     <div class="tc" id="tc-spec-reviews">
@@ -336,7 +342,7 @@
     </div>
   </div>
   <div style="position:absolute;bottom:0;left:0;right:0;padding:12px 16px;background:var(--white);border-top:1px solid var(--border);display:flex;gap:10px;z-index:10;">
-    <button class="btn btn-s" style="width:52px;height:52px;flex-shrink:0;border-radius:12px;" onclick="openPrivateChat(currentSpecId)">💬</button>
+    <button class="btn btn-s" style="width:52px;height:52px;flex-shrink:0;border-radius:14px;" onclick="openPrivateChat(currentSpecId)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></button>
     <button class="btn btn-p" style="flex:1;" onclick="nav('booking')">Записаться</button>
   </div>
 </div>
@@ -346,7 +352,7 @@
   <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="tbar-title">Подтверждение</div></div>
   <div class="scroll" style="padding:0 16px;">
     <div class="card" style="margin:0 0 12px;">
-      <h3 style="margin-bottom:14px;">📋 Детали заказа</h3>
+      <h3 style="margin-bottom:14px;">Детали заказа</h3>
       <div style="display:flex;flex-direction:column;gap:10px;" id="booking-details">
         <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="color:var(--text-secondary);">Специалист</span><span style="font-weight:700;" id="book-spec-name">—</span></div>
         <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="color:var(--text-secondary);">Услуга</span><span style="font-weight:700;" id="book-svc-name">—</span></div>
@@ -355,11 +361,11 @@
         <div style="display:flex;justify-content:space-between;font-size:14px;"><span style="color:var(--text-secondary);">Первый платёж</span><span style="font-weight:800;color:var(--primary);font-size:16px;" id="book-first-pay">—</span></div>
         <div style="height:1px;background:var(--border);"></div>
         <div style="background:rgba(74,144,217,0.06);border-radius:10px;padding:10px;">
-          <div style="display:flex;justify-content:space-between;font-size:13px;color:#5a9c18;font-weight:700;"><span>→ ❤️ Приюту «Надежда»</span><span id="book-charity">—</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#5a9c18;font-weight:700;"><span>→ Приюту «Надежда»</span><span id="book-charity">—</span></div>
         </div>
       </div>
     </div>
-    <div class="card" style="margin:0 0 12px;"><div style="display:flex;align-items:center;gap:12px;"><span style="font-size:28px;">💳</span><div><div style="font-size:14px;font-weight:700;">Карта •••• 4532</div><div style="font-size:12px;color:var(--text-secondary);">Mastercard • истекает 12/27</div></div></div></div>
+    <div class="card" style="margin:0 0 12px;"><div style="display:flex;align-items:center;gap:12px;"><div style="width:44px;height:28px;background:linear-gradient(135deg,#eb001b,#f79e1b);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:white;flex-shrink:0;">MC</div><div><div style="font-size:14px;font-weight:700;">Карта •••• 4532</div><div style="font-size:12px;color:var(--text-secondary);">Mastercard • истекает 12/27</div></div></div></div>
   </div>
   <div style="padding:12px 16px 16px;background:var(--white);border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px;flex-shrink:0;">
     <button class="btn btn-p" id="book-pay-btn" onclick="sendBookingNotification()">Оплатить 🔒</button>
