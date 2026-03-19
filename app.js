@@ -384,7 +384,15 @@ window.addEventListener('load', () => {
   splash.classList.add('active');
   splash.style.display = 'flex';
   
-  // Ждём инициализации — checkAuth сама обработает любой случай
+  // Закрываем результаты поиска районов при клике вне
+  document.addEventListener('click', (e) => {
+    const results = document.getElementById('district-search-results');
+    const search = document.getElementById('district-search');
+    if (results && !results.contains(e.target) && e.target !== search) {
+      results.style.display = 'none';
+    }
+  });
+
   setTimeout(() => checkAuth(), 2500);
 });
 
@@ -3264,8 +3272,144 @@ window.addEventListener('load',()=>{
     if(typeof renderHomeSpecialists==='function') renderHomeSpecialists();
     renderPlaces();renderDiscounts();renderLessons();renderPets();
     updateDistrictChatLabel();
+    renderSavedDistrictChats();
   },200);
 });
+
+// ════════════════════════════════════════════════════════════
+// DISTRICT SEARCH
+// ════════════════════════════════════════════════════════════
+
+// Список популярных районов Москвы и других городов для подсказок
+const KNOWN_DISTRICTS = [
+  'Путилково','Химки','Митино','Тушино','Строгино','Щукино','Сходня',
+  'Куркино','Красногорск','Зеленоград','Солнечногорск','Лобня','Долгопрудный',
+  'Медведково','Бибирево','Отрадное','Бутово','Ясенево','Чертаново','Царицыно',
+  'Марьино','Люблино','Кузьминки','Выхино','Новогиреево','Измайлово','Сокольники',
+  'Преображенское','Перово','Жулебино','Реутов','Балашиха','Железнодорожный',
+  'Некрасовка','Котельники','Люберцы','Дзержинский','Лыткарино','Раменское',
+  'Одинцово','Кунцево','Крылатское','Фили','Дорогомилово','Хамовники',
+  'Якиманка','Замоскворечье','Таганский','Лефортово','Нижегородский',
+  'Санкт-Петербург','Екатеринбург','Новосибирск','Казань','Краснодар','Сочи',
+  'Ростов-на-Дону','Нижний Новгород','Самара','Уфа','Воронеж','Пермь'
+];
+
+// Сохранённые районные чаты (localStorage)
+function getSavedDistrictChats() {
+  try { return JSON.parse(localStorage.getItem('saved_district_chats') || '[]'); } catch(e) { return []; }
+}
+function saveDistrictChat(districtName) {
+  const saved = getSavedDistrictChats();
+  if (!saved.includes(districtName)) {
+    saved.push(districtName);
+    localStorage.setItem('saved_district_chats', JSON.stringify(saved));
+    renderSavedDistrictChats();
+  }
+}
+function removeDistrictChat(districtName) {
+  const saved = getSavedDistrictChats().filter(d => d !== districtName);
+  localStorage.setItem('saved_district_chats', JSON.stringify(saved));
+  renderSavedDistrictChats();
+}
+
+function renderSavedDistrictChats() {
+  const container = document.getElementById('saved-district-chats');
+  if (!container) return;
+  const saved = getSavedDistrictChats();
+  const myDistrict = userLocationName || localStorage.getItem('df_user_geo') || '';
+  // Не показываем свой район — он уже отображается выше
+  const others = saved.filter(d => d !== myDistrict);
+  if (!others.length) { container.innerHTML = ''; return; }
+
+  container.innerHTML = others.map(district => `
+    <div class="ci" style="gap:14px;position:relative;" onclick="openNamedDistrictChat('${district.replace(/'/g,"\\'")}')">
+      <div class="avatar" style="width:52px;height:52px;font-size:20px;background:linear-gradient(135deg,#9C27B0,#673AB7);flex-shrink:0;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+          <span style="font-weight:800;font-size:15px;">📍 ${district}</span>
+          <button onclick="event.stopPropagation();removeDistrictChat('${district.replace(/'/g,"\\'")}');" 
+            style="background:none;border:none;color:var(--text-secondary);font-size:18px;cursor:pointer;padding:0 4px;line-height:1;">×</button>
+        </div>
+        <div style="font-size:13px;color:var(--text-secondary);">Чат района</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function searchDistricts(query) {
+  const input = document.getElementById('district-search');
+  const results = document.getElementById('district-search-results');
+  const clearBtn = document.getElementById('district-search-clear');
+  if (!results) return;
+
+  if (clearBtn) clearBtn.style.display = query ? '' : 'none';
+
+  if (!query || query.length < 1) {
+    results.style.display = 'none';
+    return;
+  }
+
+  const q = query.toLowerCase();
+  const matches = KNOWN_DISTRICTS.filter(d => d.toLowerCase().includes(q)).slice(0, 8);
+
+  if (!matches.length) {
+    results.innerHTML = `<div style="padding:14px 16px;color:var(--text-secondary);font-size:14px;">Район не найден — попробуйте другое название</div>`;
+    results.style.display = 'block';
+    return;
+  }
+
+  results.innerHTML = matches.map(district => `
+    <div onclick="selectDistrictFromSearch('${district.replace(/'/g,"\\'")}');"
+      style="padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;border-bottom:1px solid var(--border);"
+      onmousedown="event.preventDefault()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span style="font-size:14px;font-weight:600;">${district}</span>
+    </div>
+  `).join('');
+  results.style.display = 'block';
+}
+
+function selectDistrictFromSearch(district) {
+  // Скрываем результаты и очищаем поиск
+  const input = document.getElementById('district-search');
+  const results = document.getElementById('district-search-results');
+  const clearBtn = document.getElementById('district-search-clear');
+  if (input) input.value = '';
+  if (results) results.style.display = 'none';
+  if (clearBtn) clearBtn.style.display = 'none';
+
+  // Сохраняем и открываем чат
+  saveDistrictChat(district);
+  openNamedDistrictChat(district);
+}
+
+function clearDistrictSearch() {
+  const input = document.getElementById('district-search');
+  const results = document.getElementById('district-search-results');
+  const clearBtn = document.getElementById('district-search-clear');
+  if (input) { input.value = ''; input.focus(); }
+  if (results) results.style.display = 'none';
+  if (clearBtn) clearBtn.style.display = 'none';
+}
+
+// Открыть чат конкретного района по имени
+function openNamedDistrictChat(district) {
+  currentChatType = 'district';
+  chatNick = getChatNick();
+  document.getElementById('chat-conv-name').textContent = '📍 ' + district;
+  document.getElementById('chat-conv-av').style.background = 'linear-gradient(135deg,#F5A623,#F07B3F)';
+  document.getElementById('chat-conv-av').textContent = '📍';
+  document.getElementById('chat-conv-subtitle').innerHTML = '<span style="color:#aaa">● подключение...</span>';
+  const wrap = document.getElementById('chat-messages');
+  if (wrap) wrap.innerHTML = '';
+  const roomId = 'district_' + district.toLowerCase().replace(/\s+/g, '_').replace(/[^a-zа-я0-9_]/gi, '');
+  loadPublicChatHistory(roomId);
+  nav('chatConv');
+  requestNotificationPermission();
+  connectDistrictRealtime(district);
+}
 
 // ════════════════════════════════════════════════════════════
 // COMMUNITY TABS (Districts / DMs)
