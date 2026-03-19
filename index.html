@@ -335,7 +335,7 @@
     </div>
     <div class="tc" id="tc-spec-sched">
       <div class="card" style="margin-top:12px;margin-bottom:80px;">
-        <h3 style="margin-bottom:14px;">📅 Март 2026</h3>
+        <h3 style="margin-bottom:14px;">Март 2026</h3>
         <div class="cal-g" style="margin-bottom:8px;"><div class="cal-wd">Пн</div><div class="cal-wd">Вт</div><div class="cal-wd">Ср</div><div class="cal-wd">Чт</div><div class="cal-wd">Пт</div><div class="cal-wd">Сб</div><div class="cal-wd">Вс</div></div>
         <div class="cal-g" id="spec-calendar"></div>
       </div>
@@ -365,7 +365,9 @@
         </div>
       </div>
     </div>
-    <div class="card" style="margin:0 0 12px;"><div style="display:flex;align-items:center;gap:12px;"><div style="width:44px;height:28px;background:linear-gradient(135deg,#eb001b,#f79e1b);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:white;flex-shrink:0;">MC</div><div><div style="font-size:14px;font-weight:700;">Карта •••• 4532</div><div style="font-size:12px;color:var(--text-secondary);">Mastercard • истекает 12/27</div></div></div></div>
+    <div class="card" style="margin:0 0 12px;"><div style="display:flex;align-items:center;gap:12px;">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        <div><div style="font-size:14px;font-weight:700;" id="book-card-info">Способ оплаты</div><div style="font-size:12px;color:var(--text-secondary);">Будет выбран при оплате</div></div></div></div>
   </div>
   <div style="padding:12px 16px 16px;background:var(--white);border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px;flex-shrink:0;">
     <button class="btn btn-p" id="book-pay-btn" onclick="sendBookingNotification()">Оплатить 🔒</button>
@@ -469,7 +471,7 @@
         <option value="Сокольники"><option value="Красносельский"><option value="Пресненский"><option value="Курсовой"><option value="Замоскворечье"><option value="Якиманка"><option value="Басманный"><option value="Мещанский"><option value="Таганский"><option value="Лефортово"><option value="Перово"><option value="Нижегородский"><option value="Соколиная Гора"><option value="Покровское-Стрешнево"><option value="Хорошёво-Мнёвники"><option value="Преображенское"><option value="Кукушкин"><option value="Новокосино"><option value="Измайлово"><option value="Богородское"><option value="Косино-Ухтомский"><option value="Комсомольский"><option value="Войковский"><option value="Аэропорт"><option value="Быстрцово"><option value="Ростокино"><option value="Алексеевский"><option value="Зарядье"><option value="Тверской"><option value="Арбат"><option value="Никитники"><option value="Хамовники"><option value="Кремлёвская слобода"><option value="Гагаринский"><option value="Раменки"><option value="Коньково"><option value="Щукино"><option value="Тушино"><option value="Строгино"><option value="Крылатское"><option value="Кунцево"><option value="Внуково"><option value="Деревля"><option value="Ново-Переделкино"><option value="Переделкино"><option value="Солнцево"><option value="Башкировка"><option value="Теплый Стан"><option value="Коммунарка"><option value="Южное Бутово"><option value="Северное Бутово"><option value="Покровское"><option value="Медведково"><option value="Кунцевская"><option value="Очаково-Матвеевское"><option value="Крюково"><option value="Беговое"><option value="Западное Дегунино"><option value="Восточное Дегунино"><option value="Лианозово"><option value="Северное Медведково"><option value="Южное Медведково"><option value="Митино"><option value="Отрадное"><option value="Свиблово"><option value="Вешняки"><option value="Жулебино"><option value="Люберцы"><option value="Марфино"><option value="Бибирево"><option value="Щербинка"><option value="Троицк"><option value="Московский">
       </datalist>
       <div style="border-top:2px solid var(--border);padding-top:14px;">
-        <div style="font-size:15px;font-weight:800;margin-bottom:14px;">🐕 О вашей собаке</div>
+        <div style="font-size:15px;font-weight:800;margin-bottom:14px;">О вашей собаке</div>
         <div style="display:flex;flex-direction:column;gap:14px;">
           <div><label class="lbl">Кличка</label><input class="input" id="ep-dogname" placeholder="Например: Рыжик"></div>
           <div><label class="lbl">Порода</label><input class="input" id="ep-dogbreed" placeholder="Например: Бигль"></div>
@@ -528,7 +530,7 @@
 
 <!-- DISCOUNTS -->
 <div class="screen" id="discounts">
-  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="tbar-title">🎁 Скидки и партнёры</div></div>
+  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="tbar-title">Скидки и акции</div></div>
   <div class="chips" style="padding-top:8px;flex-shrink:0;">
     <div class="chip on" onclick="filterDiscounts('Все',this)">Все</div>
     <div class="chip" onclick="filterDiscounts('Груминг',this)">✂️ Груминг</div>
@@ -567,7 +569,7 @@
 
 <!-- BREEDS -->
 <div class="screen" id="breeds">
-  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="tbar-title">🐕 Сообщества по породам</div></div>
+  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="tbar-title">Сообщества по породам</div></div>
   <div class="scroll">
     <div class="sec-hd"><div class="sec-t">🔥 Популярные</div></div>
     <div class="scroll-row">
@@ -608,7 +610,7 @@
 
 <!-- DOG MAP -->
 <div class="screen" id="dogmap">
-  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="tbar-title">📍 Dog-friendly места</div></div>
+  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="tbar-title">Места рядом</div></div>
   <div class="chips" style="padding-top:8px;flex-shrink:0;">
     <div class="chip on" onclick="filterPlaces('Все',this)">Все</div>
     <div class="chip" onclick="filterPlaces('Кафе',this)">☕ Кафе</div>
@@ -682,14 +684,9 @@
 <div class="modal-ov" id="m-orders" onclick="closeModal('m-orders')">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="mhandle"></div>
-    <h3 style="margin-bottom:16px;">📋 Мои заказы</h3>
-    <div style="background:var(--bg);border-radius:12px;padding:14px;margin-bottom:12px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div><div style="font-size:14px;font-weight:700;">Иван Петров • Пакет 10</div><div style="font-size:12px;color:var(--text-secondary);">20 февр • 27 000 ₽ • Частями</div></div>
-        <span class="tag tag-b" style="font-size:11px;">Активен</span>
-      </div>
-      <div class="pbar" style="margin-top:10px;"><div class="pfill" style="width:10%;"></div></div>
-      <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">1 из 10 занятий пройдено</div>
+    <h3 style="margin-bottom:16px;">Мои заказы</h3>
+    <div id="orders-list-content" style="margin-bottom:12px;">
+      <div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:14px;">Заказы загружаются из истории оплат</div>
     </div>
     <button class="btn btn-g" onclick="closeModal('m-orders')">Закрыть</button>
   </div>
@@ -727,7 +724,7 @@
         
         <div>
           <label class="lbl">Что случилось?</label>
-          <textarea class="input" id="em-problem" placeholder="Опишите проблему подробно" style="width:100%;min-height:100px;padding:12px;resize:vertical;font-family:'Manrope',sans-serif;"></textarea>
+          <textarea class="input" id="em-problem" placeholder="Опишите проблему подробно" style="width:100%;min-height:100px;padding:12px;resize:vertical;font-family:'DM Sans',sans-serif;"></textarea>
         </div>
         
         <div style="background:rgba(208,2,27,0.1);border-radius:12px;padding:12px;font-size:14px;color:var(--text-primary);">
@@ -764,7 +761,7 @@
       </div>
     </div>
     <div style="padding:16px 16px 8px;">
-      <div style="font-size:15px;font-weight:800;margin-bottom:12px;">💌 Личные сообщения</div>
+      <div style="font-size:15px;font-weight:800;margin-bottom:12px;">Личные сообщения</div>
     </div>
     <div id="private-chats-list"></div>
     <div style="padding:20px 16px;text-align:center;color:var(--text-secondary);font-size:13px;" id="no-private-chats">
@@ -799,8 +796,8 @@
     <div style="flex:1;display:flex;align-items:center;gap:12px;">
       <div class="avatar" id="pc-avatar" style="width:40px;height:40px;font-size:16px;"></div>
       <div>
-        <div style="font-weight:800;font-size:15px;" id="pc-name">Иван Петров</div>
-        <div id="pc-online" style="font-size:11px;color:var(--text-secondary);">🟢 онлайн</div>
+        <div style="font-weight:800;font-size:15px;" id="pc-name">Специалист</div>
+        <div id="pc-online" style="font-size:11px;color:var(--text-secondary);"><span style="color:#34C759;">●</span> онлайн</div>
       </div>
     </div>
     <button class="back-btn" style="font-size:16px;">⋮</button>
@@ -829,7 +826,7 @@
   <!-- Input bar - always visible above keyboard -->
   <div id="chat-input-bar" style="background:var(--white);padding:10px 12px 14px;padding-bottom:calc(14px + env(safe-area-inset-bottom, 0px));display:flex;align-items:flex-end;gap:8px;border-top:1px solid var(--border);flex-shrink:0;">
     <textarea id="chat-input" rows="1"
-      style="flex:1;border:2px solid var(--border);border-radius:22px;padding:10px 16px;font-family:'Manrope',sans-serif;font-size:16px;resize:none;outline:none;max-height:96px;line-height:1.45;background:var(--bg);transition:border-color 0.2s;-webkit-text-size-adjust:100%;"
+      style="flex:1;border:2px solid var(--border);border-radius:22px;padding:10px 16px;font-family:'DM Sans',sans-serif;font-size:16px;resize:none;outline:none;max-height:96px;line-height:1.45;background:var(--bg);transition:border-color 0.2s;-webkit-text-size-adjust:100%;"
       placeholder="Написать всем..."
       autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
       onfocus="this.style.borderColor='var(--primary)';scrollChatBottom();"
@@ -846,10 +843,10 @@
 
 <!-- PAYMENTS -->
 <div class="screen" id="payments">
-  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="tbar-title">💳 Способы оплаты</div></div>
+  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="tbar-title">Способы оплаты</div></div>
   <div class="scroll" style="padding:0 16px;">
     <div class="card" style="margin:12px 0 12px;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><span style="font-size:22px;">💳</span><h3>Привязанные карты</h3></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><h3>Привязанные карты</h3></div>
       <div style="border:2px solid var(--primary);border-radius:12px;padding:14px;margin-bottom:10px;background:rgba(74,144,217,0.04);">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div style="display:flex;align-items:center;gap:10px;">
@@ -871,7 +868,7 @@
       <button class="btn btn-o" style="height:44px;" onclick="showToast('Добавление карты — скоро!')">+ Добавить карту</button>
     </div>
     <div class="card" style="margin:0 0 12px;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><span style="font-size:22px;">📱</span><h3>Электронные кошельки</h3></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><h3>Электронные кошельки</h3></div>
       <div style="display:flex;flex-direction:column;gap:8px;">
         <div onclick="showToast('СБП подключён ✓')" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border:2px solid var(--border);border-radius:12px;cursor:pointer;">
           <div style="display:flex;align-items:center;gap:10px;"><div style="width:36px;height:36px;background:linear-gradient(135deg,#00b4d8,#0077b6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;">🏦</div><span style="font-weight:600;font-size:14px;">СБП — Система быстрых платежей</span></div>
@@ -884,20 +881,9 @@
       </div>
     </div>
     <div class="card" style="margin:0 0 80px;">
-      <h3 style="margin-bottom:12px;">📊 Последние платежи</h3>
-      <div style="display:flex;flex-direction:column;">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);">
-          <div><div style="font-size:14px;font-weight:600;">Иван Петров · Пакет 10</div><div style="font-size:12px;color:var(--text-secondary);">20 февр · •••• 4532</div></div>
-          <div style="text-align:right;"><div style="font-size:15px;font-weight:800;color:var(--primary);">−6 750 ₽</div><span class="tag tag-g" style="font-size:11px;">✓ Оплачено</span></div>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);">
-          <div><div style="font-size:14px;font-weight:600;">Мария Соколова · Консультация</div><div style="font-size:12px;color:var(--text-secondary);">15 февр · •••• 4532</div></div>
-          <div style="text-align:right;"><div style="font-size:15px;font-weight:800;color:var(--primary);">−1 500 ₽</div><span class="tag tag-g" style="font-size:11px;">✓ Оплачено</span></div>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;">
-          <div><div style="font-size:14px;font-weight:600;">Статус-Вет · Приём терапевта</div><div style="font-size:12px;color:var(--text-secondary);">10 февр · •••• 7821</div></div>
-          <div style="text-align:right;"><div style="font-size:15px;font-weight:800;color:var(--primary);">−2 800 ₽</div><span class="tag tag-g" style="font-size:11px;">✓ Оплачено</span></div>
-        </div>
+      <h3 style="margin-bottom:12px;">Последние платежи</h3>
+      <div id="payments-history" style="text-align:center;padding:20px;color:var(--text-secondary);font-size:14px;">
+        История платежей появится после первой оплаты
       </div>
     </div>
   </div>
@@ -907,7 +893,7 @@
 <div class="screen" id="myPets">
   <div class="top-bar" style="padding-top:0;">
     <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-    <div class="tbar-title">🐕 Мои питомцы</div>
+    <div class="tbar-title">Мои питомцы</div>
     <button class="btn btn-p" style="width:auto;height:36px;padding:0 14px;font-size:13px;border-radius:10px;" onclick="openModal('m-add-pet')">+ Добавить</button>
   </div>
   <div class="scroll" style="padding:8px 16px 20px;"><div id="pets-list"></div></div>
@@ -915,7 +901,7 @@
 
 <!-- NOTIF SETTINGS -->
 <div class="screen" id="notifSettings">
-  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="tbar-title">🔔 Уведомления</div></div>
+  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="tbar-title">Уведомления</div></div>
   <div class="scroll" style="padding:0 16px;">
     <div class="card" style="margin:12px 0 12px;">
       <h3 style="margin-bottom:14px;">Общие уведомления</h3>
@@ -947,7 +933,7 @@
 <div class="screen" id="medRecords">
   <div class="top-bar" style="padding-top:0;">
     <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-    <div class="tbar-title">🏥 Медицинские записи</div>
+    <div class="tbar-title">Медицинские записи</div>
     <button class="btn btn-p" style="width:auto;height:36px;padding:0 14px;font-size:13px;border-radius:10px;" onclick="openModal('m-add-med')">+ Добавить</button>
   </div>
   <div class="scroll" style="padding:8px 16px 20px;"><div id="med-records-list"></div></div>
@@ -957,7 +943,7 @@
 <div class="screen" id="lessons">
   <div class="top-bar" style="padding-top:0;">
     <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-    <div class="tbar-title">🎓 Уроки и тренировки</div>
+    <div class="tbar-title">Уроки и тренировки</div>
     <div style="width:40px;"></div>
   </div>
   <div class="ghdr" style="padding-top:8px;"><p style="font-size:13px;">Бесплатные материалы для вас и питомца</p></div>
@@ -1012,7 +998,7 @@
 <div class="modal-ov" id="m-add-pet" onclick="closeModal('m-add-pet')">
   <div class="modal" onclick="event.stopPropagation()" style="max-height:90%;overflow-y:auto;">
     <div class="mhandle"></div>
-    <h3 style="margin-bottom:16px;">🐕 Добавить питомца</h3>
+    <h3 style="margin-bottom:16px;">Добавить питомца</h3>
     <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
       <div><label class="lbl">Кличка *</label><input class="input" id="new-pet-name" placeholder="Например: Рыжик"></div>
       <div><label class="lbl">Порода *</label><input class="input" id="new-pet-breed" placeholder="Например: Бигль"></div>
@@ -1076,7 +1062,7 @@
 <div class="screen" id="businessType">
   <div class="top-bar">
     <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-    <div class="tbar-title">💼 Регистрация бизнеса</div>
+    <div class="tbar-title">Регистрация бизнеса</div>
     <div style="width:40px;"></div>
   </div>
   <div class="scroll" style="padding:20px;">
@@ -1141,7 +1127,7 @@
 <div class="screen" id="bizDashboard">
   <div class="top-bar" style="padding-top:0;">
     <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-    <div class="tbar-title" id="biz-dash-title">💼 Мой бизнес</div>
+    <div class="tbar-title" id="biz-dash-title">Мой бизнес</div>
     <button class="btn btn-sm btn-p" id="biz-dash-edit-btn" onclick="openBizEdit()" style="height:36px;padding:0 14px;font-size:13px;">✏️ Изменить</button>
   </div>
   <div class="scroll" id="biz-dash-content" style="padding:0 16px 24px;">
@@ -1174,7 +1160,7 @@
 <div class="screen" id="events">
   <div class="top-bar" style="padding-top:0;">
     <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-    <div class="tbar-title">📅 События</div>
+    <div class="tbar-title">События</div>
     <button class="btn btn-sm btn-p" onclick="nav('createEvent')" style="height:36px;padding:0 14px;font-size:13px;">+ Создать</button>
   </div>
   <!-- Фильтры -->
@@ -1233,7 +1219,7 @@
       <!-- Участники -->
       <div style="background:var(--white);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <div style="font-size:15px;font-weight:800;">👥 Участники</div>
+          <div style="font-size:15px;font-weight:800;">Участники</div>
           <div id="ev-count" style="font-size:13px;color:var(--text-secondary);font-weight:600;"></div>
         </div>
         <div id="ev-participants-avatars" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>
@@ -1242,7 +1228,7 @@
       </div>
       <!-- Фото с события (если есть) -->
       <div id="ev-photo-block" style="display:none;background:var(--white);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:12px;">
-        <div style="font-size:15px;font-weight:800;margin-bottom:10px;">📸 Фото с события</div>
+        <div style="font-size:15px;font-weight:800;margin-bottom:10px;">Фото с события</div>
         <img id="ev-photo" style="width:100%;border-radius:12px;object-fit:cover;" />
         <div id="ev-photo-upload-btn" style="display:none;margin-top:10px;">
           <label style="display:block;text-align:center;padding:10px;background:var(--bg);border-radius:10px;cursor:pointer;font-weight:700;font-size:14px;">
@@ -1253,7 +1239,7 @@
       </div>
       <!-- Организатор -->
       <div id="ev-organizer-block" style="background:var(--white);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:12px;display:none;">
-        <div style="font-size:15px;font-weight:800;margin-bottom:10px;">🏢 Организатор</div>
+        <div style="font-size:15px;font-weight:800;margin-bottom:10px;">Организатор</div>
         <div id="ev-organizer" style="display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="openOrganizerProfile()">
           <div id="ev-org-avatar" class="avatar" style="width:46px;height:46px;font-size:18px;"></div>
           <div>
@@ -1287,9 +1273,9 @@
       </div>
     </div>
 
-    <div style="margin-bottom:12px;"><label class="lbl">Название *</label><input class="input" id="ev-create-title" placeholder="Утренняя прогулка в Сокольниках"></div>
+    <div style="margin-bottom:12px;"><label class="lbl">Название *</label><input class="input" id="ev-create-title" placeholder="Например: Утренняя прогулка в парке"></div>
     <div style="margin-bottom:12px;"><label class="lbl">Описание</label><textarea class="input" id="ev-create-desc" placeholder="Расскажите подробнее — породы, правила, что взять с собой..." style="min-height:80px;resize:none;"></textarea></div>
-    <div style="margin-bottom:12px;"><label class="lbl">Адрес / Место *</label><input class="input" id="ev-create-address" placeholder="Сокольники, главная аллея"></div>
+    <div style="margin-bottom:12px;"><label class="lbl">Адрес / Место *</label><input class="input" id="ev-create-address" placeholder="Адрес или название места"></div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
       <div><label class="lbl">Дата *</label><input class="input" id="ev-create-date" type="date"></div>
