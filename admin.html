@@ -7,140 +7,239 @@
 <title>Dogly Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
-:root{--p:#4A90D9;--bg:#F6F4F1;--w:#fff;--t:#1A1A1A;--m:#8E8E93;--b:#EBE8E4;--ok:#34C759;--err:#FF3B30;--warn:#F5A623;--r:16px;--sh:0 1px 3px rgba(0,0,0,.02),0 4px 16px rgba(0,0,0,.04)}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:var(--t);min-height:100vh;-webkit-font-smoothing:antialiased}
+:root{--p:#4A90D9;--bg:#F6F4F1;--w:#fff;--t:#1A1A1A;--m:#8E8E93;--b:#EBE8E4;--ok:#34C759;--err:#FF3B30;--warn:#F5A623}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:var(--t);min-height:100vh}
 #auth{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
-.ac{background:var(--w);border-radius:24px;padding:40px;max-width:380px;width:100%;box-shadow:var(--sh);text-align:center}
-.ac h1{font-family:'Nunito';font-size:26px;color:var(--p);margin-bottom:4px}
-.ac p{color:var(--m);margin-bottom:24px;font-size:14px}
+.ac{background:var(--w);border-radius:24px;padding:40px;max-width:380px;width:100%;box-shadow:0 4px 16px rgba(0,0,0,.04);text-align:center}
+.ac h1{font-family:'Nunito';font-size:26px;color:var(--p);margin-bottom:4px}.ac p{color:var(--m);margin-bottom:24px;font-size:14px}
 .ac input{width:100%;height:48px;border:1.5px solid var(--b);border-radius:12px;padding:0 14px;font-size:15px;font-family:inherit;margin-bottom:10px;outline:none}
-.ac input:focus{border-color:var(--p)}
-.ac button{width:100%;height:48px;background:var(--p);color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}
-#ae{color:var(--err);font-size:13px;margin-top:10px;min-height:18px}
-#app{display:none}
-.hd{padding:16px 16px 12px;background:var(--w);border-bottom:1px solid var(--b);position:sticky;top:0;z-index:10}
-.hd h1{font-family:'Nunito';font-size:20px;font-weight:800}
+.ac input:focus{border-color:var(--p)}.ac button{width:100%;height:48px;background:var(--p);color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}
+#ae{color:var(--err);font-size:13px;margin-top:10px}
+#app{display:none}.hd{padding:16px;background:var(--w);border-bottom:1px solid var(--b);position:sticky;top:0;z-index:10}.hd h1{font-family:'Nunito';font-size:20px;font-weight:800}
 .ct{padding:16px;padding-bottom:90px}
 .bn{position:fixed;bottom:0;left:0;right:0;background:var(--w);border-top:1px solid var(--b);display:flex;justify-content:space-around;padding:6px 0 env(safe-area-inset-bottom,6px);z-index:100}
-.bi{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:6px 10px;font-size:10px;font-weight:600;color:var(--m)}
-.bi.on{color:var(--p)}
-.bi svg{width:22px;height:22px}
+.bi{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:6px 8px;font-size:9px;font-weight:600;color:var(--m)}.bi.on{color:var(--p)}.bi svg{width:20px;height:20px}
 .sg{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
-.sc{background:var(--w);border-radius:14px;padding:16px;box-shadow:var(--sh)}
-.sc .lb{font-size:12px;color:var(--m);margin-bottom:2px}
-.sc .vl{font-size:24px;font-weight:800;font-family:'Nunito'}
-.sc .sub{font-size:11px;color:var(--m);margin-top:2px}
-.cd{background:var(--w);border-radius:14px;padding:16px;box-shadow:var(--sh);margin-bottom:12px}
-.cd h2{font-size:16px;font-weight:700;margin-bottom:12px}
-.li{padding:14px 0;border-bottom:1px solid var(--b)}
-.li:last-child{border-bottom:none}
-.lt{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
-.ln{font-weight:700;font-size:15px}
-.lm{font-size:12px;color:var(--m);line-height:1.5}
-.la{display:flex;gap:8px;margin-top:8px}
-.badge{display:inline-block;padding:3px 8px;border-radius:8px;font-size:11px;font-weight:600}
-.bw{background:rgba(245,166,35,.12);color:var(--warn)}
-.bo{background:rgba(52,199,89,.1);color:var(--ok)}
-.bn2{background:rgba(255,59,48,.1);color:var(--err)}
-.bt{background:rgba(74,144,217,.08);color:var(--p)}
-.btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border-radius:10px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:transform .1s;flex:1}
+.sc{background:var(--w);border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.03)}.sc .lb{font-size:11px;color:var(--m)}.sc .vl{font-size:22px;font-weight:800;font-family:'Nunito'}.sc .sub{font-size:10px;color:var(--m);margin-top:2px}
+.cd{background:var(--w);border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.03);margin-bottom:10px}
+.cd h2{font-size:15px;font-weight:700;margin-bottom:10px}
+.lt{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+.ln{font-weight:700;font-size:14px}.lm{font-size:12px;color:var(--m);line-height:1.5}
+.la{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600}
+.bw{background:rgba(245,166,35,.1);color:var(--warn)}.bo{background:rgba(52,199,89,.1);color:var(--ok)}.bn2{background:rgba(255,59,48,.1);color:var(--err)}.bt{background:rgba(74,144,217,.08);color:var(--p)}.bpast{background:rgba(0,0,0,.05);color:var(--m)}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:10px;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
 .btn:active{transform:scale(.96)}
-.bok{background:var(--ok);color:white}
-.bno{background:rgba(255,59,48,.08);color:var(--err)}
-.bed{background:rgba(74,144,217,.08);color:var(--p)}
-.tabs{display:flex;gap:0;margin-bottom:12px;overflow-x:auto}
-.tab{padding:8px 14px;font-size:13px;font-weight:600;color:var(--m);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent}
-.tab.on{color:var(--p);border-bottom-color:var(--p)}
-.emp{text-align:center;padding:40px 20px;color:var(--m);font-size:14px}
-.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--t);color:white;padding:10px 20px;border-radius:12px;font-size:14px;font-weight:600;z-index:999;animation:ti .3s}
-@keyframes ti{from{opacity:0;transform:translateX(-50%) translateY(-10px)}}
+.bok{background:var(--ok);color:white}.bno{background:rgba(255,59,48,.08);color:var(--err)}.bed{background:rgba(74,144,217,.08);color:var(--p)}
+.tabs{display:flex;gap:0;margin-bottom:10px;overflow-x:auto}.tab{padding:8px 12px;font-size:13px;font-weight:600;color:var(--m);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent}.tab.on{color:var(--p);border-bottom-color:var(--p)}
+.emp{text-align:center;padding:30px;color:var(--m);font-size:13px}
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--t);color:white;padding:8px 18px;border-radius:12px;font-size:13px;font-weight:600;z-index:999}
 .sec{display:none}.sec.on{display:block}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.3);display:none;align-items:flex-end;z-index:200;backdrop-filter:blur(4px)}
+.modal-bg.open{display:flex}.modal-box{background:var(--w);border-radius:20px 20px 0 0;width:100%;max-height:80vh;overflow-y:auto;padding:20px}
 </style>
 </head>
 <body>
-<div id="auth"><div class="ac">
-<h1>Dogly Admin</h1><p>Панель управления</p>
-<input id="a-email" type="email" placeholder="Email">
-<input id="a-pass" type="password" placeholder="Пароль">
-<button onclick="login()">Войти</button>
-<div id="ae"></div>
-</div></div>
-
+<div id="auth"><div class="ac"><h1>Dogly Admin</h1><p>Панель управления</p><input id="a-email" type="email" placeholder="Email"><input id="a-pass" type="password" placeholder="Пароль"><button onclick="login()">Войти</button><div id="ae"></div></div></div>
 <div id="app">
 <div class="hd"><h1 id="pt">Статистика</h1></div>
 <div class="ct">
 <div class="sec on" id="s-dash"><div class="sg" id="stats"></div><div class="cd"><h2>Ожидают одобрения</h2><div id="pend"></div></div></div>
 <div class="sec" id="s-biz"><div class="tabs" id="btabs"><div class="tab on" onclick="fb('all',this)">Все</div><div class="tab" onclick="fb('pending',this)">Ожидают</div><div class="tab" onclick="fb('approved',this)">Одобрены</div></div><div id="bl"></div></div>
 <div class="sec" id="s-users"><div id="ul"></div></div>
-<div class="sec" id="s-events"><div id="el"></div></div>
+<div class="sec" id="s-events"><div class="tabs" id="etabs"><div class="tab on" onclick="fe('upcoming',this)">Предстоящие</div><div class="tab" onclick="fe('past',this)">Прошедшие</div><div class="tab" onclick="fe('all',this)">Все</div></div><div id="el"></div></div>
 <div class="sec" id="s-promos"><div id="pl"></div></div>
 </div>
 <nav class="bn">
 <div class="bi on" onclick="go('dash',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Стат</div>
-<div class="bi" onclick="go('biz',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>Бизнесы</div>
+<div class="bi" onclick="go('biz',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>Бизнес</div>
 <div class="bi" onclick="go('users',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Юзеры</div>
 <div class="bi" onclick="go('events',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>События</div>
 <div class="bi" onclick="go('promos',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>Акции</div>
 </nav>
 </div>
+<!-- User profile modal -->
+<div class="modal-bg" id="userModal" onclick="this.classList.remove('open')"><div class="modal-box" onclick="event.stopPropagation()"><div id="userModalBody"></div></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
 <script>
-const SU='https://nxrztljcxphkdfbfubba.supabase.co';
-const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cnp0bGpjeHBoa2RmYmZ1YmJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwNDkzNzQsImV4cCI6MjA4ODYyNTM3NH0.nCunfVYOwBKAMbbuDu4zTQ0tZhjNoWk680VFSWPwuUk';
-const AD=['frate.roc@gmail.com'];
+const SU='https://nxrztljcxphkdfbfubba.supabase.co',SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cnp0bGpjeHBoa2RmYmZ1YmJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwNDkzNzQsImV4cCI6MjA4ODYyNTM3NH0.nCunfVYOwBKAMbbuDu4zTQ0tZhjNoWk680VFSWPwuUk',AD=['frate.roc@gmail.com'];
 let sb;
 function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2500)}
+
 async function login(){
   const e=document.getElementById('a-email').value.trim(),p=document.getElementById('a-pass').value,er=document.getElementById('ae');
-  if(!e||!p){er.textContent='Заполните все поля';return}
+  if(!e||!p){er.textContent='Заполните поля';return}
   try{sb=window.supabase.createClient(SU,SK);const{error}=await sb.auth.signInWithPassword({email:e,password:p});if(error)throw error;
-  if(!AD.includes(e.toLowerCase())){er.textContent='Нет прав админа';await sb.auth.signOut();return}
+  if(!AD.includes(e.toLowerCase())){er.textContent='Нет прав';await sb.auth.signOut();return}
   document.getElementById('auth').style.display='none';document.getElementById('app').style.display='block';loadDash()}catch(x){er.textContent=x.message||'Ошибка'}
 }
-const T={dash:'Статистика',biz:'Бизнесы',users:'Пользователи',events:'События',promos:'Акции'};
-function go(id,el){document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));document.getElementById('s-'+id).classList.add('on');document.querySelectorAll('.bi').forEach(n=>n.classList.remove('on'));if(el)el.classList.add('on');document.getElementById('pt').textContent=T[id];({dash:loadDash,biz:loadBiz,users:loadUsers,events:loadEvents,promos:loadPromos})[id]()}
 
+const T={dash:'Статистика',biz:'Бизнесы',users:'Пользователи',events:'События',promos:'Акции'};
+function go(id,el){document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));document.getElementById('s-'+id).classList.add('on');document.querySelectorAll('.bi').forEach(n=>n.classList.remove('on'));if(el)el.classList.add('on');document.getElementById('pt').textContent=T[id];({dash:loadDash,biz:loadBiz,users:loadUsers,events:loadEventsAdmin,promos:loadPromos})[id]()}
+
+// ═══ DASHBOARD ═══
 async function loadDash(){
   const[b,u,e,p,pe]=await Promise.all([sb.from('businesses').select('id,is_approved,created_at,name,type'),sb.from('profiles').select('id'),sb.from('events').select('id'),sb.from('promotions').select('id,is_active'),sb.from('pets').select('id')]);
   const bd=b.data||[],ud=u.data||[],ed=e.data||[],pd=p.data||[],ped=pe.data||[],pn=bd.filter(x=>!x.is_approved);
   document.getElementById('stats').innerHTML=`<div class="sc"><div class="lb">Пользователи</div><div class="vl">${ud.length}</div></div><div class="sc"><div class="lb">Бизнесы</div><div class="vl">${bd.length}</div><div class="sub">${pn.length} ожидают</div></div><div class="sc"><div class="lb">События</div><div class="vl">${ed.length}</div></div><div class="sc"><div class="lb">Питомцы</div><div class="vl">${ped.length}</div></div>`;
-  document.getElementById('pend').innerHTML=pn.length?pn.map(x=>`<div class="li"><div class="lt"><span class="ln">${x.name}</span><span class="badge bt">${x.type}</span></div><div class="lm">${new Date(x.created_at).toLocaleDateString('ru')}</div><div class="la"><button class="btn bok" onclick="apr('${x.id}')">Одобрить</button><button class="btn bno" onclick="del('businesses','${x.id}')">Отклонить</button></div></div>`).join(''):'<div class="emp">Нет заявок</div>';
+  document.getElementById('pend').innerHTML=pn.length?pn.map(x=>`<div style="padding:10px 0;border-bottom:1px solid var(--b)"><div class="lt"><span class="ln">${x.name}</span><span class="badge bt">${x.type}</span></div><div class="la"><button class="btn bok" onclick="apr('${x.id}')">Одобрить</button><button class="btn bno" onclick="del('businesses','${x.id}')">Отклонить</button></div></div>`).join(''):'<div class="emp">Нет заявок</div>';
 }
+
 async function apr(id){const{error}=await sb.from('businesses').update({is_approved:true}).eq('id',id);if(error){toast('Ошибка: '+error.message);return}toast('Одобрено ✓');loadDash();loadBiz()}
 async function unapr(id){await sb.from('businesses').update({is_approved:false}).eq('id',id);toast('Снято');loadBiz()}
-async function del(t,id){if(!confirm('Удалить? Необратимо.'))return;const{error}=await sb.from(t).delete().eq('id',id);if(error){toast('Ошибка: '+error.message);return}toast('Удалено');loadDash()}
+async function del(t,id){if(!confirm('Удалить?'))return;const{error}=await sb.from(t).delete().eq('id',id);if(error){toast('Ошибка: '+error.message);return}toast('Удалено');loadDash()}
 
+// ═══ BUSINESSES ═══
 let _bf='all';
 function fb(f,el){_bf=f;document.querySelectorAll('#btabs .tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');loadBiz()}
 async function loadBiz(){
   let q=sb.from('businesses').select('*').order('created_at',{ascending:false});
   if(_bf==='pending')q=q.eq('is_approved',false);if(_bf==='approved')q=q.eq('is_approved',true);
-  const{data,error}=await q;
-  if(error){document.getElementById('bl').innerHTML='<div class="emp">Ошибка: '+error.message+'</div>';return}
+  const{data}=await q;
   if(!data||!data.length){document.getElementById('bl').innerHTML='<div class="emp">Пусто</div>';return}
-  document.getElementById('bl').innerHTML=data.map(b=>`<div class="cd"><div class="lt"><div><span class="ln">${b.name}</span> <span class="badge bt">${b.type}</span></div><span class="badge ${b.is_approved?'bo':'bw'}">${b.is_approved?'Одобрен':'Ожидает'}</span></div><div class="lm" style="margin-top:6px">${b.address?'📍 '+b.address+'<br>':''}${b.phone?'📞 <a href="tel:'+b.phone+'">'+b.phone+'</a><br>':''}${b.email?'✉️ '+b.email+'<br>':''}${b.price_from?'💰 '+b.price_from+'<br>':''}${b.description?'<div style="margin-top:4px;font-size:13px;color:var(--t)">'+b.description.substring(0,200)+'</div>':''}${b.services&&b.services.length?'<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">'+b.services.map(s=>'<span class="badge bt">'+s+'</span>').join('')+'</div>':''}</div><div class="la" style="margin-top:10px">${!b.is_approved?'<button class="btn bok" onclick="apr(\''+b.id+'\')">Одобрить</button>':'<button class="btn bed" onclick="unapr(\''+b.id+'\')">Снять</button>'}<button class="btn bno" onclick="del('businesses','${b.id}')">Удалить</button></div></div>`).join('');
+  document.getElementById('bl').innerHTML=data.map(b=>`<div class="cd"><div class="lt"><div><span class="ln">${b.name}</span> <span class="badge bt">${b.type}</span></div><span class="badge ${b.is_approved?'bo':'bw'}">${b.is_approved?'Одобрен':'Ожидает'}</span></div><div class="lm" style="margin-top:4px">${b.address||''} ${b.phone?'· '+b.phone:''}<br>${b.description?b.description.substring(0,120)+'...':''}</div><div class="la">${!b.is_approved?'<button class="btn bok" onclick="apr(\''+b.id+'\')">Одобрить</button>':'<button class="btn bed" onclick="unapr(\''+b.id+'\')">Снять</button>'}<button class="btn bno" onclick="del('businesses','${b.id}')">Удалить</button></div></div>`).join('');
 }
+
+// ═══ USERS ═══
 async function loadUsers(){
   const{data:pr}=await sb.from('profiles').select('*').order('created_at',{ascending:false});
-  const{data:pe}=await sb.from('pets').select('user_id');
-  const pc={};(pe||[]).forEach(p=>{pc[p.user_id]=(pc[p.user_id]||0)+1});
+  const{data:pe}=await sb.from('pets').select('user_id,name');
+  const pc={};const pn={};
+  (pe||[]).forEach(p=>{pc[p.user_id]=(pc[p.user_id]||0)+1;if(!pn[p.user_id])pn[p.user_id]=p.name});
   if(!pr||!pr.length){document.getElementById('ul').innerHTML='<div class="emp">Нет пользователей</div>';return}
-  document.getElementById('ul').innerHTML=pr.map(u=>`<div class="cd"><div class="lt"><span class="ln">${u.name||'Без имени'}</span><span class="badge bt">${pc[u.user_id]||0} пит.</span></div><div class="lm">${u.district?'📍 '+u.district+'<br>':''}${u.dogname?'🐕 '+u.dogname+(u.dog_breed?' ('+u.dog_breed+')':'')+'<br>':''}Рег: ${u.created_at?new Date(u.created_at).toLocaleDateString('ru'):'—'}</div></div>`).join('');
+  document.getElementById('ul').innerHTML=pr.map(u=>{
+    const name=u.name||'Гость';
+    const initials=name.substring(0,2).toUpperCase();
+    const pets=pc[u.user_id]||0;
+    const petName=pn[u.user_id]||u.dogname||'';
+    return `<div class="cd" onclick="openUserModal('${u.user_id}')" style="cursor:pointer">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0">${initials}</div>
+        <div style="flex:1;min-width:0">
+          <div class="ln">${name}</div>
+          <div class="lm">${u.district?u.district+' · ':''}${pets} пит.${petName?' · '+petName:''}</div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--m)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>`}).join('');
 }
-async function loadEvents(){
-  const{data}=await sb.from('events').select('*').order('date',{ascending:false});
+
+// User profile modal
+async function openUserModal(userId){
+  const body=document.getElementById('userModalBody');
+  body.innerHTML='<div style="padding:20px;text-align:center;color:var(--m)">Загрузка...</div>';
+  document.getElementById('userModal').classList.add('open');
+  try{
+    const[{data:prof},{data:pets},{data:bookings}]=await Promise.all([
+      sb.from('profiles').select('*').eq('user_id',userId).single(),
+      sb.from('pets').select('*').eq('user_id',userId),
+      sb.from('bookings').select('id').eq('user_id',userId)
+    ]);
+    const p=prof||{};const pe=pets||[];const bk=bookings||[];
+    const name=p.name||'Гость';const initials=name.substring(0,2).toUpperCase();
+    body.innerHTML=`
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;margin:0 auto 10px">${initials}</div>
+        <div style="font-size:18px;font-weight:800;font-family:'Nunito'">${name}</div>
+        ${p.district?'<div style="font-size:13px;color:var(--m);margin-top:2px">📍 '+p.district+'</div>':''}
+        <div style="font-size:12px;color:var(--m);margin-top:4px">ID: ${userId.substring(0,8)}...</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <div style="flex:1;background:var(--bg);border-radius:12px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:800;color:var(--p)">${bk.length}</div><div style="font-size:11px;color:var(--m)">заказов</div></div>
+        <div style="flex:1;background:var(--bg);border-radius:12px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:800;color:var(--p)">${pe.length}</div><div style="font-size:11px;color:var(--m)">питомцев</div></div>
+        <div style="flex:1;background:var(--bg);border-radius:12px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:800;color:var(--p)">${bk.length*150} ₽</div><div style="font-size:11px;color:var(--m)">приютам</div></div>
+      </div>
+      ${pe.length?'<div style="font-size:14px;font-weight:700;margin-bottom:8px">Питомцы</div>'+pe.map(pet=>'<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--b)"><div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#E91E63,#FF9800);color:white;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">'+pet.name.substring(0,1)+'</div><div><div style="font-weight:600;font-size:13px">'+pet.name+(pet.sex==='ж'?' ♀':' ♂')+'</div><div style="font-size:12px;color:var(--m)">'+(pet.breed||'')+(pet.age?' · '+pet.age:'')+'</div></div></div>').join(''):''}
+      <div style="margin-top:16px;display:flex;gap:8px">
+        <button class="btn bno" style="flex:1" onclick="blockUser('${userId}')">Заблокировать</button>
+        <button class="btn bed" style="flex:1" onclick="document.getElementById('userModal').classList.remove('open')">Закрыть</button>
+      </div>`;
+  }catch(e){body.innerHTML='<div class="emp">Ошибка загрузки</div>'}
+}
+
+async function blockUser(userId){
+  if(!confirm('Заблокировать пользователя? Его профиль будет удалён.'))return;
+  try{
+    await sb.from('pets').delete().eq('user_id',userId);
+    await sb.from('profiles').delete().eq('user_id',userId);
+    toast('Пользователь заблокирован');
+    document.getElementById('userModal').classList.remove('open');
+    loadUsers();loadDash();
+  }catch(e){toast('Ошибка: '+e.message)}
+}
+
+// ═══ EVENTS ═══
+let _ef='upcoming';
+function fe(f,el){_ef=f;document.querySelectorAll('#etabs .tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');loadEventsAdmin()}
+async function loadEventsAdmin(){
+  let q=sb.from('events').select('*');
+  const now=new Date().toISOString();
+  if(_ef==='upcoming')q=q.gte('event_date',now).order('event_date',{ascending:true});
+  else if(_ef==='past')q=q.lt('event_date',now).order('event_date',{ascending:false});
+  else q=q.order('event_date',{ascending:false});
+  const{data}=await q;
   if(!data||!data.length){document.getElementById('el').innerHTML='<div class="emp">Нет событий</div>';return}
-  document.getElementById('el').innerHTML=data.map(e=>`<div class="cd"><div class="lt"><span class="ln">${e.title}</span><span class="badge bt">${e.type||'—'}</span></div><div class="lm">📅 ${e.date||'—'} ${e.time||''}<br>📍 ${e.address||'—'}<br>👥 ${e.participants_count||0} уч.${e.price?'<br>💰 '+e.price:''}</div><div class="la" style="margin-top:8px"><button class="btn bno" onclick="del('events','${e.id}')">Удалить</button></div></div>`).join('');
+  document.getElementById('el').innerHTML=data.map(e=>{
+    const isPast=new Date(e.event_date)<new Date();
+    const d=e.event_date?new Date(e.event_date).toLocaleDateString('ru',{day:'numeric',month:'short'}):'—';
+    const t=e.event_date?new Date(e.event_date).toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'}):'';
+    return `<div class="cd" style="${isPast?'opacity:0.6':''}">
+      <div class="lt"><span class="ln">${e.title}</span><span class="badge ${isPast?'bpast':'bt'}">${isPast?'Прошло':e.type||'—'}</span></div>
+      <div class="lm">📅 ${d} ${t} · 📍 ${e.address||'—'}<br>👥 ${e.participants_count||0} уч. ${e.price&&e.price!=='Бесплатно'?'· 💰 '+e.price:'· Бесплатно'}</div>
+      ${e.description?'<div style="font-size:12px;color:var(--t);margin-top:4px;line-height:1.4">'+e.description.substring(0,150)+'</div>':''}
+      <div class="la">
+        ${!isPast?'<button class="btn bed" onclick="editEvent(\''+e.id+'\')">Редактировать</button>':''}
+        <button class="btn bno" onclick="del('events','${e.id}')">Удалить</button>
+      </div>
+    </div>`}).join('');
 }
+
+async function editEvent(id){
+  const{data:ev}=await sb.from('events').select('*').eq('id',id).single();
+  if(!ev)return;
+  const body=document.getElementById('userModalBody');
+  const eDate=ev.event_date?ev.event_date.substring(0,10):'';
+  const eTime=ev.event_date?ev.event_date.substring(11,16):'';
+  body.innerHTML=`
+    <h3 style="margin-bottom:14px">Редактировать событие</h3>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
+      <input id="ee-title" value="${ev.title||''}" placeholder="Название" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-size:14px;font-family:inherit">
+      <input id="ee-address" value="${ev.address||''}" placeholder="Адрес" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-size:14px;font-family:inherit">
+      <div style="display:flex;gap:8px">
+        <input id="ee-date" type="date" value="${eDate}" style="flex:1;height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-size:14px;font-family:inherit">
+        <input id="ee-time" type="time" value="${eTime}" style="flex:1;height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-size:14px;font-family:inherit">
+      </div>
+      <input id="ee-price" value="${ev.price||''}" placeholder="Цена" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-size:14px;font-family:inherit">
+      <textarea id="ee-desc" placeholder="Описание" style="min-height:60px;border:1.5px solid var(--b);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;resize:none">${ev.description||''}</textarea>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn bok" style="flex:1" onclick="saveEvent('${id}')">Сохранить</button>
+      <button class="btn bed" style="flex:1" onclick="document.getElementById('userModal').classList.remove('open')">Отмена</button>
+    </div>`;
+  document.getElementById('userModal').classList.add('open');
+}
+
+async function saveEvent(id){
+  const d=document.getElementById('ee-date').value;
+  const t=document.getElementById('ee-time').value;
+  const eventDate=d&&t?d+'T'+t+':00':d?d+'T00:00:00':null;
+  const upd={title:document.getElementById('ee-title').value.trim(),address:document.getElementById('ee-address').value.trim(),price:document.getElementById('ee-price').value.trim(),description:document.getElementById('ee-desc').value.trim()};
+  if(eventDate)upd.event_date=eventDate;
+  const{error}=await sb.from('events').update(upd).eq('id',id);
+  if(error){toast('Ошибка: '+error.message);return}
+  toast('Сохранено ✓');document.getElementById('userModal').classList.remove('open');loadEventsAdmin();
+}
+
+// ═══ PROMOTIONS ═══
 async function loadPromos(){
   const{data}=await sb.from('promotions').select('*, businesses(name,type)').order('created_at',{ascending:false});
   if(!data||!data.length){document.getElementById('pl').innerHTML='<div class="emp">Нет акций</div>';return}
-  document.getElementById('pl').innerHTML=data.map(p=>`<div class="cd"><div class="lt"><span class="ln">${p.businesses?.name||'—'}</span>${p.discount_percent?'<span class="badge bo">-'+p.discount_percent+'%</span>':''}</div><div class="lm">${p.title}<br>${p.promo_code?'Код: <strong>'+p.promo_code+'</strong><br>':''}${p.valid_until?'До: '+p.valid_until+'<br>':''}${p.is_active?'✅ Активна':'❌ Неактивна'}</div><div class="la" style="margin-top:8px"><button class="btn bed" onclick="tgPr('${p.id}',${!p.is_active})">${p.is_active?'Деактивировать':'Активировать'}</button><button class="btn bno" onclick="del('promotions','${p.id}')">Удалить</button></div></div>`).join('');
+  document.getElementById('pl').innerHTML=data.map(p=>`<div class="cd"><div class="lt"><span class="ln">${p.businesses?.name||'—'}</span>${p.discount_percent?'<span class="badge bo">-'+p.discount_percent+'%</span>':''}</div><div class="lm">${p.title}${p.promo_code?' · Код: <b>'+p.promo_code+'</b>':''}${p.valid_until?' · До '+p.valid_until:''}<br>${p.is_active?'✅ Активна':'❌ Неактивна'}</div><div class="la"><button class="btn bed" onclick="tgPr('${p.id}',${!p.is_active})">${p.is_active?'Выкл':'Вкл'}</button><button class="btn bno" onclick="del('promotions','${p.id}')">Удалить</button></div></div>`).join('');
 }
 async function tgPr(id,a){await sb.from('promotions').update({is_active:a}).eq('id',id);toast(a?'Активирована':'Деактивирована');loadPromos()}
 
+// Auto-login
 window.addEventListener('load',async()=>{try{sb=window.supabase.createClient(SU,SK);const{data:{session}}=await sb.auth.getSession();if(session&&AD.includes(session.user.email.toLowerCase())){document.getElementById('auth').style.display='none';document.getElementById('app').style.display='block';loadDash()}}catch(e){}});
 </script>
 </body></html>
