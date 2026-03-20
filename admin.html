@@ -49,6 +49,25 @@
 <div class="sec" id="s-users"><div id="ul"></div></div>
 <div class="sec" id="s-events"><div class="tabs" id="etabs"><div class="tab on" onclick="fe('upcoming',this)">Предстоящие</div><div class="tab" onclick="fe('past',this)">Прошедшие</div><div class="tab" onclick="fe('all',this)">Все</div></div><div id="el"></div></div>
 <div class="sec" id="s-promos"><div id="pl"></div></div>
+<div class="sec" id="s-push">
+  <div class="cd">
+    <h2>Отправить Push-уведомление</h2>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
+      <input id="push-title" placeholder="Заголовок" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-size:14px;font-family:inherit">
+      <textarea id="push-body" placeholder="Текст уведомления..." style="min-height:70px;border:1.5px solid var(--b);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;resize:none"></textarea>
+      <input id="push-url" placeholder="Ссылка (необязательно)" value="https://dogfriend.vercel.app" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-size:14px;font-family:inherit">
+    </div>
+    <button class="btn bok" style="width:100%;padding:14px" onclick="sendPush()">Отправить всем</button>
+  </div>
+  <div class="cd">
+    <h2>Настройки</h2>
+    <div class="lm" style="margin-bottom:8px">REST API Key из OneSignal → Settings → Keys & IDs</div>
+    <input id="push-api-key" placeholder="REST API Key" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-size:13px;font-family:monospace;width:100%" value="">
+    <div class="lm" style="margin-top:8px">App ID: 6696989f-3a36-44cc-9d46-f986d0abc0fc</div>
+    <button class="btn bed" style="margin-top:8px" onclick="localStorage.setItem('os_api_key',document.getElementById('push-api-key').value);toast('Ключ сохранён')">Сохранить ключ</button>
+  </div>
+  <div class="cd" id="push-history"><h2>История</h2><div class="emp">Отправьте первый пуш</div></div>
+</div>
 </div>
 <nav class="bn">
 <div class="bi on" onclick="go('dash',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Стат</div>
@@ -56,6 +75,7 @@
 <div class="bi" onclick="go('users',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Юзеры</div>
 <div class="bi" onclick="go('events',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>События</div>
 <div class="bi" onclick="go('promos',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>Акции</div>
+<div class="bi" onclick="go('push',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>Push</div>
 </nav>
 </div>
 <!-- User profile modal -->
@@ -75,8 +95,10 @@ async function login(){
   document.getElementById('auth').style.display='none';document.getElementById('app').style.display='block';loadDash()}catch(x){er.textContent=x.message||'Ошибка'}
 }
 
-const T={dash:'Статистика',biz:'Бизнесы',users:'Пользователи',events:'События',promos:'Акции'};
-function go(id,el){document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));document.getElementById('s-'+id).classList.add('on');document.querySelectorAll('.bi').forEach(n=>n.classList.remove('on'));if(el)el.classList.add('on');document.getElementById('pt').textContent=T[id];({dash:loadDash,biz:loadBiz,users:loadUsers,events:loadEventsAdmin,promos:loadPromos})[id]()}
+const T={dash:'Статистика',biz:'Бизнесы',users:'Пользователи',events:'События',promos:'Акции',push:'Push-уведомления'};
+function go(id,el){document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));document.getElementById('s-'+id).classList.add('on');document.querySelectorAll('.bi').forEach(n=>n.classList.remove('on'));if(el)el.classList.add('on');document.getElementById('pt').textContent=T[id];
+if(id==='push'){const k=localStorage.getItem('os_api_key');if(k)document.getElementById('push-api-key').value=k;}
+({dash:loadDash,biz:loadBiz,users:loadUsers,events:loadEventsAdmin,promos:loadPromos})[id]?.()}
 
 // ═══ DASHBOARD ═══
 async function loadDash(){
@@ -241,5 +263,51 @@ async function tgPr(id,a){await sb.from('promotions').update({is_active:a}).eq('
 
 // Auto-login
 window.addEventListener('load',async()=>{try{sb=window.supabase.createClient(SU,SK);const{data:{session}}=await sb.auth.getSession();if(session&&AD.includes(session.user.email.toLowerCase())){document.getElementById('auth').style.display='none';document.getElementById('app').style.display='block';loadDash()}}catch(e){}});
+
+// ═══ PUSH NOTIFICATIONS (OneSignal) ═══
+const OS_APP_ID='6696989f-3a36-44cc-9d46-f986d0abc0fc';
+
+async function sendPush(){
+  const title=document.getElementById('push-title').value.trim();
+  const body=document.getElementById('push-body').value.trim();
+  const url=document.getElementById('push-url').value.trim();
+  const apiKey=document.getElementById('push-api-key').value.trim()||localStorage.getItem('os_api_key');
+  
+  if(!title||!body){toast('Заполните заголовок и текст');return}
+  if(!apiKey){toast('Введите REST API Key в настройках');return}
+  
+  // Save key for next time
+  localStorage.setItem('os_api_key',apiKey);
+  
+  try{
+    toast('Отправляем...');
+    const resp=await fetch('https://onesignal.com/api/v1/notifications',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Basic '+apiKey},
+      body:JSON.stringify({
+        app_id:OS_APP_ID,
+        included_segments:['All'],
+        headings:{en:title,ru:title},
+        contents:{en:body,ru:body},
+        url:url||'https://dogfriend.vercel.app',
+        chrome_web_icon:'https://dogfriend.vercel.app/icon-192.png',
+      })
+    });
+    const data=await resp.json();
+    if(data.errors){toast('Ошибка: '+JSON.stringify(data.errors));return}
+    toast('Пуш отправлен! Получателей: '+(data.recipients||0));
+    
+    // Clear fields
+    document.getElementById('push-title').value='';
+    document.getElementById('push-body').value='';
+    
+    // Add to history
+    const hist=document.getElementById('push-history');
+    const now=new Date().toLocaleString('ru');
+    hist.innerHTML=`<h2>История</h2><div style="padding:8px 0;border-bottom:1px solid var(--b)"><div class="ln">${title}</div><div class="lm">${body}<br>${now} · ${data.recipients||0} получателей</div></div>`+hist.innerHTML.replace('<h2>История</h2>','').replace('<div class="emp">Отправьте первый пуш</div>','');
+  }catch(e){
+    toast('Ошибка: '+e.message);
+  }
+}
 </script>
 </body></html>

@@ -12,6 +12,15 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <title>Dogly</title>
 <link rel="stylesheet" href="style.css">
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "6696989f-3a36-44cc-9d46-f986d0abc0fc",
+    });
+  });
+</script>
 </head>
 <body>
 <div class="phone-shell">
