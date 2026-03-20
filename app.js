@@ -1648,9 +1648,6 @@ async function loadUserProfile() {
       const profileData = { 
         name: data.name || '', 
         district: data.district || '',
-        dogname: data.dogname || '',
-        dogbreed: data.dog_breed || '',
-        dogage: data.dog_age || ''
       };
       localStorage.setItem('df_profile', JSON.stringify(profileData));
       
@@ -1662,7 +1659,31 @@ async function loadUserProfile() {
       // Обновляем UI
       loadProfile();
     } else {
-      console.log('ℹ️ No profile found in Supabase, using localStorage');
+      // Новый пользователь — создаём профиль в Supabase из localStorage / метаданных регистрации
+      console.log('ℹ️ No profile in Supabase, creating...');
+      const localProfile = JSON.parse(localStorage.getItem('df_profile') || '{}');
+      const regName = currentUser.user_metadata?.name || localProfile.name || '';
+      
+      if (regName) {
+        try {
+          await supabaseClient.from('profiles').upsert({
+            id: currentUser.id,
+            user_id: currentUser.id,
+            name: regName,
+            district: localProfile.district || '',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'id' });
+          console.log('✅ Profile created in Supabase with name:', regName);
+          
+          // Обновляем localStorage
+          localProfile.name = regName;
+          localStorage.setItem('df_profile', JSON.stringify(localProfile));
+        } catch(e) {
+          console.error('Create profile error:', e);
+        }
+      }
+      loadProfile();
     }
   } catch (err) {
     console.error('❌ Load profile exception:', err);
