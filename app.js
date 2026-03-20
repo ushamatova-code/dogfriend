@@ -236,7 +236,11 @@ function loadProfile() {
   const homeNameSub = document.getElementById('home-name-sub');
   const homeAvatar = document.getElementById('home-avatar');
   if (homeGreeting) homeGreeting.textContent = 'Привет, ' + firstName + '! 👋';
-  if (homeNameSub) homeNameSub.textContent = p.dogname ? 'Что нового у ' + p.dogname + '?' : 'Что нового у вашего питомца?';
+  if (homeNameSub) {
+    // Берём кличку первого питомца из кэша если есть
+    const petName = (_petsCache && _petsCache.length) ? _petsCache[0].name : (p.dogname || '');
+    homeNameSub.textContent = petName ? 'Что нового у ' + petName + '?' : 'Что нового у вашего питомца?';
+  }
   if (homeAvatar) homeAvatar.textContent = initials;
   const profName = document.getElementById('prof-name');
   const profAvatar = document.getElementById('prof-avatar');
@@ -311,9 +315,6 @@ function loadProfileForm() {
   const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
   document.getElementById('ep-name').value = p.name || '';
   document.getElementById('ep-district').value = p.district || '';
-  document.getElementById('ep-dogname').value = p.dogname || '';
-  document.getElementById('ep-dogbreed').value = p.dogbreed || '';
-  document.getElementById('ep-dogage').value = p.dogage || '';
   const av = document.getElementById('ep-avatar');
   if (av) av.textContent = p.name ? getInitials(p.name) : '👤';
 }
@@ -322,16 +323,13 @@ async function saveProfile() {
   const p = {
     name: document.getElementById('ep-name').value.trim(),
     district: document.getElementById('ep-district').value.trim(),
-    dogname: document.getElementById('ep-dogname').value.trim(),
-    dogbreed: document.getElementById('ep-dogbreed').value.trim(),
-    dogage: document.getElementById('ep-dogage').value.trim(),
   };
   
   // Сохраняем локально
   localStorage.setItem('df_profile', JSON.stringify(p));
   localStorage.setItem('df_user_geo', p.district);
   
-  // Сохраняем в Supabase (используем существующую таблицу profiles)
+  // Сохраняем в Supabase
   if (supabaseClient && currentUser) {
     try {
       const { error } = await supabaseClient
@@ -341,9 +339,6 @@ async function saveProfile() {
           user_id: currentUser.id,
           name: p.name,
           district: p.district,
-          dogname: p.dogname,
-          dog_breed: p.dogbreed,
-          dog_age: p.dogage,
           updated_at: new Date().toISOString()
         }, {
           onConflict: 'id'

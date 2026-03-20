@@ -477,14 +477,16 @@
         <option value="Сокольники"><option value="Красносельский"><option value="Пресненский"><option value="Курсовой"><option value="Замоскворечье"><option value="Якиманка"><option value="Басманный"><option value="Мещанский"><option value="Таганский"><option value="Лефортово"><option value="Перово"><option value="Нижегородский"><option value="Соколиная Гора"><option value="Покровское-Стрешнево"><option value="Хорошёво-Мнёвники"><option value="Преображенское"><option value="Кукушкин"><option value="Новокосино"><option value="Измайлово"><option value="Богородское"><option value="Косино-Ухтомский"><option value="Комсомольский"><option value="Войковский"><option value="Аэропорт"><option value="Быстрцово"><option value="Ростокино"><option value="Алексеевский"><option value="Зарядье"><option value="Тверской"><option value="Арбат"><option value="Никитники"><option value="Хамовники"><option value="Кремлёвская слобода"><option value="Гагаринский"><option value="Раменки"><option value="Коньково"><option value="Щукино"><option value="Тушино"><option value="Строгино"><option value="Крылатское"><option value="Кунцево"><option value="Внуково"><option value="Деревля"><option value="Ново-Переделкино"><option value="Переделкино"><option value="Солнцево"><option value="Башкировка"><option value="Теплый Стан"><option value="Коммунарка"><option value="Южное Бутово"><option value="Северное Бутово"><option value="Покровское"><option value="Медведково"><option value="Кунцевская"><option value="Очаково-Матвеевское"><option value="Крюково"><option value="Беговое"><option value="Западное Дегунино"><option value="Восточное Дегунино"><option value="Лианозово"><option value="Северное Медведково"><option value="Южное Медведково"><option value="Митино"><option value="Отрадное"><option value="Свиблово"><option value="Вешняки"><option value="Жулебино"><option value="Люберцы"><option value="Марфино"><option value="Бибирево"><option value="Щербинка"><option value="Троицк"><option value="Московский">
       </datalist>
       <div style="border-top:2px solid var(--border);padding-top:14px;">
-        <div style="font-size:15px;font-weight:800;margin-bottom:14px;">О вашей собаке</div>
-        <div style="display:flex;flex-direction:column;gap:14px;">
-          <div><label class="lbl">Кличка</label><input class="input" id="ep-dogname" placeholder="Например: Рыжик"></div>
-          <div><label class="lbl">Порода</label><input class="input" id="ep-dogbreed" placeholder="Например: Бигль"></div>
-          <div><label class="lbl">Возраст</label><input class="input" id="ep-dogage" placeholder="Например: 2 года"></div>
+        <div onclick="nav('myPets')" style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--bg);border-radius:14px;cursor:pointer;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          <div style="flex:1;">
+            <div style="font-weight:700;font-size:15px;">Мои собаки</div>
+            <div style="font-size:12px;color:var(--text-secondary);">Добавить или редактировать питомцев</div>
+          </div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         </div>
       </div>
-      <button class="btn btn-p" onclick="saveProfile()" style="margin-top:8px;">Сохранить ✓</button>
+      <button class="btn btn-p" onclick="saveProfile()" style="margin-top:8px;">Сохранить</button>
     </div>
   </div>
 </div>
