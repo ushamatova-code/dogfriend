@@ -1092,15 +1092,34 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function openUserProfile(nick) {
-  // nick — имя из общего чата, msgData содержит senderId
-  // Вызываем с данными из сообщения
   const msgData = _lastClickedUser || {};
   const theirUserId = msgData.senderId || nick;
   const theirName = msgData.senderName || nick;
   const colors = ['#4A90D9','#E91E63','#9C27B0','#00BCD4','#FF5722','#4CAF50'];
-  const color = colors[nick.charCodeAt(0) % colors.length];
-  const initials = nick.slice(0,2).toUpperCase();
+  const color = colors[(nick||'A').charCodeAt(0) % colors.length];
+  const initials = (nick||'??').slice(0,2).toUpperCase();
 
+  // Если есть Supabase userId — загружаем полный профиль
+  if (theirUserId && theirUserId.length > 10 && supabaseClient) {
+    // Временно показываем базовую модалку
+    let modal = document.getElementById('m-user-profile');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'm-user-profile';
+      modal.className = 'modal-ov';
+      modal.onclick = function(e) { if (e.target === this) closeModal('m-user-profile'); };
+      modal.innerHTML = '<div class="modal" onclick="event.stopPropagation()" style="max-height:85%;overflow-y:auto;"><div class="mhandle"></div><div id="m-user-profile-body"></div><button class="btn btn-g" onclick="closeModal(\'m-user-profile\')">Закрыть</button></div>';
+      document.body.appendChild(modal);
+    }
+    // Используем полную загрузку профиля
+    const savedChat = currentPrivateChatId;
+    currentPrivateChatId = theirUserId;
+    openChatUserProfile();
+    currentPrivateChatId = savedChat;
+    return;
+  }
+
+  // Fallback — простая модалка без Supabase
   let modal = document.getElementById('m-user-profile');
   if (!modal) {
     modal = document.createElement('div');
@@ -1114,8 +1133,11 @@ function openUserProfile(nick) {
     <div style="text-align:center;padding:20px;">
       <div class="avatar" style="width:72px;height:72px;font-size:28px;margin:0 auto 12px;background:linear-gradient(135deg,${color},${color}99);">${initials}</div>
       <h2 style="margin-bottom:4px;">${escHtml(theirName)}</h2>
-      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;">👤 Участник сообщества</div>
-      <button class="btn btn-p" style="margin-bottom:10px;" onclick="openChatWithUser('${escHtml(theirUserId)}','${escHtml(theirName)}','${initials}','linear-gradient(135deg,${color},${color}99)');closeModal('m-user-profile')">💬 Написать</button>
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;">Участник сообщества</div>
+      <button class="btn btn-p" style="margin-bottom:10px;" onclick="openChatWithUser('${escHtml(theirUserId)}','${escHtml(theirName)}','${initials}','linear-gradient(135deg,${color},${color}99)');closeModal('m-user-profile')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:8px;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        Написать
+      </button>
       <button class="btn btn-g" onclick="closeModal('m-user-profile')">Закрыть</button>
     </div>
   </div>`;
@@ -3512,7 +3534,7 @@ function switchCommTab(tab) {
 // ════════════════════════════════════════════════════════════
 // USER PROFILE (from chat — shows avatar, district, pets, stats)
 // ════════════════════════════════════════════════════════════
-async function openUserProfile() {
+async function openChatUserProfile() {
   const userId = currentPrivateChatId;
   if (!userId || !supabaseClient) return;
   
