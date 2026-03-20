@@ -117,10 +117,26 @@
     </div>
     <div style="margin-bottom:20px;">
       <label class="lbl">Пароль</label>
-      <input class="input" id="reg-password" type="password" placeholder="••••••••">
+      <input class="input" id="reg-password" type="password" placeholder="Минимум 6 символов">
     </div>
     <button class="btn btn-p" onclick="supabaseRegister()" style="margin-bottom:12px;">Зарегистрироваться</button>
     <button class="btn btn-g" onclick="nav('login')">Уже есть аккаунт?</button>
+  </div>
+</div>
+
+<!-- EMAIL CONFIRMATION -->
+<div class="screen" id="emailConfirm">
+  <div class="scroll" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;">
+    <div style="width:100px;height:100px;background:rgba(74,144,217,0.08);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:24px;">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+    </div>
+    <h1 style="margin-bottom:12px;font-size:24px;">Проверьте почту</h1>
+    <p style="color:var(--text-secondary);margin-bottom:8px;font-size:15px;line-height:1.5;">Мы отправили письмо на</p>
+    <p id="confirm-email-display" style="font-weight:700;font-size:16px;color:var(--primary);margin-bottom:24px;">email@example.com</p>
+    <p style="color:var(--text-secondary);font-size:14px;line-height:1.6;margin-bottom:32px;">Нажмите на ссылку в письме чтобы подтвердить аккаунт. После этого вернитесь сюда и войдите.</p>
+    <button class="btn btn-p" onclick="nav('login')" style="margin-bottom:12px;">Перейти к входу</button>
+    <button class="btn btn-g" onclick="nav('register')">Назад к регистрации</button>
+    <p style="color:var(--text-secondary);font-size:12px;margin-top:20px;">Не пришло? Проверьте папку «Спам»</p>
   </div>
 </div>
 

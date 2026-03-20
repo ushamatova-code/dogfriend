@@ -1515,55 +1515,50 @@ async function supabaseLogin() {
   const password = document.getElementById('login-password').value;
   
   if (!email || !password) {
-    alert('❌ Заполните все поля');
+    showToast('Заполните все поля');
     return;
   }
   
-  // Try Supabase first, fall back to localStorage if network unavailable
   try {
-    if (supabaseClient) {
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      if (!error && data && data.user) {
-        currentUser = data.user;
-        localStorage.setItem('df_registered', '1');
-        localStorage.setItem('df_email', email);
-        try { loadUserProfile(); } catch(e) {}
-        
-        // Запускаем Realtime подписку вместо polling
-        stopRealtimeDMSubscription();
-        startRealtimeDMSubscription();
-        Object.keys(privateChats).forEach(chatId => {
-          if (!chatId.startsWith('event_')) subscribeToPrivateChat(chatId);
-        });
-        
-        // Проверяем бизнес
-        checkUserBusiness();
-        
-        nav('home');
+    if (!supabaseClient) throw new Error('Нет подключения к серверу');
+    
+    showToast('Входим...', 'var(--primary)');
+    
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    
+    if (error) {
+      const msg = error.message || '';
+      if (msg.includes('Email not confirmed')) {
+        showToast('Подтвердите email — проверьте почту');
         return;
       }
+      if (msg.includes('Invalid login')) {
+        showToast('Неверный email или пароль');
+        return;
+      }
+      throw error;
+    }
+    
+    if (data && data.user) {
+      currentUser = data.user;
+      localStorage.setItem('df_registered', '1');
+      localStorage.setItem('df_email', email);
+      try { loadUserProfile(); } catch(e) {}
+      
+      // Запускаем Realtime подписку
+      stopRealtimeDMSubscription();
+      startRealtimeDMSubscription();
+      Object.keys(privateChats).forEach(chatId => {
+        if (!chatId.startsWith('event_')) subscribeToPrivateChat(chatId);
+      });
+      
+      checkUserBusiness();
+      nav('home');
     }
   } catch (err) {
-    console.warn('Supabase unavailable, using local auth:', err.message);
+    console.error('Login error:', err);
+    showToast('Ошибка: ' + (err.message || 'Попробуйте позже'));
   }
-  
-  // Local fallback — works offline / in preview
-  const stored = localStorage.getItem('df_local_pass_' + email);
-  if (stored && stored === password) {
-    localStorage.setItem('df_registered', '1');
-    localStorage.setItem('df_email', email);
-    nav('home');
-    return;
-  }
-  // Auto-login if no password stored yet (first time, demo mode)
-  if (!stored) {
-    localStorage.setItem('df_registered', '1');
-    localStorage.setItem('df_email', email);
-    localStorage.setItem('df_local_pass_' + email, password);
-    nav('home');
-    return;
-  }
-  alert('❌ Неверный пароль');
 }
 
 // Регистрация через Supabase
@@ -1572,38 +1567,58 @@ async function supabaseRegister() {
   const email = document.getElementById('reg-email').value.trim();
   const password = document.getElementById('reg-password').value;
   
-  if (!name || !email || !password) {
-    alert('❌ Заполните все поля');
+  if (!name) { showToast('Введите имя'); return; }
+  if (!email) { showToast('Введите email'); return; }
+  if (!password || password.length < 6) { showToast('Пароль минимум 6 символов'); return; }
+  
+  // Простая проверка email
+  if (!email.includes('@') || !email.includes('.')) {
+    showToast('Введите корректный email');
     return;
   }
   
-  // Try Supabase, fall back to local
   try {
-    if (supabaseClient) {
-      const { data, error } = await supabaseClient.auth.signUp({ email, password });
-      if (!error && data && data.user) {
-        localStorage.setItem('df_registered', '1');
-        localStorage.setItem('df_email', email);
-        localStorage.setItem('df_local_pass_' + email, password);
-        const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
-        p.name = name;
-        localStorage.setItem('df_profile', JSON.stringify(p));
-        nav('home');
-        return;
+    if (!supabaseClient) throw new Error('Нет подключения');
+    
+    showToast('Регистрация...', 'var(--primary)');
+    
+    const { data, error } = await supabaseClient.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name: name }
       }
+    });
+    
+    if (error) throw error;
+    
+    // Сохраняем имя локально
+    const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
+    p.name = name;
+    localStorage.setItem('df_profile', JSON.stringify(p));
+    localStorage.setItem('df_email', email);
+    
+    // Проверяем — если email confirmation включён, user будет не подтверждён
+    if (data && data.user && !data.user.confirmed_at && !data.session) {
+      // Email не подтверждён — показываем экран подтверждения
+      nav('emailConfirm');
+      document.getElementById('confirm-email-display').textContent = email;
+    } else {
+      // Email подтверждён сразу (или confirmation выключен)
+      localStorage.setItem('df_registered', '1');
+      nav('home');
     }
   } catch(err) {
-    console.warn('Supabase unavailable, local register:', err.message);
+    console.error('Register error:', err);
+    const msg = err.message || '';
+    if (msg.includes('already registered')) {
+      showToast('Этот email уже зарегистрирован');
+    } else if (msg.includes('valid email')) {
+      showToast('Некорректный email');
+    } else {
+      showToast('Ошибка: ' + msg);
+    }
   }
-  
-  // Local fallback
-  localStorage.setItem('df_registered', '1');
-  localStorage.setItem('df_email', email);
-  localStorage.setItem('df_local_pass_' + email, password);
-  const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
-  p.name = name;
-  localStorage.setItem('df_profile', JSON.stringify(p));
-  nav('home');
 }
 
 
