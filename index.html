@@ -371,7 +371,7 @@
 
 <!-- BOOKING -->
 <div class="screen" id="booking">
-  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="tbar-title">Подтверждение</div></div>
+  <div style="padding:calc(12px + env(safe-area-inset-top, 0px)) 20px 12px;background:var(--white);"><div style="display:flex;align-items:center;gap:12px;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><h1 style="font-size:22px;flex:1;">Подтверждение</h1></div></div>
   <div class="scroll" style="padding:0 16px;">
     <div class="card" style="margin:0 0 12px;">
       <h3 style="margin-bottom:14px;">Детали заказа</h3>
@@ -392,7 +392,7 @@
         <div><div style="font-size:14px;font-weight:700;" id="book-card-info">Способ оплаты</div><div style="font-size:12px;color:var(--text-secondary);">Будет выбран при оплате</div></div></div></div>
   </div>
   <div style="padding:12px 16px 16px;background:var(--white);border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px;flex-shrink:0;">
-    <button class="btn btn-p" id="book-pay-btn" onclick="sendBookingNotification()">Оплатить 🔒</button>
+    <button class="btn btn-p" id="book-pay-btn" onclick="sendBookingNotification()">Оплатить</button>
     <button class="btn btn-g" onclick="back()">Отмена</button>
   </div>
 </div>
@@ -402,16 +402,16 @@
 <div class="screen" id="success">
   <div class="scroll" style="display:flex;flex-direction:column;">
     <div class="succ-wrap">
-      <div class="succ-icon">✅</div>
+      <div class="succ-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#34C759" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
       <h1 style="margin-bottom:12px;">Всё готово!</h1>
       <p id="succ-text" style="color:var(--text-secondary);margin-bottom:24px;">Запись подтверждена.</p>
       <div style="background:rgba(126,211,33,0.1);border-radius:14px;padding:16px;width:100%;text-align:left;margin-bottom:24px;">
-        <div style="font-size:14px;font-weight:700;margin-bottom:8px;">❤️ Вы помогли приюту!</div>
+        <div style="font-size:14px;font-weight:700;margin-bottom:8px;">Вы помогли приюту!</div>
         <div id="succ-charity" style="font-size:28px;font-weight:900;font-family:'Nunito',sans-serif;color:#5a9c18;">—</div>
         <div style="font-size:13px;color:var(--text-secondary);">направлено в приют «Надежда»</div>
       </div>
       <div style="width:100%;display:flex;flex-direction:column;gap:10px;">
-        <button class="btn btn-p" onclick="nav('home')">На главную 🏠</button>
+        <button class="btn btn-p" onclick="nav('home')">На главную</button>
         <button class="btn btn-g" id="succ-review-btn" onclick="openReviewForm()" style="display:none;">⭐ Оставить отзыв</button>
         <button class="btn btn-g" onclick="nav('community')">Поделиться в сообществе</button>
       </div>
@@ -433,7 +433,7 @@
       <div id="prof-avatar" class="avatar" style="width:64px;height:64px;font-size:24px;border:2.5px solid rgba(255,255,255,0.4);box-shadow:0 3px 12px rgba(0,0,0,0.12);">АК</div>
       <div>
         <div id="prof-name" style="font-size:20px;font-weight:900;color:white;font-family:'Nunito',sans-serif;">Анна Козлова</div>
-        <div style="margin-top:4px;"><span class="tag" style="background:rgba(255,255,255,0.15);color:white;font-size:11px;">🏅 Уровень 3 — Друг</span></div>
+        <div style="margin-top:4px;"><span class="tag" style="background:rgba(255,255,255,0.15);color:white;font-size:11px;">Уровень 3 — Друг</span></div>
       </div>
     </div>
     <!-- Stats bar -->
@@ -483,12 +483,12 @@
   <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="tbar-title">Редактировать профиль</div></div>
   <div class="scroll" style="padding:0 16px;">
     <div style="text-align:center;padding:20px 0 24px;">
-      <div id="ep-avatar" class="avatar" onclick="document.getElementById('avatar-input').click()" style="width:80px;height:80px;font-size:32px;margin:0 auto 12px;cursor:pointer;">👤</div>
-      <div style="font-size:13px;color:var(--primary);cursor:pointer;" onclick="document.getElementById('avatar-input').click()">📷 Выбрать фото</div>
+      <div id="ep-avatar" class="avatar" onclick="document.getElementById('avatar-input').click()" style="width:80px;height:80px;font-size:32px;margin:0 auto 12px;cursor:pointer;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <div style="font-size:13px;color:var(--primary);cursor:pointer;" onclick="document.getElementById('avatar-input').click()">Выбрать фото</div>
     </div>
     <div style="display:flex;flex-direction:column;gap:14px;padding-bottom:24px;">
       <div><label class="lbl">Ваше имя</label><input class="input" id="ep-name" placeholder="Например: Анна Козлова"></div>
-      <div><label class="lbl">Ваш район</label><div style="display:flex;gap:8px;"><input class="input" id="ep-district" placeholder="Выберите или введите район" list="districts-list" style="flex:1;"><button class="btn btn-sm" onclick="detectGeo()" style="flex-shrink:0;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;border:none;padding:0 8px;">📍</button></div></div>
+      <div><label class="lbl">Ваш район</label><div style="display:flex;gap:8px;"><input class="input" id="ep-district" placeholder="Выберите или введите район" list="districts-list" style="flex:1;"><button class="btn btn-sm" onclick="detectGeo()" style="flex-shrink:0;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;border:none;padding:0 8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></button></div></div>
       <datalist id="districts-list">
         <option value="Сокольники"><option value="Красносельский"><option value="Пресненский"><option value="Курсовой"><option value="Замоскворечье"><option value="Якиманка"><option value="Басманный"><option value="Мещанский"><option value="Таганский"><option value="Лефортово"><option value="Перово"><option value="Нижегородский"><option value="Соколиная Гора"><option value="Покровское-Стрешнево"><option value="Хорошёво-Мнёвники"><option value="Преображенское"><option value="Кукушкин"><option value="Новокосино"><option value="Измайлово"><option value="Богородское"><option value="Косино-Ухтомский"><option value="Комсомольский"><option value="Войковский"><option value="Аэропорт"><option value="Быстрцово"><option value="Ростокино"><option value="Алексеевский"><option value="Зарядье"><option value="Тверской"><option value="Арбат"><option value="Никитники"><option value="Хамовники"><option value="Кремлёвская слобода"><option value="Гагаринский"><option value="Раменки"><option value="Коньково"><option value="Щукино"><option value="Тушино"><option value="Строгино"><option value="Крылатское"><option value="Кунцево"><option value="Внуково"><option value="Деревля"><option value="Ново-Переделкино"><option value="Переделкино"><option value="Солнцево"><option value="Башкировка"><option value="Теплый Стан"><option value="Коммунарка"><option value="Южное Бутово"><option value="Северное Бутово"><option value="Покровское"><option value="Медведково"><option value="Кунцевская"><option value="Очаково-Матвеевское"><option value="Крюково"><option value="Беговое"><option value="Западное Дегунино"><option value="Восточное Дегунино"><option value="Лианозово"><option value="Северное Медведково"><option value="Южное Медведково"><option value="Митино"><option value="Отрадное"><option value="Свиблово"><option value="Вешняки"><option value="Жулебино"><option value="Люберцы"><option value="Марфино"><option value="Бибирево"><option value="Щербинка"><option value="Троицк"><option value="Московский">
       </datalist>
@@ -518,12 +518,12 @@
     </div>
   <div class="chips" id="health-chips" style="padding-top:12px;flex-shrink:0;">
     <div class="chip on" onclick="filterHealth('Все',this)">Все</div>
-    <div class="chip" onclick="filterHealth('Терапевт',this)">🩺 Терапевты</div>
-    <div class="chip" onclick="filterHealth('Хирург',this)">🔪 Хирурги</div>
-    <div class="chip" onclick="filterHealth('Онколог',this)">🔬 Онкологи</div>
-    <div class="chip" onclick="filterHealth('Кардиолог',this)">❤️ Кардиологи</div>
-    <div class="chip" onclick="filterHealth('Невролог',this)">🧠 Неврологи</div>
-    <div class="chip" onclick="filterHealth('Клиника',this)">🏥 Клиники</div>
+    <div class="chip" onclick="filterHealth('Терапевт',this)">Терапевты</div>
+    <div class="chip" onclick="filterHealth('Хирург',this)">Хирурги</div>
+    <div class="chip" onclick="filterHealth('Онколог',this)">Онкологи</div>
+    <div class="chip" onclick="filterHealth('Кардиолог',this)">Кардиологи</div>
+    <div class="chip" onclick="filterHealth('Невролог',this)">Неврологи</div>
+    <div class="chip" onclick="filterHealth('Клиника',this)">Клиники</div>
   </div>
   <div class="scroll">
     <!-- SOS -->
@@ -603,7 +603,7 @@
 <div class="screen" id="breeds">
   <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="tbar-title">Сообщества по породам</div></div>
   <div class="scroll">
-    <div class="sec-hd"><div class="sec-t">🔥 Популярные</div></div>
+    <div class="sec-hd"><div class="sec-t">Популярные</div></div>
     <div class="scroll-row">
       <div style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;">
         <div style="width:72px;height:72px;background:linear-gradient(135deg,#FFF5E6,#FFD9A0);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;">🐕</div>
@@ -686,7 +686,7 @@
 
 <!-- COMMUNITY -->
 <div class="screen" id="community">
-  <div class="ghdr"><h2>Сообщество</h2></div>
+  
   <div class="scroll">
     <div class="ci" onclick="openPublicChat()">
       <div style="width:48px;height:48px;background:linear-gradient(135deg,var(--primary),#6BB8F0);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🐕</div>
@@ -910,7 +910,7 @@
   <!-- Fixed header -->
   <div style="background:var(--white);padding:12px 16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;flex-shrink:0;z-index:10;">
     <button class="back-btn" onclick="nav('chatList')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-    <div class="avatar" id="chat-conv-av" style="width:40px;height:40px;font-size:18px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);">🐾</div>
+    <div class="avatar" id="chat-conv-av" style="width:40px;height:40px;font-size:18px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
     <div style="flex:1;min-width:0;">
       <div id="chat-conv-name" style="font-weight:800;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
       <div id="chat-conv-subtitle" style="font-size:12px;font-weight:600;color:#aaa;">● подключение...</div>
@@ -1046,11 +1046,11 @@
   <div style="padding:0 16px 8px;"><p style="font-size:13px;color:var(--text-secondary);">Бесплатные материалы для вас и питомца</p></div>
   <div class="chips" id="lessons-chips" style="padding-top:8px;flex-shrink:0;">
     <div class="chip on" onclick="filterLessons('Все',this)">Все</div>
-    <div class="chip" onclick="filterLessons('Щенки',this)">🐾 Щенки</div>
-    <div class="chip" onclick="filterLessons('Послушание',this)">🎯 Послушание</div>
-    <div class="chip" onclick="filterLessons('Здоровье',this)">❤️ Здоровье</div>
-    <div class="chip" onclick="filterLessons('Поведение',this)">🧠 Поведение</div>
-    <div class="chip" onclick="filterLessons('Аджилити',this)">🏃 Аджилити</div>
+    <div class="chip" onclick="filterLessons('Щенки',this)">Щенки</div>
+    <div class="chip" onclick="filterLessons('Послушание',this)">Послушание</div>
+    <div class="chip" onclick="filterLessons('Здоровье',this)">Здоровье</div>
+    <div class="chip" onclick="filterLessons('Поведение',this)">Поведение</div>
+    <div class="chip" onclick="filterLessons('Аджилити',this)">Аджилити</div>
   </div>
   <div class="scroll" id="lessons-list"></div>
 </div>
@@ -1064,7 +1064,7 @@
       <p style="color:var(--text-secondary);margin-bottom:24px;" id="appt-success-text">Заявка отправлена.</p>
       <div id="appt-success-card" style="background:var(--white);border-radius:14px;padding:16px;width:100%;text-align:left;margin-bottom:24px;box-shadow:var(--shadow);"></div>
       <div style="width:100%;display:flex;flex-direction:column;gap:10px;">
-        <button class="btn btn-p" onclick="nav('home')">На главную 🏠</button>
+        <button class="btn btn-p" onclick="nav('home')">На главную</button>
         <button class="btn btn-g" onclick="nav('medRecords')">Медицинские записи</button>
       </div>
     </div>
@@ -1133,11 +1133,11 @@
     <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
       <div><label class="lbl">Тип записи</label>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;" id="med-type-chips">
-          <div class="chip on" onclick="selectMedType('Вакцинация',this)">💉 Вакцинация</div>
-          <div class="chip" onclick="selectMedType('Приём',this)">🏥 Приём</div>
-          <div class="chip" onclick="selectMedType('Анализ',this)">🔬 Анализ</div>
-          <div class="chip" onclick="selectMedType('Операция',this)">🔪 Операция</div>
-          <div class="chip" onclick="selectMedType('Другое',this)">📋 Другое</div>
+          <div class="chip on" onclick="selectMedType('Вакцинация',this)">Вакцинация</div>
+          <div class="chip" onclick="selectMedType('Приём',this)">Приём</div>
+          <div class="chip" onclick="selectMedType('Анализ',this)">Анализ</div>
+          <div class="chip" onclick="selectMedType('Операция',this)">Операция</div>
+          <div class="chip" onclick="selectMedType('Другое',this)">Другое</div>
         </div>
       </div>
       <div><label class="lbl">Питомец</label><input class="input" id="med-pet-name" placeholder="Имя питомца"></div>
@@ -1278,11 +1278,11 @@
   <!-- Фильтры -->
   <div style="display:flex;gap:8px;padding:0 16px 12px;overflow-x:auto;flex-shrink:0;" id="events-filters">
     <button class="filter-btn active" onclick="filterEvents('all',this)">Все</button>
-    <button class="filter-btn" onclick="filterEvents('walk',this)">🐾 Прогулки</button>
-    <button class="filter-btn" onclick="filterEvents('training',this)">🎓 Тренировки</button>
-    <button class="filter-btn" onclick="filterEvents('meetup',this)">🐕 Встречи</button>
-    <button class="filter-btn" onclick="filterEvents('promo',this)">🎁 Акции</button>
-    <button class="filter-btn" onclick="filterEvents('openday',this)">🏥 Открытые дни</button>
+    <button class="filter-btn" onclick="filterEvents('walk',this)">Прогулки</button>
+    <button class="filter-btn" onclick="filterEvents('training',this)">Тренировки</button>
+    <button class="filter-btn" onclick="filterEvents('meetup',this)">Встречи</button>
+    <button class="filter-btn" onclick="filterEvents('promo',this)">Акции</button>
+    <button class="filter-btn" onclick="filterEvents('openday',this)">Открытые дни</button>
   </div>
   <div class="scroll" id="events-list" style="padding:0 16px 24px;">
     <div style="text-align:center;padding:40px 0;color:var(--text-secondary);">Загружаем события...</div>
@@ -1378,11 +1378,11 @@
     <div style="margin-bottom:16px;padding-top:16px;">
       <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:10px;">Тип события</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;" id="event-type-picker">
-        <label class="ev-type-opt" data-type="walk">🐾 Прогулка</label>
-        <label class="ev-type-opt" data-type="meetup">🐕 Встреча</label>
-        <label class="ev-type-opt" data-type="training">🎓 Тренировка</label>
-        <label class="ev-type-opt" data-type="promo">🎁 Акция</label>
-        <label class="ev-type-opt" data-type="openday">🏥 Открытый день</label>
+        <label class="ev-type-opt" data-type="walk">Прогулка</label>
+        <label class="ev-type-opt" data-type="meetup">Встреча</label>
+        <label class="ev-type-opt" data-type="training">Тренировка</label>
+        <label class="ev-type-opt" data-type="promo">Акция</label>
+        <label class="ev-type-opt" data-type="openday">Открытый день</label>
       </div>
     </div>
 
