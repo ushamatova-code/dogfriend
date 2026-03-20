@@ -1155,50 +1155,113 @@ function openUserProfile(nick) {
   const colors = ['#4A90D9','#E91E63','#9C27B0','#00BCD4','#FF5722','#4CAF50'];
   const color = colors[(nick||'A').charCodeAt(0) % colors.length];
   const initials = (nick||'??').slice(0,2).toUpperCase();
+  const grad = `linear-gradient(135deg,${color},${color}99)`;
 
-  // Если есть Supabase userId — загружаем полный профиль
-  if (theirUserId && theirUserId.length > 10 && supabaseClient) {
-    // Временно показываем базовую модалку
-    let modal = document.getElementById('m-user-profile');
-    if (!modal) {
-      modal = document.createElement('div');
-      modal.id = 'm-user-profile';
-      modal.className = 'modal-ov';
-      modal.onclick = function(e) { if (e.target === this) closeModal('m-user-profile'); };
-      modal.innerHTML = '<div class="modal" onclick="event.stopPropagation()" style="max-height:85%;overflow-y:auto;"><div class="mhandle"></div><div id="m-user-profile-body"></div><button class="btn btn-g" onclick="closeModal(\'m-user-profile\')">Закрыть</button></div>';
-      document.body.appendChild(modal);
-    }
-    // Используем полную загрузку профиля
-    const savedChat = currentPrivateChatId;
-    currentPrivateChatId = theirUserId;
-    openChatUserProfile();
-    currentPrivateChatId = savedChat;
-    return;
-  }
-
-  // Fallback — простая модалка без Supabase
+  // Ensure modal exists
   let modal = document.getElementById('m-user-profile');
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'm-user-profile';
     modal.className = 'modal-ov';
     modal.onclick = function(e) { if (e.target === this) closeModal('m-user-profile'); };
+    modal.innerHTML = '<div class="modal" onclick="event.stopPropagation()" style="max-height:85%;overflow-y:auto;"><div class="mhandle"></div><div id="m-user-profile-body"></div></div>';
     document.body.appendChild(modal);
   }
-  modal.innerHTML = `<div class="modal" onclick="event.stopPropagation()" style="max-height:80%;overflow-y:auto;">
-    <div class="mhandle"></div>
-    <div style="text-align:center;padding:20px;">
-      <div class="avatar" style="width:72px;height:72px;font-size:28px;margin:0 auto 12px;background:linear-gradient(135deg,${color},${color}99);">${initials}</div>
+  
+  const body = document.getElementById('m-user-profile-body');
+  
+  // Show immediately with basic info
+  body.innerHTML = `<div style="text-align:center;padding:20px;">
+    <div class="avatar" style="width:72px;height:72px;font-size:28px;margin:0 auto 12px;background:${grad};">${initials}</div>
+    <h2 style="margin-bottom:4px;">${escHtml(theirName)}</h2>
+    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;">Загрузка...</div>
+  </div>`;
+  openModal('m-user-profile');
+
+  // If we have a real Supabase UUID — load full profile
+  if (theirUserId && theirUserId.length > 10 && supabaseClient) {
+    loadFullUserProfile(theirUserId, theirName, initials, grad);
+  } else {
+    // Fallback — simple modal
+    body.innerHTML = `<div style="text-align:center;padding:20px;">
+      <div class="avatar" style="width:72px;height:72px;font-size:28px;margin:0 auto 12px;background:${grad};">${initials}</div>
       <h2 style="margin-bottom:4px;">${escHtml(theirName)}</h2>
       <div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;">Участник сообщества</div>
-      <button class="btn btn-p" style="margin-bottom:10px;" onclick="openChatWithUser('${escHtml(theirUserId)}','${escHtml(theirName)}','${initials}','linear-gradient(135deg,${color},${color}99)');closeModal('m-user-profile')">
+      <button class="btn btn-p" style="margin-bottom:10px;" onclick="closeModal('m-user-profile');openChatWithUser('${escHtml(theirUserId)}','${escHtml(theirName)}','${initials}','${grad}')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:8px;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
         Написать
       </button>
       <button class="btn btn-g" onclick="closeModal('m-user-profile')">Закрыть</button>
+    </div>`;
+  }
+}
+
+async function loadFullUserProfile(userId, fallbackName, fallbackInitials, fallbackGrad) {
+  const body = document.getElementById('m-user-profile-body');
+  if (!body || !supabaseClient) return;
+
+  try {
+    const [profileRes, petsRes, bookingsRes] = await Promise.all([
+      supabaseClient.from('profiles').select('*').eq('user_id', userId).single(),
+      supabaseClient.from('pets').select('*').eq('user_id', userId),
+      supabaseClient.from('bookings').select('id').eq('user_id', userId),
+    ]);
+
+    const profile = profileRes.data;
+    const pets = petsRes.data || [];
+    const bookings = bookingsRes.data || [];
+
+    const name = profile?.name || fallbackName || 'Пользователь';
+    const initials = name.substring(0,2).toUpperCase();
+    const district = profile?.district || '';
+    const avatarUrl = profile?.avatar_url;
+    const ordersCount = bookings.length;
+    const charityAmount = ordersCount * 150;
+
+    body.innerHTML = `<div style="text-align:center;padding:8px 0;">
+      <div class="avatar" style="width:72px;height:72px;font-size:28px;margin:0 auto 12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.1);">
+        ${avatarUrl ? `<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.textContent='${initials}'">` : initials}
+      </div>
+      <div style="font-size:20px;font-weight:900;font-family:'Nunito',sans-serif;">${escHtml(name)}</div>
+      ${district ? `<div style="display:flex;align-items:center;justify-content:center;gap:4px;color:var(--text-secondary);font-size:13px;margin-top:4px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        ${escHtml(district)}
+      </div>` : ''}
     </div>
-  </div>`;
-  openModal('m-user-profile');
+    
+    <div style="display:flex;gap:0;background:var(--bg);border-radius:14px;padding:12px;margin:16px 0;">
+      <div style="flex:1;text-align:center;"><div style="font-size:18px;font-weight:900;color:var(--primary);">${ordersCount}</div><div style="font-size:11px;color:var(--text-secondary);">заказов</div></div>
+      <div style="width:1px;background:var(--border);"></div>
+      <div style="flex:1;text-align:center;"><div style="font-size:18px;font-weight:900;color:var(--primary);">${charityAmount} ₽</div><div style="font-size:11px;color:var(--text-secondary);">приютам</div></div>
+      <div style="width:1px;background:var(--border);"></div>
+      <div style="flex:1;text-align:center;"><div style="font-size:18px;font-weight:900;color:var(--primary);">${pets.length}</div><div style="font-size:11px;color:var(--text-secondary);">питомцев</div></div>
+    </div>
+    
+    ${pets.length ? `<div style="text-align:left;margin-bottom:12px;">
+      <div style="font-size:14px;font-weight:800;margin-bottom:8px;">Питомцы</div>
+      ${pets.map(p => `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <div style="width:40px;height:40px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#4A90D9,#7B5EA7);color:white;font-weight:700;font-size:15px;flex-shrink:0;">
+          ${p.photo_url ? `<img src="${p.photo_url}" style="width:100%;height:100%;object-fit:cover;">` : p.name.substring(0,1).toUpperCase()}
+        </div>
+        <div><div style="font-weight:700;font-size:13px;">${escHtml(p.name)} ${p.sex==='ж'?'♀':'♂'}</div><div style="font-size:12px;color:var(--text-secondary);">${escHtml(p.breed||'')}${p.age?' · '+p.age:''}</div></div>
+      </div>`).join('')}
+    </div>` : ''}
+    
+    <button class="btn btn-p" style="margin-bottom:8px;" onclick="closeModal('m-user-profile');openChatWithUser('${userId}','${escHtml(name)}','${initials}','${fallbackGrad}')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:8px;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      Написать
+    </button>
+    <button class="btn btn-g" onclick="closeModal('m-user-profile')">Закрыть</button>`;
+  } catch(e) {
+    console.error('Load user profile error:', e);
+    body.innerHTML = `<div style="text-align:center;padding:20px;">
+      <div class="avatar" style="width:72px;height:72px;font-size:28px;margin:0 auto 12px;background:${fallbackGrad};">${fallbackInitials}</div>
+      <h2 style="margin-bottom:4px;">${escHtml(fallbackName)}</h2>
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;">Участник сообщества</div>
+      <button class="btn btn-p" style="margin-bottom:10px;" onclick="closeModal('m-user-profile');openChatWithUser('${userId}','${escHtml(fallbackName)}','${fallbackInitials}','${fallbackGrad}')">Написать</button>
+      <button class="btn btn-g" onclick="closeModal('m-user-profile')">Закрыть</button>
+    </div>`;
+  }
 }
 
 let _lastClickedUser = null;
