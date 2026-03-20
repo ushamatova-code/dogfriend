@@ -386,7 +386,6 @@ function renderLevelModal(orders, charity, level) {
     </div>
   `;
 }
-}
 
 function loadProfileForm() {
   const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
