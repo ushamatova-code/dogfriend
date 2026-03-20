@@ -272,14 +272,12 @@ async function loadProfileStats() {
   
   if (supabaseClient && currentUser) {
     try {
-      // Питомцы из Supabase
       const { data: pets } = await supabaseClient
         .from('pets')
         .select('id')
         .eq('user_id', currentUser.id);
       petsCount = (pets || []).length;
       
-      // Заказы
       const { data: bookings } = await supabaseClient
         .from('bookings')
         .select('id')
@@ -300,7 +298,7 @@ async function loadProfileStats() {
   const charityStat = document.getElementById('prof-stat-charity');
   if (charityStat) charityStat.textContent = charityAmount.toLocaleString('ru-RU') + ' ₽';
   
-  // Также обновляем плашку на главной
+  // Обновляем плашку на главной
   const homeCharity = document.getElementById('home-charity-amount');
   if (homeCharity) homeCharity.textContent = charityAmount.toLocaleString('ru-RU') + ' ₽ собрано';
   
@@ -309,6 +307,85 @@ async function loadProfileStats() {
     const pct = Math.min(100, (charityAmount / 2000) * 100);
     homeCharityBar.style.width = pct + '%';
   }
+  
+  // Обновляем уровень
+  const level = getUserLevel(ordersCount);
+  const levelBadge = document.getElementById('prof-level-badge');
+  if (levelBadge) levelBadge.textContent = level.name;
+  
+  // Рендерим модалку уровня
+  renderLevelModal(ordersCount, charityAmount, level);
+}
+
+// ═══ СИСТЕМА УРОВНЕЙ ═══
+const LEVELS = [
+  { min: 0,  name: 'Новичок',       icon: '🌱', color: '#8E8E93', next: 1 },
+  { min: 1,  name: 'Друг собак',    icon: '🐕', color: '#4A90D9', next: 4 },
+  { min: 4,  name: 'Защитник',      icon: '🛡️', color: '#F5A623', next: 10 },
+  { min: 10, name: 'Чемпион',       icon: '🏆', color: '#FF6B35', next: 25 },
+  { min: 25, name: 'Герой приютов', icon: '⭐', color: '#E91E63', next: null },
+];
+
+function getUserLevel(orders) {
+  let lvl = LEVELS[0];
+  for (const l of LEVELS) {
+    if (orders >= l.min) lvl = l;
+  }
+  return lvl;
+}
+
+function renderLevelModal(orders, charity, level) {
+  const body = document.getElementById('m-level-body');
+  if (!body) return;
+  
+  const lvlIndex = LEVELS.indexOf(level);
+  const nextLevel = lvlIndex < LEVELS.length - 1 ? LEVELS[lvlIndex + 1] : null;
+  const progress = nextLevel ? Math.min(100, ((orders - level.min) / (nextLevel.min - level.min)) * 100) : 100;
+  const remaining = nextLevel ? nextLevel.min - orders : 0;
+  
+  body.innerHTML = `
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:56px;margin-bottom:8px;">${level.icon}</div>
+      <div style="font-size:22px;font-weight:900;font-family:'Nunito',sans-serif;color:${level.color};">${level.name}</div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">${orders} заказов · ${charity.toLocaleString('ru-RU')} ₽ в приюты</div>
+    </div>
+    
+    ${nextLevel ? `
+    <div style="background:var(--bg);border-radius:16px;padding:16px;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:13px;font-weight:700;">${level.name}</span>
+        <span style="font-size:13px;font-weight:700;color:${nextLevel.color};">${nextLevel.name} ${nextLevel.icon}</span>
+      </div>
+      <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:6px;">
+        <div style="height:100%;width:${progress}%;background:linear-gradient(90deg,${level.color},${nextLevel.color});border-radius:4px;transition:width 0.5s;"></div>
+      </div>
+      <div style="font-size:12px;color:var(--text-secondary);text-align:center;">Ещё ${remaining} заказ${remaining===1?'':remaining<5?'а':'ов'} до уровня «${nextLevel.name}»</div>
+    </div>` : `
+    <div style="background:linear-gradient(135deg,${level.color}15,${level.color}08);border-radius:16px;padding:16px;margin-bottom:16px;text-align:center;">
+      <div style="font-size:15px;font-weight:700;color:${level.color};">Максимальный уровень!</div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">Вы настоящий герой</div>
+    </div>`}
+    
+    <div style="font-size:15px;font-weight:800;margin-bottom:12px;">Все уровни</div>
+    ${LEVELS.map((l, i) => {
+      const isCurrent = l === level;
+      const isLocked = l.min > orders;
+      return `<div style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;margin-bottom:6px;${isCurrent ? 'background:'+l.color+'10;border:1.5px solid '+l.color+'30;' : isLocked ? 'opacity:0.4;' : 'background:var(--bg);'}">
+        <div style="font-size:28px;width:40px;text-align:center;">${l.icon}</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:700;${isCurrent ? 'color:'+l.color : ''}">${l.name}</div>
+          <div style="font-size:12px;color:var(--text-secondary);">${l.min === 0 ? 'Начальный уровень' : 'От '+l.min+' заказов · '+(l.min*150)+' ₽ приютам'}</div>
+        </div>
+        ${isCurrent ? '<span style="font-size:12px;font-weight:700;color:'+l.color+';">Вы тут</span>' : isLocked ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>' : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="'+l.color+'" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>'}
+      </div>`;
+    }).join('')}
+    
+    <div style="background:var(--bg);border-radius:14px;padding:14px;margin-top:12px;">
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px;">Как это работает?</div>
+      <div style="font-size:12px;color:var(--text-secondary);line-height:1.6;">С каждого заказа 150 ₽ направляется в приюты для животных. Чем больше заказов — тем выше ваш уровень и вклад в помощь.</div>
+    </div>
+  `;
+}
 }
 
 function loadProfileForm() {

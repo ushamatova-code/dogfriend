@@ -433,7 +433,7 @@
       <div id="prof-avatar" class="avatar" style="width:64px;height:64px;font-size:24px;border:2.5px solid rgba(255,255,255,0.4);box-shadow:0 3px 12px rgba(0,0,0,0.12);">АК</div>
       <div>
         <div id="prof-name" style="font-size:20px;font-weight:900;color:white;font-family:'Nunito',sans-serif;">Анна Козлова</div>
-        <div style="margin-top:4px;"><span class="tag" style="background:rgba(255,255,255,0.15);color:white;font-size:11px;">Уровень 3 — Друг</span></div>
+        <div style="margin-top:4px;cursor:pointer;" onclick="openModal('m-level')"><span id="prof-level-badge" class="tag" style="background:rgba(255,255,255,0.15);color:white;font-size:11px;">Новичок</span></div>
       </div>
     </div>
     <!-- Stats bar -->
@@ -903,6 +903,15 @@
       <!-- Заполняется из JS -->
     </div>
     <button class="btn btn-g" onclick="closeModal('m-user-profile')">Закрыть</button>
+  </div>
+</div>
+
+<!-- LEVEL & ACHIEVEMENTS MODAL -->
+<div class="modal-ov" id="m-level" onclick="closeModal('m-level')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:88%;overflow-y:auto;">
+    <div class="mhandle"></div>
+    <div id="m-level-body"></div>
+    <button class="btn btn-g" onclick="closeModal('m-level')" style="margin-top:8px;">Закрыть</button>
   </div>
 </div>
 
