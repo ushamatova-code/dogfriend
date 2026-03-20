@@ -489,11 +489,7 @@ let unreadChats = JSON.parse(localStorage.getItem('unread_chats') || '{}');
 // ============================================================
 // NOTIFICATION FUNCTIONS
 // ============================================================
-function requestNotificationPermission() {
-  if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission();
-  }
-}
+// (основные определения ниже в файле — строки ~1791-1836)
 
 function playNotificationSound() {
   // Создаем звук уведомления с помощью Web Audio API
@@ -515,16 +511,6 @@ function playNotificationSound() {
     oscillator.stop(audioContext.currentTime + 0.5);
   } catch(e) {
     // Если Web Audio не поддерживается, игнорируем
-  }
-}
-
-function showBrowserNotification(title, options = {}) {
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(title, {
-      icon: '🐕',
-      badge: '🐾',
-      ...options
-    });
   }
 }
 

@@ -132,7 +132,7 @@
     </div>
     <h1 style="margin-bottom:12px;font-size:24px;">Проверьте почту</h1>
     <p style="color:var(--text-secondary);margin-bottom:8px;font-size:15px;line-height:1.5;">Мы отправили письмо на</p>
-    <p id="confirm-email-display" style="font-weight:700;font-size:16px;color:var(--primary);margin-bottom:24px;">email@example.com</p>
+    <p id="confirm-email-display" style="font-weight:700;font-size:16px;color:var(--primary);margin-bottom:24px;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="caafa7aba3a68aafb2aba7baa6afe4a9a5a7">[email&#160;protected]</a></p>
     <p style="color:var(--text-secondary);font-size:14px;line-height:1.6;margin-bottom:32px;">Нажмите на ссылку в письме чтобы подтвердить аккаунт. После этого вернитесь сюда и войдите.</p>
     <button class="btn btn-p" onclick="nav('login')" style="margin-bottom:12px;">Перейти к входу</button>
     <button class="btn btn-g" onclick="nav('register')">Назад к регистрации</button>
@@ -1303,7 +1303,7 @@
   <div class="top-bar" style="padding-top:0;">
     <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
     <div class="tbar-title" id="ev-topbar-title">Событие</div>
-    <button class="back-btn" id="ev-edit-btn" style="display:none;" onclick="editCurrentEvent()">✏️</button>
+    <button class="back-btn" id="ev-edit-btn" style="display:none;" onclick="showToast('Редактируйте в админке')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
   </div>
   <div class="scroll" style="padding:0 0 24px;">
     <!-- Шапка события -->
@@ -1433,13 +1433,5 @@
 
 
 <!-- JS Modules -->
-<script src="booking.js"></script>
-<script src="app.js"></script>
-<script src="business.js"></script>
-<script src="reviews-helper.js"></script>
-<script src="ratings.js"></script>
-<script src="dashboard.js"></script>
-<script src="events.js"></script>
-
-</body>
-</html>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="booking.js"></script>
+<scr

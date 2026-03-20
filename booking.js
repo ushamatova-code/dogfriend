@@ -3,59 +3,6 @@ let currentBookingBiz = null;
 let currentBookingSvc = null;
 let lastBookingId = null;
 
-// Заполняем экран бронирования реальными данными при переходе
-function populateBookingScreen() {
-  let biz = loadedBusinesses.find(b => b.user_id === currentSpecId) || loadedBusinesses.find(b => b.id === currentSpecId);
-  const spec = SPECIALISTS.find(s => s.id === currentSpecId);
-  
-  let selectedService = null;
-  let bizName = '';
-  
-  if (biz) {
-    bizName = biz.name;
-    const selEl = document.querySelector('#spec-services .pr.sel');
-    const selIdx = selEl ? parseInt(selEl.id.replace('svc','')) - 1 : 0;
-    const svcList = biz.services && biz.services.length
-      ? biz.services.map(s => typeof s === 'string' ? { name: s, price: biz.price_from || 'По запросу' } : s)
-      : [{ name: 'Консультация', price: biz.price_from || 'По запросу' }];
-    selectedService = svcList[selIdx] || svcList[0];
-  } else if (spec) {
-    bizName = spec.name;
-    const selEl = document.querySelector('#spec-services .pr.sel');
-    const selIdx = selEl ? parseInt(selEl.id.replace('svc','')) - 1 : 0;
-    selectedService = spec.services[selIdx] || spec.services.find(s => s.sel) || spec.services[0];
-  }
-  
-  if (!selectedService) selectedService = { name: 'Услуга', price: 'По запросу' };
-  
-  currentBookingBiz = biz || spec;
-  currentBookingSvc = selectedService;
-  
-  const priceStr = selectedService.price || 'По запросу';
-  const amount = parseInt(priceStr.replace(/[^0-9]/g, '')) || 0;
-  const charity = Math.round(amount * 0.025);
-  
-  document.getElementById('book-spec-name').textContent = bizName || '—';
-  document.getElementById('book-svc-name').textContent = selectedService.name || '—';
-  document.getElementById('book-total').textContent = amount ? amount.toLocaleString('ru-RU') + ' ₽' : priceStr;
-  document.getElementById('book-charity').textContent = charity ? charity.toLocaleString('ru-RU') + ' ₽' : '—';
-
-  // Показываем номер телефона для СБП если есть
-  const phone = (biz || spec)?.phone;
-  const phoneBlock = document.getElementById('book-sbp-phone-block');
-  const phoneEl = document.getElementById('book-sbp-phone');
-  if (phone && phoneBlock && phoneEl) {
-    phoneEl.textContent = formatPhone(phone);
-    phoneBlock.style.display = 'block';
-  }
-
-  // Сброс кнопок
-  const payBtn = document.getElementById('book-pay-btn');
-  const paidBtn = document.getElementById('book-paid-btn');
-  if (payBtn) { payBtn.style.display = ''; payBtn.disabled = false; }
-  if (paidBtn) paidBtn.style.display = 'none';
-}
-
 function copyPhone(phone) {
   const formatted = '+' + phone;
   navigator.clipboard?.writeText(formatted).catch(() => {});
@@ -161,65 +108,6 @@ async function createBookingRecord(status = 'pending_payment') {
   } catch(e) {
     console.error('Booking error:', e);
   }
-}
-
-async function sendBookingNotification() {
-  if (!currentUser) { alert('Пожалуйста, войдите в систему для записи.'); return; }
-
-  const biz = currentBookingBiz;
-  const svc = currentBookingSvc;
-  if (!biz || !svc) { showToast('Ошибка: не выбран специалист или услуга'); return; }
-
-  const bizName = biz.name || biz.business_name || 'Специалист';
-  const priceStr = svc.price || '0';
-  const amount = parseInt(priceStr.replace(/[^0-9]/g, '')) || 0;
-  const charity = Math.round(amount * 0.025);
-  const profile = JSON.parse(localStorage.getItem('df_profile') || '{}');
-
-  // Отправляем сообщение специалисту в чат
-  const message = `💳 Оплата через СБП!\nУслуга: ${svc.name}\nСумма: ${amount ? amount.toLocaleString('ru-RU') + ' ₽' : 'По запросу'}\nКлиент: ${profile.name || 'Не указано'}\nСобака: ${profile.dogname || 'Не указано'}\n⏳ Ожидает подтверждения`;
-
-  try {
-    const now = new Date();
-    const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
-    const myUserId = currentUser?.id || userId;
-
-    if (!privateChats[currentSpecId]) privateChats[currentSpecId] = [];
-    privateChats[currentSpecId].push({
-      text: message, sender: 'user', time,
-      senderName: profile.name || 'Клиент', senderId: myUserId
-    });
-    savePrivateChatsToStorage();
-    await savePrivateMsgToServer(currentSpecId, message, time);
-
-    const roomId = getRoomId(myUserId, String(currentSpecId));
-    const channelName = `dogfriend-dm-${roomId}`;
-    let channel = supabasePrivateChannels[channelName];
-    if (!channel) {
-      channel = supabaseClient.channel(channelName, { config: { broadcast: { self: false } } });
-      channel.subscribe();
-      supabasePrivateChannels[channelName] = channel;
-    }
-    channel.send({
-      type: 'broadcast', event: 'message',
-      payload: { senderId: myUserId, senderName: profile.name || 'Клиент', text: message, time }
-    });
-  } catch(e) {
-    console.error('Failed to send booking notification:', e);
-  }
-
-  // Экран успеха
-  document.getElementById('succ-text').textContent = `Заявка отправлена. Специалист подтвердит получение оплаты.`;
-  document.getElementById('succ-charity').textContent = charity ? charity.toLocaleString('ru-RU') + ' ₽' : '—';
-
-  const reviewBtn = document.getElementById('succ-review-btn');
-  if (reviewBtn) {
-    reviewBtn.style.display = '';
-    reviewBtn.dataset.bizId = biz.id || '';
-    reviewBtn.dataset.bizName = bizName;
-  }
-
-  nav('success');
 }
 
 // Заполняем экран бронирования реальными данными при переходе
