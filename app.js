@@ -956,8 +956,20 @@ function openChatWithUser(theirUserId, theirName, theirInitials, theirGrad) {
   const av = document.getElementById('pc-avatar');
   av.textContent = contactBook[theirUserId].initials;
   av.style.background = contactBook[theirUserId].grad;
+  av.style.overflow = 'hidden';
   document.getElementById('pc-name').textContent = theirName;
-  document.getElementById('pc-online').textContent = '🟢 онлайн';
+  document.getElementById('pc-online').innerHTML = '<span style="color:#34C759;">●</span> онлайн';
+
+  // Async load avatar
+  if (theirUserId.length > 10) {
+    getUserAvatarUrl(theirUserId).then(url => {
+      if (url) {
+        av.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.textContent='${contactBook[theirUserId].initials}'">`;
+        av.style.background = 'none';
+        av.style.padding = '0';
+      }
+    });
+  }
 
   renderPrivateChatMessages(theirUserId);
   loadPrivateChatFromServer(theirUserId);
@@ -1076,16 +1088,17 @@ function renderPrivateChatMessages(chatId) {
   const myName = (JSON.parse(localStorage.getItem('df_profile') || '{}')).name || 'Я';
 
   if (messages.length === 0) {
-    container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text-secondary);font-size:14px;">Напишите первое сообщение 👋</div>';
+    container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text-secondary);font-size:14px;">Напишите первое сообщение</div>';
     return;
   }
 
   container.innerHTML = messages.map(msg => {
     const isMine = msg.sender === 'user';
+    const content = formatMsgContent(msg.text);
     return `<div style="display:flex;justify-content:${isMine ? 'flex-end' : 'flex-start'};">
       <div style="max-width:75%;background:${isMine ? 'var(--primary)' : 'var(--white)'};color:${isMine ? 'white' : 'var(--text-primary)'};padding:10px 14px;border-radius:${isMine ? '16px 16px 4px 16px' : '16px 16px 16px 4px'};word-wrap:break-word;font-size:14px;box-shadow:var(--shadow);">
         ${!isMine ? `<div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:4px;">${escHtml(msg.senderName || '')}</div>` : ''}
-        ${escHtml(msg.text)}
+        ${content}
         <div style="font-size:11px;${isMine ? 'color:rgba(255,255,255,0.7)' : 'color:var(--text-secondary)'};margin-top:4px;text-align:right;">${msg.time}</div>
       </div>
     </div>`;
@@ -1140,6 +1153,69 @@ function sendPrivateMessage() {
       type: 'broadcast', event: 'message',
       payload: { text, senderName: myName, senderId: myUserId, time }
     });
+  }
+}
+
+// Отправка фото в чат
+function triggerChatPhoto() {
+  const input = document.getElementById('pc-photo-input');
+  if (input) input.click();
+}
+
+async function sendChatPhoto(fileInput) {
+  const file = fileInput.files[0];
+  if (!file || !currentPrivateChatId || !supabaseClient || !currentUser) return;
+  fileInput.value = '';
+  
+  showToast('Отправляем фото...', 'var(--primary)');
+  
+  try {
+    const ext = file.type.includes('png') ? 'png' : 'jpg';
+    const filePath = `chat/${currentUser.id}_${Date.now()}.${ext}`;
+    
+    const { error: uploadError } = await supabaseClient.storage
+      .from('avatars')
+      .upload(filePath, file, { upsert: true, contentType: file.type });
+    if (uploadError) throw uploadError;
+    
+    const { data: urlData } = supabaseClient.storage
+      .from('avatars')
+      .getPublicUrl(filePath);
+    
+    const photoUrl = urlData.publicUrl;
+    
+    // Send as a message with [photo] prefix
+    const chatId = currentPrivateChatId;
+    const time = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    const myProfile = JSON.parse(localStorage.getItem('df_profile') || '{}');
+    const myName = myProfile.name || 'Гость';
+    const myUserId = currentUser.id;
+    
+    if (!privateChats[chatId]) privateChats[chatId] = [];
+    const msgText = '[photo]' + photoUrl;
+    privateChats[chatId].push({ text: msgText, sender: 'user', time, senderName: myName, senderId: myUserId, created_at: new Date().toISOString() });
+    
+    if (!String(chatId).startsWith('event_')) savePrivateChatsToStorage();
+    renderPrivateChatMessages(chatId);
+    renderPrivateChats();
+    
+    savePrivateMsgToServer(chatId, msgText, time);
+    
+    // Broadcast
+    if (!String(chatId).startsWith('event_')) {
+      const roomId = [myUserId, String(chatId)].sort().join('__');
+      const channelName = 'dogfriend-dm-' + roomId;
+      let channel = supabasePrivateChannels[channelName];
+      if (!channel) {
+        channel = supabaseClient.channel(channelName, { config: { broadcast: { self: false } } });
+        channel.subscribe();
+        supabasePrivateChannels[channelName] = channel;
+      }
+      channel.send({ type: 'broadcast', event: 'message', payload: { text: msgText, senderName: myName, senderId: myUserId, time } });
+    }
+  } catch(e) {
+    console.error('Chat photo error:', e);
+    showToast('Ошибка отправки фото');
   }
 }
 
@@ -2383,23 +2459,43 @@ function appendMessage(nick, text, time, isMine, senderId) {
   const colors   = ['#4A90D9','#E91E63','#9C27B0','#00BCD4','#FF5722','#4CAF50'];
   const color    = colors[nick.charCodeAt(0) % colors.length];
   const grad = `linear-gradient(135deg,${color},${color}99)`;
-  // клик по имени → запоминаем пользователя и открываем профиль
-  // senderId здесь — всегда Supabase UUID (или локальный fallback)
   const safeSenderId = senderId ? String(senderId).replace(/'/g, "\\'") : '';
   const safeNick = escHtml(nick).replace(/'/g, "\\'");
   const clickHandler = safeSenderId
     ? `_lastClickedUser={senderId:'${safeSenderId}',senderName:'${safeNick}'};openUserProfile('${safeNick}')`
     : `openUserProfile('${safeNick}')`;
+  const avId = 'av-' + Date.now() + '-' + Math.random().toString(36).substr(2,4);
   row.innerHTML = `
     ${!isMine ? `<div class="cmsg-nick" style="cursor:pointer;color:var(--primary);" onclick="${clickHandler}">${escHtml(nick)}</div>` : ''}
     <div style="display:flex;align-items:flex-end;gap:6px;${isMine?'flex-direction:row-reverse':''}">
-      ${!isMine ? `<div class="avatar" style="width:28px;height:28px;font-size:10px;flex-shrink:0;background:${grad};cursor:pointer;" onclick="${clickHandler}">${initials}</div>` : ''}
-      <div class="cmsg-bubble">${escHtml(text)}</div>
+      ${!isMine ? `<div class="avatar" id="${avId}" style="width:28px;height:28px;font-size:10px;flex-shrink:0;background:${grad};cursor:pointer;overflow:hidden;" onclick="${clickHandler}">${initials}</div>` : ''}
+      <div class="cmsg-bubble">${formatMsgContent(text)}</div>
     </div>
     <div class="cmsg-time">${time}</div>
   `;
   wrap.appendChild(row);
   scrollChatBottom();
+  
+  // Async load avatar
+  if (!isMine && senderId && senderId.length > 10) {
+    getUserAvatarUrl(senderId).then(url => {
+      if (url) {
+        const el = document.getElementById(avId);
+        if (el) el.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.textContent='${initials}'">`;
+      }
+    });
+  }
+}
+
+// Format message content — detect images
+function formatMsgContent(text) {
+  if (!text) return '';
+  // Check if it's a photo URL from storage
+  if (text.match(/^https:\/\/.*\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i) || text.startsWith('[photo]')) {
+    const url = text.replace('[photo]', '').trim();
+    return `<img src="${url}" style="max-width:100%;border-radius:10px;cursor:pointer;max-height:240px;" onclick="window.open('${url}','_blank')" onerror="this.outerHTML='${escHtml(text)}'">`;
+  }
+  return escHtml(text);
 }
 
 function appendSysMsg(text) {
