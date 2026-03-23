@@ -127,57 +127,200 @@ async function loadBiz(){
 async function loadUsers(){
   const{data:pr}=await sb.from('profiles').select('*').order('created_at',{ascending:false});
   const{data:pe}=await sb.from('pets').select('user_id,name');
-  const pc={};const pn={};
+  const{data:bk}=await sb.from('bookings').select('user_id');
+  const{data:ps}=await sb.from('push_subscriptions').select('user_id');
+  const pc={};const pn={};const bc={};const pushSet=new Set();
   (pe||[]).forEach(p=>{pc[p.user_id]=(pc[p.user_id]||0)+1;if(!pn[p.user_id])pn[p.user_id]=p.name});
+  (bk||[]).forEach(b=>{bc[b.user_id]=(bc[b.user_id]||0)+1});
+  (ps||[]).forEach(p=>pushSet.add(p.user_id));
   if(!pr||!pr.length){document.getElementById('ul').innerHTML='<div class="emp">Нет пользователей</div>';return}
   document.getElementById('ul').innerHTML=pr.map(u=>{
     const name=u.name||'Гость';
     const initials=name.substring(0,2).toUpperCase();
-    const pets=pc[u.user_id]||0;
-    const petName=pn[u.user_id]||u.dogname||'';
-    return `<div class="cd" onclick="openUserModal('${u.user_id}')" style="cursor:pointer">
+    const pets=pc[u.id]||pc[u.user_id]||0;
+    const petName=pn[u.id]||pn[u.user_id]||u.dogname||'';
+    const orders=bc[u.id]||bc[u.user_id]||0;
+    const hasPush=pushSet.has(u.id)||pushSet.has(u.user_id);
+    const regDate=u.created_at?new Date(u.created_at).toLocaleDateString('ru',{day:'numeric',month:'short',year:'2-digit'}):'';
+    return `<div class="cd" onclick="openUserModal('${u.id||u.user_id}')" style="cursor:pointer">
       <div style="display:flex;align-items:center;gap:12px">
-        <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0">${initials}</div>
+        ${u.avatar_url
+          ?`<img src="${u.avatar_url}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;flex-shrink:0">`
+          :`<div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0">${initials}</div>`}
         <div style="flex:1;min-width:0">
-          <div class="ln">${name}</div>
-          <div class="lm">${u.district?u.district+' · ':''}${pets} пит.${petName?' · '+petName:''}</div>
+          <div class="ln">${name}${hasPush?' 🔔':''}</div>
+          <div class="lm">${u.email?u.email+' · ':''} ${u.district?u.district+' · ':''}${pets} пит. · ${orders} зак.${regDate?' · '+regDate:''}</div>
+          ${petName?`<div style="font-size:11px;color:var(--p);margin-top:1px">🐕 ${petName}</div>`:''}
         </div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--m)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
     </div>`}).join('');
 }
 
-// User profile modal
+// User profile modal — полная информация
 async function openUserModal(userId){
   const body=document.getElementById('userModalBody');
-  body.innerHTML='<div style="padding:20px;text-align:center;color:var(--m)">Загрузка...</div>';
+  body.innerHTML='<div style="padding:30px;text-align:center;color:var(--m)">⏳ Загрузка...</div>';
   document.getElementById('userModal').classList.add('open');
   try{
-    const[{data:prof},{data:pets},{data:bookings}]=await Promise.all([
-      sb.from('profiles').select('*').eq('user_id',userId).single(),
+    const[
+      profRes,
+      {data:pets},
+      {data:bookings},
+      {data:medRecs},
+      {data:pushSubs},
+      {data:reviews},
+      {data:messages}
+    ]=await Promise.all([
+      sb.from('profiles').select('*').eq('id',userId).maybeSingle(),
       sb.from('pets').select('*').eq('user_id',userId),
-      sb.from('bookings').select('id').eq('user_id',userId)
+      sb.from('bookings').select('*').eq('user_id',userId).order('created_at',{ascending:false}),
+      sb.from('med_records').select('*').eq('user_id',userId).order('created_at',{ascending:false}).limit(5),
+      sb.from('push_subscriptions').select('*').eq('user_id',userId),
+      sb.from('reviews').select('*,businesses(name)').eq('user_id',userId).order('created_at',{ascending:false}).limit(5),
+      sb.from('direct_messages').select('id,created_at').eq('sender_id',userId)
     ]);
-    const p=prof||{};const pe=pets||[];const bk=bookings||[];
-    const name=p.name||'Гость';const initials=name.substring(0,2).toUpperCase();
+
+    // Если не нашли по id — пробуем по user_id
+    let prof = profRes.data;
+    if(!prof){
+      const r2 = await sb.from('profiles').select('*').eq('user_id',userId).maybeSingle();
+      prof = r2.data;
+    }
+
+    const p=prof||{};
+    const pe=pets||[];
+    const bk=bookings||[];
+    const mr=medRecs||[];
+    const ps=pushSubs||[];
+    const rv=reviews||[];
+    const msgCount=(messages||[]).length;
+
+    const name=p.name||'Гость';
+    const initials=name.substring(0,2).toUpperCase();
+    const charity=bk.length*150;
+    const regDate=p.created_at?new Date(p.created_at).toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric'}):'—';
+    const lastActive=p.updated_at?new Date(p.updated_at).toLocaleDateString('ru',{day:'numeric',month:'short',year:'2-digit'}):'—';
+
+    const devices=ps.map(s=>{
+      const ua=s.user_agent||'';
+      if(ua.includes('iPhone')||ua.includes('iPad')) return '📱 iOS';
+      if(ua.includes('Android')) return '📱 Android';
+      if(ua.includes('Windows')) return '💻 Windows';
+      if(ua.includes('Mac')) return '💻 Mac';
+      return '🖥️ Desktop';
+    }).filter((v,i,a)=>a.indexOf(v)===i);
+
     body.innerHTML=`
-      <div style="text-align:center;margin-bottom:16px">
-        <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;margin:0 auto 10px">${initials}</div>
-        <div style="font-size:18px;font-weight:800;font-family:'Nunito'">${name}</div>
-        ${p.district?'<div style="font-size:13px;color:var(--m);margin-top:2px">📍 '+p.district+'</div>':''}
-        <div style="font-size:12px;color:var(--m);margin-top:4px">ID: ${userId.substring(0,8)}...</div>
+      <!-- Шапка -->
+      <div style="text-align:center;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--b)">
+        ${p.avatar_url
+          ?`<img src="${p.avatar_url}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;margin:0 auto 10px;display:block;border:3px solid var(--p)">`
+          :`<div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:26px;margin:0 auto 10px">${initials}</div>`}
+        <div style="font-size:20px;font-weight:800;font-family:'Nunito'">${name}</div>
+        ${p.email?`<div style="font-size:13px;color:var(--p);margin-top:4px;font-weight:600">✉️ ${p.email}</div>`:''}
+        ${p.district?`<div style="font-size:13px;color:var(--m);margin-top:3px">📍 ${p.district}</div>`:''}
+        ${p.phone?`<div style="font-size:13px;color:var(--m);margin-top:2px">📞 ${p.phone}</div>`:''}
+        <div style="font-size:11px;color:var(--m);margin-top:6px;font-family:monospace;background:var(--bg);padding:4px 8px;border-radius:6px;display:inline-block;cursor:pointer" onclick="navigator.clipboard?.writeText('${userId}');toast('ID скопирован')" title="Нажмите чтобы скопировать">${userId}</div>
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:16px">
-        <div style="flex:1;background:var(--bg);border-radius:12px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:800;color:var(--p)">${bk.length}</div><div style="font-size:11px;color:var(--m)">заказов</div></div>
-        <div style="flex:1;background:var(--bg);border-radius:12px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:800;color:var(--p)">${pe.length}</div><div style="font-size:11px;color:var(--m)">питомцев</div></div>
-        <div style="flex:1;background:var(--bg);border-radius:12px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:800;color:var(--p)">${bk.length*150} ₽</div><div style="font-size:11px;color:var(--m)">приютам</div></div>
+
+      <!-- Статистика -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px">
+        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center"><div style="font-size:17px;font-weight:800;color:var(--p)">${bk.length}</div><div style="font-size:10px;color:var(--m)">заказов</div></div>
+        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center"><div style="font-size:17px;font-weight:800;color:var(--p)">${pe.length}</div><div style="font-size:10px;color:var(--m)">питомцев</div></div>
+        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center"><div style="font-size:17px;font-weight:800;color:var(--ok)">${msgCount}</div><div style="font-size:10px;color:var(--m)">сообщений</div></div>
+        <div style="background:var(--bg);border-radius:10px;padding:8px;text-align:center"><div style="font-size:17px;font-weight:800;color:var(--warn)">${charity} ₽</div><div style="font-size:10px;color:var(--m)">приютам</div></div>
       </div>
-      ${pe.length?'<div style="font-size:14px;font-weight:700;margin-bottom:8px">Питомцы</div>'+pe.map(pet=>'<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--b)"><div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#E91E63,#FF9800);color:white;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">'+pet.name.substring(0,1)+'</div><div><div style="font-weight:600;font-size:13px">'+pet.name+(pet.sex==='ж'?' ♀':' ♂')+'</div><div style="font-size:12px;color:var(--m)">'+(pet.breed||'')+(pet.age?' · '+pet.age:'')+'</div></div></div>').join(''):''}
-      <div style="margin-top:16px;display:flex;gap:8px">
-        <button class="btn bno" style="flex:1" onclick="blockUser('${userId}')">Заблокировать</button>
+
+      <!-- Профиль -->
+      <div style="background:var(--bg);border-radius:12px;padding:12px;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px">👤 Профиль</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">
+          <div><span style="color:var(--m)">Зарегистрирован</span><br><b>${regDate}</b></div>
+          <div><span style="color:var(--m)">Последняя активность</span><br><b>${lastActive}</b></div>
+          ${p.email?`<div style="grid-column:1/-1"><span style="color:var(--m)">Email</span><br><b>${p.email}</b></div>`:'<div style="grid-column:1/-1"><span style="color:var(--m)">Email</span><br><b style="color:var(--err)">не указан</b></div>'}
+          ${p.dogname?`<div><span style="color:var(--m)">Кличка собаки</span><br><b>${p.dogname}</b></div>`:''}
+          ${p.dog_breed?`<div><span style="color:var(--m)">Порода</span><br><b>${p.dog_breed}</b></div>`:''}
+          ${p.dog_age?`<div><span style="color:var(--m)">Возраст собаки</span><br><b>${p.dog_age}</b></div>`:''}
+          <div><span style="color:var(--m)">Push-уведомления</span><br><b>${ps.length?'✅ '+ps.length+' устр.':'❌ нет'}</b></div>
+          ${devices.length?`<div><span style="color:var(--m)">Устройства</span><br><b>${devices.join(', ')}</b></div>`:''}
+        </div>
+      </div>
+
+      <!-- Питомцы -->
+      ${pe.length?`
+      <div style="background:var(--bg);border-radius:12px;padding:12px;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px">🐕 Питомцы (${pe.length})</div>
+        ${pe.map(pet=>`
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--b)">
+            ${pet.photo_url
+              ?`<img src="${pet.photo_url}" style="width:36px;height:36px;border-radius:50%;object-fit:cover">`
+              :`<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#E91E63,#FF9800);color:white;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">${pet.name.substring(0,1)}</div>`}
+            <div style="flex:1">
+              <div style="font-weight:700;font-size:13px">${pet.name} ${pet.sex==='ж'?'♀':'♂'}</div>
+              <div style="font-size:11px;color:var(--m)">${[pet.breed,pet.age?pet.age+' лет':null,pet.weight?pet.weight+' кг':null].filter(Boolean).join(' · ')||'—'}</div>
+              ${pet.notes?`<div style="font-size:11px;color:var(--m);font-style:italic">${pet.notes}</div>`:''}
+            </div>
+            ${pet.dob?`<div style="font-size:11px;color:var(--m);text-align:right">🎂 ${pet.dob}</div>`:''}
+          </div>`).join('')}
+      </div>`:''}
+
+      <!-- Заказы -->
+      ${bk.length?`
+      <div style="background:var(--bg);border-radius:12px;padding:12px;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px">📋 Последние заказы</div>
+        ${bk.slice(0,5).map(b=>{
+          const d=b.created_at?new Date(b.created_at).toLocaleDateString('ru',{day:'numeric',month:'short'}):'';
+          const statusMap={confirmed:'✅',pending_payment:'⏳',pending_confirmation:'🔄',cancelled:'❌'};
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--b);font-size:12px">
+            <div><div style="font-weight:600">${b.business_name||'—'}</div><div style="color:var(--m)">${b.service_name||''}</div></div>
+            <div style="text-align:right"><div>${statusMap[b.status]||'•'} ${b.amount?b.amount+' ₽':''}</div><div style="color:var(--m)">${d}</div></div>
+          </div>`;
+        }).join('')}
+        ${bk.length>5?`<div style="font-size:11px;color:var(--m);text-align:center;padding-top:6px">+ ещё ${bk.length-5}</div>`:''}
+      </div>`:''}
+
+      <!-- Отзывы -->
+      ${rv.length?`
+      <div style="background:var(--bg);border-radius:12px;padding:12px;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px">⭐ Отзывы (${rv.length})</div>
+        ${rv.map(r=>`
+          <div style="padding:6px 0;border-bottom:1px solid var(--b);font-size:12px">
+            <div style="display:flex;justify-content:space-between"><b>${r.businesses?.name||'—'}</b><span>${'⭐'.repeat(r.rating)}</span></div>
+            ${r.text?`<div style="color:var(--m);margin-top:2px">${r.text}</div>`:''}
+          </div>`).join('')}
+      </div>`:''}
+
+      <!-- Медзаписи -->
+      ${mr.length?`
+      <div style="background:var(--bg);border-radius:12px;padding:12px;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px">🏥 Мед. записи (${mr.length})</div>
+        ${mr.map(r=>`
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--b);font-size:12px">
+            <div><span class="badge bt">${r.type}</span> <b>${r.title}</b>${r.pet_name?' · 🐕 '+r.pet_name:''}</div>
+            <div style="color:var(--m);flex-shrink:0;margin-left:8px">${r.date||''}</div>
+          </div>`).join('')}
+      </div>`:''}
+
+      <!-- Push устройства -->
+      ${ps.length?`
+      <div style="background:var(--bg);border-radius:12px;padding:12px;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px">🔔 Push-устройства (${ps.length})</div>
+        ${ps.map((s,i)=>`
+          <div style="font-size:11px;padding:5px 0;border-bottom:1px solid var(--b)">
+            <div style="font-weight:600">${devices[i]||'Устройство'}</div>
+            <div style="color:var(--m);word-break:break-all">${(s.endpoint||'').substring(0,60)}...</div>
+            <div style="color:var(--m)">Обновлено: ${s.updated_at?new Date(s.updated_at).toLocaleDateString('ru'):'—'}</div>
+          </div>`).join('')}
+      </div>`:''}
+
+      <!-- Кнопки -->
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn bno" style="flex:1" onclick="blockUser('${userId}')">🚫 Заблокировать</button>
         <button class="btn bed" style="flex:1" onclick="document.getElementById('userModal').classList.remove('open')">Закрыть</button>
       </div>`;
-  }catch(e){body.innerHTML='<div class="emp">Ошибка загрузки</div>'}
+
+  }catch(e){console.error(e);body.innerHTML='<div class="emp">Ошибка загрузки: '+e.message+'</div>'}
 }
 
 async function blockUser(userId){
@@ -212,7 +355,7 @@ async function loadEventsAdmin(){
       ${e.description?'<div style="font-size:12px;color:var(--t);margin-top:4px;line-height:1.4">'+e.description.substring(0,150)+'</div>':''}
       <div class="la">
         ${!isPast?'<button class="btn bed" onclick="editEvent(\''+e.id+'\')">Редактировать</button>':''}
-        <button class="btn bno" onclick="del('events','${e.id}')">Удалить</button>
+        <button class="btn bno" onclick="del(\'events\',\''+e.id+'\')">Удалить</button>
       </div>
     </div>`}).join('');
 }
@@ -272,42 +415,25 @@ async function sendPush(){
   const body=document.getElementById('push-body').value.trim();
   const url=document.getElementById('push-url').value.trim();
   const apiKey=document.getElementById('push-api-key').value.trim()||localStorage.getItem('os_api_key');
-  
   if(!title||!body){toast('Заполните заголовок и текст');return}
   if(!apiKey){toast('Введите REST API Key в настройках');return}
-  
-  // Save key for next time
   localStorage.setItem('os_api_key',apiKey);
-  
   try{
     toast('Отправляем...');
     const resp=await fetch('https://onesignal.com/api/v1/notifications',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Basic '+apiKey},
-      body:JSON.stringify({
-        app_id:OS_APP_ID,
-        included_segments:['All'],
-        headings:{en:title,ru:title},
-        contents:{en:body,ru:body},
-        url:url||'https://dogfriend.vercel.app',
-        chrome_web_icon:'https://dogfriend.vercel.app/icon-192.png',
-      })
+      body:JSON.stringify({app_id:OS_APP_ID,included_segments:['All'],headings:{en:title,ru:title},contents:{en:body,ru:body},url:url||'https://dogfriend.vercel.app',chrome_web_icon:'https://dogfriend.vercel.app/icon-192.png'})
     });
     const data=await resp.json();
     if(data.errors){toast('Ошибка: '+JSON.stringify(data.errors));return}
     toast('Пуш отправлен! Получателей: '+(data.recipients||0));
-    
-    // Clear fields
     document.getElementById('push-title').value='';
     document.getElementById('push-body').value='';
-    
-    // Add to history
     const hist=document.getElementById('push-history');
     const now=new Date().toLocaleString('ru');
     hist.innerHTML=`<h2>История</h2><div style="padding:8px 0;border-bottom:1px solid var(--b)"><div class="ln">${title}</div><div class="lm">${body}<br>${now} · ${data.recipients||0} получателей</div></div>`+hist.innerHTML.replace('<h2>История</h2>','').replace('<div class="emp">Отправьте первый пуш</div>','');
-  }catch(e){
-    toast('Ошибка: '+e.message);
-  }
+  }catch(e){toast('Ошибка: '+e.message)}
 }
 </script>
 </body></html>
