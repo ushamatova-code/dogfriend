@@ -355,7 +355,7 @@ async function loadEventsAdmin(){
       ${e.description?'<div style="font-size:12px;color:var(--t);margin-top:4px;line-height:1.4">'+e.description.substring(0,150)+'</div>':''}
       <div class="la">
         ${!isPast?'<button class="btn bed" onclick="editEvent(\''+e.id+'\')">Редактировать</button>':''}
-        <button class="btn bno" onclick="del(\'events\',\''+e.id+'\')">Удалить</button>
+        <button class="btn bno" onclick="del('events','${e.id}')">Удалить</button>
       </div>
     </div>`}).join('');
 }
