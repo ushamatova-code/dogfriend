@@ -1011,9 +1011,9 @@ function subscribeToPrivateChat(theirId) {
     const chatId = data.senderId; // сообщение от него — ключ = его userId
     if (!privateChats[chatId]) privateChats[chatId] = [];
     
-    // Проверяем дубликаты
+    // Проверяем дубликаты (broadcast + postgres_changes может доставить одно и то же)
     const isDuplicate = privateChats[chatId].some(m => 
-      m.text === data.text && m.time === data.time && m.senderId === data.senderId
+      (m.text === data.text && m.senderId === data.senderId && Math.abs(Date.now() - new Date(m.created_at || 0).getTime()) < 10000)
     );
     
     if (isDuplicate) {
@@ -2046,6 +2046,7 @@ function initBackgroundDM() {
   });
   
   // Запускаем Realtime подписку на БД (заменяет polling)
+  stopRealtimeDMSubscription();
   startRealtimeDMSubscription();
 }
 function connectSupabaseRealtime() {
@@ -2109,7 +2110,7 @@ function connectSupabaseRealtime() {
           });
           
           // Запускаем Realtime подписку на БД (если ещё не запущена)
-          startRealtimeDMSubscription();
+          if (!realtimeDMChannel) startRealtimeDMSubscription();
           
           refreshOnlineCount();
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
@@ -2145,7 +2146,12 @@ function connectSupabaseRealtime() {
 let realtimeDMChannel = null;
 
 function startRealtimeDMSubscription() {
-  if (realtimeDMChannel || !supabaseClient) return;
+  // Защита от дублирования подписок
+  if (realtimeDMChannel) {
+    console.log('⏭️ DM subscription already active, skipping');
+    return;
+  }
+  if (!supabaseClient || !currentUser) return;
   
   const myUserId = currentUser?.id || userId;
   if (!myUserId) return;
@@ -2216,7 +2222,7 @@ function startRealtimeDMSubscription() {
       
       // Дубль? (может прийти и через broadcast и через postgres_changes)
       const exists = privateChats[chatId].some(m => 
-        m.text === msg.text && m.time === msg.time && m.senderId === msg.sender_id
+        m.dbId === msg.id || (m.text === msg.text && m.senderId === msg.sender_id && Math.abs(new Date(m.created_at || 0) - new Date(msg.created_at || 0)) < 5000)
       );
       if (exists) return;
       
