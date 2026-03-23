@@ -184,18 +184,18 @@ function applyAvatar(url) {
 // Получить URL аватарки другого пользователя (с кэшем)
 const _avatarCache = {};
 async function getUserAvatarUrl(userId) {
-  if (_avatarCache[userId]) return _avatarCache[userId];
+  if (_avatarCache[userId] !== undefined) return _avatarCache[userId] || null;
   if (!supabaseClient) return null;
   try {
     const { data, error } = await supabaseClient
       .from('profiles')
       .select('avatar_url, name')
-      .eq('id', userId)
+      .eq('user_id', userId)
       .single();
-    if (error || !data || !data.avatar_url) return null;
+    if (error || !data || !data.avatar_url) { _avatarCache[userId] = ''; return null; }
     _avatarCache[userId] = data.avatar_url;
     return data.avatar_url;
-  } catch(e) { return null; }
+  } catch(e) { _avatarCache[userId] = ''; return null; }
 }
 
 // Генерирует HTML для аватарки пользователя (используется в чатах, списках и т.д.)
@@ -2438,6 +2438,11 @@ async function loadPublicChatHistory(roomId = 'public_chat') {
       .limit(100);
     
     if (!data || !data.length) return;
+    
+    // Preload all avatars in one batch
+    const senderIds = [...new Set(data.map(m => m.sender_id).filter(Boolean))];
+    await preloadAvatars(senderIds);
+    
     const myUserId = currentUser?.id || userId;
     const wrap = document.getElementById('chat-messages');
     if (!wrap) return;
@@ -2449,6 +2454,27 @@ async function loadPublicChatHistory(roomId = 'public_chat') {
   } catch(e) {
     console.error('loadPublicChatHistory error:', e);
   }
+}
+
+// Batch preload avatars — one query instead of N
+async function preloadAvatars(userIds) {
+  if (!supabaseClient || !userIds.length) return;
+  const uncached = userIds.filter(id => !_avatarCache[id] && id.length > 10);
+  if (!uncached.length) return;
+  try {
+    const { data } = await supabaseClient
+      .from('profiles')
+      .select('user_id, avatar_url')
+      .in('user_id', uncached);
+    if (data) {
+      data.forEach(p => {
+        if (p.avatar_url) _avatarCache[p.user_id] = p.avatar_url;
+        else _avatarCache[p.user_id] = ''; // mark as no-avatar to avoid re-query
+      });
+    }
+    // Mark missing ones too
+    uncached.forEach(id => { if (!_avatarCache[id]) _avatarCache[id] = ''; });
+  } catch(e) {}
 }
 
 function appendMessage(nick, text, time, isMine, senderId) {
@@ -2464,11 +2490,19 @@ function appendMessage(nick, text, time, isMine, senderId) {
   const clickHandler = safeSenderId
     ? `_lastClickedUser={senderId:'${safeSenderId}',senderName:'${safeNick}'};openUserProfile('${safeNick}')`
     : `openUserProfile('${safeNick}')`;
+  
+  // Use cached avatar synchronously if available
+  const cachedAv = senderId ? _avatarCache[senderId] : null;
   const avId = 'av-' + Date.now() + '-' + Math.random().toString(36).substr(2,4);
+  const avatarContent = cachedAv 
+    ? `<img src="${cachedAv}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.textContent='${initials}'">`
+    : initials;
+  const avatarBg = cachedAv ? 'background:none;padding:0;' : `background:${grad};`;
+  
   row.innerHTML = `
     ${!isMine ? `<div class="cmsg-nick" style="cursor:pointer;color:var(--primary);" onclick="${clickHandler}">${escHtml(nick)}</div>` : ''}
     <div style="display:flex;align-items:flex-end;gap:6px;${isMine?'flex-direction:row-reverse':''}">
-      ${!isMine ? `<div class="avatar" id="${avId}" style="width:28px;height:28px;font-size:10px;flex-shrink:0;background:${grad};cursor:pointer;overflow:hidden;" onclick="${clickHandler}">${initials}</div>` : ''}
+      ${!isMine ? `<div class="avatar" id="${avId}" style="width:28px;height:28px;font-size:10px;flex-shrink:0;${avatarBg}cursor:pointer;overflow:hidden;" onclick="${clickHandler}">${avatarContent}</div>` : ''}
       <div class="cmsg-bubble">${formatMsgContent(text)}</div>
     </div>
     <div class="cmsg-time">${time}</div>
@@ -2476,12 +2510,16 @@ function appendMessage(nick, text, time, isMine, senderId) {
   wrap.appendChild(row);
   scrollChatBottom();
   
-  // Async load avatar
-  if (!isMine && senderId && senderId.length > 10) {
+  // Only async load if not cached and not already checked
+  if (!isMine && senderId && senderId.length > 10 && _avatarCache[senderId] === undefined) {
     getUserAvatarUrl(senderId).then(url => {
       if (url) {
         const el = document.getElementById(avId);
-        if (el) el.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.textContent='${initials}'">`;
+        if (el) {
+          el.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.textContent='${initials}'">`;
+          el.style.background = 'none';
+          el.style.padding = '0';
+        }
       }
     });
   }
