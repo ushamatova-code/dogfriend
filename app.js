@@ -476,12 +476,17 @@ let currentPrivateChatId = null;  // ID специалиста для прива
 let privateChats = {};  // {specialistId: [{text, sender, time}, ...]}
 
 // Сохраняем в localStorage только личные чаты, event-чаты туда не пишем никогда
+let _saveChatTimer = null;
 function savePrivateChatsToStorage() {
-  const toSave = {};
-  Object.keys(privateChats).forEach(k => {
-    if (!k.startsWith('event_')) toSave[k] = privateChats[k];
-  });
-  localStorage.setItem('private_chats', JSON.stringify(toSave));
+  // Debounce — не сохраняем чаще чем раз в 500ms
+  if (_saveChatTimer) clearTimeout(_saveChatTimer);
+  _saveChatTimer = setTimeout(() => {
+    const toSave = {};
+    Object.keys(privateChats).forEach(k => {
+      if (!k.startsWith('event_')) toSave[k] = privateChats[k];
+    });
+    try { localStorage.setItem('private_chats', JSON.stringify(toSave)); } catch(e) {}
+  }, 500);
 }
 let unreadCount = parseInt(localStorage.getItem('unread_count') || '0');
 let unreadChats = JSON.parse(localStorage.getItem('unread_chats') || '{}');
@@ -991,7 +996,7 @@ function subscribeToPrivateChat(theirId) {
   const channelName = 'dogfriend-dm-' + roomId;
 
   if (supabasePrivateChannels[channelName]) {
-    console.log('✅ Already subscribed to:', channelName);
+    
     return; // уже подписаны
   }
 
@@ -1002,7 +1007,7 @@ function subscribeToPrivateChat(theirId) {
   });
 
   channel.on('broadcast', { event: 'message' }, (payload) => {
-    console.log('📩 Private message received:', payload);
+    
     const data = payload.payload;
     // Игнорируем свои (уже отображены локально)
     const myUserId = currentUser?.id || userId;
@@ -1017,7 +1022,7 @@ function subscribeToPrivateChat(theirId) {
     );
     
     if (isDuplicate) {
-      console.log('⚠️ Duplicate message, skipping');
+      
       return;
     }
     
@@ -1038,7 +1043,7 @@ function subscribeToPrivateChat(theirId) {
     }
 
     if (currentPrivateChatId !== chatId) {
-      console.log('📢 Showing notification for chat:', chatId);
+      
       addUnreadMessage(chatId);
       playNotificationSound();
       showInAppNotification('💬 ' + data.senderName, data.text);
@@ -1302,7 +1307,13 @@ function deleteLocalChat(chatId) {
   renderPrivateChats();
 }
 
+let _renderChatsTimer = null;
 function renderPrivateChats() {
+  // Debounce — не рендерим чаще чем раз в 300ms
+  if (_renderChatsTimer) clearTimeout(_renderChatsTimer);
+  _renderChatsTimer = setTimeout(_doRenderPrivateChats, 300);
+}
+function _doRenderPrivateChats() {
   const list = document.getElementById('private-chats-list');
   const noChats = document.getElementById('no-private-chats');
   // Личные чаты: только непустые из памяти
@@ -1971,8 +1982,13 @@ function openDistrictChat() {
 }
 
 // Подключение к каналу района
+let _districtRetries = 0;
 function connectDistrictRealtime(district) {
-  if (!supabaseClient) { setTimeout(() => connectDistrictRealtime(district), 500); return; }
+  if (!supabaseClient) { 
+    if (_districtRetries++ < 5) setTimeout(() => connectDistrictRealtime(district), 500); 
+    return; 
+  }
+  _districtRetries = 0;
   
   // Отписываемся от предыдущего районного канала
   if (supabaseDistrictChannel) {
@@ -2148,7 +2164,7 @@ let realtimeDMChannel = null;
 function startRealtimeDMSubscription() {
   // Защита от дублирования подписок
   if (realtimeDMChannel) {
-    console.log('⏭️ DM subscription already active, skipping');
+    
     return;
   }
   if (!supabaseClient || !currentUser) return;
