@@ -4179,3 +4179,21 @@ document.addEventListener('touchend', () => {
     });
   }
 });
+
+// ════════════════════════════════════════════════════════════
+// FIX: Mobile keyboard pushes layout — use visualViewport
+// ════════════════════════════════════════════════════════════
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    const chat = document.getElementById('privateChat');
+    if (chat && chat.style.display !== 'none') {
+      chat.style.height = window.visualViewport.height + 'px';
+    }
+  });
+  window.visualViewport.addEventListener('scroll', () => {
+    const chat = document.getElementById('privateChat');
+    if (chat && chat.style.display !== 'none') {
+      chat.style.top = window.visualViewport.offsetTop + 'px';
+    }
+  });
+}
