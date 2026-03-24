@@ -4030,8 +4030,7 @@ function openServiceCategory(catKey) {
   renderCatalog();
 }
 
-// Patch renderCatalog to filter by service category
-const _origRenderCatalog = window.renderCatalog;
+// Patch renderCatalog to filter by service category + geo
 window.renderCatalog = function() {
   const list = document.getElementById('catalog-trainers-list');
   if (!list) return;
@@ -4046,53 +4045,56 @@ window.renderCatalog = function() {
     filtered = filtered.filter(b => b.type === cat.type);
   }
   
+  // Geo filter — only show within 50km if user has location
+  if (userLat && userLng) {
+    filtered = filtered.map(b => ({
+      ...b,
+      _dist: (b.location_lat && b.location_lng) ? calcDistance(userLat, userLng, b.location_lat, b.location_lng) : 999
+    })).filter(b => b._dist < 50).sort((a, b) => a._dist - b._dist);
+  }
+  
   // Apply search
   if (searchVal) {
     filtered = filtered.filter(b => 
       (b.name || '').toLowerCase().includes(searchVal) ||
       (b.description || '').toLowerCase().includes(searchVal) ||
+      (b.address || '').toLowerCase().includes(searchVal) ||
       (b.services || []).some(s => s.toLowerCase().includes(searchVal))
     );
   }
   
-  // Apply chip filter (for trainers)
-  if (_currentServiceCategory === 'trainer' || _currentServiceCategory === 'all') {
-    if (typeof currentCatalogFilter !== 'undefined' && currentCatalogFilter !== 'Все') {
-      filtered = filtered.filter(b => 
-        (b.services || []).some(s => s.includes(currentCatalogFilter))
-      );
-    }
+  // Apply chip filter
+  if (typeof catalogFilter !== 'undefined' && catalogFilter !== 'Все') {
+    filtered = filtered.filter(b => 
+      (b.services || []).some(s => s.includes(catalogFilter))
+    );
   }
   
   if (!filtered.length) {
+    const noGeo = !userLat || !userLng;
     list.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--text-secondary);">
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--border)" stroke-width="1.5" style="margin-bottom:12px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <div style="font-size:16px;font-weight:700;margin-bottom:6px;">Пока нет специалистов</div>
-      <div style="font-size:13px;">В этой категории ещё никто не зарегистрировался</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:6px;">${noGeo ? 'Укажите район' : 'Пока нет специалистов'}</div>
+      <div style="font-size:13px;">${noGeo ? 'Зайдите в профиль и укажите район чтобы видеть специалистов рядом' : 'В вашем городе ещё никто не зарегистрировался'}</div>
     </div>`;
     return;
   }
   
-  // Render using existing business card logic
-  if (typeof _origRenderCatalog === 'function') {
-    _origRenderCatalog();
-    return;
-  }
-  
-  // Fallback render
   list.innerHTML = filtered.map(b => {
     const initials = (b.name || 'XX').substring(0,2).toUpperCase();
+    const distText = b._dist < 1 ? (b._dist * 1000).toFixed(0) + ' м' : b._dist.toFixed(1) + ' км';
     return `<div class="card" style="margin:0 16px 10px;cursor:pointer;" onclick="openBusinessProfile('${b.id}')">
       <div style="display:flex;gap:14px;align-items:center;">
         <div class="avatar" style="width:52px;height:52px;font-size:18px;flex-shrink:0;overflow:hidden;${b.cover_url?'padding:0;background:none;':''}">
-          ${b.cover_url ? `<img src="${b.cover_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : initials}
+          ${b.cover_url ? '<img src="' + b.cover_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">' : initials}
         </div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:15px;font-weight:800;">${b.name}</div>
           <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${b.address || ''}</div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
-            <span style="font-size:12px;font-weight:700;color:var(--primary);">${b.rating || '5.0'} ⭐</span>
-            ${b.price_from ? `<span style="font-size:12px;color:var(--text-secondary);">от ${b.price_from}</span>` : ''}
+            <span style="font-size:12px;font-weight:700;color:var(--primary);">${b.rating || '5.0'}</span>
+            ${b.price_from ? '<span style="font-size:12px;color:var(--text-secondary);">от ' + b.price_from + '</span>' : ''}
+            ${b._dist < 50 ? '<span style="font-size:11px;color:var(--text-secondary);">' + distText + '</span>' : ''}
           </div>
         </div>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
@@ -4100,3 +4102,62 @@ window.renderCatalog = function() {
     </div>`;
   }).join('');
 };
+
+// ════════════════════════════════════════════════════════════
+// PULL TO REFRESH
+// ════════════════════════════════════════════════════════════
+let _pullStart = 0;
+let _pulling = false;
+let _refreshing = false;
+
+document.addEventListener('touchstart', (e) => {
+  const screen = document.querySelector('.screen[style*="display: flex"], .screen:not([style*="display: none"])');
+  if (!screen) return;
+  const scroll = screen.querySelector('.scroll');
+  if (scroll && scroll.scrollTop === 0) {
+    _pullStart = e.touches[0].clientY;
+    _pulling = true;
+  }
+}, { passive: true });
+
+document.addEventListener('touchmove', (e) => {
+  if (!_pulling || _refreshing) return;
+  const dy = e.touches[0].clientY - _pullStart;
+  if (dy > 80) {
+    let indicator = document.getElementById('pull-refresh-indicator');
+    if (!indicator) {
+      indicator = document.createElement('div');
+      indicator.id = 'pull-refresh-indicator';
+      indicator.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;text-align:center;padding:12px;font-size:13px;font-weight:600;color:var(--primary);background:var(--white);box-shadow:0 2px 8px rgba(0,0,0,0.05);transition:opacity 0.3s;';
+      document.body.appendChild(indicator);
+    }
+    indicator.textContent = 'Отпустите для обновления';
+    indicator.style.opacity = '1';
+  }
+}, { passive: true });
+
+document.addEventListener('touchend', () => {
+  if (!_pulling) return;
+  _pulling = false;
+  const indicator = document.getElementById('pull-refresh-indicator');
+  if (indicator && indicator.style.opacity === '1') {
+    _refreshing = true;
+    indicator.textContent = 'Обновляем...';
+    
+    // Reload data
+    Promise.all([
+      typeof loadEvents === 'function' ? loadEvents() : Promise.resolve(),
+      typeof renderHomeSpecialists === 'function' ? renderHomeSpecialists() : Promise.resolve(),
+      typeof renderPlaces === 'function' ? renderPlaces() : Promise.resolve(),
+      typeof renderDiscounts === 'function' ? renderDiscounts() : Promise.resolve(),
+      typeof renderPets === 'function' ? renderPets() : Promise.resolve(),
+      typeof loadProfileStats === 'function' ? loadProfileStats() : Promise.resolve(),
+    ]).then(() => {
+      indicator.textContent = 'Обновлено';
+      setTimeout(() => { indicator.style.opacity = '0'; setTimeout(() => indicator.remove(), 300); _refreshing = false; }, 800);
+    }).catch(() => {
+      indicator.textContent = 'Ошибка';
+      setTimeout(() => { indicator.style.opacity = '0'; setTimeout(() => indicator.remove(), 300); _refreshing = false; }, 1000);
+    });
+  }
+});
