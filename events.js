@@ -191,10 +191,11 @@ async function openEventDetail(eventId) {
 
   const t = EVENT_TYPES[ev.type] || EVENT_TYPES.meetup;
   document.getElementById('ev-topbar-title').textContent = ev.title;
-  document.getElementById('ev-type-icon').textContent = t.icon;
+  document.getElementById('ev-type-icon').innerHTML = t.icon;
+  document.getElementById('ev-type-icon').style.color = t.color;
   document.getElementById('ev-title').textContent = ev.title;
   document.getElementById('ev-type-label').textContent = t.label;
-  document.getElementById('ev-date-badge').textContent = '🕐 ' + formatEventDate(ev.event_date);
+  document.getElementById('ev-date-badge').textContent = formatEventDate(ev.event_date);
   document.getElementById('ev-price-badge').textContent = ev.price || 'Бесплатно';
   document.getElementById('ev-address').textContent = ev.address;
   document.getElementById('ev-datetime').textContent = formatEventDateFull(ev.event_date);
