@@ -546,36 +546,13 @@ async function loadBusinessEvents(businessId) {
   } catch(e) { return []; }
 }
 
-// Патчим openBusinessProfile чтобы показывать события бизнеса
+// Патчим openBusinessProfile чтобы загружать отзывы (события убраны из профиля)
 const _origOpenBizProfile = window.openBusinessProfile;
 window.openBusinessProfile = async function(id) {
   await _origOpenBizProfile(id);
-  // Добавляем блок событий
-  const bizObj = loadedBusinesses.find(b => b.id === id);
-  if (!bizObj?.id) return;
-  const events = await loadBusinessEvents(bizObj.id);
-  if (!events.length) return;
-  const overviewEl = document.getElementById('tc-spec-overview');
-  if (!overviewEl) return;
+  // Удаляем блок событий если остался от предыдущего просмотра
   const old = document.getElementById('biz-events-block');
   if (old) old.remove();
-  const div = document.createElement('div');
-  div.id = 'biz-events-block';
-  div.className = 'card';
-  div.innerHTML = `<h3 style="margin-bottom:12px;">📅 Ближайшие события</h3>` +
-    events.map(ev => {
-      const t = EVENT_TYPES[ev.type] || EVENT_TYPES.meetup;
-      return `<div onclick="openEventDetail('${ev.id}')" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;">
-        <div style="width:40px;height:40px;border-radius:12px;background:${t.color}22;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">${t.icon}</div>
-        <div style="flex:1;">
-          <div style="font-size:14px;font-weight:700;">${ev.title}</div>
-          <div style="font-size:12px;color:var(--text-secondary);">🕐 ${formatEventDate(ev.event_date)}</div>
-        </div>
-        <span style="font-size:13px;color:var(--primary);font-weight:700;">›</span>
-      </div>`;
-    }).join('') +
-    `<button class="btn btn-o" style="margin-top:10px;" onclick="nav('createEvent')">+ Добавить событие</button>`;
-  overviewEl.appendChild(div);
 };
 
 // ── Nav патч — инициализация событий ─────────────────────────

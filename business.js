@@ -240,20 +240,20 @@ async function openBusinessProfile(id) {
   if (b.email)     contacts.push(`<a href="mailto:${b.email}" style="display:flex;align-items:center;gap:10px;padding:10px 0;text-decoration:none;color:inherit;"><div style="width:36px;height:36px;border-radius:10px;background:rgba(245,166,35,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5A623" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div><div><div style="font-size:12px;color:var(--text-secondary);">Email</div><div style="font-weight:700;color:var(--primary);">${b.email}</div></div></a>`);
 
   if (contacts.length) {
-    infoHtml += `<div class="card" style="margin-top:12px;"><h3 style="margin-bottom:8px;">📞 Контакты</h3>${contacts.join('')}</div>`;
+    infoHtml += `<div class="card" style="margin-top:12px;"><h3 style="margin-bottom:8px;">Контакты</h3>${contacts.join('')}</div>`;
   }
 
   // Тип-специфичная информация
   if (b.type === 'trainer') {
     const rows = [];
     if (b.experience)    rows.push(['🏅 Опыт', b.experience]);
-    if (b.education)     rows.push(['🎓 Образование', b.education]);
+    if (b.education)     rows.push(['Образование', b.education]);
     if (b.dog_breeds)    rows.push(['🐕 Породы', b.dog_breeds]);
-    if (b.lesson_format) rows.push(['📋 Формат занятий', b.lesson_format]);
-    if (b.area)          rows.push(['📍 Рабочая зона', b.area]);
-    if (b.schedule)      rows.push(['🕐 Расписание', b.schedule]);
+    if (b.lesson_format) rows.push(['Формат занятий', b.lesson_format]);
+    if (b.area)          rows.push(['Рабочая зона', b.area]);
+    if (b.schedule)      rows.push(['Расписание', b.schedule]);
     if (rows.length) {
-      infoHtml += `<div class="card"><h3 style="margin-bottom:12px;">🐕 О кинологе</h3>` +
+      infoHtml += `<div class="card"><h3 style="margin-bottom:12px;">О кинологе</h3>` +
         rows.map(([label, val]) => `<div style="margin-bottom:10px;"><div style="font-size:12px;color:var(--text-secondary);font-weight:600;">${label}</div><div style="font-size:14px;font-weight:600;margin-top:2px;">${val}</div></div>`).join('') +
         `</div>`;
     }
@@ -261,14 +261,14 @@ async function openBusinessProfile(id) {
 
   if (b.type === 'clinic') {
     const rows = [];
-    if (b.experience) rows.push(['📅 На рынке', b.experience]);
-    if (b.doctors)    rows.push(['👨‍⚕️ Врачи', b.doctors]);
-    if (b.equipment)  rows.push(['🔬 Оборудование', b.equipment]);
-    if (b.emergency)  rows.push(['🚑 Скорая помощь', b.emergency]);
-    if (b.area)       rows.push(['📍 Районы', b.area]);
-    if (b.schedule)   rows.push(['🕐 Расписание', b.schedule]);
+    if (b.experience) rows.push(['На рынке', b.experience]);
+    if (b.doctors)    rows.push(['Врачи', b.doctors]);
+    if (b.equipment)  rows.push(['Оборудование', b.equipment]);
+    if (b.emergency)  rows.push(['Скорая помощь', b.emergency]);
+    if (b.area)       rows.push(['Районы', b.area]);
+    if (b.schedule)   rows.push(['Расписание', b.schedule]);
     if (rows.length) {
-      infoHtml += `<div class="card"><h3 style="margin-bottom:12px;">🏥 О клинике</h3>` +
+      infoHtml += `<div class="card"><h3 style="margin-bottom:12px;">О клинике</h3>` +
         rows.map(([label, val]) => `<div style="margin-bottom:10px;"><div style="font-size:12px;color:var(--text-secondary);font-weight:600;">${label}</div><div style="font-size:14px;font-weight:600;margin-top:2px;">${val}</div></div>`).join('') +
         `</div>`;
     }
@@ -276,13 +276,13 @@ async function openBusinessProfile(id) {
 
   if (b.type === 'cafe') {
     const rows = [];
-    if (b.dog_policy)    rows.push(['🐕 Политика для собак', b.dog_policy]);
-    if (b.max_dog_size)  rows.push(['📏 Макс. размер', b.max_dog_size]);
-    if (b.dog_menu)      rows.push(['🦴 Меню для собак', b.dog_menu]);
-    if (b.area)          rows.push(['🏡 Зона', b.area]);
-    if (b.schedule)      rows.push(['🕐 Часы работы', b.schedule]);
+    if (b.dog_policy)    rows.push(['Политика для собак', b.dog_policy]);
+    if (b.max_dog_size)  rows.push(['Макс. размер', b.max_dog_size]);
+    if (b.dog_menu)      rows.push(['Меню для собак', b.dog_menu]);
+    if (b.area)          rows.push(['Зона', b.area]);
+    if (b.schedule)      rows.push(['Часы работы', b.schedule]);
     if (rows.length) {
-      infoHtml += `<div class="card"><h3 style="margin-bottom:12px;">☕ О заведении</h3>` +
+      infoHtml += `<div class="card"><h3 style="margin-bottom:12px;">О заведении</h3>` +
         rows.map(([label, val]) => `<div style="margin-bottom:10px;"><div style="font-size:12px;color:var(--text-secondary);font-weight:600;">${label}</div><div style="font-size:14px;font-weight:600;margin-top:2px;">${val}</div></div>`).join('') +
         `</div>`;
     }

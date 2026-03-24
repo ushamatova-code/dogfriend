@@ -449,7 +449,7 @@
           <div style="font-size:12px;color:var(--text-secondary);line-height:1.5;">Скоро будет доступна оплата частями и через приложение. Пока договаривайтесь напрямую со специалистом.</div>
         </div>
       </div>
-      <div class="card" style="margin-bottom:90px;">
+      <div class="card" style="margin-bottom:100px;">
         <h3 style="margin-bottom:12px;">Гарантии Dogly</h3>
         <div style="background:var(--bg);border-radius:14px;padding:14px;text-align:center;">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" style="margin-bottom:6px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -459,10 +459,10 @@
       </div>
     </div>
     <div class="tc" id="tc-spec-reviews">
-      <div class="card" style="margin-top:12px;margin-bottom:80px;" id="spec-reviews-block"></div>
+      <div class="card" style="margin-top:12px;margin-bottom:100px;" id="spec-reviews-block"></div>
     </div>
     <div class="tc" id="tc-spec-sched">
-      <div class="card" style="margin-top:12px;margin-bottom:80px;">
+      <div class="card" style="margin-top:12px;margin-bottom:100px;">
         <h3 id="spec-sched-title" style="margin-bottom:14px;">Расписание</h3>
         <div id="spec-schedule-content" style="font-size:14px;color:var(--text-secondary);line-height:1.6;">
           <div style="background:var(--bg);border-radius:14px;padding:14px;text-align:center;">
@@ -474,9 +474,9 @@
       </div>
     </div>
   </div>
-  <div style="position:absolute;bottom:0;left:0;right:0;padding:12px 16px;background:var(--white);border-top:1px solid var(--border);display:flex;gap:10px;z-index:10;">
+  <div style="position:fixed;bottom:0;left:0;right:0;padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));background:var(--white);border-top:1px solid var(--border);display:flex;gap:10px;z-index:10;">
     <button class="btn btn-s" style="width:52px;height:52px;flex-shrink:0;border-radius:14px;" onclick="openPrivateChat(currentSpecId)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></button>
-    <button class="btn btn-p" style="flex:1;" onclick="openPrivateChat(currentSpecId)">Связаться</button>
+    <button class="btn btn-p" style="flex:1;height:52px;font-size:16px;" onclick="openPrivateChat(currentSpecId)">Связаться</button>
   </div>
 </div>
 
