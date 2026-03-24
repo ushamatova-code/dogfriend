@@ -4181,19 +4181,11 @@ document.addEventListener('touchend', () => {
 });
 
 // ════════════════════════════════════════════════════════════
-// FIX: Mobile keyboard pushes layout — use visualViewport
+// FIX: Mobile keyboard — scroll to bottom when input focused
 // ════════════════════════════════════════════════════════════
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', () => {
-    const chat = document.getElementById('privateChat');
-    if (chat && chat.style.display !== 'none') {
-      chat.style.height = window.visualViewport.height + 'px';
-    }
-  });
-  window.visualViewport.addEventListener('scroll', () => {
-    const chat = document.getElementById('privateChat');
-    if (chat && chat.style.display !== 'none') {
-      chat.style.top = window.visualViewport.offsetTop + 'px';
-    }
-  });
-}
+document.getElementById('pc-input')?.addEventListener('focus', () => {
+  setTimeout(() => {
+    const msgs = document.getElementById('pc-messages');
+    if (msgs) msgs.scrollTop = msgs.scrollHeight;
+  }, 300);
+});
