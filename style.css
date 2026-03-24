@@ -579,3 +579,20 @@ h3 {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
 }
+
+/* Hide OneSignal default prompts */
+.onesignal-slidedown-container,
+.onesignal-slidedown-dialog,
+.onesignal-bell-container,
+#onesignal-slidedown-container,
+#onesignal-bell-container,
+.onesignal-slidedown-allow-button,
+.onesignal-slidedown-cancel-button,
+div[class*="onesignal"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
