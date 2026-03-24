@@ -3963,3 +3963,34 @@ function previewPetPhoto(input) {
   reader.readAsDataURL(file);
 }
 
+
+// ════════════════════════════════════════════════════════════
+// PWA INSTALL PROMPT
+// ════════════════════════════════════════════════════════════
+let _deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  _deferredInstallPrompt = e;
+  const row = document.getElementById('pwa-install-row');
+  if (row) row.style.display = 'flex';
+});
+
+window.addEventListener('appinstalled', () => {
+  _deferredInstallPrompt = null;
+  const row = document.getElementById('pwa-install-row');
+  if (row) row.style.display = 'none';
+  showToast('Приложение установлено!', '#34C759');
+});
+
+function installPWA() {
+  if (_deferredInstallPrompt) {
+    _deferredInstallPrompt.prompt();
+    _deferredInstallPrompt.userChoice.then(choice => {
+      if (choice.outcome === 'accepted') showToast('Установка...', '#34C759');
+      _deferredInstallPrompt = null;
+    });
+  } else {
+    showToast('Нажмите «Поделиться» → «На экран Домой»');
+  }
+}
