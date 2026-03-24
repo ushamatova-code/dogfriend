@@ -316,7 +316,11 @@ async function openBusinessProfile(id) {
 
   nav('specialist');
   
-  // Загружаем акции бизнеса и вставляем после "О себе"
+  // ВСЕГДА удаляем старый блок акций перед загрузкой новых
+  const oldPromos = document.getElementById('spec-promos-block');
+  if (oldPromos) oldPromos.remove();
+  
+  // Загружаем акции ЭТОГО бизнеса
   loadBusinessPromos(b);
   
   // Расписание — показываем из данных бизнеса
