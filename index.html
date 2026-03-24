@@ -987,26 +987,26 @@
 <!-- CHAT CONVERSATION -->
 <!-- PRIVATE CHAT -->
 <div class="screen" id="privateChat" style="display:none;position:fixed;inset:0;flex-direction:column;background:var(--bg);">
-  <div class="top-bar" style="padding-top:0;">
+  <div style="padding:12px 16px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;z-index:10;">
     <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-    <div style="flex:1;display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="openChatUserProfile()">
-      <div class="avatar" id="pc-avatar" style="width:40px;height:40px;font-size:16px;"></div>
-      <div>
-        <div style="font-weight:800;font-size:15px;" id="pc-name">Специалист</div>
+    <div style="flex:1;display:flex;align-items:center;gap:12px;cursor:pointer;min-width:0;" onclick="openChatUserProfile()">
+      <div class="avatar" id="pc-avatar" style="width:40px;height:40px;font-size:16px;flex-shrink:0;"></div>
+      <div style="min-width:0;">
+        <div style="font-weight:800;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="pc-name">Специалист</div>
         <div id="pc-online" style="font-size:11px;color:var(--text-secondary);"><span style="color:#34C759;">●</span> онлайн</div>
       </div>
     </div>
-    <button class="back-btn" onclick="openChatUserProfile()" style="font-size:16px;">
+    <button class="back-btn" onclick="openChatUserProfile()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
     </button>
   </div>
-  <div class="scroll" id="pc-messages" style="padding:12px 16px;display:flex;flex-direction:column;gap:12px;"></div>
+  <div class="scroll" id="pc-messages" style="padding:12px 16px;display:flex;flex-direction:column;gap:12px;flex:1;overflow-y:auto;"></div>
   <div style="padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));background:var(--white);border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;">
     <input type="file" id="pc-photo-input" accept="image/*" style="display:none;" onchange="sendChatPhoto(this)">
     <button class="btn btn-g" style="width:44px;height:44px;padding:0;flex-shrink:0;" onclick="triggerChatPhoto()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
     </button>
-    <textarea class="input" id="pc-input" placeholder="Напишите сообщение..." style="flex:1;min-height:44px;max-height:100px;padding:10px 12px;resize:vertical;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+    <textarea class="input" id="pc-input" placeholder="Напишите сообщение..." style="flex:1;min-height:44px;max-height:100px;padding:10px 12px;resize:none;" autocomplete="on" autocorrect="on" autocapitalize="sentences" spellcheck="true"></textarea>
     <button class="btn btn-p" style="width:44px;height:44px;padding:0;flex-shrink:0;" onclick="sendPrivateMessage()">➤</button>
   </div>
 </div>
@@ -1050,7 +1050,7 @@
     <textarea id="chat-input" rows="1"
       style="flex:1;border:2px solid var(--border);border-radius:22px;padding:10px 16px;font-family:'DM Sans',sans-serif;font-size:16px;resize:none;outline:none;max-height:96px;line-height:1.45;background:var(--bg);transition:border-color 0.2s;-webkit-text-size-adjust:100%;"
       placeholder="Написать всем..."
-      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+      autocomplete="on" autocorrect="on" autocapitalize="sentences" spellcheck="true"
       onfocus="this.style.borderColor='var(--primary)';scrollChatBottom();"
       onblur="this.style.borderColor='var(--border)'"></textarea>
     <button onclick="sendChatMsg()"

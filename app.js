@@ -1224,7 +1224,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const pcInput = document.getElementById('pc-input');
   if (pcInput) {
     pcInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendPrivateMessage(); }
+      // Enter отправляет только на десктопе (без тач-экрана)
+      const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+      if (e.key === 'Enter' && !e.shiftKey && !isMobile) { e.preventDefault(); sendPrivateMessage(); }
     });
   }
 });
@@ -1392,8 +1394,6 @@ function renderPrivateChats() {
 function _doRenderPrivateChats() {
   const list = document.getElementById('private-chats-list');
   const noChats = document.getElementById('no-private-chats');
-  // Личные чаты: только непустые из памяти
-  // Event-чаты: берём из contactBook (они могут быть пустыми в памяти до загрузки БД)
   const eventKeys = Object.keys(contactBook).filter(k => k.startsWith('event_'));
   const personalKeys = Object.keys(privateChats).filter(k => !k.startsWith('event_') && privateChats[k].length > 0);
   const keys = [...new Set([...personalKeys, ...eventKeys])];
@@ -1404,6 +1404,10 @@ function _doRenderPrivateChats() {
     return;
   }
   if (noChats) noChats.style.display = 'none';
+
+  // Preload avatars for chat contacts
+  const contactIds = keys.filter(k => !k.startsWith('event_') && k.length > 10);
+  if (contactIds.length) preloadAvatars(contactIds);
 
   keys.sort((a, b) => {
     const aMsgs = privateChats[a] || [];
@@ -1431,22 +1435,34 @@ function _doRenderPrivateChats() {
     const safeName = escHtml(contact.name);
     const safeInitials = escHtml(contact.initials);
     const safeGrad = escHtml(contact.grad);
+    // Format last message preview
+    let lastPreview = '';
+    if (last) {
+      if (last.text && (last.text.startsWith('[photo]') || last.text.match(/\.(jpg|jpeg|png|gif|webp)$/i))) {
+        lastPreview = '📷 Фото';
+      } else {
+        lastPreview = escHtml((last.text || '').substring(0, 50));
+      }
+    }
+    const cachedAv = _avatarCache[id];
+    const avContent = cachedAv ? `<img src="${cachedAv}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.textContent='${safeInitials}'">` : safeInitials;
+    const avBg = cachedAv ? 'background:none;padding:0;overflow:hidden;' : `background:${contact.grad};`;
     return `
     <div style="position:relative;overflow:hidden;" id="ci-wrap-${safeId}">
       <div style="position:absolute;right:0;top:0;bottom:0;width:80px;background:#FF3B30;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;cursor:pointer;" onclick="deleteLocalChat('${safeId}')">
-        <span style="font-size:18px;">🗑️</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
         <span style="color:white;font-size:11px;font-weight:700;">Удалить</span>
       </div>
       <div class="ci" id="ci-row-${safeId}" style="gap:14px;position:relative;background:var(--white);transform:translateX(0);transition:transform 0.25s ease;will-change:transform;">
-        <div class="avatar" style="width:52px;height:52px;font-size:20px;background:${contact.grad};flex-shrink:0;">${contact.initials}</div>
+        <div class="avatar" style="width:52px;height:52px;font-size:20px;${avBg}flex-shrink:0;">${avContent}</div>
         <div style="flex:1;min-width:0;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
             <span style="font-weight:800;font-size:15px;">${safeName}</span>
             <span style="font-size:11px;color:var(--text-secondary);">${last?.time || ''}</span>
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:13px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">${escHtml(last?.text || '')}</span>
-            ${unread ? `<span class="badge">${unread}</span>` : ''}
+            <span style="font-size:13px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">${lastPreview}</span>
+            ${unread ? `<span style="min-width:20px;height:20px;background:var(--primary);color:white;border-radius:10px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 6px;">${unread}</span>` : ''}
           </div>
         </div>
       </div>
