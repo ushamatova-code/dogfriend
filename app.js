@@ -4104,17 +4104,20 @@ window.renderCatalog = function() {
 };
 
 // ════════════════════════════════════════════════════════════
-// PULL TO REFRESH
+// PULL TO REFRESH (только на главной)
 // ════════════════════════════════════════════════════════════
 let _pullStart = 0;
 let _pulling = false;
 let _refreshing = false;
 
 document.addEventListener('touchstart', (e) => {
-  const screen = document.querySelector('.screen[style*="display: flex"], .screen:not([style*="display: none"])');
-  if (!screen) return;
-  const scroll = screen.querySelector('.scroll');
-  if (scroll && scroll.scrollTop === 0) {
+  // Только на главном экране
+  const homeScreen = document.getElementById('home');
+  if (!homeScreen || homeScreen.style.display === 'none') return;
+  
+  // Проверяем что скролл вверху
+  const scroll = homeScreen.querySelector('.scroll');
+  if (scroll && scroll.scrollTop <= 0) {
     _pullStart = e.touches[0].clientY;
     _pulling = true;
   }
@@ -4144,7 +4147,6 @@ document.addEventListener('touchend', () => {
     _refreshing = true;
     indicator.textContent = 'Обновляем...';
     
-    // Reload data
     Promise.all([
       typeof loadEvents === 'function' ? loadEvents() : Promise.resolve(),
       typeof renderHomeSpecialists === 'function' ? renderHomeSpecialists() : Promise.resolve(),
