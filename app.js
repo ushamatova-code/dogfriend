@@ -3994,3 +3994,109 @@ function installPWA() {
     showToast('Нажмите «Поделиться» → «На экран Домой»');
   }
 }
+
+// ════════════════════════════════════════════════════════════
+// SERVICES HUB — category navigation
+// ════════════════════════════════════════════════════════════
+const SERVICE_CATEGORIES = {
+  trainer: { title: 'Кинологи', type: 'trainer' },
+  grooming: { title: 'Груминг', type: 'grooming' },
+  dogsitting: { title: 'Передержка', type: 'dogsitting' },
+  psychologist: { title: 'Зоопсихолог', type: 'psychologist' },
+  walking: { title: 'Выгул собак', type: 'walking' },
+  training_ground: { title: 'Дрессировочные площадки', type: 'training_ground' },
+  all: { title: 'Все специалисты', type: null },
+};
+
+let _currentServiceCategory = 'all';
+
+function openServiceCategory(catKey) {
+  const cat = SERVICE_CATEGORIES[catKey] || SERVICE_CATEGORIES.all;
+  _currentServiceCategory = catKey;
+  
+  document.getElementById('catalog-filter-title').textContent = cat.title;
+  
+  // Update chips based on category
+  const chipsEl = document.getElementById('catalog-chips');
+  if (chipsEl) {
+    if (catKey === 'all' || catKey === 'trainer') {
+      chipsEl.style.display = 'flex';
+    } else {
+      chipsEl.style.display = 'none';
+    }
+  }
+  
+  nav('catalogFiltered');
+  renderCatalog();
+}
+
+// Patch renderCatalog to filter by service category
+const _origRenderCatalog = window.renderCatalog;
+window.renderCatalog = function() {
+  const list = document.getElementById('catalog-trainers-list');
+  if (!list) return;
+  
+  const cat = SERVICE_CATEGORIES[_currentServiceCategory];
+  const searchVal = (document.getElementById('catalog-search')?.value || '').toLowerCase();
+  
+  // Filter businesses by category type
+  let filtered = loadedBusinesses.filter(b => b.is_approved);
+  
+  if (cat && cat.type) {
+    filtered = filtered.filter(b => b.type === cat.type);
+  }
+  
+  // Apply search
+  if (searchVal) {
+    filtered = filtered.filter(b => 
+      (b.name || '').toLowerCase().includes(searchVal) ||
+      (b.description || '').toLowerCase().includes(searchVal) ||
+      (b.services || []).some(s => s.toLowerCase().includes(searchVal))
+    );
+  }
+  
+  // Apply chip filter (for trainers)
+  if (_currentServiceCategory === 'trainer' || _currentServiceCategory === 'all') {
+    if (typeof currentCatalogFilter !== 'undefined' && currentCatalogFilter !== 'Все') {
+      filtered = filtered.filter(b => 
+        (b.services || []).some(s => s.includes(currentCatalogFilter))
+      );
+    }
+  }
+  
+  if (!filtered.length) {
+    list.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--text-secondary);">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--border)" stroke-width="1.5" style="margin-bottom:12px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <div style="font-size:16px;font-weight:700;margin-bottom:6px;">Пока нет специалистов</div>
+      <div style="font-size:13px;">В этой категории ещё никто не зарегистрировался</div>
+    </div>`;
+    return;
+  }
+  
+  // Render using existing business card logic
+  if (typeof _origRenderCatalog === 'function') {
+    _origRenderCatalog();
+    return;
+  }
+  
+  // Fallback render
+  list.innerHTML = filtered.map(b => {
+    const initials = (b.name || 'XX').substring(0,2).toUpperCase();
+    return `<div class="card" style="margin:0 16px 10px;cursor:pointer;" onclick="openBusinessProfile('${b.id}')">
+      <div style="display:flex;gap:14px;align-items:center;">
+        <div class="avatar" style="width:52px;height:52px;font-size:18px;flex-shrink:0;overflow:hidden;${b.cover_url?'padding:0;background:none;':''}">
+          ${b.cover_url ? `<img src="${b.cover_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : initials}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:15px;font-weight:800;">${b.name}</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${b.address || ''}</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+            <span style="font-size:12px;font-weight:700;color:var(--primary);">${b.rating || '5.0'} ⭐</span>
+            ${b.price_from ? `<span style="font-size:12px;color:var(--text-secondary);">от ${b.price_from}</span>` : ''}
+          </div>
+        </div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>`;
+  }).join('');
+};
