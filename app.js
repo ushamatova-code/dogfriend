@@ -4339,12 +4339,14 @@ async function acceptPushBanner() {
   const b = document.getElementById('push-banner');
   if (b) { b.style.opacity = '0'; b.style.transition = 'opacity 0.3s'; setTimeout(() => b.remove(), 300); }
   
-  // Запрашиваем разрешение через OneSignal
+  // Запрашиваем нативное разрешение браузера через OneSignal
   try {
     if (window.OneSignal) {
-      await OneSignal.Slidedown.promptPush();
+      await OneSignal.Notifications.requestPermission();
     } else {
       await Notification.requestPermission();
     }
-  } catch(e) {}
+  } catch(e) {
+    console.log('Push permission error:', e);
+  }
 }
