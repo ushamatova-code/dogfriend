@@ -1793,6 +1793,8 @@ async function checkAuth() {
       nav('home');
       // Инициализируем push-уведомления
       setTimeout(async () => { await initServiceWorker(); if (currentUser) subscribeToPush(); }, 3000);
+      // OneSignal — показываем свой промпт через 5 сек после входа
+      setTimeout(() => askPushPermission(), 5000);
     } else {
       console.log('❌ No session found');
       const oldRegistered = localStorage.getItem('df_registered');
@@ -4295,3 +4297,54 @@ function checkIOSInstallBanner() {
 window.addEventListener('load', () => {
   setTimeout(checkIOSInstallBanner, 1000);
 });
+
+// ════════════════════════════════════════════════════════════
+// PUSH PERMISSION — красивый баннер вместо системного промпта
+// ════════════════════════════════════════════════════════════
+function askPushPermission() {
+  // Не показываем если уже подписан или уже отказался
+  if (localStorage.getItem('push_asked')) return;
+  if (Notification.permission === 'granted') return;
+  if (Notification.permission === 'denied') return;
+  
+  const banner = document.createElement('div');
+  banner.id = 'push-banner';
+  banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:var(--white);padding:20px 16px;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 24px rgba(0,0,0,0.1);z-index:9999;border-radius:20px 20px 0 0;animation:slideUp 0.3s ease;';
+  banner.innerHTML = `
+    <div style="display:flex;gap:14px;align-items:flex-start;">
+      <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:15px;font-weight:800;margin-bottom:4px;">Включить уведомления?</div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.4;">Узнавайте о новых сообщениях, акциях и событиях рядом с вами</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button onclick="dismissPushBanner()" style="flex:1;padding:14px;border-radius:14px;border:none;background:var(--bg);font-size:14px;font-weight:700;color:var(--text-secondary);cursor:pointer;">Позже</button>
+      <button onclick="acceptPushBanner()" style="flex:1;padding:14px;border-radius:14px;border:none;background:var(--primary);color:white;font-size:14px;font-weight:700;cursor:pointer;">Включить</button>
+    </div>
+  `;
+  document.body.appendChild(banner);
+}
+
+function dismissPushBanner() {
+  localStorage.setItem('push_asked', '1');
+  const b = document.getElementById('push-banner');
+  if (b) { b.style.opacity = '0'; b.style.transition = 'opacity 0.3s'; setTimeout(() => b.remove(), 300); }
+}
+
+async function acceptPushBanner() {
+  localStorage.setItem('push_asked', '1');
+  const b = document.getElementById('push-banner');
+  if (b) { b.style.opacity = '0'; b.style.transition = 'opacity 0.3s'; setTimeout(() => b.remove(), 300); }
+  
+  // Запрашиваем разрешение через OneSignal
+  try {
+    if (window.OneSignal) {
+      await OneSignal.Slidedown.promptPush();
+    } else {
+      await Notification.requestPermission();
+    }
+  } catch(e) {}
+}

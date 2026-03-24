@@ -574,3 +574,8 @@ h3 {
   background:var(--primary);border-color:var(--primary);color:white;
   box-shadow:0 2px 12px rgba(74,144,217,0.25);
 }
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
