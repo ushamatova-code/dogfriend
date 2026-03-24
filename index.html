@@ -1560,6 +1560,38 @@
 
 
 
+<!-- iOS Install Banner -->
+<div id="ios-install-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:99999;background:white;border-radius:20px 20px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,0.15);padding:20px 20px 32px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <img src="icon-192.png" style="width:48px;height:48px;border-radius:12px;">
+      <div>
+        <div style="font-size:16px;font-weight:800;">Установи Dogly</div>
+        <div style="font-size:13px;color:#888;">Получай уведомления о сообщениях</div>
+      </div>
+    </div>
+    <button onclick="dismissIOSBanner()" style="background:none;border:none;font-size:22px;color:#888;padding:0;cursor:pointer;">✕</button>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+    <div style="display:flex;align-items:center;gap:12px;background:#F5F7FA;border-radius:12px;padding:12px;">
+      <div style="font-size:24px;">1️⃣</div>
+      <div style="font-size:14px;">Нажми <strong>Поделиться</strong> внизу браузера
+        <span style="display:inline-block;background:#007AFF;color:white;border-radius:6px;padding:1px 8px;font-size:12px;margin-left:4px;">⬆️</span>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;background:#F5F7FA;border-radius:12px;padding:12px;">
+      <div style="font-size:24px;">2️⃣</div>
+      <div style="font-size:14px;">Выбери <strong>«На экран «Домой»»</strong></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;background:#F5F7FA;border-radius:12px;padding:12px;">
+      <div style="font-size:24px;">3️⃣</div>
+      <div style="font-size:14px;">Открой приложение с домашнего экрана и <strong>разреши уведомления</strong></div>
+    </div>
+  </div>
+  <button onclick="dismissIOSBanner()" style="width:100%;padding:14px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);color:white;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;">Понятно!</button>
+</div>
+<div id="ios-install-overlay" onclick="dismissIOSBanner()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:99998;"></div>
+
 <!-- JS Modules -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
 <script src="app.js"></script>

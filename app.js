@@ -4189,3 +4189,44 @@ document.getElementById('pc-input')?.addEventListener('focus', () => {
     if (msgs) msgs.scrollTop = msgs.scrollHeight;
   }, 300);
 });
+
+// ════════════════════════════════════════════════════════════
+// iOS INSTALL BANNER
+// ════════════════════════════════════════════════════════════
+function showIOSInstallBanner() {
+  const banner = document.getElementById('ios-install-banner');
+  const overlay = document.getElementById('ios-install-overlay');
+  if (banner) banner.style.display = 'block';
+  if (overlay) overlay.style.display = 'block';
+}
+
+function dismissIOSBanner() {
+  const banner = document.getElementById('ios-install-banner');
+  const overlay = document.getElementById('ios-install-overlay');
+  if (banner) banner.style.display = 'none';
+  if (overlay) overlay.style.display = 'none';
+  // Запоминаем — не показываем 3 дня
+  localStorage.setItem('ios_banner_dismissed', Date.now().toString());
+}
+
+function checkIOSInstallBanner() {
+  // Только iOS
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (!isIOS) return;
+
+  // Уже установлено как PWA — не показываем
+  const isStandalone = window.navigator.standalone === true;
+  if (isStandalone) return;
+
+  // Закрыл недавно — не показываем 3 дня
+  const dismissed = localStorage.getItem('ios_banner_dismissed');
+  if (dismissed && Date.now() - parseInt(dismissed) < 3 * 24 * 60 * 60 * 1000) return;
+
+  // Показываем через 30 секунд — пусть сначала попользуется
+  setTimeout(showIOSInstallBanner, 30000);
+}
+
+// Запускаем после загрузки
+window.addEventListener('load', () => {
+  setTimeout(checkIOSInstallBanner, 1000);
+});
