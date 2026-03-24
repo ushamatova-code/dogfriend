@@ -1551,6 +1551,81 @@ async function reloadEventChatsFromDB() {
   renderPrivateChats();
 }
 
+// ════════════════════════════════════════════════════════════
+// ЗАГРУЗКА ВСЕХ ДИАЛОГОВ ИЗ БД
+// Вызывается при каждом входе — восстанавливает список чатов
+// даже после переустановки PWA или очистки localStorage
+// ════════════════════════════════════════════════════════════
+async function loadAllDialogsFromDB() {
+  if (!supabaseClient || !currentUser) return;
+  const myUserId = currentUser.id;
+
+  try {
+    // Получаем все сообщения где участвует текущий пользователь
+    // room_id для личных чатов содержит myUserId
+    const { data, error } = await supabaseClient
+      .from('direct_messages')
+      .select('*')
+      .like('room_id', '%' + myUserId + '%')
+      .not('room_id', 'like', 'event_%')
+      .not('room_id', 'eq', 'public_chat')
+      .order('created_at', { ascending: true });
+
+    if (error) { console.error('loadAllDialogsFromDB error:', error); return; }
+    if (!data || !data.length) return;
+
+    // Группируем сообщения по room_id
+    const rooms = {};
+    data.forEach(m => {
+      if (!rooms[m.room_id]) rooms[m.room_id] = [];
+      rooms[m.room_id].push(m);
+    });
+
+    // Для каждой комнаты определяем собеседника и восстанавливаем чат
+    for (const [roomId, messages] of Object.entries(rooms)) {
+      // chatId = userId собеседника (тот кто не myUserId в room_id)
+      const parts = roomId.split('__');
+      const theirId = parts.find(p => p !== myUserId);
+      if (!theirId) continue;
+
+      // Восстанавливаем сообщения
+      privateChats[theirId] = messages.map(m => ({
+        text: m.text,
+        sender: m.sender_id === myUserId ? 'user' : 'other',
+        time: m.time,
+        senderName: m.sender_name,
+        senderId: m.sender_id,
+        created_at: m.created_at,
+        dbId: m.id,
+      }));
+
+      // Восстанавливаем контакт если не знаем
+      if (!contactBook[theirId]) {
+        // Берём имя из последнего сообщения от собеседника
+        const theirMsg = messages.find(m => m.sender_id === theirId);
+        const name = theirMsg ? theirMsg.sender_name : 'Пользователь';
+        contactBook[theirId] = {
+          name: name,
+          initials: name.slice(0, 2).toUpperCase(),
+          grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)'
+        };
+      }
+
+      // Подписываемся на новые сообщения в этом чате
+      subscribeToPrivateChat(theirId);
+    }
+
+    // Сохраняем и обновляем UI
+    localStorage.setItem('df_contacts', JSON.stringify(contactBook));
+    savePrivateChatsToStorage();
+    renderPrivateChats();
+
+    console.log('✅ Loaded', Object.keys(rooms).length, 'dialogs from DB');
+  } catch(e) {
+    console.error('loadAllDialogsFromDB exception:', e);
+  }
+}
+
 // ============================================================
 // SUPABASE CONFIG (вместо Railway + Ably)
 // ============================================================
@@ -1704,11 +1779,10 @@ async function checkAuth() {
       // Запускаем Realtime подписку на новые сообщения (заменяет polling)
       stopRealtimeDMSubscription(); // Сбрасываем если была старая
       startRealtimeDMSubscription();
-      
-      // Подписываемся только на личные чаты broadcast-каналы
-      Object.keys(privateChats).forEach(chatId => {
-        if (!chatId.startsWith('event_')) subscribeToPrivateChat(chatId);
-      });
+
+      // Загружаем ВСЕ диалоги из БД — чтобы они появились даже после
+      // переустановки PWA или очистки localStorage
+      loadAllDialogsFromDB();
 
       // Загружаем event-чаты из БД (единственный источник истины)
       reloadEventChatsFromDB();
@@ -1776,9 +1850,9 @@ async function supabaseLogin() {
       // Запускаем Realtime подписку
       stopRealtimeDMSubscription();
       startRealtimeDMSubscription();
-      Object.keys(privateChats).forEach(chatId => {
-        if (!chatId.startsWith('event_')) subscribeToPrivateChat(chatId);
-      });
+
+      // Загружаем все диалоги из БД
+      loadAllDialogsFromDB();
       
       checkUserBusiness();
       nav('home');
@@ -4205,28 +4279,19 @@ function dismissIOSBanner() {
   const overlay = document.getElementById('ios-install-overlay');
   if (banner) banner.style.display = 'none';
   if (overlay) overlay.style.display = 'none';
-  // Запоминаем — не показываем 3 дня
   localStorage.setItem('ios_banner_dismissed', Date.now().toString());
 }
 
 function checkIOSInstallBanner() {
-  // Только iOS
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   if (!isIOS) return;
-
-  // Уже установлено как PWA — не показываем
   const isStandalone = window.navigator.standalone === true;
   if (isStandalone) return;
-
-  // Закрыл недавно — не показываем 3 дня
   const dismissed = localStorage.getItem('ios_banner_dismissed');
   if (dismissed && Date.now() - parseInt(dismissed) < 3 * 24 * 60 * 60 * 1000) return;
-
-  // Показываем через 30 секунд — пусть сначала попользуется
   setTimeout(showIOSInstallBanner, 30000);
 }
 
-// Запускаем после загрузки
 window.addEventListener('load', () => {
   setTimeout(checkIOSInstallBanner, 1000);
 });
