@@ -318,6 +318,23 @@ async function openBusinessProfile(id) {
   
   // Загружаем акции бизнеса и вставляем после "О себе"
   loadBusinessPromos(b);
+  
+  // Расписание — показываем из данных бизнеса
+  const schedContent = document.getElementById('spec-schedule-content');
+  const schedTitle = document.getElementById('spec-sched-title');
+  if (schedContent) {
+    if (b.schedule) {
+      if (schedTitle) schedTitle.textContent = 'Расписание';
+      schedContent.innerHTML = `<div style="white-space:pre-line;font-size:14px;line-height:1.8;">${b.schedule}</div>`;
+    } else {
+      if (schedTitle) schedTitle.textContent = 'Расписание';
+      schedContent.innerHTML = `<div style="background:var(--bg);border-radius:14px;padding:14px;text-align:center;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round" style="margin-bottom:6px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Расписание не указано</div>
+        <div style="font-size:12px;color:var(--text-secondary);">Свяжитесь со специалистом</div>
+      </div>`;
+    }
+  }
 }
 
 async function loadBusinessPromos(b) {

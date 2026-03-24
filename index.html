@@ -411,14 +411,15 @@
 
 <!-- SPECIALIST (dynamic) -->
 <div class="screen" id="specialist">
-  <div class="top-bar" style="padding-top:0;">
-    <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-    <div class="tbar-title" id="spec-topbar-name"></div>
-    <button class="back-btn" style="font-size:16px;">⋮</button>
+  <div style="padding:calc(16px + env(safe-area-inset-top, 0px)) 20px 12px;background:var(--white);">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <h1 id="spec-topbar-name" style="font-size:20px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></h1>
+    </div>
   </div>
   <div class="scroll">
     <div style="text-align:center;padding:16px 16px 20px;background:var(--white);margin-bottom:8px;">
-      <div class="avatar" id="spec-avatar" style="width:80px;height:80px;font-size:32px;margin:0 auto 12px;"></div>
+      <div class="avatar" id="spec-avatar" style="width:80px;height:80px;font-size:32px;margin:0 auto 12px;box-shadow:0 4px 16px rgba(0,0,0,0.1);"></div>
       <h2 id="spec-name"></h2>
       <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:8px 0;"><span class="tag tag-b" id="spec-badge"></span></div>
       <div style="display:flex;align-items:center;justify-content:center;gap:10px;font-size:14px;color:var(--text-secondary);">
@@ -442,16 +443,19 @@
       </div>
       <div class="card">
         <h3 style="margin-bottom:12px;">Способ оплаты</h3>
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <div class="popt" id="pf" onclick="selectPay('full')"><div class="rdot"><div class="rfill"></div></div><div><div style="font-size:14px;font-weight:700;">Полная оплата</div><div style="font-size:13px;color:var(--text-secondary);" id="pay-full-desc"></div></div></div>
-          <div class="popt sel" id="ps" onclick="selectPay('split')"><div class="rdot"><div class="rfill"></div></div><div><div style="font-size:14px;font-weight:700;">Частями без переплат</div><div style="font-size:13px;color:var(--text-secondary);" id="pay-split-desc"></div></div></div>
+        <div style="background:var(--bg);border-radius:14px;padding:14px;text-align:center;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" style="margin-bottom:6px;"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Оплата в разработке</div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.5;">Скоро будет доступна оплата частями и через приложение. Пока договаривайтесь напрямую со специалистом.</div>
         </div>
       </div>
       <div class="card" style="margin-bottom:90px;">
         <h3 style="margin-bottom:12px;">Гарантии Dogly</h3>
-        <div class="gr"><div class="gr-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div><div class="gr-text">Страховка 100 000 ₽</div><div style="font-size:12px;color:var(--text-secondary);">На каждое занятие</div></div></div>
-        <div class="gr"><div class="gr-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E91E63" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div><div><div class="gr-text">150 ₽ → приютам</div><div style="font-size:12px;color:var(--text-secondary);">С каждой оплаты</div></div></div>
-        <div class="gr"><div class="gr-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg></div><div><div class="gr-text">Возврат денег</div><div style="font-size:12px;color:var(--text-secondary);">Если что-то пойдёт не так</div></div></div>
+        <div style="background:var(--bg);border-radius:14px;padding:14px;text-align:center;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" style="margin-bottom:6px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Гарантии в разработке</div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.5;">Мы работаем над системой страхования и возврата средств. Следите за обновлениями.</div>
+        </div>
       </div>
     </div>
     <div class="tc" id="tc-spec-reviews">
@@ -459,15 +463,20 @@
     </div>
     <div class="tc" id="tc-spec-sched">
       <div class="card" style="margin-top:12px;margin-bottom:80px;">
-        <h3 style="margin-bottom:14px;">Март 2026</h3>
-        <div class="cal-g" style="margin-bottom:8px;"><div class="cal-wd">Пн</div><div class="cal-wd">Вт</div><div class="cal-wd">Ср</div><div class="cal-wd">Чт</div><div class="cal-wd">Пт</div><div class="cal-wd">Сб</div><div class="cal-wd">Вс</div></div>
-        <div class="cal-g" id="spec-calendar"></div>
+        <h3 id="spec-sched-title" style="margin-bottom:14px;">Расписание</h3>
+        <div id="spec-schedule-content" style="font-size:14px;color:var(--text-secondary);line-height:1.6;">
+          <div style="background:var(--bg);border-radius:14px;padding:14px;text-align:center;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round" style="margin-bottom:6px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Расписание</div>
+            <div style="font-size:12px;color:var(--text-secondary);">Свяжитесь со специалистом для записи на удобное время</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
   <div style="position:absolute;bottom:0;left:0;right:0;padding:12px 16px;background:var(--white);border-top:1px solid var(--border);display:flex;gap:10px;z-index:10;">
     <button class="btn btn-s" style="width:52px;height:52px;flex-shrink:0;border-radius:14px;" onclick="openPrivateChat(currentSpecId)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></button>
-    <button class="btn btn-p" style="flex:1;" onclick="nav('booking')">Записаться</button>
+    <button class="btn btn-p" style="flex:1;" onclick="openPrivateChat(currentSpecId)">Связаться</button>
   </div>
 </div>
 
