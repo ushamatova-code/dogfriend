@@ -1644,18 +1644,29 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 // Загружаем Supabase SDK
 if (!window.supabaseLoaded) {
-  const script = document.createElement('script');
-  script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js';
-  script.onload = async () => { 
-    window.supabaseLoaded = true; 
-    await initSupabase(); 
-  };
-  script.onerror = () => {
-    console.error('Failed to load Supabase SDK');
-    // Fallback - идём на login без Supabase
-    setTimeout(() => nav('login'), 2000);
-  };
-  document.head.appendChild(script);
+  const cdns = [
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js',
+    'https://unpkg.com/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js',
+  ];
+  let loaded = false;
+  function tryLoadSupabase(i) {
+    if (i >= cdns.length || loaded) {
+      if (!loaded) console.error('All Supabase CDNs failed');
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = cdns[i];
+    s.onload = async () => { loaded = true; window.supabaseLoaded = true; await initSupabase(); };
+    s.onerror = () => { console.warn('CDN failed:', cdns[i]); tryLoadSupabase(i + 1); };
+    document.head.appendChild(s);
+  }
+  // Если SDK уже загружен из HTML — не грузим повторно
+  if (window.supabase) {
+    window.supabaseLoaded = true;
+    initSupabase();
+  } else {
+    tryLoadSupabase(0);
+  }
 }
 
 // ── PUSH-УВЕДОМЛЕНИЯ (Web Push API + Service Worker) ─────────────
@@ -1754,10 +1765,18 @@ async function initSupabase() {
 }
 
 // Проверка авторизации при загрузке
+let _authRetries = 0;
 async function checkAuth() {
-  // Если Supabase ещё не готов — подождём и попробуем снова
+  // Если Supabase ещё не готов — подождём и попробуем снова (макс 15 сек)
   if (!supabaseClient) {
-    setTimeout(() => checkAuth(), 300);
+    _authRetries++;
+    if (_authRetries > 30) {
+      // 30 * 500ms = 15 сек — Supabase не загрузился
+      if (typeof showVPNError === 'function') showVPNError();
+      else nav(localStorage.getItem('df_registered') === '1' ? 'home' : 'login');
+      return;
+    }
+    setTimeout(() => checkAuth(), 500);
     return;
   }
 
