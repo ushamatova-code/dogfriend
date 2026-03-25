@@ -132,7 +132,7 @@ async function handleAvatarUpload(event) {
       // Сохраняем URL в профиль
       const { error: updateError } = await supabaseClient
         .from('profiles')
-        .upsert({ id: currentUser.id, avatar_url: publicUrl, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+        .upsert({ id: currentUser.id, user_id: currentUser.id, avatar_url: publicUrl, updated_at: new Date().toISOString() }, { onConflict: 'id' });
       if (updateError) console.error('❌ Avatar URL save error:', updateError);
 
       // Обновляем UI и кэш
@@ -227,7 +227,6 @@ function loadProfile() {
   
   // Аватарка: приоритет — Supabase URL из профиля, затем localStorage
   const avatarUrl = (currentUserProfile && currentUserProfile.avatar_url) || localStorage.getItem('df_avatar');
-  if (avatarUrl) setTimeout(() => applyAvatar(avatarUrl), 50);
   
   const name = p.name || 'Гость';
   const firstName = name.split(' ')[0];
@@ -235,17 +234,21 @@ function loadProfile() {
   const homeGreeting = document.getElementById('home-greeting');
   const homeNameSub = document.getElementById('home-name-sub');
   const homeAvatar = document.getElementById('home-avatar');
-  if (homeGreeting) homeGreeting.textContent = 'Привет, ' + firstName + '! 👋';
+  if (homeGreeting) homeGreeting.textContent = 'Привет, ' + firstName + '!';
   if (homeNameSub) {
-    // Берём кличку первого питомца из кэша если есть
     const petName = (_petsCache && _petsCache.length) ? _petsCache[0].name : (p.dogname || '');
     homeNameSub.textContent = petName ? 'Что нового у ' + petName + '?' : 'Что нового у вашего питомца?';
   }
-  if (homeAvatar) homeAvatar.textContent = initials;
+  // Аватарка: если есть URL — показываем фото, если нет — инициалы
+  if (avatarUrl) {
+    applyAvatar(avatarUrl);
+  } else {
+    if (homeAvatar) homeAvatar.textContent = initials;
+    const profAvatar = document.getElementById('prof-avatar');
+    if (profAvatar) profAvatar.textContent = initials;
+  }
   const profName = document.getElementById('prof-name');
-  const profAvatar = document.getElementById('prof-avatar');
   if (profName) profName.textContent = name;
-  if (profAvatar) profAvatar.textContent = initials;
   
   // Обновляем гео на главном экране
   const geoDisplay = document.getElementById('home-geo-display');
@@ -1940,11 +1943,22 @@ async function loadUserProfile() {
   try {
     console.log('📥 Loading profile from Supabase for user:', currentUser.id);
     
-    const { data, error } = await supabaseClient
+    // Пробуем загрузить по user_id (основное поле), потом по id (fallback)
+    let data, error;
+    ({ data, error } = await supabaseClient
       .from('profiles')
       .select('*')
-      .eq('id', currentUser.id)
-      .single();
+      .eq('user_id', currentUser.id)
+      .single());
+    
+    if (error && error.code === 'PGRST116') {
+      // Не нашли по user_id — пробуем по id
+      ({ data, error } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUser.id)
+        .single());
+    }
     
     if (error && error.code !== 'PGRST116') { // PGRST116 = not found, это норм для нового юзера
       console.error('❌ Load profile error:', error);
