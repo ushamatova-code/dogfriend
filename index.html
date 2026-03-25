@@ -166,7 +166,7 @@
     <div style="padding:calc(16px + env(safe-area-inset-top, 0px)) 20px 8px;background:var(--white);">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
         <div>
-          <div style="font-size:26px;font-weight:900;font-family:'Nunito',sans-serif;letter-spacing:-0.03em;color:var(--text-primary);" id="home-greeting">Привет! 👋</div>
+          <div style="font-size:26px;font-weight:900;font-family:'Nunito',sans-serif;letter-spacing:-0.03em;color:var(--text-primary);" id="home-greeting">Привет!</div>
           <div style="font-size:14px;color:var(--text-secondary);margin-top:2px;" id="home-name-sub">Что нового у вашего питомца?</div>
         </div>
         <div style="position:relative;cursor:pointer;" onclick="nav('profile')">
@@ -243,7 +243,7 @@
     <div class="sec-hd"><div class="sec-t">Ближайшие события</div><div class="sec-l" onclick="nav('events')">Все</div></div>
     <div class="scroll-row" id="home-events-row">
       <div class="ec" style="align-items:center;justify-content:center;color:var(--text-secondary);">
-        <div style="font-size:28px;">📅</div>
+        <div style="font-size:28px;"><svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='var(--primary)' stroke-width='2'><rect x='3' y='4' width='18' height='18' rx='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/></svg></div>
         <div style="font-size:13px;text-align:center;">Загружаем...</div>
       </div>
     </div>
@@ -679,15 +679,15 @@
   </div>
   <div class="chips" style="padding-top:8px;flex-shrink:0;">
     <div class="chip on" onclick="filterDiscounts('Все',this)">Все</div>
-    <div class="chip" onclick="filterDiscounts('Груминг',this)">✂️ Груминг</div>
-    <div class="chip" onclick="filterDiscounts('Питание',this)">🍖 Питание</div>
-    <div class="chip" onclick="filterDiscounts('Аксессуары',this)">🎀 Аксессуары</div>
-    <div class="chip" onclick="filterDiscounts('Ветеринар',this)">🏥 Ветеринар</div>
+    <div class="chip" onclick="filterDiscounts('Груминг',this)">Груминг</div>
+    <div class="chip" onclick="filterDiscounts('Питание',this)">Питание</div>
+    <div class="chip" onclick="filterDiscounts('Аксессуары',this)">Аксессуары</div>
+    <div class="chip" onclick="filterDiscounts('Ветеринар',this)">Ветеринар</div>
     <div class="chip" onclick="filterDiscounts('Кафе',this)">☕ Кафе</div>
   </div>
   <div class="scroll">
     <div id="discounts-location-banner" style="margin:8px 16px 12px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);border-radius:var(--radius);padding:14px;color:white;display:flex;align-items:center;gap:12px;">
-      <div style="font-size:32px;">🎁</div>
+      <div style="font-size:32px;"><svg width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='#34C759' stroke-width='2'><path d='M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z'/><line x1='7' y1='7' x2='7.01' y2='7'/></svg></div>
       <div><div style="font-size:15px;font-weight:800;">Скидки рядом с вами</div><div style="font-size:12px;opacity:0.85;margin-top:2px;">Определяем местоположение...</div></div>
     </div>
     <div id="discounts-list"></div>
@@ -765,14 +765,14 @@
   <div class="chips" style="padding-top:8px;flex-shrink:0;">
     <div class="chip on" onclick="filterPlaces('Все',this)">Все</div>
     <div class="chip" onclick="filterPlaces('Кафе',this)">☕ Кафе</div>
-    <div class="chip" onclick="filterPlaces('Парк',this)">🌳 Парки</div>
-    <div class="chip" onclick="filterPlaces('Магазин',this)">🛍️ Магазины</div>
+    <div class="chip" onclick="filterPlaces('Парк',this)">Парки</div>
+    <div class="chip" onclick="filterPlaces('Магазин',this)">Магазины</div>
     <div class="chip" onclick="filterPlaces('Грумер',this)">✂️ Грумеры</div>
-    <div class="chip" onclick="filterPlaces('Площадка',this)">🏃 Площадки</div>
+    <div class="chip" onclick="filterPlaces('Площадка',this)">Площадки</div>
   </div>
   <div class="scroll">
     <div id="dogmap-map-block" style="margin:8px 16px 12px;border-radius:var(--radius);min-height:100px;background:linear-gradient(135deg,#c8e6c9,#a5d6a7);position:relative;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;padding:20px;">
-      <div style="font-size:32px;">📍</div>
+      <div style="font-size:32px;"><svg width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='var(--primary)' stroke-width='2'><path d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z'/><circle cx='12' cy='10' r='3'/></svg></div>
       <div style="font-size:14px;font-weight:800;color:#2e7d32;">Загружаем места рядом...</div>
     </div>
     <div id="places-list"></div>
@@ -857,12 +857,12 @@
   <div class="modal" onclick="event.stopPropagation()" style="max-height:90%;overflow-y:auto;">
     <div class="mhandle"></div>
     <div style="padding:20px;">
-      <div style="font-size:24px;font-weight:900;margin-bottom:16px;">🚨 Экстренная помощь</div>
+      <div style="font-size:24px;font-weight:900;margin-bottom:16px;">Экстренная помощь</div>
       
       <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px;">
         <!-- Информация из профиля (только для чтения) -->
         <div style="background:rgba(74,144,217,0.08);border-radius:12px;padding:12px;border-left:4px solid var(--primary);">
-          <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">📝 Ваши данные</div>
+          <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">Ваши данные</div>
           <div style="font-size:15px;font-weight:700;margin-bottom:6px;" id="em-display-name">Анна Козлова</div>
           <div style="font-size:13px;color:var(--text-secondary);">🐕 <span id="em-display-pet">Рыжик</span></div>
         </div>
@@ -879,14 +879,14 @@
         </div>
         
         <div style="background:rgba(208,2,27,0.1);border-radius:12px;padding:12px;font-size:14px;color:var(--text-primary);">
-          <strong>☎️ Номер телефона:</strong><br>
+          <strong>Номер телефона:</strong><br>
           <span id="em-phone" style="font-weight:600;color:#D0021B;font-size:16px;">+7 (495) 123-45-67</span>
         </div>
       </div>
       
       <div style="display:flex;gap:10px;flex-direction:column;">
-        <button class="btn btn-p" onclick="submitEmergency()" style="background:linear-gradient(135deg,#D0021B,#FF5252);">☎️ Позвонить сейчас</button>
-        <button class="btn" onclick="sendEmergencyRequest()" style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;border:none;">✓ Отправить заявку</button>
+        <button class="btn btn-p" onclick="submitEmergency()" style="background:linear-gradient(135deg,#D0021B,#FF5252);">Позвонить сейчас</button>
+        <button class="btn" onclick="sendEmergencyRequest()" style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;border:none;">Отправить заявку</button>
         <button class="btn btn-g" onclick="closeModal('m-emergency')">Закрыть</button>
       </div>
     </div>
@@ -928,7 +928,7 @@
         </div>
         <div style="flex:1;min-width:0;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-            <span style="font-weight:800;font-size:15px;">🌍 Общий чат Dogly</span>
+            <span style="font-weight:800;font-size:15px;">Общий чат Dogly</span>
             <span style="font-size:11px;color:var(--text-secondary);">сейчас</span>
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -1009,7 +1009,7 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
     </button>
     <textarea class="input" id="pc-input" placeholder="Напишите сообщение..." style="flex:1;min-height:44px;max-height:100px;padding:10px 12px;resize:none;" autocomplete="on" autocorrect="on" autocapitalize="sentences" spellcheck="true" enterkeyhint="send"></textarea>
-    <button class="btn btn-p" style="width:44px;height:44px;padding:0;flex-shrink:0;" onclick="sendPrivateMessage()">➤</button>
+    <button class="btn btn-p" style="width:44px;height:44px;padding:0;flex-shrink:0;" onclick="sendPrivateMessage()"><svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5'><line x1='5' y1='12' x2='19' y2='12'/><polyline points='12 5 19 12 12 19'/></svg></button>
   </div>
 </div>
 
@@ -1056,7 +1056,7 @@
       onfocus="this.style.borderColor='var(--primary)';scrollChatBottom();"
       onblur="this.style.borderColor='var(--border)'"></textarea>
     <button onclick="sendChatMsg()"
-      style="width:46px;height:46px;background:var(--primary);color:white;border:none;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(74,144,217,0.4);margin-bottom:1px;">➤</button>
+      style="width:46px;height:46px;background:var(--primary);color:white;border:none;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(74,144,217,0.4);margin-bottom:1px;"><svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5'><line x1='5' y1='12' x2='19' y2='12'/><polyline points='12 5 19 12 12 19'/></svg></button>
   </div>
 </div>
 
@@ -1077,7 +1077,7 @@
             <div style="width:44px;height:28px;background:linear-gradient(135deg,#eb001b,#f79e1b);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:white;">MC</div>
             <div><div style="font-weight:700;font-size:14px;">•••• 4532</div><div style="font-size:12px;color:var(--text-secondary);">Mastercard · 12/27</div></div>
           </div>
-          <span class="tag tag-g" style="font-size:11px;">✓ Основная</span>
+          <span class="tag tag-g" style="font-size:11px;">Основная</span>
         </div>
       </div>
       <div style="border:2px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;">
@@ -1226,7 +1226,7 @@
   <div class="modal" onclick="event.stopPropagation()" style="max-height:85%;overflow-y:auto;">
     <div class="mhandle"></div>
     <div id="m-place-body"></div>
-    <button class="btn btn-p" style="margin-bottom:10px;" onclick="openYandexMap()">🗺️ Открыть в Яндекс.Картах</button>
+    <button class="btn btn-p" style="margin-bottom:10px;" onclick="openYandexMap()">Открыть в Яндекс.Картах</button>
     <button class="btn btn-g" onclick="closeModal('m-place')">Закрыть</button>
   </div>
 </div>
@@ -1236,7 +1236,7 @@
   <div class="modal" onclick="event.stopPropagation()" style="max-height:85%;overflow-y:auto;">
     <div class="mhandle"></div>
     <div id="m-discount-body"></div>
-    <button class="btn btn-p" style="margin-bottom:10px;" onclick="copyPromoCode()">📋 Скопировать промокод</button>
+    <button class="btn btn-p" style="margin-bottom:10px;" onclick="copyPromoCode()"> Скопировать промокод</button>
     <button class="btn btn-g" onclick="closeModal('m-discount')">Закрыть</button>
   </div>
 </div>

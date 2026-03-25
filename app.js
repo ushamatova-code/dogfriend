@@ -10,7 +10,7 @@ function nav(id) {
   
   // Сбрасываем currentPrivateChatId когда уходим с экрана личного чата
   if (curr && curr.id === 'privateChat' && id !== 'privateChat') {
-    console.log('🔄 Closing private chat, resetting currentPrivateChatId');
+    console.log(' Closing private chat, resetting currentPrivateChatId');
     currentPrivateChatId = null;
   }
   
@@ -40,7 +40,7 @@ function back() {
   
   // Сбрасываем currentPrivateChatId когда уходим с экрана личного чата назад
   if (curr && curr.id === 'privateChat' && prevId !== 'privateChat') {
-    console.log('🔄 Going back from private chat, resetting currentPrivateChatId');
+    console.log(' Going back from private chat, resetting currentPrivateChatId');
     currentPrivateChatId = null;
   }
   
@@ -104,8 +104,8 @@ async function handleAvatarUpload(event) {
   if (!file) return;
 
   // Валидация
-  if (!file.type.startsWith('image/')) { showToast('❌ Выберите изображение', '#FF3B30'); return; }
-  if (file.size > 5 * 1024 * 1024) { showToast('❌ Макс. размер 5 МБ', '#FF3B30'); return; }
+  if (!file.type.startsWith('image/')) { showToast('Выберите изображение', '#FF3B30'); return; }
+  if (file.size > 5 * 1024 * 1024) { showToast('Макс. размер 5 МБ', '#FF3B30'); return; }
 
   // Сжимаем перед загрузкой
   const compressed = await compressImage(file, 512, 0.8);
@@ -133,16 +133,16 @@ async function handleAvatarUpload(event) {
       const { error: updateError } = await supabaseClient
         .from('profiles')
         .upsert({ id: currentUser.id, user_id: currentUser.id, avatar_url: publicUrl, updated_at: new Date().toISOString() }, { onConflict: 'id' });
-      if (updateError) console.error('❌ Avatar URL save error:', updateError);
+      if (updateError) console.error('Avatar URL save error:', updateError);
 
       // Обновляем UI и кэш
       applyAvatar(publicUrl);
       localStorage.setItem('df_avatar', publicUrl);
       if (currentUserProfile) currentUserProfile.avatar_url = publicUrl;
-      showToast('✅ Аватарка обновлена!', '#34C759');
+      showToast('Аватарка обновлена!', '#34C759');
     } catch(e) {
-      console.error('❌ Avatar upload error:', e);
-      showToast('❌ Ошибка загрузки', '#FF3B30');
+      console.error('Avatar upload error:', e);
+      showToast('Ошибка загрузки', '#FF3B30');
       // Fallback — сохраняем локально как base64
       const reader = new FileReader();
       reader.onload = (ev) => { localStorage.setItem('df_avatar', ev.target.result); applyAvatar(ev.target.result); };
@@ -174,7 +174,7 @@ function compressImage(file, maxSize = 512, quality = 0.8) {
 }
 
 function applyAvatar(url) {
-  const img = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.textContent='👤'">`;
+  const img = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.textContent='?'">`;
   ['prof-avatar','home-avatar','ep-avatar'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.innerHTML = img; el.style.padding = '0'; }
@@ -211,7 +211,7 @@ function userAvatarHtml(avatarUrl, initials, grad, size = 36) {
 // PROFILE
 // ============================================================
 function getInitials(name) {
-  if (!name) return '👤';
+  if (!name) return '?';
   const parts = name.trim().split(' ');
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
   return name.slice(0,2).toUpperCase();
@@ -230,7 +230,7 @@ function loadProfile() {
   
   const name = p.name || 'Гость';
   const firstName = name.split(' ')[0];
-  const initials = p.name ? getInitials(p.name) : '👤';
+  const initials = p.name ? getInitials(p.name) : '?';
   const homeGreeting = document.getElementById('home-greeting');
   const homeNameSub = document.getElementById('home-name-sub');
   const homeAvatar = document.getElementById('home-avatar');
@@ -395,7 +395,7 @@ function loadProfileForm() {
   document.getElementById('ep-name').value = p.name || '';
   document.getElementById('ep-district').value = p.district || '';
   const av = document.getElementById('ep-avatar');
-  if (av) av.textContent = p.name ? getInitials(p.name) : '👤';
+  if (av) av.textContent = p.name ? getInitials(p.name) : '?';
 }
 
 async function saveProfile() {
@@ -424,12 +424,12 @@ async function saveProfile() {
         });
       
       if (error) {
-        console.error('❌ Failed to save profile to Supabase:', error);
+        console.error('Failed to save profile to Supabase:', error);
       } else {
-        console.log('✅ Profile saved to Supabase');
+        console.log('Profile saved to Supabase');
       }
     } catch(e) {
-      console.error('❌ Error saving profile:', e);
+      console.error('Error saving profile:', e);
     }
   }
   
@@ -642,7 +642,7 @@ function reverseGeocode(lat, lng, input) {
       console.error('Ошибка Nominatim:', error);
       input.placeholder = 'Выберите или введите район';
       input.disabled = false;
-      alert('⚠️ Ошибка при определении района');
+      alert('Ошибка при определении района');
     });
 }
 
@@ -764,7 +764,7 @@ function renderHealth() {
 
   let html = '';
   if (vets.length) {
-    html += `<div class="sec-hd"><div class="sec-t">👨‍⚕️ Специалисты</div></div>`;
+    html += `<div class="sec-hd"><div class="sec-t">Специалисты</div></div>`;
     html += vets.map(v => `
       <div class="scard" onclick="openSpecialistHealth('${v.id}')">
         <div class="avatar" style="width:56px;height:56px;font-size:22px;background:${v.grad};">${v.initials}</div>
@@ -779,15 +779,15 @@ function renderHealth() {
     `).join('');
   }
   if (clinics.length) {
-    html += `<div class="sec-hd"><div class="sec-t">🏥 Клиники Москвы</div></div>`;
+    html += `<div class="sec-hd"><div class="sec-t">Клиники</div></div>`;
     html += clinics.map(c => `
       <div class="card" style="display:flex;gap:12px;cursor:pointer;margin-bottom:10px;" onclick="openClinicModal('${c.id}')">
         <div style="width:54px;height:54px;background:${c.grad};border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${c.icon}</div>
         <div style="flex:1;">
           <div style="font-weight:800;font-size:15px;">${c.name}</div>
           <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">${c.subtitle}</div>
-          <div style="font-size:13px;color:var(--text-secondary);">📍 ${c.addr}</div>
-          <div style="font-size:13px;color:var(--text-secondary);">🕐 ${c.hours} • ${c.rating}</div>
+          <div style="font-size:13px;color:var(--text-secondary);">${c.addr}</div>
+          <div style="font-size:13px;color:var(--text-secondary);">${c.hours} • ${c.rating}</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
             ${c.tags.map(t=>`<span class="tag tag-b" style="font-size:11px;">${t}</span>`).join('')}
           </div>
@@ -851,7 +851,7 @@ function submitEmergency() {
   
   // В реальности здесь можно вызвать реальный номер
   // window.location.href = 'tel:+74951234567';
-  alert('☎️ Сейчас вас свяжут с оператором\n\n' +
+  alert('Сейчас вас свяжут с оператором\n\n' +
     'Ваши данные:\n' +
     `Владелец: ${name}\n` +
     `Питомец: ${petname}\n` +
@@ -909,8 +909,8 @@ function openClinicModal(id) {
       </div>
       <div style="font-size:14px;color:var(--text-secondary);line-height:1.6;margin-bottom:14px;">${item.desc}</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
-        <div style="font-size:14px;">📍 ${item.addr}</div>
-        <div style="font-size:14px;">🕐 ${item.hours}</div>
+        <div style="font-size:14px;">${item.addr}</div>
+        <div style="font-size:14px;">${item.hours}</div>
         <div style="font-size:14px;">${item.rating} • ${item.dist}</div>
         <div style="font-size:14px;font-weight:700;color:var(--primary);">${item.price}</div>
       </div>
@@ -952,10 +952,10 @@ function loadContactBook() {
 // Открыть чат с реальным пользователем
 function openChatWithUser(theirUserId, theirName, theirInitials, theirGrad) {
   const myUserId = currentUser?.id || userId;
-  console.log('👤 openChatWithUser: theirUserId=', theirUserId, 'myUserId=', myUserId);
+  console.log('? openChatWithUser: theirUserId=', theirUserId, 'myUserId=', myUserId);
   if (!theirUserId || theirUserId === myUserId) return;
   currentPrivateChatId = theirUserId;
-  console.log('✅ Set currentPrivateChatId =', currentPrivateChatId);
+  console.log('Set currentPrivateChatId =', currentPrivateChatId);
 
   // Запомним контакт
   contactBook[theirUserId] = { name: theirName, initials: theirInitials || theirName.slice(0,2).toUpperCase(), grad: theirGrad || 'linear-gradient(135deg,#4A90D9,#7B5EA7)' };
@@ -988,13 +988,13 @@ function openChatWithUser(theirUserId, theirName, theirInitials, theirGrad) {
   nav('privateChat');
 }
 
-// Открыть чат со специалистом (кнопка 💬 на карточке)
+// Открыть чат со специалистом
 function openPrivateChat(specId) {
   console.log('💬 openPrivateChat called with specId:', specId);
   // Сначала ищем в бизнесах из БД
   const business = loadedBusinesses.find(b => b.user_id === specId);
   if (business) {
-    console.log('✅ Found business:', business.name || business.business_name, 'user_id:', business.user_id);
+    console.log('Found business:', business.name || business.business_name, 'user_id:', business.user_id);
     const initials = business.name || business.business_name.substring(0,2).toUpperCase();
     openChatWithUser(specId, business.name || business.business_name, initials, 'linear-gradient(135deg,#4A90D9,#7B5EA7)');
     return;
@@ -1022,7 +1022,7 @@ function subscribeToPrivateChat(theirId) {
     return; // уже подписаны
   }
 
-  console.log('🔵 Subscribing to private chat:', channelName, 'for user:', theirId);
+  console.log(' Subscribing to private chat:', channelName, 'for user:', theirId);
 
   const channel = supabaseClient.channel(channelName, {
     config: { broadcast: { self: false } }
@@ -1068,19 +1068,19 @@ function subscribeToPrivateChat(theirId) {
       
       addUnreadMessage(chatId);
       playNotificationSound();
-      showInAppNotification('💬 ' + data.senderName, data.text);
+      showInAppNotification(data.senderName, data.text);
       showBrowserNotification('Новое от ' + data.senderName, { body: data.text.substring(0, 80) });
-      sendPushToUser(data.senderId, { title: '💬 ' + data.senderName, message: data.text.substring(0, 100), url: '/', chatId: chatId, type: 'message' });
+      sendPushToUser(data.senderId, { title: data.senderName, message: data.text.substring(0, 100), url: '/', chatId: chatId, type: 'message' });
     } else {
       renderPrivateChatMessages(chatId);
     }
     renderPrivateChats();
   }).subscribe((status) => {
-    console.log('📡 Private channel subscribe status:', status, 'for', channelName);
+    console.log(' Private channel subscribe status:', status, 'for', channelName);
     if (status === 'SUBSCRIBED') {
-      console.log('✅ Successfully subscribed to private chat:', channelName);
+      console.log('Successfully subscribed to private chat:', channelName);
     } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-      console.error('❌ Failed to subscribe to private chat:', channelName, status);
+      console.error('Failed to subscribe to private chat:', channelName, status);
     }
   });
 
@@ -1449,7 +1449,7 @@ function _doRenderPrivateChats() {
     let lastPreview = '';
     if (last) {
       if (last.text && (last.text.startsWith('[photo]') || last.text.match(/\.(jpg|jpeg|png|gif|webp)$/i))) {
-        lastPreview = '📷 Фото';
+        lastPreview = 'Фото';
       } else {
         lastPreview = escHtml((last.text || '').substring(0, 50));
       }
@@ -1523,7 +1523,7 @@ function _doRenderPrivateChats() {
         if (evContact) {
           const evId = id.replace('event_', '');
           // Создаём минимальный объект события чтобы передать в openEventGroupChat
-          openEventGroupChat({ id: evId, title: evContact.name.replace('📅 ', '') });
+          openEventGroupChat({ id: evId, title: evContact.name.replace('', '') });
         }
       } else {
         const contact = contactBook[id] || { name: id, initials: id.slice(0,2).toUpperCase(), grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)' };
@@ -1630,7 +1630,7 @@ async function loadAllDialogsFromDB() {
     savePrivateChatsToStorage();
     renderPrivateChats();
 
-    console.log('✅ Loaded', Object.keys(rooms).length, 'dialogs from DB');
+    console.log('Loaded', Object.keys(rooms).length, 'dialogs from DB');
   } catch(e) {
     console.error('loadAllDialogsFromDB exception:', e);
   }
@@ -1651,7 +1651,7 @@ if (!window.supabaseLoaded) {
     await initSupabase(); 
   };
   script.onerror = () => {
-    console.error('❌ Failed to load Supabase SDK');
+    console.error('Failed to load Supabase SDK');
     // Fallback - идём на login без Supabase
     setTimeout(() => nav('login'), 2000);
   };
@@ -1748,7 +1748,7 @@ let currentUserProfile = null;
 async function initSupabase() {
   if (window.supabase) {
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('✅ Supabase connected');
+    console.log('Supabase connected');
     // checkAuth вызывается из splash-таймера
   }
 }
@@ -1761,7 +1761,7 @@ async function checkAuth() {
     return;
   }
 
-  console.log('🔍 Checking auth...');
+  console.log('Checking auth...');
 
   // Запасной таймер — никогда не зависнем на сплэше
   const fallback = setTimeout(() => {
@@ -1776,13 +1776,13 @@ async function checkAuth() {
     clearTimeout(fallback);
 
     if (error) {
-      console.error('❌ Auth error:', error);
+      console.error('Auth error:', error);
       nav('login');
       return;
     }
 
     if (session) {
-      console.log('✅ User authenticated:', session.user.email);
+      console.log('User authenticated:', session.user.email);
       currentUser = session.user;
       try { await loadUserProfile(); } catch(e) { console.warn('loadUserProfile:', e); }
       
@@ -1806,10 +1806,10 @@ async function checkAuth() {
       // OneSignal — показываем свой промпт через 5 сек после входа
       setTimeout(() => askPushPermission(), 5000);
     } else {
-      console.log('❌ No session found');
+      console.log('No session found');
       const oldRegistered = localStorage.getItem('df_registered');
       if (oldRegistered === '1') {
-        console.log('🔄 Using localStorage auth');
+        console.log(' Using localStorage auth');
         nav('home');
       } else {
         console.log('→ Redirecting to login');
@@ -1818,7 +1818,7 @@ async function checkAuth() {
     }
   } catch(e) {
     clearTimeout(fallback);
-    console.error('❌ checkAuth exception:', e);
+    console.error('checkAuth exception:', e);
     nav(localStorage.getItem('df_registered') === '1' ? 'home' : 'login');
   }
 }
@@ -1941,7 +1941,7 @@ async function loadUserProfile() {
   if (!currentUser || !supabaseClient) return;
   
   try {
-    console.log('📥 Loading profile from Supabase for user:', currentUser.id);
+    console.log(' Loading profile from Supabase for user:', currentUser.id);
     
     // Пробуем загрузить по user_id (основное поле), потом по id (fallback)
     let data, error;
@@ -1961,12 +1961,12 @@ async function loadUserProfile() {
     }
     
     if (error && error.code !== 'PGRST116') { // PGRST116 = not found, это норм для нового юзера
-      console.error('❌ Load profile error:', error);
+      console.error('Load profile error:', error);
       return;
     }
     
     if (data) {
-      console.log('✅ Profile loaded from Supabase:', data);
+      console.log('Profile loaded from Supabase:', data);
       currentUserProfile = data;
       
       // Обновляем localStorage для совместимости
@@ -1985,7 +1985,7 @@ async function loadUserProfile() {
       loadProfile();
     } else {
       // Новый пользователь — создаём профиль в Supabase из localStorage / метаданных регистрации
-      console.log('ℹ️ No profile in Supabase, creating...');
+      console.log(' No profile in Supabase, creating...');
       const localProfile = JSON.parse(localStorage.getItem('df_profile') || '{}');
       const regName = currentUser.user_metadata?.name || localProfile.name || '';
       
@@ -1999,7 +1999,7 @@ async function loadUserProfile() {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }, { onConflict: 'id' });
-          console.log('✅ Profile created in Supabase with name:', regName);
+          console.log('Profile created in Supabase with name:', regName);
           
           // Обновляем localStorage
           localProfile.name = regName;
@@ -2011,7 +2011,7 @@ async function loadUserProfile() {
       loadProfile();
     }
   } catch (err) {
-    console.error('❌ Load profile exception:', err);
+    console.error('Load profile exception:', err);
   }
 }
 // ============================================================
@@ -2082,7 +2082,7 @@ function requestNotificationPermission() {
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission().then(permission => {
       if (permission === 'granted') {
-        showInAppNotification('✅ Уведомления включены', 'Теперь вы будете получать уведомления о новых сообщениях');
+        showInAppNotification('Уведомления включены', 'Теперь вы будете получать уведомления о новых сообщениях');
       }
     });
   }
@@ -2139,9 +2139,9 @@ function updateDistrictChatLabel() {
 function openGlobalChat() {
   currentChatType = 'global';
   chatNick = getChatNick();
-  document.getElementById('chat-conv-name').textContent = '🌍 Общий чат Dogly';
+  document.getElementById('chat-conv-name').textContent = 'Общий чат Dogly';
   document.getElementById('chat-conv-av').style.background = 'linear-gradient(135deg,#4A90D9,#7B5EA7)';
-  document.getElementById('chat-conv-av').textContent = '🌍';
+  document.getElementById('chat-conv-av').textContent = '';
   document.getElementById('chat-conv-subtitle').innerHTML = '<span style="color:#aaa">● подключение...</span>';
   const wrap = document.getElementById('chat-messages');
   if (wrap) wrap.innerHTML = '';
@@ -2260,7 +2260,7 @@ function initBackgroundDM() {
 }
 function connectSupabaseRealtime() {
   try {
-    console.log('🔌 Connecting to Supabase Realtime...');
+    console.log(' Connecting to Supabase Realtime...');
     
     // Создаём Realtime канал для общего чата
     supabasePublicChannel = supabaseClient.channel('dogfriend-public-chat', {
@@ -2274,7 +2274,7 @@ function connectSupabaseRealtime() {
       
       // Retry через 3 секунды
       setTimeout(() => {
-        console.log('🔄 Retrying connection...');
+        console.log(' Retrying connection...');
         if (supabasePublicChannel) {
           supabasePublicChannel.unsubscribe();
         }
@@ -2302,7 +2302,7 @@ function connectSupabaseRealtime() {
         if (d.nick !== chatNick) appendSysMsg(d.text);
       })
       .subscribe((status) => {
-        console.log('📡 Realtime status:', status);
+        console.log(' Realtime status:', status);
         
         if (status === 'SUBSCRIBED') {
           clearTimeout(connectionTimeout); // Отменяем таймаут
@@ -2324,12 +2324,12 @@ function connectSupabaseRealtime() {
           refreshOnlineCount();
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           clearTimeout(connectionTimeout);
-          console.error('❌ Connection failed:', status);
+          console.error('Connection failed:', status);
           setChatStatus('error');
           
           // Retry через 3 секунды
           setTimeout(() => {
-            console.log('🔄 Retrying after error...');
+            console.log(' Retrying after error...');
             connectSupabaseRealtime();
           }, 3000);
         }
@@ -2337,12 +2337,12 @@ function connectSupabaseRealtime() {
 
   } catch(e) {
     setChatStatus('error');
-    console.error('❌ Realtime error:', e);
-    appendSysMsg('⚠️ Ошибка: ' + e.message);
+    console.error('Realtime error:', e);
+    appendSysMsg('Ошибка: ' + e.message);
     
     // Retry через 5 секунд
     setTimeout(() => {
-      console.log('🔄 Retrying after exception...');
+      console.log(' Retrying after exception...');
       connectSupabaseRealtime();
     }, 5000);
   }
@@ -2365,7 +2365,7 @@ function startRealtimeDMSubscription() {
   const myUserId = currentUser?.id || userId;
   if (!myUserId) return;
   
-  console.log('🔔 Starting Realtime subscription for direct_messages');
+  console.log(' Starting Realtime subscription for direct_messages');
   
   realtimeDMChannel = supabaseClient
     .channel('dm-changes')
@@ -2416,7 +2416,7 @@ function startRealtimeDMSubscription() {
         } else {
           addUnreadMessage(chatId);
           playNotificationSound();
-          showInAppNotification('💬 ' + msg.sender_name, msg.text);
+          showInAppNotification(msg.sender_name, msg.text);
         }
         renderPrivateChats();
         return;
@@ -2462,20 +2462,20 @@ function startRealtimeDMSubscription() {
       if (currentPrivateChatId !== chatId) {
         addUnreadMessage(chatId);
         playNotificationSound();
-        showInAppNotification('💬 ' + msg.sender_name, msg.text);
+        showInAppNotification(msg.sender_name, msg.text);
         showBrowserNotification('Новое от ' + msg.sender_name, { body: msg.text.substring(0, 80) });
-        sendPushToUser(msg.sender_id, { title: '💬 ' + msg.sender_name, message: msg.text.substring(0, 100), url: '/', chatId: chatId, type: 'message' });
+        sendPushToUser(msg.sender_id, { title: msg.sender_name, message: msg.text.substring(0, 100), url: '/', chatId: chatId, type: 'message' });
       } else {
         renderPrivateChatMessages(chatId);
       }
       renderPrivateChats();
     })
     .subscribe((status) => {
-      console.log('📡 Realtime DM subscription status:', status);
+      console.log(' Realtime DM subscription status:', status);
       if (status === 'SUBSCRIBED') {
-        console.log('✅ Realtime DM subscription active');
+        console.log('Realtime DM subscription active');
       } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-        console.error('❌ Realtime DM subscription failed:', status);
+        console.error('Realtime DM subscription failed:', status);
         // Retry
         realtimeDMChannel = null;
         setTimeout(startRealtimeDMSubscription, 3000);
@@ -2538,7 +2538,7 @@ function sendChatMsg() {
       text: text,
       time: time
     }).then(({ error }) => {
-      if (error) console.error('❌ Failed to save public msg:', error);
+      if (error) console.error('Failed to save public msg:', error);
     });
   }
 }
@@ -2760,14 +2760,14 @@ async function savePrivateMsgToServer(chatId, text, time) {
       text: text,
       time: time
     });
-    if (error) { console.error('❌ Failed to save message:', error); return; }
+    if (error) { console.error('Failed to save message:', error); return; }
 
     // Сохраняем localStorage для личных чатов
     if (!isEventChat) {
       savePrivateChatsToStorage();
     }
   } catch(e) {
-    console.error('❌ Save message error:', e);
+    console.error('Save message error:', e);
   }
 }
 
@@ -2913,7 +2913,7 @@ function bookFromClinicModal() {
     + '📅 Дата заявки: <strong>'+dateStr+'</strong><br>'
     + '🕐 Ориентировочно: <strong>10:00–12:00</strong><br>'
     + (rec.addr ? '📍 '+rec.addr+'<br>' : '')
-    + '📞 Менеджер свяжется для подтверждения времени</div>';
+    + 'Менеджер свяжется для подтверждения времени</div>';
   nav('apptSuccess');
 }
 
@@ -3150,7 +3150,7 @@ function openPlaceModal(id) {
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
       <div style="font-size:14px;">📍 ${b.address}${dist ? ' · ' + dist : ''}</div>
       ${b.schedule ? `<div style="font-size:14px;">🕐 ${b.schedule}</div>` : ''}
-      ${b.phone ? `<div style="font-size:14px;">📞 <a href="tel:${b.phone}" style="color:var(--primary);text-decoration:none;font-weight:700;">${b.phone}</a></div>` : ''}
+      ${b.phone ? `<div style="font-size:14px;"><a href="tel:${b.phone}" style="color:var(--primary);text-decoration:none;font-weight:700;">${b.phone}</a></div>` : ''}
     </div>
     ${services.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">${services.map(t=>`<span class="tag tag-b">${t}</span>`).join('')}</div>` : ''}
   `;
@@ -3188,7 +3188,7 @@ async function renderDiscounts() {
   const locBanner = document.getElementById('discounts-location-banner');
   if (locBanner) {
     locBanner.innerHTML = `
-      <div style="font-size:32px;">🎁</div>
+      <div style="font-size:32px;"><svg width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='#34C759' stroke-width='2'><path d='M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z'/><line x1='7' y1='7' x2='7.01' y2='7'/></svg></div>
       <div>
         <div style="font-size:15px;font-weight:800;">Скидки рядом с вами</div>
         <div style="font-size:12px;opacity:0.85;margin-top:2px;">${userLocationName || 'Определяем местоположение...'}</div>
@@ -3329,7 +3329,7 @@ function contactBizFromPromo() {
 function copyPromoCode() {
   if (!_currentDisc || !_currentDisc.promo_code) return;
   navigator.clipboard.writeText(_currentDisc.promo_code)
-    .then(()=>showToast('✅ Промокод ' + _currentDisc.promo_code + ' скопирован!','#7ED321'))
+    .then(()=>showToast('Промокод ' + _currentDisc.promo_code + ' скопирован!','#7ED321'))
     .catch(()=>showToast('Промокод: ' + _currentDisc.promo_code));
 }
 
@@ -3549,7 +3549,7 @@ window.openModal = function(id) {
 
 async function saveMedRecord(){
   const title=document.getElementById('med-title').value.trim();
-  if(!title){showToast('❌ Укажите название/диагноз');return;}
+  if(!title){showToast('Укажите название/диагноз');return;}
   
   const rec = {
     type: _medType,
@@ -3568,7 +3568,7 @@ async function saveMedRecord(){
       });
       if (error) throw error;
     } catch(e) {
-      console.error('❌ Save med record error:', e);
+      console.error('Save med record error:', e);
       // Fallback — localStorage
       let recs = JSON.parse(localStorage.getItem('df_med_records')||'[]');
       recs.unshift({ id: Date.now(), ...rec, petName: rec.pet_name });
@@ -3582,7 +3582,7 @@ async function saveMedRecord(){
   
   closeModal('m-add-med');
   await renderMedRecords();
-  showToast('✅ Запись сохранена','#7ED321');
+  showToast('Запись сохранена','#7ED321');
 }
 
 async function renderMedRecords(){
@@ -3610,7 +3610,7 @@ async function renderMedRecords(){
       }));
       _medRecordsCache = recs;
     } catch(e) {
-      console.error('❌ Load med records error:', e);
+      console.error('Load med records error:', e);
       recs = JSON.parse(localStorage.getItem('df_med_records')||'[]');
     }
   } else {
@@ -3728,7 +3728,7 @@ async function deleteMedRecord(id) {
       const { error } = await supabaseClient.from('med_records').delete().eq('id', id).eq('user_id', currentUser.id);
       if (error) throw error;
     } catch(e) {
-      console.error('❌ Delete med record error:', e);
+      console.error('Delete med record error:', e);
     }
   } else {
     let recs = JSON.parse(localStorage.getItem('df_med_records')||'[]');
@@ -3737,7 +3737,7 @@ async function deleteMedRecord(id) {
   }
   
   await renderMedRecords();
-  showToast('🗑️ Запись удалена', '#FF3B30');
+  showToast('Запись удалена', '#FF3B30');
 }
 
 // ════════════════════════════════════════════════════════════
@@ -3780,7 +3780,7 @@ function renderLessons(){
       <div class="lesson-banner" style="background:${l.color};">${l.emoji}</div>
       <div class="lesson-body">
         <div class="lesson-title">${l.title}</div>
-        <div class="lesson-meta">⏱️ ${l.duration} · 📊 ${l.level} · 🏷️ ${l.cat}</div>
+        <div class="lesson-meta">${l.duration} · ${l.level} · ${l.cat}</div>
       </div>
     </div>`).join('')||'<div style="padding:40px;text-align:center;color:var(--text-secondary);">Ничего не найдено</div>';
 }
@@ -3794,7 +3794,7 @@ function openLesson(id){
     </div>
     <div style="font-size:14px;line-height:1.7;color:var(--text-secondary);margin-bottom:16px;">${l.content}</div>
     <div style="background:var(--bg);border-radius:12px;padding:14px;margin-bottom:8px;">
-      <div style="font-size:14px;font-weight:800;margin-bottom:10px;">📋 Шаги выполнения:</div>
+      <div style="font-size:14px;font-weight:800;margin-bottom:10px;">Шаги выполнения:</div>
       ${l.steps.map((s,i)=>`<div style="display:flex;gap:10px;margin-bottom:8px;align-items:flex-start;"><div style="width:24px;height:24px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:white;flex-shrink:0;">${i+1}</div><div style="font-size:13px;line-height:1.5;padding-top:3px;">${s}</div></div>`).join('')}
     </div>`;
   openModal('m-lesson');
