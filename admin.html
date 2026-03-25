@@ -388,9 +388,10 @@ async function openUserModal(userId){
       </div>`:''}
 
       <!-- Кнопки -->
-      <div style="display:flex;gap:8px;margin-top:4px">
-        <button class="btn bno" style="flex:1" onclick="blockUser('${userId}')">🚫 Заблокировать</button>
-        <button class="btn bed" style="flex:1" onclick="document.getElementById('userModal').classList.remove('open')">Закрыть</button>
+      <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
+        <a href="https://dogfriend.vercel.app/?chat=${userId}" target="_blank" class="btn bok" style="flex:1;min-width:120px;text-decoration:none">💬 Написать</a>
+        <button class="btn bno" style="flex:1;min-width:120px" onclick="blockUser('${userId}')">🚫 Заблокировать</button>
+        <button class="btn bed" style="width:100%" onclick="document.getElementById('userModal').classList.remove('open')">Закрыть</button>
       </div>`;
 
   }catch(e){console.error(e);body.innerHTML='<div class="emp">Ошибка загрузки: '+e.message+'</div>'}
@@ -807,4 +808,5 @@ function deleteCategory(i){
   loadCategories();
 }
 </script>
+
 </body></html>

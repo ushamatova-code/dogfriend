@@ -1782,11 +1782,11 @@ async function checkAuth() {
 
   console.log('Checking auth...');
 
-  // Запасной таймер — если Supabase не отвечает за 5 сек, показываем VPN баннер
+  // Запасной таймер — никогда не зависнем на сплэше
   const fallback = setTimeout(() => {
     const active = document.querySelector('.screen.active');
     if (active && active.id === 'splash') {
-      showVPNBanner();
+      nav(localStorage.getItem('df_registered') === '1' ? 'home' : 'login');
     }
   }, 5000);
 
@@ -1820,6 +1820,8 @@ async function checkAuth() {
       checkUserBusiness();
 
       nav('home');
+      // Если открыли с параметром ?chat=userId — сразу открываем чат
+      handleChatDeeplink();
       // Инициализируем push-уведомления
       setTimeout(async () => { await initServiceWorker(); if (currentUser) subscribeToPush(); }, 3000);
       // OneSignal — показываем свой промпт через 5 сек после входа
@@ -4525,21 +4527,6 @@ async function acceptPushBanner() {
 // NETWORK RESILIENCE — работа при плохой сети / VPN
 // ════════════════════════════════════════════════════════════
 
-function showVPNBanner() {
-  if (document.getElementById('vpn-banner')) return;
-  const banner = document.createElement('div');
-  banner.id = 'vpn-banner';
-  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:24px;';
-  banner.innerHTML = `
-    <div style="background:white;border-radius:20px;padding:28px 24px;max-width:340px;width:100%;text-align:center;">
-      <div style="font-size:48px;margin-bottom:16px;">🔒</div>
-      <div style="font-size:17px;font-weight:800;font-family:Nunito,sans-serif;margin-bottom:12px;color:#1A1A2E;">Проблема с VPN</div>
-      <p style="font-size:14px;color:#6B7280;line-height:1.6;margin-bottom:24px;">Вы используете VPN, но приложение не работает с ним. Отключите и попробуйте снова. Увы, мы ничего не можем с этим сделать.</p>
-      <button onclick="location.reload()" style="width:100%;padding:14px;background:#4A90D9;color:white;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;">Попробовать снова</button>
-    </div>`;
-  document.body.appendChild(banner);
-}
-
 // Показываем баннер когда нет сети
 window.addEventListener('offline', () => {
   showNetworkBanner(false);
@@ -4627,4 +4614,35 @@ async function sendFeedback() {
   
   closeModal('m-feedback');
   showToast('Спасибо за обратную связь!', '#34C759');
+}
+
+// ════════════════════════════════════════════════════════════
+// DEEPLINK — открыть чат по параметру ?chat=userId
+// Используется из админки кнопкой "Написать"
+// ════════════════════════════════════════════════════════════
+async function handleChatDeeplink() {
+  const params = new URLSearchParams(window.location.search);
+  const chatUserId = params.get('chat');
+  if (!chatUserId) return;
+
+  // Убираем параметр из URL чтобы не мешал при обновлении
+  const cleanUrl = window.location.pathname;
+  window.history.replaceState({}, '', cleanUrl);
+
+  // Небольшая задержка чтобы home успел отрисоваться
+  setTimeout(async () => {
+    // Загружаем имя пользователя из профиля
+    let name = 'Пользователь';
+    try {
+      const { data } = await supabaseClient
+        .from('profiles')
+        .select('name')
+        .eq('id', chatUserId)
+        .maybeSingle();
+      if (data && data.name) name = data.name;
+    } catch(e) {}
+
+    const initials = name.substring(0, 2).toUpperCase();
+    openChatWithUser(chatUserId, name, initials, 'linear-gradient(135deg,#4A90D9,#7B5EA7)');
+  }, 500);
 }
