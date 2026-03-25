@@ -1782,11 +1782,11 @@ async function checkAuth() {
 
   console.log('Checking auth...');
 
-  // Запасной таймер — никогда не зависнем на сплэше
+  // Запасной таймер — если Supabase не отвечает за 5 сек, показываем VPN баннер
   const fallback = setTimeout(() => {
     const active = document.querySelector('.screen.active');
     if (active && active.id === 'splash') {
-      nav(localStorage.getItem('df_registered') === '1' ? 'home' : 'login');
+      showVPNBanner();
     }
   }, 5000);
 
@@ -4524,6 +4524,21 @@ async function acceptPushBanner() {
 // ════════════════════════════════════════════════════════════
 // NETWORK RESILIENCE — работа при плохой сети / VPN
 // ════════════════════════════════════════════════════════════
+
+function showVPNBanner() {
+  if (document.getElementById('vpn-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'vpn-banner';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:24px;';
+  banner.innerHTML = `
+    <div style="background:white;border-radius:20px;padding:28px 24px;max-width:340px;width:100%;text-align:center;">
+      <div style="font-size:48px;margin-bottom:16px;">🔒</div>
+      <div style="font-size:17px;font-weight:800;font-family:Nunito,sans-serif;margin-bottom:12px;color:#1A1A2E;">Проблема с VPN</div>
+      <p style="font-size:14px;color:#6B7280;line-height:1.6;margin-bottom:24px;">Вы используете VPN, но приложение не работает с ним. Отключите и попробуйте снова. Увы, мы ничего не можем с этим сделать.</p>
+      <button onclick="location.reload()" style="width:100%;padding:14px;background:#4A90D9;color:white;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;">Попробовать снова</button>
+    </div>`;
+  document.body.appendChild(banner);
+}
 
 // Показываем баннер когда нет сети
 window.addEventListener('offline', () => {
