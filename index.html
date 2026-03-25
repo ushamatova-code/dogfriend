@@ -1277,7 +1277,7 @@
 
 <!-- ADD MED RECORD MODAL -->
 <div class="modal-ov" id="m-add-med" onclick="closeModal('m-add-med')">
-  <div class="modal" onclick="event.stopPropagation()" style="max-height:90%;overflow-y:auto;">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overflow-x:hidden;">
     <div class="mhandle"></div>
     <h3 style="margin-bottom:16px;">Новая запись</h3>
     <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px;">
@@ -1296,22 +1296,20 @@
         </select>
       </div>
       <div><label class="lbl">Название / диагноз *</label><input class="input" id="med-title" placeholder="Например: Нобивак DHPPi+L"></div>
-      <div style="display:flex;gap:8px;">
-        <div style="flex:1;"><label class="lbl">Дата</label><input class="input" id="med-date" type="date"></div>
-        <div style="flex:1;"><label class="lbl">Напоминание</label>
-          <select class="input" id="med-remind" style="height:48px;">
-            <option value="">Нет</option>
-            <option value="7">За 7 дней</option>
-            <option value="30">За 30 дней</option>
-            <option value="365">Через 1 год</option>
-          </select>
-        </div>
+      <div><label class="lbl">Дата</label><input class="input" id="med-date" type="date" style="height:48px;"></div>
+      <div><label class="lbl">Напоминание</label>
+        <select class="input" id="med-remind" style="height:48px;">
+          <option value="">Нет</option>
+          <option value="7">За 7 дней</option>
+          <option value="30">За 30 дней</option>
+          <option value="365">Через 1 год</option>
+        </select>
       </div>
       <div><label class="lbl">Врач / клиника</label><input class="input" id="med-doctor" placeholder="Др. Иванов, Зоовет"></div>
-      <div><label class="lbl">Заметки</label><textarea class="input" id="med-notes" placeholder="Следующая через 1 год..." style="min-height:60px;padding:12px;"></textarea></div>
+      <div><label class="lbl">Заметки</label><textarea class="input" id="med-notes" placeholder="Следующая через 1 год..." style="min-height:60px;padding:12px;resize:none;"></textarea></div>
     </div>
     <button class="btn btn-p" onclick="saveMedRecord()" style="margin-bottom:10px;">Сохранить запись</button>
-    <button class="btn btn-g" onclick="closeModal('m-add-med')">Отмена</button>
+    <button class="btn btn-g" onclick="closeModal('m-add-med')" style="margin-bottom:env(safe-area-inset-bottom, 16px);">Отмена</button>
   </div>
 </div>
 

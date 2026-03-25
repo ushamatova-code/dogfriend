@@ -3520,12 +3520,25 @@ const _origOpenModal = window.openModal;
 window.openModal = function(id) {
   _origOpenModal(id);
   if (id === 'm-add-med') {
-    // Fill pets dropdown
-    const select = document.getElementById('med-pet-name');
-    if (select && _petsCache && _petsCache.length) {
-      select.innerHTML = '<option value="">Выберите питомца</option>' + 
-        _petsCache.map(p => `<option value="${p.name}">${p.name}${p.breed ? ' (' + p.breed + ')' : ''}</option>`).join('');
+    // Load pets if not cached yet
+    const fillPets = () => {
+      const select = document.getElementById('med-pet-name');
+      if (select && _petsCache && _petsCache.length) {
+        select.innerHTML = '<option value="">Выберите питомца</option>' + 
+          _petsCache.map(p => `<option value="${p.name}">${p.name}${p.breed ? ' (' + p.breed + ')' : ''}</option>`).join('');
+      }
+    };
+    
+    if (_petsCache && _petsCache.length) {
+      fillPets();
+    } else if (supabaseClient && currentUser) {
+      // Load pets from Supabase
+      supabaseClient.from('pets').select('*').eq('user_id', currentUser.id).then(({ data }) => {
+        if (data) _petsCache = data;
+        fillPets();
+      });
     }
+    
     // Prefill today's date
     const dateInput = document.getElementById('med-date');
     if (dateInput && !dateInput.value) {

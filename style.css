@@ -585,3 +585,7 @@ h3 {
 #onesignal-bell-container {
   display: none !important;
 }
+
+/* Hide scrollbar in modals but keep scrolling */
+.modal::-webkit-scrollbar { display: none; }
+.modal { -ms-overflow-style: none; scrollbar-width: none; }
