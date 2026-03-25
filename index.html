@@ -20,25 +20,16 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <title>Dogly</title>
 <link rel="stylesheet" href="style.css">
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
-  // OneSignal — динамически, не блокирует приложение если VPN режет onesignal.com
   window.OneSignalDeferred = window.OneSignalDeferred || [];
-  (function(){
-    var s = document.createElement('script');
-    s.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
-    s.async = true;
-    s.onload = function(){
-      OneSignalDeferred.push(async function(OneSignal){
-        await OneSignal.init({
-          appId: '6696989f-3a36-44cc-9d46-f986d0abc0fc',
-          autoPrompt: false,
-          notifyButton: { enable: false },
-        });
-      });
-    };
-    s.onerror = function(){ console.warn('[OneSignal] недоступен, пуши отключены'); };
-    document.head.appendChild(s);
-  })();
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "6696989f-3a36-44cc-9d46-f986d0abc0fc",
+      autoPrompt: false,
+      notifyButton: { enable: false },
+    });
+  });
 </script>
 </head>
 <body>
@@ -1640,63 +1631,42 @@
 <div id="ios-install-overlay" onclick="dismissIOSBanner()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:99998;"></div>
 
 <!-- JS Modules -->
-<!-- Supabase SDK: сначала локальный файл (работает через любой VPN),
-     если нет — fallback на CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"
+  onerror="loadFallbackSupabase()"></script>
 <script>
-(function(){
-  function loadAppScripts(){
-    // Загружаем все модули приложения только после готовности Supabase
-    var scripts = ['app.js','business.js','booking.js','dashboard.js','events.js'];
-    var i = 0;
-    function next(){
-      if(i >= scripts.length) return;
-      var s = document.createElement('script');
-      s.src = scripts[i++];
-      s.onload = next;
-      s.onerror = function(){ console.error('Failed to load:', s.src); next(); };
-      document.body.appendChild(s);
-    }
-    next();
-  }
-
-  function tryLoadSupabase(urls, idx){
-    if(idx >= urls.length){ showSDKError(); return; }
-    var s = document.createElement('script');
-    s.src = urls[idx];
-    s.onload = function(){
-      console.log('[Supabase] loaded from:', s.src);
-      loadAppScripts();
-    };
-    s.onerror = function(){
-      console.warn('[Supabase] failed:', s.src);
-      tryLoadSupabase(urls, idx + 1);
-    };
-    document.head.appendChild(s);
-  }
-
-  // Пробуем сначала локальный файл, потом CDN
-  tryLoadSupabase([
-    'supabase.min.js',
-    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js',
-    'https://unpkg.com/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.39.0/supabase.min.js'
-  ], 0);
-
-  function showSDKError(){
-    var shell = document.querySelector('.phone-shell');
-    if(!shell) return;
-    shell.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:40px;text-align:center;">'
-      + '<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#D0021B" stroke-width="1.5" style="margin-bottom:20px;"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>'
-      + '<h2 style="font-family:Nunito,sans-serif;margin-bottom:8px;">Нет подключения</h2>'
-      + '<p style="color:#8E8E93;font-size:14px;line-height:1.6;margin-bottom:16px;">Не удалось загрузить приложение.</p>'
-      + '<div style="text-align:left;font-size:13px;color:#8E8E93;line-height:1.8;margin-bottom:24px;">'
-      + '• Проверьте подключение к интернету<br>'
-      + '• Если используете VPN — попробуйте другую страну<br>'
-      + '• Или временно отключите VPN</div>'
-      + '<button onclick="location.reload()" style="background:#4A90D9;color:white;border:none;border-radius:14px;padding:14px 40px;font-size:15px;font-weight:700;cursor:pointer;">Попробовать снова</button>'
-      + '</div>';
-  }
-})();
+function loadFallbackSupabase(){
+  console.log('jsdelivr failed, trying unpkg...');
+  var s=document.createElement('script');
+  s.src='https://unpkg.com/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js';
+  s.onerror=function(){
+    console.log('unpkg failed, trying cdnjs...');
+    var s2=document.createElement('script');
+    s2.src='https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.39.0/supabase.min.js';
+    s2.onerror=function(){ showVPNError(); };
+    document.head.appendChild(s2);
+  };
+  document.head.appendChild(s);
+}
+function showVPNError(){
+  document.querySelector('.phone-shell').innerHTML=`
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:40px;text-align:center;">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#D0021B" stroke-width="1.5" style="margin-bottom:20px;"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+      <h2 style="font-family:Nunito,sans-serif;margin-bottom:8px;">Нет подключения</h2>
+      <p style="color:#8E8E93;font-size:14px;line-height:1.6;margin-bottom:20px;">Не удалось загрузить приложение. Возможные причины:</p>
+      <div style="text-align:left;font-size:13px;color:#8E8E93;line-height:1.8;margin-bottom:24px;">
+        • VPN блокирует нужные сервисы<br>
+        • Попробуйте другую страну VPN (Нидерланды, Германия)<br>
+        • Или отключите VPN и попробуйте снова<br>
+        • Проверьте подключение к интернету
+      </div>
+      <button onclick="location.reload()" style="background:#4A90D9;color:white;border:none;border-radius:14px;padding:14px 40px;font-size:15px;font-weight:700;cursor:pointer;">Попробовать снова</button>
+    </div>`;
+}
 </script>
+<script src="app.js"></script>
+<script src="business.js"></script>
+<script src="booking.js"></script>
+<script src="dashboard.js"></script>
+<script src="events.js"></script>
 </body>
 </html>
