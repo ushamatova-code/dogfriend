@@ -2634,7 +2634,10 @@ function formatMsgContent(text) {
   // Check if it's a photo URL from storage
   if (text.match(/^https:\/\/.*\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i) || text.startsWith('[photo]')) {
     const url = text.replace('[photo]', '').trim();
-    return `<img src="${url}" style="max-width:100%;border-radius:10px;cursor:pointer;max-height:240px;" onclick="window.open('${url}','_blank')" onerror="this.outerHTML='${escHtml(text)}'">`;
+    // Only allow https URLs for safety
+    if (!url.startsWith('https://')) return escHtml(text);
+    const safeUrl = url.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    return `<img src="${safeUrl}" style="max-width:100%;border-radius:10px;cursor:pointer;max-height:240px;" onclick="window.open('${safeUrl}','_blank')" onerror="this.outerHTML='Фото не загрузилось'">`;
   }
   return escHtml(text);
 }
@@ -2745,15 +2748,8 @@ async function savePrivateMsgToServer(chatId, text, time) {
     });
     if (error) { console.error('❌ Failed to save message:', error); return; }
 
-    // Для личных чатов — broadcast через Realtime для мгновенной доставки
-    // Для event-чатов — получатели сами опрашивают БД через polling
+    // Сохраняем localStorage для личных чатов
     if (!isEventChat) {
-      const ch = supabasePrivateChannels[channelName] || supabaseClient.channel(channelName);
-      ch.send({
-        type: 'broadcast',
-        event: 'message',
-        payload: { text, time, senderId: myUserId, senderName: p.name || 'Гость' }
-      });
       savePrivateChatsToStorage();
     }
   } catch(e) {
