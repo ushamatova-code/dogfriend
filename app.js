@@ -4626,23 +4626,30 @@ async function handleChatDeeplink() {
   if (!chatUserId) return;
 
   // Убираем параметр из URL чтобы не мешал при обновлении
-  const cleanUrl = window.location.pathname;
-  window.history.replaceState({}, '', cleanUrl);
+  window.history.replaceState({}, '', window.location.pathname);
 
   // Небольшая задержка чтобы home успел отрисоваться
   setTimeout(async () => {
-    // Загружаем имя пользователя из профиля
     let name = 'Пользователь';
     try {
-      const { data } = await supabaseClient
+      // Пробуем сначала по user_id, потом по id
+      let { data } = await supabaseClient
         .from('profiles')
         .select('name')
-        .eq('id', chatUserId)
+        .eq('user_id', chatUserId)
         .maybeSingle();
+      if (!data || !data.name) {
+        const r2 = await supabaseClient
+          .from('profiles')
+          .select('name')
+          .eq('id', chatUserId)
+          .maybeSingle();
+        data = r2.data;
+      }
       if (data && data.name) name = data.name;
-    } catch(e) {}
+    } catch(e) { console.warn('Deeplink profile load error:', e); }
 
     const initials = name.substring(0, 2).toUpperCase();
     openChatWithUser(chatUserId, name, initials, 'linear-gradient(135deg,#4A90D9,#7B5EA7)');
-  }, 500);
+  }, 800);
 }
