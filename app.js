@@ -4628,28 +4628,36 @@ async function handleChatDeeplink() {
   // Убираем параметр из URL чтобы не мешал при обновлении
   window.history.replaceState({}, '', window.location.pathname);
 
+  // Ждём пока supabaseClient будет готов (макс 10 сек)
+  let waited = 0;
+  while (!supabaseClient && waited < 10000) {
+    await new Promise(r => setTimeout(r, 200));
+    waited += 200;
+  }
+  if (!supabaseClient) return;
+
   // Небольшая задержка чтобы home успел отрисоваться
-  setTimeout(async () => {
-    let name = 'Пользователь';
-    try {
-      // Пробуем сначала по user_id, потом по id
-      let { data } = await supabaseClient
+  await new Promise(r => setTimeout(r, 500));
+
+  let name = 'Пользователь';
+  try {
+    // Пробуем сначала по user_id, потом по id
+    let { data } = await supabaseClient
+      .from('profiles')
+      .select('name')
+      .eq('user_id', chatUserId)
+      .maybeSingle();
+    if (!data || !data.name) {
+      const r2 = await supabaseClient
         .from('profiles')
         .select('name')
-        .eq('user_id', chatUserId)
+        .eq('id', chatUserId)
         .maybeSingle();
-      if (!data || !data.name) {
-        const r2 = await supabaseClient
-          .from('profiles')
-          .select('name')
-          .eq('id', chatUserId)
-          .maybeSingle();
-        data = r2.data;
-      }
-      if (data && data.name) name = data.name;
-    } catch(e) { console.warn('Deeplink profile load error:', e); }
+      data = r2.data;
+    }
+    if (data && data.name) name = data.name;
+  } catch(e) { console.warn('Deeplink profile load error:', e); }
 
-    const initials = name.substring(0, 2).toUpperCase();
-    openChatWithUser(chatUserId, name, initials, 'linear-gradient(135deg,#4A90D9,#7B5EA7)');
-  }, 800);
+  const initials = name.substring(0, 2).toUpperCase();
+  openChatWithUser(chatUserId, name, initials, 'linear-gradient(135deg,#4A90D9,#7B5EA7)');
 }
