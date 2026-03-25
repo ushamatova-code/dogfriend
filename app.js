@@ -4548,3 +4548,49 @@ async function supabaseRetry(fn, retries = 2) {
 
 // Check on load
 if (!navigator.onLine) showNetworkBanner(false);
+
+// ════════════════════════════════════════════════════════════
+// FEEDBACK — обратная связь от пользователей
+// ════════════════════════════════════════════════════════════
+function openFeedbackForm() {
+  let modal = document.getElementById('m-feedback');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'm-feedback';
+    modal.className = 'modal-ov';
+    modal.onclick = (e) => { if (e.target === modal) closeModal('m-feedback'); };
+    modal.innerHTML = '<div class="modal" onclick="event.stopPropagation()"><div class="mhandle"></div><div id="m-feedback-body"></div></div>';
+    document.body.appendChild(modal);
+  }
+  document.getElementById('m-feedback-body').innerHTML = `
+    <h3 style="margin-bottom:16px;">Обратная связь</h3>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">Расскажите о проблеме, предложите идею или пожалуйтесь</p>
+    <textarea class="input" id="feedback-text" placeholder="Ваше сообщение..." style="min-height:100px;padding:12px;resize:none;margin-bottom:16px;"></textarea>
+    <button class="btn btn-p" onclick="sendFeedback()" style="margin-bottom:8px;">Отправить</button>
+    <button class="btn btn-g" onclick="closeModal('m-feedback')">Отмена</button>
+  `;
+  openModal('m-feedback');
+}
+
+async function sendFeedback() {
+  const text = document.getElementById('feedback-text').value.trim();
+  if (!text) { showToast('Напишите сообщение'); return; }
+  
+  const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
+  
+  if (supabaseClient && currentUser) {
+    try {
+      const { error } = await supabaseClient.from('feedback').insert({
+        user_id: currentUser.id,
+        user_name: p.name || 'Аноним',
+        text: text
+      });
+      if (error) throw error;
+    } catch(e) {
+      console.error('Feedback error:', e);
+    }
+  }
+  
+  closeModal('m-feedback');
+  showToast('Спасибо за обратную связь!', '#34C759');
+}

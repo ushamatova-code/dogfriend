@@ -619,36 +619,155 @@ async function loadReports(){
 
 // ═══ CONTENT ═══
 async function loadContent(){
-  const list=document.getElementById('cnt-lessons-list');
-  list.innerHTML='<div class="lm">Уроки управляются в коде (app.js → LESSONS). Скоро здесь появится редактор.</div>';
+  // Banner
+  const saved = localStorage.getItem('admin_banner');
+  if (saved) {
+    try { const b = JSON.parse(saved); document.getElementById('cnt-banner-title').value = b.title||''; document.getElementById('cnt-banner-url').value = b.url||''; } catch(e){}
+  }
+  // Lessons from Supabase
+  const list = document.getElementById('cnt-lessons-list');
+  try {
+    const {data,error} = await sb.from('lessons').select('*').order('created_at',{ascending:false});
+    if (error) throw error;
+    if (!data || !data.length) {
+      list.innerHTML = '<div class="emp">Нет уроков. Добавьте первый.</div>';
+      return;
+    }
+    list.innerHTML = data.map(l => `<div class="cd" style="margin-bottom:6px">
+      <div class="lt"><div class="ln">${l.title}</div><span class="badge bt">${l.cat||''}</span></div>
+      <div class="lm" style="margin-top:4px">${l.duration||''} · ${l.level||''}</div>
+      <div class="la"><button class="btn bno" onclick="deleteLesson('${l.id}')">Удалить</button></div>
+    </div>`).join('');
+  } catch(e) {
+    list.innerHTML = `<div class="cd"><div class="lm">Таблица lessons не найдена. Создайте в Supabase:<br><br>
+    <code style="font-size:11px;background:var(--bg);padding:8px;display:block;border-radius:8px;white-space:pre-wrap">CREATE TABLE lessons (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  title text NOT NULL,
+  cat text,
+  level text DEFAULT 'Начальный',
+  duration text DEFAULT '5 мин',
+  description text,
+  steps text[],
+  created_at timestamptz DEFAULT now()
+);</code></div></div>`;
+  }
 }
+
 function saveBanner(){
-  const t=document.getElementById('cnt-banner-title').value;
-  const u=document.getElementById('cnt-banner-url').value;
-  localStorage.setItem('admin_banner',JSON.stringify({title:t,url:u}));
+  const t=document.getElementById('cnt-banner-title').value.trim();
+  const u=document.getElementById('cnt-banner-url').value.trim();
+  if (!t) { toast('Введите заголовок'); return; }
+  localStorage.setItem('admin_banner',JSON.stringify({title:t,url:u,updated:new Date().toISOString()}));
   toast('Баннер сохранён');
 }
-function addLessonForm(){toast('Редактор уроков в разработке');}
+
+function addLessonForm(){
+  const modal = document.getElementById('userModal');
+  document.getElementById('userModalBody').innerHTML = `
+    <h3 style="margin-bottom:16px;">Новый урок</h3>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+      <input id="nl-title" class="ac input" placeholder="Название урока" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;">
+      <select id="nl-cat" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-family:inherit;">
+        <option>Щенки</option><option>Послушание</option><option>Поведение</option><option>Здоровье</option><option>Аджилити</option>
+      </select>
+      <select id="nl-level" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-family:inherit;">
+        <option>Начальный</option><option>Средний</option><option>Продвинутый</option>
+      </select>
+      <input id="nl-duration" class="ac input" placeholder="Длительность (5 мин)" value="5 мин" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;">
+      <textarea id="nl-desc" placeholder="Описание урока..." style="min-height:80px;border:1.5px solid var(--b);border-radius:10px;padding:10px 12px;font-family:inherit;resize:none;"></textarea>
+      <textarea id="nl-steps" placeholder="Шаги (каждый с новой строки)..." style="min-height:80px;border:1.5px solid var(--b);border-radius:10px;padding:10px 12px;font-family:inherit;resize:none;"></textarea>
+    </div>
+    <button class="btn bok" style="width:100%;padding:12px" onclick="saveLesson()">Сохранить</button>
+    <button class="btn bed" style="width:100%;padding:12px;margin-top:8px" onclick="document.getElementById('userModal').classList.remove('open')">Отмена</button>
+  `;
+  modal.classList.add('open');
+}
+
+async function saveLesson(){
+  const title = document.getElementById('nl-title').value.trim();
+  if (!title) { toast('Введите название'); return; }
+  try {
+    const {error} = await sb.from('lessons').insert({
+      title, cat: document.getElementById('nl-cat').value,
+      level: document.getElementById('nl-level').value,
+      duration: document.getElementById('nl-duration').value,
+      description: document.getElementById('nl-desc').value.trim(),
+      steps: document.getElementById('nl-steps').value.trim().split('\n').filter(Boolean)
+    });
+    if (error) throw error;
+    document.getElementById('userModal').classList.remove('open');
+    toast('Урок добавлен');
+    loadContent();
+  } catch(e) { toast('Ошибка: ' + (e.message||'')); }
+}
+
+async function deleteLesson(id){
+  if (!confirm('Удалить урок?')) return;
+  await sb.from('lessons').delete().eq('id',id);
+  toast('Удалено');
+  loadContent();
+}
 
 // ═══ FEEDBACK ═══
 async function loadFeedback(){
   const list=document.getElementById('feedback-list');
   const empty=document.getElementById('feedback-empty');
-  // Check if feedback table exists
   try{
     const{data,error}=await sb.from('feedback').select('*').order('created_at',{ascending:false}).limit(50);
     if(error)throw error;
     if(!data||!data.length){empty.style.display='';list.innerHTML='';return;}
     empty.style.display='none';
-    list.innerHTML=data.map(f=>`<div class="cd"><div class="lt"><div class="ln">${f.user_name||'Аноним'}</div><div class="lm">${new Date(f.created_at).toLocaleString('ru')}</div></div><div style="font-size:13px;margin-top:6px">${f.text}</div>${f.status?`<span class="badge ${f.status==='resolved'?'bo':'bw'}">${f.status}</span>`:''}</div>`).join('');
+    list.innerHTML=data.map(f=>`<div class="cd" style="margin-bottom:8px">
+      <div class="lt"><div class="ln">${f.user_name||'Аноним'}</div><span class="badge ${f.status==='resolved'?'bo':f.status==='in_progress'?'bw':'bn2'}">${f.status==='resolved'?'Решено':f.status==='in_progress'?'В работе':'Новое'}</span></div>
+      <div class="lm">${new Date(f.created_at).toLocaleString('ru')}</div>
+      <div style="font-size:13px;margin:8px 0;padding:10px;background:var(--bg);border-radius:10px;">${f.text}</div>
+      ${f.admin_reply?`<div style="font-size:12px;color:var(--p);margin-bottom:8px;">Ответ: ${f.admin_reply}</div>`:''}
+      <div class="la">
+        <button class="btn bed" onclick="replyFeedback('${f.id}')">Ответить</button>
+        <button class="btn bok" onclick="resolveFeedback('${f.id}')">Решено</button>
+        <button class="btn bno" onclick="deleteFeedback('${f.id}')">Удалить</button>
+      </div>
+    </div>`).join('');
   }catch(e){
     empty.style.display='none';
-    list.innerHTML='<div class="cd"><div class="lm">Таблица feedback ещё не создана в Supabase. Создайте таблицу с полями: id, user_id, user_name, text, status, created_at</div></div>';
+    list.innerHTML=`<div class="cd"><h2>Создайте таблицу feedback</h2><div class="lm" style="margin-top:8px">Выполните в Supabase SQL Editor:</div>
+    <pre style="font-size:11px;background:var(--bg);padding:12px;border-radius:10px;margin-top:8px;overflow-x:auto;white-space:pre-wrap;">CREATE TABLE feedback (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id uuid REFERENCES auth.users(id),
+  user_name text,
+  text text NOT NULL,
+  status text DEFAULT 'new',
+  admin_reply text,
+  created_at timestamptz DEFAULT now()
+);
+ALTER TABLE feedback ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can insert" ON feedback FOR INSERT WITH CHECK (true);
+CREATE POLICY "Users can see own" ON feedback FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Admin full access" ON feedback FOR ALL USING (true);</pre>
+    <button class="btn bed" style="margin-top:10px" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);toast('SQL скопирован')">Копировать SQL</button></div>`;
   }
+}
+async function replyFeedback(id){
+  const reply = prompt('Ваш ответ:');
+  if (!reply) return;
+  await sb.from('feedback').update({admin_reply:reply,status:'in_progress'}).eq('id',id);
+  toast('Ответ отправлен');
+  loadFeedback();
+}
+async function resolveFeedback(id){
+  await sb.from('feedback').update({status:'resolved'}).eq('id',id);
+  toast('Отмечено как решено');
+  loadFeedback();
+}
+async function deleteFeedback(id){
+  if(!confirm('Удалить?'))return;
+  await sb.from('feedback').delete().eq('id',id);
+  toast('Удалено');
+  loadFeedback();
 }
 
 // ═══ CATEGORIES ═══
-const DEFAULT_CATS=[
+let _adminCats = JSON.parse(localStorage.getItem('admin_categories') || 'null') || [
   {key:'trainer',name:'Кинологи / Тренеры'},
   {key:'grooming',name:'Груминг'},
   {key:'dogsitting',name:'Передержка'},
@@ -658,12 +777,34 @@ const DEFAULT_CATS=[
   {key:'clinic',name:'Клиники'},
   {key:'cafe',name:'Dog-friendly кафе'},
 ];
+
 async function loadCategories(){
   const list=document.getElementById('cat-list');
   const{data:biz}=await sb.from('businesses').select('type');
   const counts={};(biz||[]).forEach(b=>{counts[b.type]=(counts[b.type]||0)+1;});
-  list.innerHTML=DEFAULT_CATS.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--b)"><div><div class="ln">${c.name}</div><div class="lm">Ключ: ${c.key}</div></div><span class="badge bt">${counts[c.key]||0} бизнесов</span></div>`).join('');
+  list.innerHTML=_adminCats.map((c,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--b)">
+    <div><div class="ln">${c.name}</div><div class="lm">type: ${c.key} · ${counts[c.key]||0} бизнесов</div></div>
+    <button class="btn bno" onclick="deleteCategory(${i})" style="font-size:11px;padding:4px 10px;">Удалить</button>
+  </div>`).join('');
 }
-function addCategoryForm(){toast('Добавление категорий — скоро');}
+
+function addCategoryForm(){
+  const name = prompt('Название категории:');
+  if (!name) return;
+  const key = prompt('Ключ (латиницей, например: vet_pharmacy):');
+  if (!key) return;
+  _adminCats.push({key, name});
+  localStorage.setItem('admin_categories', JSON.stringify(_adminCats));
+  toast('Категория добавлена');
+  loadCategories();
+}
+
+function deleteCategory(i){
+  if (!confirm('Удалить категорию ' + _adminCats[i].name + '?')) return;
+  _adminCats.splice(i, 1);
+  localStorage.setItem('admin_categories', JSON.stringify(_adminCats));
+  toast('Удалено');
+  loadCategories();
+}
 </script>
 </body></html>
