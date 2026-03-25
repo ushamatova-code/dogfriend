@@ -497,7 +497,16 @@ let unreadChats = JSON.parse(localStorage.getItem('unread_chats') || '{}');
 // (основные определения ниже в файле — строки ~1791-1836)
 
 function playNotificationSound() {
-  // Создаем звук уведомления с помощью Web Audio API
+  const s = JSON.parse(localStorage.getItem('df_notif') || '{}');
+  
+  // Vibration
+  if (s.vibro !== false && navigator.vibrate) {
+    navigator.vibrate([200, 100, 200]);
+  }
+  
+  // Sound
+  if (s.sound === false) return;
+  
   try {
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
@@ -514,9 +523,7 @@ function playNotificationSound() {
     
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + 0.5);
-  } catch(e) {
-    // Если Web Audio не поддерживается, игнорируем
-  }
+  } catch(e) {}
 }
 
 function addUnreadMessage(chatId) {
@@ -2002,6 +2009,10 @@ function getRoomId(a, b) {
 
 // In-app уведомление — работает везде без разрешений
 function showInAppNotification(title, body) {
+  // Check if messages notifications are enabled
+  const s = JSON.parse(localStorage.getItem('df_notif') || '{}');
+  if (s.messages === false) return;
+  
   const el = document.createElement('div');
   el.style.cssText = `
     position:fixed; top:16px; left:50%; transform:translateX(-50%);
@@ -3726,10 +3737,83 @@ function openLesson(id){
 // ════════════════════════════════════════════════════════════
 // NOTIF SETTINGS
 // ════════════════════════════════════════════════════════════
-function saveNotif(key,val){
-  let s=JSON.parse(localStorage.getItem('df_notif')||'{}');
-  s[key]=val;localStorage.setItem('df_notif',JSON.stringify(s));
-  showToast(val?'🔔 Включено':'🔕 Отключено');
+function saveNotifSetting(key, val) {
+  let s = JSON.parse(localStorage.getItem('df_notif') || '{}');
+  s[key] = val;
+  localStorage.setItem('df_notif', JSON.stringify(s));
+  showToast(val ? 'Включено' : 'Отключено');
+}
+
+function getNotifSettings() {
+  return JSON.parse(localStorage.getItem('df_notif') || '{"messages":true,"lessons":true,"events":true,"promos":true,"vaccine":true,"checkup":true,"sound":true,"vibro":true}');
+}
+
+function loadNotifScreen() {
+  const s = getNotifSettings();
+  const el = (id) => document.getElementById(id);
+  if (el('ntf-messages')) el('ntf-messages').checked = s.messages !== false;
+  if (el('ntf-lessons')) el('ntf-lessons').checked = s.lessons !== false;
+  if (el('ntf-events')) el('ntf-events').checked = s.events !== false;
+  if (el('ntf-promos')) el('ntf-promos').checked = s.promos !== false;
+  if (el('ntf-vaccine')) el('ntf-vaccine').checked = s.vaccine !== false;
+  if (el('ntf-checkup')) el('ntf-checkup').checked = s.checkup !== false;
+  if (el('ntf-sound')) el('ntf-sound').checked = s.sound !== false;
+  if (el('ntf-vibro')) el('ntf-vibro').checked = s.vibro !== false;
+  
+  // Show push status
+  const statusEl = el('notif-push-status');
+  if (!statusEl) return;
+  
+  const permission = 'Notification' in window ? Notification.permission : 'unsupported';
+  
+  if (permission === 'granted') {
+    statusEl.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:44px;height:44px;border-radius:14px;background:rgba(52,199,89,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#34C759" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:#34C759;">Push включены</div>
+          <div style="font-size:12px;color:var(--text-secondary);">Уведомления приходят даже когда приложение закрыто</div>
+        </div>
+      </div>`;
+  } else if (permission === 'denied') {
+    statusEl.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:44px;height:44px;border-radius:14px;background:rgba(208,2,27,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D0021B" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:#D0021B;">Push заблокированы</div>
+          <div style="font-size:12px;color:var(--text-secondary);">Откройте настройки браузера → сайт dogfriend.vercel.app → разрешите уведомления</div>
+        </div>
+      </div>`;
+  } else {
+    statusEl.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:44px;height:44px;border-radius:14px;background:rgba(74,144,217,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:15px;font-weight:800;">Push не включены</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">Включите чтобы получать уведомления когда приложение закрыто</div>
+          <button class="btn btn-p" style="width:100%;height:44px;" onclick="enablePushFromSettings()">Включить push-уведомления</button>
+        </div>
+      </div>`;
+  }
+}
+
+async function enablePushFromSettings() {
+  try {
+    if (window.OneSignal) {
+      await OneSignal.Notifications.requestPermission();
+    } else {
+      await Notification.requestPermission();
+    }
+    loadNotifScreen(); // refresh status
+  } catch(e) {
+    showToast('Ошибка: ' + (e.message || ''));
+  }
 }
 
 // ════════════════════════════════════════════════════════════
@@ -3745,6 +3829,7 @@ function saveNotif(key,val){
     if(id==='lessons')   renderLessons();
     if(id==='myPets')    renderPets();
     if(id==='medRecords')renderMedRecords();
+    if(id==='notifSettings') loadNotifScreen();
   };
 })();
 

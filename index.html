@@ -1125,29 +1125,48 @@
 
 <!-- NOTIF SETTINGS -->
 <div class="screen" id="notifSettings">
-  <div class="top-bar" style="padding-top:0;"><button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="tbar-title">Уведомления</div></div>
+  <div style="padding:calc(16px + env(safe-area-inset-top, 0px)) 20px 12px;background:var(--white);">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <h1 style="font-size:22px;flex:1;">Уведомления</h1>
+    </div>
+  </div>
   <div class="scroll" style="padding:0 16px;">
-    <div class="card" style="margin:12px 0 12px;">
-      <h3 style="margin-bottom:14px;">Общие уведомления</h3>
+    <!-- Push status -->
+    <div class="card" style="margin:12px 0 12px;" id="notif-push-status"></div>
+    
+    <div class="card" style="margin:0 0 12px;">
+      <h3 style="margin-bottom:14px;">Что присылать</h3>
       <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);"><div><div style="font-size:14px;font-weight:600;">Новые сообщения</div><div style="font-size:12px;color:var(--text-secondary);">Личные и групповые чаты</div></div><label class="df-toggle"><input type="checkbox" checked onchange="saveNotif('messages',this.checked)"><span class="df-slider"></span></label></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);"><div><div style="font-size:14px;font-weight:600;">Напоминание о занятиях</div><div style="font-size:12px;color:var(--text-secondary);">За 2 часа до записи</div></div><label class="df-toggle"><input type="checkbox" checked onchange="saveNotif('lessons',this.checked)"><span class="df-slider"></span></label></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);"><div><div style="font-size:14px;font-weight:600;">События в районе</div><div style="font-size:12px;color:var(--text-secondary);">Прогулки, встречи пород</div></div><label class="df-toggle"><input type="checkbox" checked onchange="saveNotif('events',this.checked)"><span class="df-slider"></span></label></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;"><div><div style="font-size:14px;font-weight:600;">Акции и скидки</div><div style="font-size:12px;color:var(--text-secondary);">Специальные предложения</div></div><label class="df-toggle"><input type="checkbox" onchange="saveNotif('promos',this.checked)"><span class="df-slider"></span></label></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);"><div><div style="font-size:14px;font-weight:600;">Новые сообщения</div><div style="font-size:12px;color:var(--text-secondary);">Личные и групповые чаты</div></div><label class="df-toggle"><input type="checkbox" id="ntf-messages" onchange="saveNotifSetting('messages',this.checked)"><span class="df-slider"></span></label></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);"><div><div style="font-size:14px;font-weight:600;">Напоминание о занятиях</div><div style="font-size:12px;color:var(--text-secondary);">За 2 часа до записи</div></div><label class="df-toggle"><input type="checkbox" id="ntf-lessons" onchange="saveNotifSetting('lessons',this.checked)"><span class="df-slider"></span></label></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);"><div><div style="font-size:14px;font-weight:600;">События рядом</div><div style="font-size:12px;color:var(--text-secondary);">Прогулки, встречи, тренировки</div></div><label class="df-toggle"><input type="checkbox" id="ntf-events" onchange="saveNotifSetting('events',this.checked)"><span class="df-slider"></span></label></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;"><div><div style="font-size:14px;font-weight:600;">Акции и скидки</div><div style="font-size:12px;color:var(--text-secondary);">От специалистов рядом</div></div><label class="df-toggle"><input type="checkbox" id="ntf-promos" onchange="saveNotifSetting('promos',this.checked)"><span class="df-slider"></span></label></div>
       </div>
     </div>
+    
     <div class="card" style="margin:0 0 12px;">
       <h3 style="margin-bottom:14px;">Здоровье питомца</h3>
       <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);"><div><div style="font-size:14px;font-weight:600;">Напоминание о вакцинации</div><div style="font-size:12px;color:var(--text-secondary);">За 7 дней до срока</div></div><label class="df-toggle"><input type="checkbox" checked onchange="saveNotif('vaccine',this.checked)"><span class="df-slider"></span></label></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;"><div><div style="font-size:14px;font-weight:600;">Плановый осмотр</div><div style="font-size:12px;color:var(--text-secondary);">Раз в 6 месяцев</div></div><label class="df-toggle"><input type="checkbox" checked onchange="saveNotif('checkup',this.checked)"><span class="df-slider"></span></label></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);"><div><div style="font-size:14px;font-weight:600;">Напоминание о вакцинации</div><div style="font-size:12px;color:var(--text-secondary);">За 7 дней до срока</div></div><label class="df-toggle"><input type="checkbox" id="ntf-vaccine" onchange="saveNotifSetting('vaccine',this.checked)"><span class="df-slider"></span></label></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;"><div><div style="font-size:14px;font-weight:600;">Плановый осмотр</div><div style="font-size:12px;color:var(--text-secondary);">Раз в 6 месяцев</div></div><label class="df-toggle"><input type="checkbox" id="ntf-checkup" onchange="saveNotifSetting('checkup',this.checked)"><span class="df-slider"></span></label></div>
       </div>
     </div>
-    <div class="card" style="margin:0 0 80px;">
+
+    <div class="card" style="margin:0 0 12px;">
       <h3 style="margin-bottom:14px;">Звук и вибрация</h3>
       <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);"><div style="font-size:14px;font-weight:600;">Звук</div><label class="df-toggle"><input type="checkbox" checked onchange="saveNotif('sound',this.checked)"><span class="df-slider"></span></label></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;"><div style="font-size:14px;font-weight:600;">Вибрация</div><label class="df-toggle"><input type="checkbox" checked onchange="saveNotif('vibro',this.checked)"><span class="df-slider"></span></label></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);"><div style="font-size:14px;font-weight:600;">Звук</div><label class="df-toggle"><input type="checkbox" id="ntf-sound" onchange="saveNotifSetting('sound',this.checked)"><span class="df-slider"></span></label></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;"><div style="font-size:14px;font-weight:600;">Вибрация</div><label class="df-toggle"><input type="checkbox" id="ntf-vibro" onchange="saveNotifSetting('vibro',this.checked)"><span class="df-slider"></span></label></div>
+      </div>
+    </div>
+    
+    <div class="card" style="margin:0 0 80px;">
+      <h3 style="margin-bottom:10px;">Как работают уведомления</h3>
+      <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
+        <div style="margin-bottom:8px;">Когда приложение <strong>открыто</strong> — уведомления приходят внутри приложения (звук + баннер).</div>
+        <div style="margin-bottom:8px;">Когда приложение <strong>закрыто</strong> — push-уведомления приходят от браузера (нужно разрешение).</div>
+        <div>На <strong>iPhone</strong> для push нужно добавить приложение на домашний экран.</div>
       </div>
     </div>
   </div>
