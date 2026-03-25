@@ -4435,3 +4435,50 @@ async function acceptPushBanner() {
     console.log('Push permission error:', e);
   }
 }
+
+// ════════════════════════════════════════════════════════════
+// NETWORK RESILIENCE — работа при плохой сети / VPN
+// ════════════════════════════════════════════════════════════
+
+// Показываем баннер когда нет сети
+window.addEventListener('offline', () => {
+  showNetworkBanner(false);
+});
+
+window.addEventListener('online', () => {
+  showNetworkBanner(true);
+  // Переподключаемся к Supabase Realtime
+  if (typeof startRealtimeDMSubscription === 'function') {
+    stopRealtimeDMSubscription();
+    startRealtimeDMSubscription();
+  }
+});
+
+function showNetworkBanner(isOnline) {
+  let banner = document.getElementById('network-banner');
+  if (isOnline) {
+    if (banner) { banner.style.opacity = '0'; setTimeout(() => banner.remove(), 300); }
+    return;
+  }
+  if (banner) return; // already showing
+  banner = document.createElement('div');
+  banner.id = 'network-banner';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#FF3B30;color:white;text-align:center;padding:8px 16px;font-size:13px;font-weight:700;z-index:99999;transition:opacity 0.3s;';
+  banner.textContent = 'Нет подключения к интернету';
+  document.body.appendChild(banner);
+}
+
+// Retry wrapper для Supabase запросов
+async function supabaseRetry(fn, retries = 2) {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await fn();
+    } catch(e) {
+      if (i === retries) throw e;
+      await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+    }
+  }
+}
+
+// Check on load
+if (!navigator.onLine) showNetworkBanner(false);
