@@ -1174,10 +1174,14 @@
 
 <!-- MEDICAL RECORDS -->
 <div class="screen" id="medRecords">
-  <div class="top-bar" style="padding-top:0;">
-    <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-    <div class="tbar-title">Медицинские записи</div>
-    <button class="btn btn-p" style="width:auto;height:36px;padding:0 14px;font-size:13px;border-radius:10px;" onclick="openModal('m-add-med')">+ Добавить</button>
+  <div style="padding:calc(16px + env(safe-area-inset-top, 0px)) 20px 12px;background:var(--white);">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="back-btn" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <h1 style="font-size:22px;flex:1;">Медицинские записи</h1>
+      <button style="width:36px;height:36px;border-radius:10px;background:var(--primary);color:white;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="openModal('m-add-med')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
   </div>
   <div class="scroll" style="padding:8px 16px 20px;"><div id="med-records-list"></div></div>
 </div>
@@ -1276,7 +1280,7 @@
   <div class="modal" onclick="event.stopPropagation()" style="max-height:90%;overflow-y:auto;">
     <div class="mhandle"></div>
     <h3 style="margin-bottom:16px;">Новая запись</h3>
-    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
+    <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px;">
       <div><label class="lbl">Тип записи</label>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;" id="med-type-chips">
           <div class="chip on" onclick="selectMedType('Вакцинация',this)">Вакцинация</div>
@@ -1286,11 +1290,25 @@
           <div class="chip" onclick="selectMedType('Другое',this)">Другое</div>
         </div>
       </div>
-      <div><label class="lbl">Питомец</label><input class="input" id="med-pet-name" placeholder="Имя питомца"></div>
+      <div><label class="lbl">Питомец</label>
+        <select class="input" id="med-pet-name" style="height:48px;">
+          <option value="">Выберите питомца</option>
+        </select>
+      </div>
       <div><label class="lbl">Название / диагноз *</label><input class="input" id="med-title" placeholder="Например: Нобивак DHPPi+L"></div>
-      <div><label class="lbl">Дата</label><input class="input" id="med-date" type="date"></div>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;"><label class="lbl">Дата</label><input class="input" id="med-date" type="date"></div>
+        <div style="flex:1;"><label class="lbl">Напоминание</label>
+          <select class="input" id="med-remind" style="height:48px;">
+            <option value="">Нет</option>
+            <option value="7">За 7 дней</option>
+            <option value="30">За 30 дней</option>
+            <option value="365">Через 1 год</option>
+          </select>
+        </div>
+      </div>
       <div><label class="lbl">Врач / клиника</label><input class="input" id="med-doctor" placeholder="Др. Иванов, Зоовет"></div>
-      <div><label class="lbl">Заметки</label><input class="input" id="med-notes" placeholder="Следующая через 1 год..."></div>
+      <div><label class="lbl">Заметки</label><textarea class="input" id="med-notes" placeholder="Следующая через 1 год..." style="min-height:60px;padding:12px;"></textarea></div>
     </div>
     <button class="btn btn-p" onclick="saveMedRecord()" style="margin-bottom:10px;">Сохранить запись</button>
     <button class="btn btn-g" onclick="closeModal('m-add-med')">Отмена</button>

@@ -3502,12 +3502,37 @@ async function renderPets() {
 // ════════════════════════════════════════════════════════════
 // MED RECORDS
 // ════════════════════════════════════════════════════════════
-const MED_ICONS={'Вакцинация':'💉','Приём':'🏥','Анализ':'🔬','Операция':'🔪','Другое':'📋'};
-const MED_BG={'Вакцинация':'rgba(74,144,217,.12)','Приём':'rgba(76,175,80,.12)','Анализ':'rgba(156,39,176,.12)','Операция':'rgba(208,2,27,.12)','Другое':'rgba(0,0,0,.06)'};
+const MED_ICONS={
+  'Вакцинация':'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4A90D9" stroke-width="2" stroke-linecap="round"><path d="M19.5 2.5l2 2-5 5-2-2"/><path d="M14.5 7.5l-8 8-3 3"/><path d="M9.5 12.5l2 2"/></svg>',
+  'Приём':'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" stroke-width="2" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+  'Анализ':'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9C27B0" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+  'Операция':'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D0021B" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>',
+  'Другое':'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
+};
+const MED_BG={'Вакцинация':'rgba(74,144,217,.1)','Приём':'rgba(76,175,80,.1)','Анализ':'rgba(156,39,176,.1)','Операция':'rgba(208,2,27,.1)','Другое':'rgba(142,142,147,.08)'};
 let _medType='Вакцинация';
 let _medRecordsCache = [];
 
 function selectMedType(t,el){_medType=t;document.querySelectorAll('#med-type-chips .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');}
+
+// Auto-fill pets dropdown when modal opens
+const _origOpenModal = window.openModal;
+window.openModal = function(id) {
+  _origOpenModal(id);
+  if (id === 'm-add-med') {
+    // Fill pets dropdown
+    const select = document.getElementById('med-pet-name');
+    if (select && _petsCache && _petsCache.length) {
+      select.innerHTML = '<option value="">Выберите питомца</option>' + 
+        _petsCache.map(p => `<option value="${p.name}">${p.name}${p.breed ? ' (' + p.breed + ')' : ''}</option>`).join('');
+    }
+    // Prefill today's date
+    const dateInput = document.getElementById('med-date');
+    if (dateInput && !dateInput.value) {
+      dateInput.value = new Date().toISOString().split('T')[0];
+    }
+  }
+};
 
 async function saveMedRecord(){
   const title=document.getElementById('med-title').value.trim();
@@ -3580,23 +3605,26 @@ async function renderMedRecords(){
   }
 
   if(!recs.length){
-    list.innerHTML = '<div style="padding:40px 20px;text-align:center;color:var(--text-secondary);"><div style="font-size:48px;margin-bottom:12px;">📋</div><div style="font-weight:700;margin-bottom:4px;">Нет записей</div><div style="font-size:13px;">Добавьте первую медицинскую запись</div></div>';
+    list.innerHTML = `<div style="padding:60px 20px;text-align:center;color:var(--text-secondary);">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--border)" stroke-width="1.5" style="margin-bottom:12px;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <div style="font-weight:700;margin-bottom:4px;">Нет записей</div>
+      <div style="font-size:13px;">Нажмите + чтобы добавить первую запись</div>
+    </div>`;
     return;
   }
 
   list.innerHTML=recs.map(r=>`
-    <div id="med-${r.id}" class="med-record-item" onclick="openMedRecord('${r.id}')" style="background:var(--white);border-radius:var(--radius);margin-bottom:10px;box-shadow:var(--shadow);padding:14px 16px;display:flex;gap:12px;align-items:flex-start;cursor:pointer;position:relative;transition:transform 0.2s;">
-      <div style="width:44px;height:44px;background:${MED_BG[r.type]||'rgba(0,0,0,.06)'};border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${MED_ICONS[r.type]||'📋'}</div>
+    <div id="med-${r.id}" class="med-record-item" onclick="openMedRecord('${r.id}')" style="background:var(--white);border-radius:16px;margin-bottom:10px;box-shadow:var(--shadow);padding:14px 16px;display:flex;gap:12px;align-items:flex-start;cursor:pointer;position:relative;transition:transform 0.2s;">
+      <div style="width:44px;height:44px;background:${MED_BG[r.type]||'rgba(0,0,0,.06)'};border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${MED_ICONS[r.type]||MED_ICONS['Другое']}</div>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
           <div style="font-weight:800;font-size:14px;">${r.title}</div>
-          <span class="tag tag-b" style="font-size:11px;flex-shrink:0;">${r.type}</span>
+          <span style="font-size:11px;color:var(--text-secondary);background:var(--bg);padding:2px 8px;border-radius:6px;flex-shrink:0;">${r.type}</span>
         </div>
-        ${r.petName?`<div style="font-size:12px;color:var(--primary);font-weight:600;margin-top:2px;">🐕 ${r.petName}</div>`:''}
-        <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">📅 ${r.date}${r.doctor?' · '+r.doctor:''}</div>
-        ${r.notes?`<div style="font-size:12px;color:var(--text-secondary);margin-top:3px;font-style:italic;">${r.notes}</div>`:''}
+        ${r.petName?`<div style="font-size:12px;color:var(--primary);font-weight:600;margin-top:3px;display:flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg> ${r.petName}</div>`:''}
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;display:flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg> ${r.date||'Без даты'}${r.doctor?' · '+r.doctor:''}</div>
+        ${r.notes?`<div style="font-size:12px;color:var(--text-secondary);margin-top:3px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.notes}</div>`:''}
       </div>
-      <button onclick="event.stopPropagation();deleteMedRecord('${r.id}')" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);background:#FF3B30;color:white;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;opacity:0;transition:opacity 0.2s;">Удалить</button>
     </div>`).join('');
     
   // Добавляем свайп для удаления
@@ -3643,21 +3671,36 @@ function openMedRecord(id) {
     document.body.appendChild(modal);
   }
   
-  modal.innerHTML = `<div class="modal" onclick="event.stopPropagation()">
+  modal.innerHTML = `<div class="modal" onclick="event.stopPropagation()" style="max-height:85%;overflow-y:auto;">
     <div class="mhandle"></div>
-    <div style="padding:20px;">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-        <div style="width:56px;height:56px;background:${MED_BG[rec.type]||'rgba(0,0,0,.06)'};border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:32px;">${MED_ICONS[rec.type]||'📋'}</div>
+    <div style="padding:4px 0 16px;">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+        <div style="width:56px;height:56px;background:${MED_BG[rec.type]||'rgba(0,0,0,.06)'};border-radius:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${MED_ICONS[rec.type]||MED_ICONS['Другое']}</div>
         <div style="flex:1;">
-          <div style="font-weight:800;font-size:16px;margin-bottom:4px;">${rec.title}</div>
-          <span class="tag tag-b">${rec.type}</span>
+          <div style="font-weight:800;font-size:17px;margin-bottom:4px;">${rec.title}</div>
+          <span style="font-size:12px;color:var(--text-secondary);background:var(--bg);padding:3px 10px;border-radius:6px;">${rec.type}</span>
         </div>
       </div>
-      ${rec.petName?`<div style="margin-bottom:12px;"><strong>🐕 Питомец:</strong> ${rec.petName}</div>`:''}
-      <div style="margin-bottom:12px;"><strong>📅 Дата:</strong> ${rec.date}</div>
-      ${rec.doctor?`<div style="margin-bottom:12px;"><strong>👨‍⚕️ Врач:</strong> ${rec.doctor}</div>`:''}
-      ${rec.notes?`<div style="margin-bottom:16px;padding:12px;background:var(--bg);border-radius:10px;"><strong>📝 Заметки:</strong><br>${rec.notes}</div>`:''}
-      <button class="btn btn-g" onclick="closeModal('m-view-med')">Закрыть</button>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
+        ${rec.petName?`<div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(74,144,217,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
+          <div><div style="font-size:12px;color:var(--text-secondary);">Питомец</div><div style="font-weight:700;font-size:14px;">${rec.petName}</div></div>
+        </div>`:''}
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(74,144,217,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg></div>
+          <div><div style="font-size:12px;color:var(--text-secondary);">Дата</div><div style="font-weight:700;font-size:14px;">${rec.date || 'Не указана'}</div></div>
+        </div>
+        ${rec.doctor?`<div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(74,144,217,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <div><div style="font-size:12px;color:var(--text-secondary);">Врач / клиника</div><div style="font-weight:700;font-size:14px;">${rec.doctor}</div></div>
+        </div>`:''}
+      </div>
+      ${rec.notes?`<div style="padding:14px;background:var(--bg);border-radius:14px;margin-bottom:20px;">
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">Заметки</div>
+        <div style="font-size:14px;line-height:1.5;">${rec.notes}</div>
+      </div>`:''}
+      <button class="btn btn-g" onclick="closeModal('m-view-med')" style="margin-bottom:8px;">Закрыть</button>
+      <button class="btn" style="background:rgba(208,2,27,0.08);color:#D0021B;width:100%;" onclick="closeModal('m-view-med');deleteMedRecord('${rec.id}')">Удалить запись</button>
     </div>
   </div>`;
   
