@@ -32,6 +32,8 @@
 .btn:active{transform:scale(.96)}
 .bok{background:var(--ok);color:white}.bno{background:rgba(255,59,48,.08);color:var(--err)}.bed{background:rgba(74,144,217,.08);color:var(--p)}
 .tabs{display:flex;gap:0;margin-bottom:10px;overflow-x:auto}.tab{padding:8px 12px;font-size:13px;font-weight:600;color:var(--m);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent}.tab.on{color:var(--p);border-bottom-color:var(--p)}
+.uf-btn{padding:6px 12px;border-radius:20px;border:1.5px solid var(--b);background:var(--w);font-size:12px;font-weight:600;color:var(--m);cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap}
+.uf-btn.on{background:var(--p);color:white;border-color:var(--p)}
 .emp{text-align:center;padding:30px;color:var(--m);font-size:13px}
 .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--t);color:white;padding:8px 18px;border-radius:12px;font-size:13px;font-weight:600;z-index:999}
 .sec{display:none}.sec.on{display:block}
@@ -47,7 +49,26 @@
 <div class="ct">
 <div class="sec on" id="s-dash"><div class="sg" id="stats"></div><div class="cd"><h2>Ожидают одобрения</h2><div id="pend"></div></div></div>
 <div class="sec" id="s-biz"><div class="tabs" id="btabs"><div class="tab on" onclick="fb('all',this)">Все</div><div class="tab" onclick="fb('pending',this)">Ожидают</div><div class="tab" onclick="fb('approved',this)">Одобрены</div></div><div id="bl"></div></div>
-<div class="sec" id="s-users"><div id="ul"></div></div>
+<div class="sec" id="s-users">
+  <!-- Поиск -->
+  <div style="padding:0 0 10px;">
+    <input id="user-search" placeholder="🔍 Поиск по имени, email, району..." oninput="filterUsers()"
+      style="width:100%;height:44px;border:1.5px solid var(--b);border-radius:12px;padding:0 14px;font-size:14px;font-family:inherit;outline:none;background:var(--w);">
+  </div>
+  <!-- Фильтры -->
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;" id="user-filters">
+    <button class="uf-btn on" onclick="setUserFilter('all',this)">Все</button>
+    <button class="uf-btn" onclick="setUserFilter('push',this)">🔔 С пушами</button>
+    <button class="uf-btn" onclick="setUserFilter('nopush',this)">🔕 Без пушей</button>
+    <button class="uf-btn" onclick="setUserFilter('pets',this)">🐕 С питомцем</button>
+    <button class="uf-btn" onclick="setUserFilter('orders',this)">📋 С заказами</button>
+    <button class="uf-btn" onclick="setUserFilter('district',this)">📍 С районом</button>
+    <button class="uf-btn" onclick="setUserFilter('new',this)">🆕 За 7 дней</button>
+  </div>
+  <!-- Счётчик -->
+  <div id="user-count" style="font-size:12px;color:var(--m);margin-bottom:8px;"></div>
+  <div id="ul"></div>
+</div>
 <div class="sec" id="s-events"><div class="tabs" id="etabs"><div class="tab on" onclick="fe('upcoming',this)">Предстоящие</div><div class="tab" onclick="fe('past',this)">Прошедшие</div><div class="tab" onclick="fe('all',this)">Все</div></div><div id="el"></div></div>
 <div class="sec" id="s-promos"><div id="pl"></div></div>
 <div class="sec" id="s-push">
@@ -197,37 +218,101 @@ async function loadBiz(){
 }
 
 // ═══ USERS ═══
-async function loadUsers(){
-  const{data:pr}=await sb.from('profiles').select('*').order('created_at',{ascending:false});
-  const{data:pe}=await sb.from('pets').select('user_id,name');
-  const{data:bk}=await sb.from('bookings').select('user_id');
-  const{data:ps}=await sb.from('push_subscriptions').select('user_id');
-  const pc={};const pn={};const bc={};const pushSet=new Set();
-  (pe||[]).forEach(p=>{pc[p.user_id]=(pc[p.user_id]||0)+1;if(!pn[p.user_id])pn[p.user_id]=p.name});
-  (bk||[]).forEach(b=>{bc[b.user_id]=(bc[b.user_id]||0)+1});
-  (ps||[]).forEach(p=>pushSet.add(p.user_id));
-  if(!pr||!pr.length){document.getElementById('ul').innerHTML='<div class="emp">Нет пользователей</div>';return}
-  document.getElementById('ul').innerHTML=pr.map(u=>{
-    const name=u.name||'Гость';
-    const initials=name.substring(0,2).toUpperCase();
-    const pets=pc[u.id]||pc[u.user_id]||0;
-    const petName=pn[u.id]||pn[u.user_id]||u.dogname||'';
-    const orders=bc[u.id]||bc[u.user_id]||0;
-    const hasPush=pushSet.has(u.id)||pushSet.has(u.user_id);
-    const regDate=u.created_at?new Date(u.created_at).toLocaleDateString('ru',{day:'numeric',month:'short',year:'2-digit'}):'';
-    return `<div class="cd" onclick="openUserModal('${u.id||u.user_id}')" style="cursor:pointer">
+let _allUsers = [];        // все пользователи — кэш
+let _userFilter = 'all';   // текущий фильтр
+let _pushSet = new Set();  // userId у кого есть push
+let _petCount = {};        // userId → кол-во питомцев
+let _petName = {};         // userId → кличка первого питомца
+let _bookCount = {};       // userId → кол-во заказов
+
+async function loadUsers() {
+  document.getElementById('ul').innerHTML = '<div class="emp">⏳ Загрузка...</div>';
+  const [
+    {data: pr},
+    {data: pe},
+    {data: bk},
+    {data: ps}
+  ] = await Promise.all([
+    sb.from('profiles').select('*').order('created_at', {ascending: false}),
+    sb.from('pets').select('user_id,name'),
+    sb.from('bookings').select('user_id'),
+    sb.from('push_subscriptions').select('user_id')
+  ]);
+
+  _petCount = {}; _petName = {}; _bookCount = {}; _pushSet = new Set();
+  (pe||[]).forEach(p => { _petCount[p.user_id] = (_petCount[p.user_id]||0)+1; if (!_petName[p.user_id]) _petName[p.user_id] = p.name; });
+  (bk||[]).forEach(b => { _bookCount[b.user_id] = (_bookCount[b.user_id]||0)+1; });
+  (ps||[]).forEach(p => _pushSet.add(p.user_id));
+
+  _allUsers = pr || [];
+  filterUsers();
+}
+
+function setUserFilter(f, el) {
+  _userFilter = f;
+  document.querySelectorAll('.uf-btn').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  filterUsers();
+}
+
+function filterUsers() {
+  const q = (document.getElementById('user-search')?.value || '').toLowerCase().trim();
+  const now = Date.now();
+  const week = 7 * 24 * 60 * 60 * 1000;
+
+  let list = _allUsers.filter(u => {
+    const uid = u.id || u.user_id;
+    const hasPush = _pushSet.has(uid);
+    const pets = _petCount[uid] || 0;
+    const orders = _bookCount[uid] || 0;
+
+    // Фильтр по типу
+    if (_userFilter === 'push' && !hasPush) return false;
+    if (_userFilter === 'nopush' && hasPush) return false;
+    if (_userFilter === 'pets' && pets === 0) return false;
+    if (_userFilter === 'orders' && orders === 0) return false;
+    if (_userFilter === 'district' && !u.district) return false;
+    if (_userFilter === 'new' && (!u.created_at || now - new Date(u.created_at) > week)) return false;
+
+    // Поиск
+    if (q) {
+      const searchIn = [u.name, u.email, u.district, _petName[uid]].join(' ').toLowerCase();
+      if (!searchIn.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const countEl = document.getElementById('user-count');
+  if (countEl) countEl.textContent = `Показано: ${list.length} из ${_allUsers.length}`;
+
+  if (!list.length) {
+    document.getElementById('ul').innerHTML = '<div class="emp">Никого не нашли</div>';
+    return;
+  }
+
+  document.getElementById('ul').innerHTML = list.map(u => {
+    const uid = u.id || u.user_id;
+    const name = u.name || 'Гость';
+    const initials = name.substring(0,2).toUpperCase();
+    const pets = _petCount[uid] || 0;
+    const petName = _petName[uid] || u.dogname || '';
+    const orders = _bookCount[uid] || 0;
+    const hasPush = _pushSet.has(uid);
+    const regDate = u.created_at ? new Date(u.created_at).toLocaleDateString('ru',{day:'numeric',month:'short',year:'2-digit'}) : '';
+    return `<div class="cd" onclick="openUserModal('${uid}')" style="cursor:pointer">
       <div style="display:flex;align-items:center;gap:12px">
         ${u.avatar_url
-          ?`<img src="${u.avatar_url}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;flex-shrink:0">`
-          :`<div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0">${initials}</div>`}
+          ? `<img src="${u.avatar_url}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;flex-shrink:0">`
+          : `<div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0">${initials}</div>`}
         <div style="flex:1;min-width:0">
-          <div class="ln">${name}${hasPush?' 🔔':''}</div>
-          <div class="lm">${u.email?u.email+' · ':''} ${u.district?u.district+' · ':''}${pets} пит. · ${orders} зак.${regDate?' · '+regDate:''}</div>
-          ${petName?`<div style="font-size:11px;color:var(--p);margin-top:1px">🐕 ${petName}</div>`:''}
+          <div class="ln">${name}${hasPush ? ' 🔔' : ''}</div>
+          <div class="lm">${u.email ? u.email+' · ' : ''}${u.district ? u.district+' · ' : ''}${pets} пит. · ${orders} зак.${regDate ? ' · '+regDate : ''}</div>
+          ${petName ? `<div style="font-size:11px;color:var(--p);margin-top:1px">🐕 ${petName}</div>` : ''}
         </div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--m)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
-    </div>`}).join('');
+    </div>`;
+  }).join('');
 }
 
 // User profile modal — полная информация
@@ -388,10 +473,9 @@ async function openUserModal(userId){
       </div>`:''}
 
       <!-- Кнопки -->
-      <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
-        <a href="https://dogfriend.vercel.app/?chat=${userId}" target="_blank" class="btn bok" style="flex:1;min-width:120px;text-decoration:none">💬 Написать</a>
-        <button class="btn bno" style="flex:1;min-width:120px" onclick="blockUser('${userId}')">🚫 Заблокировать</button>
-        <button class="btn bed" style="width:100%" onclick="document.getElementById('userModal').classList.remove('open')">Закрыть</button>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn bno" style="flex:1" onclick="blockUser('${userId}')">🚫 Заблокировать</button>
+        <button class="btn bed" style="flex:1" onclick="document.getElementById('userModal').classList.remove('open')">Закрыть</button>
       </div>`;
 
   }catch(e){console.error(e);body.innerHTML='<div class="emp">Ошибка загрузки: '+e.message+'</div>'}
@@ -808,5 +892,4 @@ function deleteCategory(i){
   loadCategories();
 }
 </script>
-
 </body></html>
