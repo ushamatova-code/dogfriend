@@ -424,11 +424,12 @@ let sb;
 function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2500)}
 
 function toggleMenu(){
-  const menu=document.getElementById('admin-menu');
-  menu.style.display=menu.style.display==='none'?'block':'none';
+  const sb = document.getElementById('sidebar');
+  if (sb.classList.contains('open')) closeSidebar();
+  else openSidebar();
 }
 function goMenu(id){
-  toggleMenu();
+  closeSidebar();
   go(id);
 }
 
@@ -437,7 +438,12 @@ async function login(){
   if(!e||!p){er.textContent='Заполните поля';return}
   try{sb=window.supabase.createClient(SU,SK);const{error}=await sb.auth.signInWithPassword({email:e,password:p});if(error)throw error;
   if(!AD.includes(e.toLowerCase())){er.textContent='Нет прав';await sb.auth.signOut();return}
-  document.getElementById('auth').style.display='none';document.getElementById('app').style.display='block';loadDash()}catch(x){er.textContent=x.message||'Ошибка'}
+  document.getElementById('auth').style.display='none';
+  document.getElementById('app').style.display='block';
+  // Показываем email в sidebar
+  const sbEmail=document.getElementById('sb-email');if(sbEmail)sbEmail.textContent=e;
+  const sbAv=document.getElementById('sb-avatar');if(sbAv)sbAv.textContent=e[0].toUpperCase();
+  loadDash()}catch(x){er.textContent=x.message||'Ошибка'}
 }
 
 const T={dash:'Статистика',analytics:'Аналитика',biz:'Бизнесы',users:'Пользователи',events:'События',promos:'Акции',push:'Push',moderation:'Модерация',logs:'Логи',reports:'Отчёты',content:'Контент',feedback:'Обратная связь',categories:'Категории'};
