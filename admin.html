@@ -5,166 +5,417 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Dogly Admin</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
-:root{--p:#4A90D9;--bg:#F6F4F1;--w:#fff;--t:#1A1A1A;--m:#8E8E93;--b:#EBE8E4;--ok:#34C759;--err:#FF3B30;--warn:#F5A623}
-*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:var(--t);min-height:100vh}
-#auth{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
-.ac{background:var(--w);border-radius:24px;padding:40px;max-width:380px;width:100%;box-shadow:0 4px 16px rgba(0,0,0,.04);text-align:center}
-.ac h1{font-family:'Nunito';font-size:26px;color:var(--p);margin-bottom:4px}.ac p{color:var(--m);margin-bottom:24px;font-size:14px}
-.ac input{width:100%;height:48px;border:1.5px solid var(--b);border-radius:12px;padding:0 14px;font-size:15px;font-family:inherit;margin-bottom:10px;outline:none}
-.ac input:focus{border-color:var(--p)}.ac button{width:100%;height:48px;background:var(--p);color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}
-#ae{color:var(--err);font-size:13px;margin-top:10px}
-#app{display:none}.hd{padding:16px;background:var(--w);border-bottom:1px solid var(--b);position:sticky;top:0;z-index:10}.hd h1{font-family:'Nunito';font-size:20px;font-weight:800}
-.ct{padding:16px;padding-bottom:20px}
-.bn{position:fixed;bottom:0;left:0;right:0;background:var(--w);border-top:1px solid var(--b);display:flex;justify-content:space-around;padding:6px 0 env(safe-area-inset-bottom,6px);z-index:100}
-.bi{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:6px 8px;font-size:9px;font-weight:600;color:var(--m)}.bi.on{color:var(--p)}.bi svg{width:20px;height:20px}
-.sg{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
-.sc{background:var(--w);border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.03)}.sc .lb{font-size:11px;color:var(--m)}.sc .vl{font-size:22px;font-weight:800;font-family:'Nunito'}.sc .sub{font-size:10px;color:var(--m);margin-top:2px}
-.cd{background:var(--w);border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.03);margin-bottom:10px}
-.cd h2{font-size:15px;font-weight:700;margin-bottom:10px}
-.lt{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
-.ln{font-weight:700;font-size:14px}.lm{font-size:12px;color:var(--m);line-height:1.5}
-.la{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
-.badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600}
-.bw{background:rgba(245,166,35,.1);color:var(--warn)}.bo{background:rgba(52,199,89,.1);color:var(--ok)}.bn2{background:rgba(255,59,48,.1);color:var(--err)}.bt{background:rgba(74,144,217,.08);color:var(--p)}.bpast{background:rgba(0,0,0,.05);color:var(--m)}
-.btn{display:inline-flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:10px;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
-.btn:active{transform:scale(.96)}
-.bok{background:var(--ok);color:white}.bno{background:rgba(255,59,48,.08);color:var(--err)}.bed{background:rgba(74,144,217,.08);color:var(--p)}
-.tabs{display:flex;gap:0;margin-bottom:10px;overflow-x:auto}.tab{padding:8px 12px;font-size:13px;font-weight:600;color:var(--m);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent}.tab.on{color:var(--p);border-bottom-color:var(--p)}
-.uf-btn{padding:6px 12px;border-radius:20px;border:1.5px solid var(--b);background:var(--w);font-size:12px;font-weight:600;color:var(--m);cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap}
-.uf-btn.on{background:var(--p);color:white;border-color:var(--p)}
-.emp{text-align:center;padding:30px;color:var(--m);font-size:13px}
-.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--t);color:white;padding:8px 18px;border-radius:12px;font-size:13px;font-weight:600;z-index:999}
-.sec{display:none}.sec.on{display:block}
-.menu-item{background:var(--w);border-radius:14px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.03);font-size:13px;font-weight:600;text-align:center;transition:transform 0.15s}.menu-item:active{transform:scale(0.95)}
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.3);display:none;align-items:flex-end;z-index:200;backdrop-filter:blur(4px)}
-.modal-bg.open{display:flex}.modal-box{background:var(--w);border-radius:20px 20px 0 0;width:100%;max-height:80vh;overflow-y:auto;padding:20px}
+:root {
+  --p: #4A90D9; --p2: #6B5CE7;
+  --bg: #F2F4F7; --w: #FFFFFF;
+  --t: #0F1117; --m: #6B7280; --b: #E5E7EB;
+  --ok: #10B981; --err: #EF4444; --warn: #F59E0B;
+  --sidebar: #0F1117; --sidebar-w: 240px;
+  --r: 14px; --r2: 10px;
+  --shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--t); min-height: 100vh; font-size: 14px; }
+
+/* ── AUTH ── */
+#auth { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg); padding: 20px; }
+.ac { background: var(--w); border-radius: 20px; padding: 40px 36px; max-width: 400px; width: 100%; box-shadow: 0 8px 40px rgba(0,0,0,.08); }
+.ac-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+.ac-logo-icon { width: 44px; height: 44px; background: linear-gradient(135deg, var(--p), var(--p2)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+.ac h1 { font-family: 'Nunito'; font-size: 22px; font-weight: 900; color: var(--t); }
+.ac-sub { font-size: 13px; color: var(--m); margin-bottom: 24px; }
+.ac input { width: 100%; height: 48px; border: 1.5px solid var(--b); border-radius: var(--r2); padding: 0 14px; font-size: 14px; font-family: inherit; margin-bottom: 10px; outline: none; background: var(--bg); color: var(--t); transition: border-color .2s; }
+.ac input:focus { border-color: var(--p); background: var(--w); }
+.ac button { width: 100%; height: 48px; background: linear-gradient(135deg, var(--p), var(--p2)); color: white; border: none; border-radius: var(--r2); font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; letter-spacing: .2px; }
+#ae { color: var(--err); font-size: 13px; margin-top: 10px; }
+
+/* ── LAYOUT ── */
+#app { display: none; }
+.layout { display: flex; min-height: 100vh; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w); flex-shrink: 0;
+  background: var(--sidebar); color: #fff;
+  display: flex; flex-direction: column;
+  position: fixed; top: 0; left: 0; bottom: 0;
+  z-index: 50; overflow-y: auto;
+  transform: translateX(-100%); transition: transform .25s ease;
+}
+.sidebar.open { transform: translateX(0); }
+@media (min-width: 900px) { .sidebar { transform: translateX(0); } .main { margin-left: var(--sidebar-w); } }
+
+.sb-logo { padding: 22px 20px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,.06); }
+.sb-logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--p), var(--p2)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.sb-logo-name { font-family: 'Nunito'; font-size: 18px; font-weight: 900; }
+.sb-logo-badge { font-size: 10px; color: rgba(255,255,255,.4); font-weight: 600; margin-top: 1px; }
+
+.sb-nav { padding: 12px 10px; flex: 1; }
+.sb-section { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 1px; text-transform: uppercase; padding: 12px 10px 6px; }
+.sb-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; border-radius: 10px;
+  cursor: pointer; color: rgba(255,255,255,.55);
+  font-size: 13px; font-weight: 500;
+  transition: all .15s; margin-bottom: 2px;
+}
+.sb-item:hover { background: rgba(255,255,255,.06); color: rgba(255,255,255,.85); }
+.sb-item.on { background: rgba(74,144,217,.18); color: #fff; }
+.sb-item.on svg { color: var(--p); }
+.sb-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+.sb-footer { padding: 12px 10px; border-top: 1px solid rgba(255,255,255,.06); }
+.sb-user { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; }
+.sb-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--p), var(--p2)); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.sb-name { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.7); }
+
+/* ── MAIN ── */
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+/* ── TOPBAR ── */
+.topbar {
+  padding: 14px 20px; background: var(--w);
+  border-bottom: 1px solid var(--b);
+  display: flex; align-items: center; gap: 12px;
+  position: sticky; top: 0; z-index: 40;
+}
+.topbar-burger { width: 36px; height: 36px; border-radius: 10px; background: var(--bg); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.topbar-burger svg { width: 18px; height: 18px; stroke: var(--t); }
+@media (min-width: 900px) { .topbar-burger { display: none; } }
+.topbar-title { font-family: 'Nunito'; font-size: 18px; font-weight: 900; flex: 1; }
+.topbar-app-link { display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: linear-gradient(135deg, var(--p), var(--p2)); color: white; border-radius: var(--r2); font-size: 13px; font-weight: 600; text-decoration: none; }
+
+/* ── CONTENT ── */
+.ct { padding: 20px; padding-bottom: 40px; }
+
+/* ── CARDS ── */
+.cd { background: var(--w); border-radius: var(--r); padding: 16px; box-shadow: var(--shadow); margin-bottom: 12px; border: 1px solid var(--b); }
+.cd h2 { font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--t); }
+
+/* ── STAT GRID ── */
+.sg { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+@media (min-width: 640px) { .sg { grid-template-columns: repeat(4, 1fr); } }
+.sc { background: var(--w); border-radius: var(--r); padding: 16px; box-shadow: var(--shadow); border: 1px solid var(--b); }
+.sc .lb { font-size: 11px; color: var(--m); font-weight: 500; margin-bottom: 6px; }
+.sc .vl { font-size: 26px; font-weight: 800; font-family: 'Nunito'; color: var(--t); line-height: 1; }
+.sc .sub { font-size: 11px; color: var(--m); margin-top: 4px; }
+.sc .trend { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; margin-top: 4px; }
+.sc .trend.up { color: var(--ok); }
+
+/* ── LIST ITEMS ── */
+.lt { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+.ln { font-weight: 600; font-size: 14px; }
+.lm { font-size: 12px; color: var(--m); line-height: 1.5; }
+.la { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+
+/* ── BADGES ── */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+.bw { background: rgba(245,158,11,.1); color: var(--warn); }
+.bo { background: rgba(16,185,129,.1); color: var(--ok); }
+.bn2 { background: rgba(239,68,68,.1); color: var(--err); }
+.bt { background: rgba(74,144,217,.1); color: var(--p); }
+.bpast { background: rgba(0,0,0,.05); color: var(--m); }
+
+/* ── BUTTONS ── */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: var(--r2); border: none; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all .15s; }
+.btn:active { transform: scale(.96); }
+.bok { background: var(--ok); color: white; }
+.bno { background: rgba(239,68,68,.08); color: var(--err); border: 1px solid rgba(239,68,68,.15); }
+.bed { background: rgba(74,144,217,.08); color: var(--p); border: 1px solid rgba(74,144,217,.15); }
+
+/* ── TABS ── */
+.tabs { display: flex; gap: 0; margin-bottom: 12px; overflow-x: auto; border-bottom: 2px solid var(--b); }
+.tab { padding: 8px 14px; font-size: 13px; font-weight: 600; color: var(--m); cursor: pointer; white-space: nowrap; border-bottom: 2.5px solid transparent; margin-bottom: -2px; transition: all .15s; }
+.tab.on { color: var(--p); border-bottom-color: var(--p); }
+.tab:hover { color: var(--t); }
+
+/* ── USER FILTERS ── */
+.uf-btn { padding: 6px 12px; border-radius: 20px; border: 1.5px solid var(--b); background: var(--w); font-size: 12px; font-weight: 600; color: var(--m); cursor: pointer; font-family: inherit; transition: all .15s; white-space: nowrap; }
+.uf-btn.on { background: var(--p); color: white; border-color: var(--p); }
+.uf-btn:hover:not(.on) { border-color: var(--p); color: var(--p); }
+
+/* ── SEARCH INPUT ── */
+.search-input { width: 100%; height: 42px; border: 1.5px solid var(--b); border-radius: var(--r2); padding: 0 14px 0 38px; font-size: 14px; font-family: inherit; outline: none; background: var(--bg); color: var(--t); transition: border-color .2s; }
+.search-input:focus { border-color: var(--p); background: var(--w); }
+.search-wrap { position: relative; margin-bottom: 10px; }
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+
+/* ── EMPTY ── */
+.emp { text-align: center; padding: 40px 20px; color: var(--m); font-size: 13px; }
+.emp-icon { font-size: 36px; margin-bottom: 8px; }
+
+/* ── TOAST ── */
+.toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--t); color: white; padding: 10px 20px; border-radius: 12px; font-size: 13px; font-weight: 600; z-index: 9999; box-shadow: 0 4px 20px rgba(0,0,0,.15); white-space: nowrap; }
+
+/* ── SECTIONS ── */
+.sec { display: none; }
+.sec.on { display: block; }
+
+/* ── MODAL ── */
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: none; align-items: flex-end; z-index: 200; backdrop-filter: blur(6px); }
+.modal-bg.open { display: flex; }
+.modal-box { background: var(--w); border-radius: 20px 20px 0 0; width: 100%; max-height: 85vh; overflow-y: auto; padding: 20px; }
+.modal-handle { width: 36px; height: 4px; background: var(--b); border-radius: 2px; margin: 0 auto 18px; }
+
+/* ── SIDEBAR OVERLAY ── */
+.sb-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 49; }
+.sb-overlay.show { display: block; }
+
+/* ── PENDING ITEM ── */
+.pend-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--b); gap: 12px; }
+.pend-item:last-child { border-bottom: none; }
 </style>
 </head>
 <body>
-<div id="auth"><div class="ac"><h1>Dogly Admin</h1><p>Панель управления</p><input id="a-email" type="email" placeholder="Email"><input id="a-pass" type="password" placeholder="Пароль"><button onclick="login()">Войти</button><div id="ae"></div></div></div>
-<div id="app">
-<div class="hd"><div style="display:flex;align-items:center;justify-content:space-between;"><h1 id="pt">Статистика</h1><button onclick="toggleMenu()" style="width:40px;height:40px;border-radius:12px;background:var(--bg);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--t)" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button></div></div>
-<div class="ct">
-<div class="sec on" id="s-dash"><div class="sg" id="stats"></div><div class="cd"><h2>Ожидают одобрения</h2><div id="pend"></div></div></div>
-<div class="sec" id="s-biz"><div class="tabs" id="btabs"><div class="tab on" onclick="fb('all',this)">Все</div><div class="tab" onclick="fb('pending',this)">Ожидают</div><div class="tab" onclick="fb('approved',this)">Одобрены</div></div><div id="bl"></div></div>
-<div class="sec" id="s-users">
-  <!-- Поиск -->
-  <div style="padding:0 0 10px;">
-    <input id="user-search" placeholder="🔍 Поиск по имени, email, району..." oninput="filterUsers()"
-      style="width:100%;height:44px;border:1.5px solid var(--b);border-radius:12px;padding:0 14px;font-size:14px;font-family:inherit;outline:none;background:var(--w);">
-  </div>
-  <!-- Фильтры -->
-  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;" id="user-filters">
-    <button class="uf-btn on" onclick="setUserFilter('all',this)">Все</button>
-    <button class="uf-btn" onclick="setUserFilter('push',this)">🔔 С пушами</button>
-    <button class="uf-btn" onclick="setUserFilter('nopush',this)">🔕 Без пушей</button>
-    <button class="uf-btn" onclick="setUserFilter('pets',this)">🐕 С питомцем</button>
-    <button class="uf-btn" onclick="setUserFilter('orders',this)">📋 С заказами</button>
-    <button class="uf-btn" onclick="setUserFilter('district',this)">📍 С районом</button>
-    <button class="uf-btn" onclick="setUserFilter('new',this)">🆕 За 7 дней</button>
-  </div>
-  <!-- Счётчик -->
-  <div id="user-count" style="font-size:12px;color:var(--m);margin-bottom:8px;"></div>
-  <div id="ul"></div>
-</div>
-<div class="sec" id="s-events"><div class="tabs" id="etabs"><div class="tab on" onclick="fe('upcoming',this)">Предстоящие</div><div class="tab" onclick="fe('past',this)">Прошедшие</div><div class="tab" onclick="fe('all',this)">Все</div></div><div id="el"></div></div>
-<div class="sec" id="s-promos"><div id="pl"></div></div>
-<div class="sec" id="s-push">
-  <div class="cd">
-    <h2>Отправить Push-уведомление</h2>
-    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
-      <input id="push-title" placeholder="Заголовок" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-size:14px;font-family:inherit">
-      <textarea id="push-body" placeholder="Текст уведомления..." style="min-height:70px;border:1.5px solid var(--b);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;resize:none"></textarea>
-      <input id="push-url" placeholder="Ссылка (необязательно)" value="https://dogfriend.vercel.app" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-size:14px;font-family:inherit">
+
+<!-- AUTH -->
+<div id="auth">
+  <div class="ac">
+    <div class="ac-logo">
+      <div class="ac-logo-icon">🐕</div>
+      <div>
+        <div class="ac h1" style="font-family:'Nunito';font-size:20px;font-weight:900;color:var(--t)">Dogly Admin</div>
+        <div class="ac-sub" style="margin:0;font-size:12px">Панель управления</div>
+      </div>
     </div>
-    <button class="btn bok" style="width:100%;padding:14px" onclick="sendPush()">Отправить всем</button>
-  </div>
-  <div class="cd">
-    <h2>Настройки</h2>
-    <div class="lm" style="margin-bottom:8px">REST API Key из OneSignal</div>
-    <input id="push-api-key" placeholder="REST API Key" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-size:13px;font-family:monospace;width:100%" value="">
-    <button class="btn bed" style="margin-top:8px" onclick="localStorage.setItem('os_api_key',document.getElementById('push-api-key').value);toast('Ключ сохранён')">Сохранить ключ</button>
+    <input id="a-email" type="email" placeholder="Email администратора">
+    <input id="a-pass" type="password" placeholder="Пароль">
+    <button onclick="login()">Войти в панель</button>
+    <div id="ae"></div>
   </div>
 </div>
 
-<!-- ANALYTICS -->
-<div class="sec" id="s-analytics">
-  <div class="cd"><h2>Регистрации</h2><canvas id="chart-users" height="200"></canvas></div>
-  <div class="cd"><h2>Сообщения</h2><canvas id="chart-msgs" height="200"></canvas></div>
-  <div class="cd"><h2>События</h2><canvas id="chart-events" height="200"></canvas></div>
-</div>
+<!-- APP -->
+<div id="app">
+<div class="layout">
 
-<!-- MODERATION -->
-<div class="sec" id="s-moderation">
-  <div class="tabs"><div class="tab on" onclick="loadModerationTab('public',this)">Общий чат</div><div class="tab" onclick="loadModerationTab('private',this)">Личные</div><div class="tab" onclick="loadModerationTab('reports',this)">Жалобы</div></div>
-  <div id="mod-list"></div>
-</div>
-
-<!-- CONTENT -->
-<div class="sec" id="s-content">
-  <div class="cd"><h2>Баннер на главной</h2>
-    <input id="cnt-banner-title" placeholder="Заголовок баннера" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-size:14px;font-family:inherit;width:100%;margin-bottom:8px">
-    <input id="cnt-banner-url" placeholder="Ссылка (куда ведёт)" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-size:14px;font-family:inherit;width:100%;margin-bottom:8px">
-    <button class="btn bok" onclick="saveBanner()">Сохранить баннер</button>
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-icon">🐕</div>
+    <div>
+      <div class="sb-logo-name">Dogly</div>
+      <div class="sb-logo-badge">Admin Panel</div>
+    </div>
   </div>
-  <div class="cd"><h2>Управление уроками</h2><div id="cnt-lessons-list"></div>
-    <button class="btn bed" style="margin-top:8px" onclick="addLessonForm()">+ Добавить урок</button>
+  <nav class="sb-nav">
+    <div class="sb-section">Главное</div>
+    <div class="sb-item on" onclick="goSidebar('dash',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Статистика
+    </div>
+    <div class="sb-item" onclick="goSidebar('analytics',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Аналитика
+    </div>
+
+    <div class="sb-section">Контент</div>
+    <div class="sb-item" onclick="goSidebar('biz',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+      Бизнесы
+    </div>
+    <div class="sb-item" onclick="goSidebar('users',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      Пользователи
+    </div>
+    <div class="sb-item" onclick="goSidebar('events',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+      События
+    </div>
+    <div class="sb-item" onclick="goSidebar('promos',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      Акции
+    </div>
+    <div class="sb-item" onclick="goSidebar('content',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Контент
+    </div>
+    <div class="sb-item" onclick="goSidebar('categories',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/></svg>
+      Категории
+    </div>
+
+    <div class="sb-section">Инструменты</div>
+    <div class="sb-item" onclick="goSidebar('push',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      Push-уведомления
+    </div>
+    <div class="sb-item" onclick="goSidebar('moderation',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Модерация
+    </div>
+    <div class="sb-item" onclick="goSidebar('reports',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Отчёты
+    </div>
+    <div class="sb-item" onclick="goSidebar('logs',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Логи
+    </div>
+    <div class="sb-item" onclick="goSidebar('feedback',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      Обратная связь
+    </div>
+  </nav>
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="sb-avatar" id="sb-avatar">A</div>
+      <div>
+        <div class="sb-name" id="sb-email">admin</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.3);cursor:pointer" onclick="sb&&sb.auth.signOut().then(()=>location.reload())">Выйти</div>
+      </div>
+    </div>
   </div>
-</div>
+</aside>
 
-<!-- BIZ REPORTS -->
-<div class="sec" id="s-reports">
-  <div id="reports-list"></div>
-</div>
+<!-- OVERLAY для мобильного sidebar -->
+<div class="sb-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
 
-<!-- LOGS -->
-<div class="sec" id="s-logs">
-  <div class="tabs"><div class="tab on" onclick="loadLogs('all',this)">Все</div><div class="tab" onclick="loadLogs('reg',this)">Регистрации</div><div class="tab" onclick="loadLogs('events',this)">События</div><div class="tab" onclick="loadLogs('biz',this)">Бизнесы</div></div>
-  <div id="logs-list"></div>
-</div>
-
-<!-- FEEDBACK -->
-<div class="sec" id="s-feedback">
-  <div class="emp" id="feedback-empty">Жалоб пока нет</div>
-  <div id="feedback-list"></div>
-</div>
-
-<!-- CATEGORIES -->
-<div class="sec" id="s-categories">
-  <div class="cd"><h2>Категории услуг</h2><div id="cat-list"></div>
-    <button class="btn bed" style="margin-top:8px" onclick="addCategoryForm()">+ Добавить категорию</button>
+<!-- MAIN -->
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <button class="topbar-burger" onclick="openSidebar()">
+      <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-width="2"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+    </button>
+    <div class="topbar-title" id="pt">Статистика</div>
+    <a href="https://dogfriend.vercel.app/" target="_blank" class="topbar-app-link">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Приложение
+    </a>
   </div>
-</div>
 
-</div>
-<nav class="bn" style="display:none;"></nav>
-<!-- FULL SCREEN MENU -->
-<div id="admin-menu" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:500;overflow-y:auto;padding:20px 16px;padding-top:calc(20px + env(safe-area-inset-top,0px));">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-    <h2 style="font-family:'Nunito';font-size:22px;">Меню</h2>
-    <button onclick="toggleMenu()" style="width:40px;height:40px;border-radius:12px;background:var(--w);border:none;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-    <div class="menu-item" onclick="goMenu('dash')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--p)" stroke-width="2" style="width:24px;height:24px;"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><div>Статистика</div></div>
-    <div class="menu-item" onclick="goMenu('analytics')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--p)" stroke-width="2" style="width:24px;height:24px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><div>Аналитика</div></div>
-    <div class="menu-item" onclick="goMenu('biz')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--p)" stroke-width="2" style="width:24px;height:24px;"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg><div>Бизнесы</div></div>
-    <div class="menu-item" onclick="goMenu('users')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--p)" stroke-width="2" style="width:24px;height:24px;"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><div>Пользователи</div></div>
-    <div class="menu-item" onclick="goMenu('events')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--p)" stroke-width="2" style="width:24px;height:24px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg><div>События</div></div>
-    <div class="menu-item" onclick="goMenu('promos')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--p)" stroke-width="2" style="width:24px;height:24px;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><div>Акции</div></div>
-    <div class="menu-item" onclick="goMenu('push')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--p)" stroke-width="2" style="width:24px;height:24px;"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><div>Push</div></div>
-    <div class="menu-item" onclick="goMenu('moderation')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--p)" stroke-width="2" style="width:24px;height:24px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><div>Модерация</div></div>
-    <div class="menu-item" onclick="goMenu('logs')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--p)" stroke-width="2" style="width:24px;height:24px;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><div>Логи</div></div>
-    <div class="menu-item" onclick="goMenu('reports')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--p)" stroke-width="2" style="width:24px;height:24px;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><div>Отчёты</div></div>
-    <div class="menu-item" onclick="goMenu('content')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--p)" stroke-width="2" style="width:24px;height:24px;"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><div>Контент</div></div>
-    <div class="menu-item" onclick="goMenu('feedback')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--p)" stroke-width="2" style="width:24px;height:24px;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><div>Обратная связь</div></div>
-    <div class="menu-item" onclick="goMenu('categories')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--p)" stroke-width="2" style="width:24px;height:24px;"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><div>Категории</div></div>
-  </div>
-</div>
-</div>
+  <!-- CONTENT -->
+  <div class="ct">
+
+    <!-- DASHBOARD -->
+    <div class="sec on" id="s-dash">
+      <div class="sg" id="stats"></div>
+      <div class="cd"><h2>⏳ Ожидают одобрения</h2><div id="pend"></div></div>
+    </div>
+
+    <!-- BUSINESSES -->
+    <div class="sec" id="s-biz">
+      <div class="tabs" id="btabs">
+        <div class="tab on" onclick="fb('all',this)">Все</div>
+        <div class="tab" onclick="fb('pending',this)">Ожидают</div>
+        <div class="tab" onclick="fb('approved',this)">Одобрены</div>
+      </div>
+      <div id="bl"></div>
+    </div>
+
+    <!-- USERS -->
+    <div class="sec" id="s-users">
+      <div class="search-wrap">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--m)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" id="user-search" placeholder="Поиск по имени, email, району..." oninput="filterUsers()">
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+        <button class="uf-btn on" onclick="setUserFilter('all',this)">Все</button>
+        <button class="uf-btn" onclick="setUserFilter('push',this)">🔔 С пушами</button>
+        <button class="uf-btn" onclick="setUserFilter('nopush',this)">🔕 Без пушей</button>
+        <button class="uf-btn" onclick="setUserFilter('pets',this)">🐕 С питомцем</button>
+        <button class="uf-btn" onclick="setUserFilter('orders',this)">📋 С заказами</button>
+        <button class="uf-btn" onclick="setUserFilter('district',this)">📍 С районом</button>
+        <button class="uf-btn" onclick="setUserFilter('new',this)">🆕 За 7 дней</button>
+      </div>
+      <div id="user-count" style="font-size:12px;color:var(--m);margin-bottom:8px;"></div>
+      <div id="ul"></div>
+    </div>
+
+    <!-- EVENTS -->
+    <div class="sec" id="s-events">
+      <div class="tabs" id="etabs">
+        <div class="tab on" onclick="fe('upcoming',this)">Предстоящие</div>
+        <div class="tab" onclick="fe('past',this)">Прошедшие</div>
+        <div class="tab" onclick="fe('all',this)">Все</div>
+      </div>
+      <div id="el"></div>
+    </div>
+
+    <!-- PROMOS -->
+    <div class="sec" id="s-promos"><div id="pl"></div></div>
+
+    <!-- PUSH -->
+    <div class="sec" id="s-push">
+      <div class="cd">
+        <h2>📣 Отправить Push-уведомление</h2>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
+          <input id="push-title" placeholder="Заголовок" style="height:44px;border:1.5px solid var(--b);border-radius:var(--r2);padding:0 12px;font-size:14px;font-family:inherit;outline:none;background:var(--bg)">
+          <textarea id="push-body" placeholder="Текст уведомления..." style="min-height:80px;border:1.5px solid var(--b);border-radius:var(--r2);padding:10px 12px;font-size:14px;font-family:inherit;resize:none;outline:none;background:var(--bg)"></textarea>
+          <input id="push-url" placeholder="Ссылка (необязательно)" value="https://dogfriend.vercel.app" style="height:44px;border:1.5px solid var(--b);border-radius:var(--r2);padding:0 12px;font-size:14px;font-family:inherit;outline:none;background:var(--bg)">
+        </div>
+        <button class="btn bok" style="width:100%;padding:14px;font-size:14px" onclick="sendPush()">Отправить всем</button>
+      </div>
+      <div class="cd">
+        <h2>⚙️ Настройки</h2>
+        <div class="lm" style="margin-bottom:8px">REST API Key из OneSignal</div>
+        <input id="push-api-key" placeholder="REST API Key" style="height:44px;border:1.5px solid var(--b);border-radius:var(--r2);padding:0 12px;font-size:13px;font-family:monospace;width:100%;outline:none;background:var(--bg)">
+        <button class="btn bed" style="margin-top:8px" onclick="localStorage.setItem('os_api_key',document.getElementById('push-api-key').value);toast('Ключ сохранён')">Сохранить ключ</button>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="sec" id="s-analytics">
+      <div class="cd"><h2>Регистрации</h2><canvas id="chart-users" height="200"></canvas></div>
+      <div class="cd"><h2>Сообщения</h2><canvas id="chart-msgs" height="200"></canvas></div>
+      <div class="cd"><h2>События</h2><canvas id="chart-events" height="200"></canvas></div>
+    </div>
+
+    <!-- MODERATION -->
+    <div class="sec" id="s-moderation">
+      <div class="tabs"><div class="tab on" onclick="loadModerationTab('public',this)">Общий чат</div><div class="tab" onclick="loadModerationTab('private',this)">Личные</div><div class="tab" onclick="loadModerationTab('reports',this)">Жалобы</div></div>
+      <div id="mod-list"></div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="sec" id="s-content">
+      <div class="cd"><h2>🖼 Баннер на главной</h2>
+        <input id="cnt-banner-title" placeholder="Заголовок баннера" style="height:44px;border:1.5px solid var(--b);border-radius:var(--r2);padding:0 12px;font-size:14px;font-family:inherit;width:100%;margin-bottom:8px;outline:none;background:var(--bg)">
+        <input id="cnt-banner-url" placeholder="Ссылка (куда ведёт)" style="height:44px;border:1.5px solid var(--b);border-radius:var(--r2);padding:0 12px;font-size:14px;font-family:inherit;width:100%;margin-bottom:8px;outline:none;background:var(--bg)">
+        <button class="btn bok" onclick="saveBanner()">Сохранить баннер</button>
+      </div>
+      <div class="cd"><h2>📚 Управление уроками</h2><div id="cnt-lessons-list"></div>
+        <button class="btn bed" style="margin-top:8px" onclick="addLessonForm()">+ Добавить урок</button>
+      </div>
+    </div>
+
+    <!-- BIZ REPORTS -->
+    <div class="sec" id="s-reports"><div id="reports-list"></div></div>
+
+    <!-- LOGS -->
+    <div class="sec" id="s-logs">
+      <div class="tabs"><div class="tab on" onclick="loadLogs('all',this)">Все</div><div class="tab" onclick="loadLogs('reg',this)">Регистрации</div><div class="tab" onclick="loadLogs('events',this)">События</div><div class="tab" onclick="loadLogs('biz',this)">Бизнесы</div></div>
+      <div id="logs-list"></div>
+    </div>
+
+    <!-- FEEDBACK -->
+    <div class="sec" id="s-feedback">
+      <div class="emp" id="feedback-empty"><div class="emp-icon">💬</div>Жалоб пока нет</div>
+      <div id="feedback-list"></div>
+    </div>
+
+    <!-- CATEGORIES -->
+    <div class="sec" id="s-categories">
+      <div class="cd"><h2>Категории услуг</h2><div id="cat-list"></div>
+        <button class="btn bed" style="margin-top:8px" onclick="addCategoryForm()">+ Добавить категорию</button>
+      </div>
+    </div>
+
+  </div><!-- /ct -->
+</div><!-- /main -->
+</div><!-- /layout -->
+</div><!-- /app -->
+
 <!-- User profile modal -->
-<div class="modal-bg" id="userModal" onclick="this.classList.remove('open')"><div class="modal-box" onclick="event.stopPropagation()"><div id="userModalBody"></div></div></div>
+<div class="modal-bg" id="userModal" onclick="this.classList.remove('open')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div id="userModalBody"></div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
 <script>
@@ -891,5 +1142,55 @@ function deleteCategory(i){
   toast('Удалено');
   loadCategories();
 }
+</script>
+
+// ── НОВАЯ НАВИГАЦИЯ (sidebar) ──
+const T2 = {dash:'Статистика',analytics:'Аналитика',biz:'Бизнесы',users:'Пользователи',events:'События',promos:'Акции',push:'Push-уведомления',moderation:'Модерация',logs:'Логи',reports:'Отчёты',content:'Контент',feedback:'Обратная связь',categories:'Категории'};
+
+function goSidebar(id, el) {
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('on'));
+  if (el) el.classList.add('on');
+  document.getElementById('pt').textContent = T2[id] || id;
+  // вызываем оригинальный go()
+  go(id);
+  // закрываем на мобильном
+  closeSidebar();
+}
+
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sb-overlay').classList.add('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sb-overlay').classList.remove('show');
+}
+
+// Патчим оригинальный login чтобы показать email в sidebar
+const _origLogin = login;
+// После логина показываем email в sidebar
+const _origGo = go;
+window.go = function(id, el) {
+  _origGo(id, el);
+  // синхронизируем sb-item активный
+  document.querySelectorAll('.sb-item').forEach(i => {
+    const onclick = i.getAttribute('onclick') || '';
+    i.classList.toggle('on', onclick.includes("'"+id+"'"));
+  });
+  document.getElementById('pt').textContent = T2[id] || id;
+};
+
+// Показываем email в footer sidebar после логина
+document.addEventListener('DOMContentLoaded', () => {
+  const emailEl = document.getElementById('sb-email');
+  const emailInput = document.getElementById('a-email');
+  if (emailEl && emailInput) {
+    emailInput.addEventListener('change', () => {
+      emailEl.textContent = emailInput.value || 'admin';
+      const av = document.getElementById('sb-avatar');
+      if (av) av.textContent = (emailInput.value || 'A')[0].toUpperCase();
+    });
+  }
+});
 </script>
 </body></html>
