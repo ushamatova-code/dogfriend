@@ -1932,6 +1932,8 @@ async function supabaseRegister() {
     p.name = name;
     localStorage.setItem('df_profile', JSON.stringify(p));
     localStorage.setItem('df_email', email);
+    // Сбрасываем флаг — новый пользователь должен увидеть запрос уведомлений
+    localStorage.removeItem('push_asked');
     
     // Проверяем — если email confirmation включён, user будет не подтверждён
     if (data && data.user && !data.user.confirmed_at && !data.session) {
@@ -1942,6 +1944,9 @@ async function supabaseRegister() {
       // Email подтверждён сразу (или confirmation выключен)
       localStorage.setItem('df_registered', '1');
       nav('home');
+      // Запрашиваем разрешение на уведомления сразу после регистрации
+      // Небольшая задержка чтобы экран home успел отрисоваться
+      setTimeout(() => askPushPermission(), 1500);
     }
   } catch(err) {
     console.error('Register error:', err);
@@ -4439,7 +4444,7 @@ document.getElementById('pc-input')?.addEventListener('focus', () => {
 });
 
 // ════════════════════════════════════════════════════════════
-// iOS INSTALL BANNER
+// iOS INSTALL BANNER + ПОСЛЕ УСТАНОВКИ → ЗАПРОС УВЕДОМЛЕНИЙ
 // ════════════════════════════════════════════════════════════
 function showIOSInstallBanner() {
   const banner = document.getElementById('ios-install-banner');
@@ -4453,17 +4458,29 @@ function dismissIOSBanner() {
   const overlay = document.getElementById('ios-install-overlay');
   if (banner) banner.style.display = 'none';
   if (overlay) overlay.style.display = 'none';
+  // Запоминаем на 3 дня
   localStorage.setItem('ios_banner_dismissed', Date.now().toString());
 }
 
 function checkIOSInstallBanner() {
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   if (!isIOS) return;
-  const isStandalone = window.navigator.standalone === true;
-  if (isStandalone) return;
+
+  // Уже установлено как PWA
+  if (window.navigator.standalone === true) {
+    // Приложение открыто как PWA — сразу просим уведомления
+    // Небольшая задержка чтобы не пугать сразу
+    setTimeout(() => askPushPermission(), 2000);
+    return;
+  }
+
+  // В браузере — показываем баннер установки
+  // Закрыл недавно — не показываем
   const dismissed = localStorage.getItem('ios_banner_dismissed');
   if (dismissed && Date.now() - parseInt(dismissed) < 3 * 24 * 60 * 60 * 1000) return;
-  setTimeout(showIOSInstallBanner, 30000);
+
+  // Показываем сразу через 3 секунды — не сразу чтобы человек успел увидеть приложение
+  setTimeout(showIOSInstallBanner, 3000);
 }
 
 window.addEventListener('load', () => {
