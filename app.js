@@ -1820,6 +1820,8 @@ async function checkAuth() {
       checkUserBusiness();
 
       nav('home');
+      // Обновляем статистику после входа (charity block)
+      setTimeout(() => loadProfileStats(), 1000);
       // Если открыли с параметром ?chat=userId — сразу открываем чат
       handleChatDeeplink();
       // Инициализируем push-уведомления
@@ -3915,7 +3917,7 @@ async function enablePushFromSettings() {
   const _orig=window.nav;
   window.nav=function(id){
     _orig(id);
-    if(id==='home')      { if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); }
+    if(id==='home')      { if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); if(typeof loadProfileStats==='function') loadProfileStats(); }
     if(id==='dogmap')    renderPlaces();
     if(id==='discounts') renderDiscounts();
     if(id==='lessons')   renderLessons();
