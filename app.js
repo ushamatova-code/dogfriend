@@ -2947,6 +2947,8 @@ async function loadPrivateChatFromServer(chatId) {
   const myUserId = currentUser?.id || userId;
   const roomId = getRoomId(myUserId, String(chatId));
   
+  console.log('📥 Loading messages from DB for chatId:', chatId, 'roomId:', roomId);
+  
   try {
     const { data, error } = await supabaseClient
       .from('direct_messages')
@@ -2955,19 +2957,26 @@ async function loadPrivateChatFromServer(chatId) {
       .order('created_at', { ascending: true })
       .limit(100);
     
+    if (error) {
+      console.error('❌ DB load error:', error);
+      return;
+    }
+    
+    console.log('✅ Loaded', data?.length || 0, 'messages from DB');
+    
     if (data && data.length > 0) {
-      // Сохраняем существующие данные если они есть
-      const existingMessages = privateChats[chatId] || [];
-      const existingMap = new Map(existingMessages.map(m => [m.dbId, m]));
-      
+      // Полностью заменяем данные из БД - БД это источник правды!
       privateChats[chatId] = data.map(m => {
-        // Если сообщение уже есть в памяти - используем его (оно может иметь replyTo данные)
-        const existing = existingMap.get(m.id);
-        if (existing) {
-          return existing;
+        const hasReply = m.reply_to_id || m.reply_to_text;
+        if (hasReply) {
+          console.log('  📎 Message with reply:', {
+            id: m.id,
+            text: m.text?.substring(0, 20),
+            reply_to_id: m.reply_to_id,
+            reply_to_text: m.reply_to_text?.substring(0, 20)
+          });
         }
         
-        // Иначе создаём новое из БД
         return {
           text: m.text,
           sender: m.sender_id === myUserId ? 'user' : 'other',
