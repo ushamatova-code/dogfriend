@@ -1670,7 +1670,7 @@ if (!window.supabaseLoaded) {
 }
 
 // ── PUSH-УВЕДОМЛЕНИЯ (Web Push API + Service Worker) ─────────────
-const VAPID_PUBLIC_KEY = 'BI8_NAdekNyDnzqz8NAqHvNeUzmFzjJZtZpybpxPOdszWLPUnaMJnJZNckK5vGDj0L-AN9DmkcC5DaCes2CHspg';
+const VAPID_PUBLIC_KEY = 'BNKlgs_70LJigJbbEx14m_j38oCZAmkXzxDr6-w8ra_Pc612uMVS1R9vprRQ6aSwyZRCSULW_lmX2N52Ic7WBzo';
 
 let swRegistration = null;
 
