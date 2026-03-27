@@ -1210,13 +1210,14 @@ function sendPrivateMessage() {
     savePrivateChatsToStorage();
   }
 
+  // ВАЖНО: сохраняем в БД ДО cancelReply(), иначе _replyTo будет null!
+  savePrivateMsgToServer(chatId, text, time, _replyTo);
+
   input.value = '';
   input.style.height = 'auto';
   cancelReply();
   renderPrivateChatMessages(chatId);
   renderPrivateChats();
-
-  savePrivateMsgToServer(chatId, text, time, _replyTo);
 
   // Для личных чатов — дополнительный broadcast через свой канал
   if (!isEventChat && supabaseClient) {
