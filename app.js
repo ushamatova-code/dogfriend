@@ -1055,6 +1055,10 @@ function subscribeToPrivateChat(theirId) {
       senderName: data.senderName,
       senderId: data.senderId,
       created_at: new Date().toISOString(),
+      // Поля ответа
+      replyToId: data.replyToId || null,
+      replyToText: data.replyToText || null,
+      replyToName: data.replyToName || null,
     });
     savePrivateChatsToStorage();
 
@@ -1105,15 +1109,18 @@ function renderPrivateChatMessages(chatId) {
   container.innerHTML = messages.map((msg, idx) => {
     const isMine = msg.sender === 'user';
     const content = formatMsgContent(msg.text);
+    
+    // Уникальный ID: используем dbId если есть, иначе индекс
+    const msgUniqueId = msg.dbId || `idx-${idx}`;
 
     // Блок цитаты если это ответ
     const replyBlock = (msg.replyToText || msg.reply_to_text) ? `
-      <div style="background:${isMine ? 'rgba(255,255,255,0.2)' : 'var(--bg)'};border-left:3px solid ${isMine ? 'rgba(255,255,255,0.7)' : 'var(--primary)'};border-radius:6px;padding:6px 10px;margin-bottom:6px;cursor:pointer;" onclick="scrollToMsg('${msg.replyToId || msg.reply_to_id}')">
+      <div style="background:${isMine ? 'rgba(255,255,255,0.2)' : 'var(--bg)'};border-left:3px solid ${isMine ? 'rgba(255,255,255,0.7)' : 'var(--primary)'};border-radius:6px;padding:6px 10px;margin-bottom:6px;cursor:pointer;" onclick="scrollToMsg('${msg.replyToId || msg.reply_to_id || ''}')">
         <div style="font-size:11px;font-weight:700;color:${isMine ? 'rgba(255,255,255,0.85)' : 'var(--primary)'};margin-bottom:2px;">${escHtml(msg.replyToName || msg.reply_to_name || '')}</div>
         <div style="font-size:12px;color:${isMine ? 'rgba(255,255,255,0.75)' : 'var(--text-secondary)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">${escHtml((msg.replyToText || msg.reply_to_text || '').substring(0, 80))}</div>
       </div>` : '';
 
-    return `<div id="msg-${msg.dbId || idx}" class="swipeable-msg" data-msg-idx="${idx}" style="display:flex;justify-content:${isMine ? 'flex-end' : 'flex-start'};align-items:flex-end;gap:6px;position:relative;margin-bottom:6px;">
+    return `<div id="msg-${msgUniqueId}" class="swipeable-msg" data-msg-idx="${idx}" data-msg-dbid="${msg.dbId || ''}" style="display:flex;justify-content:${isMine ? 'flex-end' : 'flex-start'};align-items:flex-end;gap:6px;position:relative;margin-bottom:6px;">
       <div class="swipe-reply-icon" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);opacity:0;transition:opacity 0.2s;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2">
           <polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 00-4-4H4"/>
@@ -2496,6 +2503,10 @@ function startRealtimeDMSubscription() {
           time: msg.time, senderName: msg.sender_name,
           senderId: msg.sender_id, dbId: msg.id,
           created_at: msg.created_at,
+          // Поля ответа
+          replyToId: msg.reply_to_id || null,
+          replyToText: msg.reply_to_text || null,
+          replyToName: msg.reply_to_name || null,
         });
         
         if (currentPrivateChatId === chatId) {
@@ -2530,6 +2541,10 @@ function startRealtimeDMSubscription() {
         senderId: msg.sender_id,
         created_at: msg.created_at,
         dbId: msg.id,
+        // Поля ответа
+        replyToId: msg.reply_to_id || null,
+        replyToText: msg.reply_to_text || null,
+        replyToName: msg.reply_to_name || null,
       });
       savePrivateChatsToStorage();
       
@@ -2917,6 +2932,10 @@ async function loadPrivateChatFromServer(chatId) {
         senderId: m.sender_id,
         created_at: m.created_at,
         dbId: m.id,
+        // Поля ответа
+        replyToId: m.reply_to_id || null,
+        replyToText: m.reply_to_text || null,
+        replyToName: m.reply_to_name || null,
       }));
       savePrivateChatsToStorage();
       if (currentPrivateChatId == chatId) renderPrivateChatMessages(chatId);
@@ -4879,7 +4898,8 @@ function startReply(msgIndex) {
   const msg = messages[msgIndex];
   if (!msg) return;
 
-  _replyTo = msg;
+  // Сохраняем сообщение и индекс для fallback
+  _replyTo = { ...msg, _index: msgIndex };
 
   const bar = document.getElementById('pc-reply-bar');
   const nameEl = document.getElementById('pc-reply-name');
@@ -4904,12 +4924,50 @@ function cancelReply() {
 
 function scrollToMsg(msgId) {
   if (!msgId) return;
-  const el = document.getElementById('msg-' + msgId);
+  
+  let el = null;
+  
+  // 1. Пробуем найти по точному ID
+  el = document.getElementById('msg-' + msgId);
+  
+  // 2. Если не нашли, ищем по data-msg-dbid
+  if (!el) {
+    el = document.querySelector(`[data-msg-dbid="${msgId}"]`);
+  }
+  
+  // 3. Если это похоже на индекс (idx-123), ищем по индексу
+  if (!el && String(msgId).startsWith('idx-')) {
+    const idx = msgId.replace('idx-', '');
+    el = document.querySelector(`[data-msg-idx="${idx}"]`);
+  }
+  
+  // 4. Последняя попытка - ищем в массиве сообщений
+  if (!el && currentPrivateChatId) {
+    const messages = privateChats[currentPrivateChatId] || [];
+    const msgIndex = messages.findIndex(m => m.dbId == msgId || m.id == msgId);
+    if (msgIndex !== -1) {
+      el = document.querySelector(`[data-msg-idx="${msgIndex}"]`);
+    }
+  }
+  
   if (el) {
+    // Скроллим к элементу
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    el.style.transition = 'background 0.3s';
-    el.style.background = 'rgba(74,144,217,0.15)';
-    setTimeout(() => { el.style.background = ''; }, 1500);
+    
+    // Подсвечиваем
+    const bubble = el.querySelector('.msg-bubble');
+    if (bubble) {
+      const isMine = bubble.style.background.includes('var(--primary)');
+      const originalBg = bubble.style.background;
+      
+      // Анимация подсветки
+      bubble.style.transition = 'background 0.3s';
+      bubble.style.background = isMine ? 'rgba(74,144,217,0.8)' : 'rgba(74,144,217,0.15)';
+      
+      setTimeout(() => { 
+        bubble.style.background = originalBg; 
+      }, 1500);
+    }
   }
 }
 
