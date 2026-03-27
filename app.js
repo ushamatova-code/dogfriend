@@ -1101,6 +1101,19 @@ function renderPrivateChatMessages(chatId) {
   const container = document.getElementById('pc-messages');
   const myName = (JSON.parse(localStorage.getItem('df_profile') || '{}')).name || 'Я';
 
+  console.log('🔍 renderPrivateChatMessages:', chatId, 'messages:', messages.length);
+  
+  // Проверяем первые 3 сообщения на наличие replyTo
+  messages.slice(0, 3).forEach((msg, idx) => {
+    if (msg.replyToId || msg.reply_to_id) {
+      console.log(`  Msg ${idx} HAS reply:`, {
+        replyToId: msg.replyToId || msg.reply_to_id,
+        replyToText: (msg.replyToText || msg.reply_to_text || '').substring(0, 30),
+        replyToName: msg.replyToName || msg.reply_to_name
+      });
+    }
+  });
+
   if (messages.length === 0) {
     container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text-secondary);font-size:14px;">Напишите первое сообщение</div>';
     return;
@@ -4923,34 +4936,45 @@ function cancelReply() {
 }
 
 function scrollToMsg(msgId) {
-  if (!msgId) return;
+  console.log('📍 scrollToMsg called with msgId:', msgId);
+  
+  if (!msgId) {
+    console.log('  ❌ msgId is empty');
+    return;
+  }
   
   let el = null;
   
   // 1. Пробуем найти по точному ID
   el = document.getElementById('msg-' + msgId);
+  if (el) console.log('  ✅ Found by exact ID');
   
   // 2. Если не нашли, ищем по data-msg-dbid
   if (!el) {
     el = document.querySelector(`[data-msg-dbid="${msgId}"]`);
+    if (el) console.log('  ✅ Found by data-msg-dbid');
   }
   
   // 3. Если это похоже на индекс (idx-123), ищем по индексу
   if (!el && String(msgId).startsWith('idx-')) {
     const idx = msgId.replace('idx-', '');
     el = document.querySelector(`[data-msg-idx="${idx}"]`);
+    if (el) console.log('  ✅ Found by idx');
   }
   
   // 4. Последняя попытка - ищем в массиве сообщений
   if (!el && currentPrivateChatId) {
     const messages = privateChats[currentPrivateChatId] || [];
+    console.log('  🔍 Searching in messages array, total messages:', messages.length);
     const msgIndex = messages.findIndex(m => m.dbId == msgId || m.id == msgId);
     if (msgIndex !== -1) {
+      console.log('  ✅ Found in array at index:', msgIndex);
       el = document.querySelector(`[data-msg-idx="${msgIndex}"]`);
     }
   }
   
   if (el) {
+    console.log('  ✅ Element found, scrolling...');
     // Скроллим к элементу
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     
@@ -4968,6 +4992,8 @@ function scrollToMsg(msgId) {
         bubble.style.background = originalBg; 
       }, 1500);
     }
+  } else {
+    console.log('  ❌ Element NOT found!');
   }
 }
 
