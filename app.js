@@ -2956,22 +2956,36 @@ async function loadPrivateChatFromServer(chatId) {
       .limit(100);
     
     if (data && data.length > 0) {
-      privateChats[chatId] = data.map(m => ({
-        text: m.text,
-        sender: m.sender_id === myUserId ? 'user' : 'other',
-        time: m.time,
-        senderName: m.sender_name,
-        senderId: m.sender_id,
-        created_at: m.created_at,
-        dbId: m.id,
-        // Поля ответа - сохраняем оба варианта для совместимости
-        replyToId: m.reply_to_id || null,
-        replyToText: m.reply_to_text || null,
-        replyToName: m.reply_to_name || null,
-        reply_to_id: m.reply_to_id || null,
-        reply_to_text: m.reply_to_text || null,
-        reply_to_name: m.reply_to_name || null,
-      }));
+      // Сохраняем существующие данные если они есть
+      const existingMessages = privateChats[chatId] || [];
+      const existingMap = new Map(existingMessages.map(m => [m.dbId, m]));
+      
+      privateChats[chatId] = data.map(m => {
+        // Если сообщение уже есть в памяти - используем его (оно может иметь replyTo данные)
+        const existing = existingMap.get(m.id);
+        if (existing) {
+          return existing;
+        }
+        
+        // Иначе создаём новое из БД
+        return {
+          text: m.text,
+          sender: m.sender_id === myUserId ? 'user' : 'other',
+          time: m.time,
+          senderName: m.sender_name,
+          senderId: m.sender_id,
+          created_at: m.created_at,
+          dbId: m.id,
+          // Поля ответа - сохраняем оба варианта для совместимости
+          replyToId: m.reply_to_id || null,
+          replyToText: m.reply_to_text || null,
+          replyToName: m.reply_to_name || null,
+          reply_to_id: m.reply_to_id || null,
+          reply_to_text: m.reply_to_text || null,
+          reply_to_name: m.reply_to_name || null,
+        };
+      });
+      
       savePrivateChatsToStorage();
       if (currentPrivateChatId == chatId) renderPrivateChatMessages(chatId);
     }
