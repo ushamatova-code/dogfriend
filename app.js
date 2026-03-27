@@ -1824,10 +1824,10 @@ async function checkAuth() {
       setTimeout(() => loadProfileStats(), 1000);
       // Если открыли с параметром ?chat=userId — сразу открываем чат
       handleChatDeeplink();
-      // Инициализируем push-уведомления
+      // Инициализируем push-уведомления (VAPID для Android)
       setTimeout(async () => { await initServiceWorker(); if (currentUser) subscribeToPush(); }, 3000);
-      // OneSignal — показываем свой промпт через 5 сек после входа
-      setTimeout(() => askPushPermission(), 5000);
+      // OneSignal — сохраняем player_id и показываем промпт
+      setTimeout(() => { saveOneSignalPlayerId(); askPushPermission(); }, 5000);
     } else {
       console.log('No session found');
       const oldRegistered = localStorage.getItem('df_registered');
@@ -4679,4 +4679,30 @@ async function handleChatDeeplink() {
 
   const initials = name.substring(0, 2).toUpperCase();
   openChatWithUser(chatUserId, name, initials, 'linear-gradient(135deg,#4A90D9,#7B5EA7)');
+}
+
+// ════════════════════════════════════════════════════════════
+// ONESIGNAL — сохраняем player_id в Supabase для серверных пушей
+// ════════════════════════════════════════════════════════════
+async function saveOneSignalPlayerId() {
+  if (!window.OneSignal || !supabaseClient || !currentUser) return;
+  try {
+    // Ждём пока OneSignal инициализируется
+    await OneSignal.Notifications.requestPermission();
+    const playerId = await OneSignal.User.PushSubscription.id;
+    if (!playerId) {
+      // Попробуем через 3 сек ещё раз
+      setTimeout(() => saveOneSignalPlayerId(), 3000);
+      return;
+    }
+    console.log('[OneSignal] player_id:', playerId);
+    // Сохраняем в profiles
+    const { error } = await supabaseClient
+      .from('profiles')
+      .upsert({ id: currentUser.id, user_id: currentUser.id, onesignal_player_id: playerId, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+    if (error) console.error('[OneSignal] Save error:', error);
+    else console.log('[OneSignal] ✅ player_id сохранён');
+  } catch(e) {
+    console.error('[OneSignal] Error:', e);
+  }
 }
