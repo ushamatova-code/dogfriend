@@ -1114,7 +1114,7 @@ function renderPrivateChatMessages(chatId) {
       </div>` : '';
 
     return `<div id="msg-${msg.dbId || idx}" class="swipeable-msg" data-msg-idx="${idx}" style="display:flex;justify-content:${isMine ? 'flex-end' : 'flex-start'};align-items:flex-end;gap:6px;position:relative;margin-bottom:6px;">
-      <div class="swipe-reply-icon" style="position:absolute;${isMine ? 'left:10px' : 'right:10px'};top:50%;transform:translateY(-50%);opacity:0;transition:opacity 0.2s;">
+      <div class="swipe-reply-icon" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);opacity:0;transition:opacity 0.2s;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2">
           <polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 00-4-4H4"/>
         </svg>
@@ -4929,7 +4929,6 @@ function initSwipeToReply() {
     let isDragging = false;
     let startTime = 0;
     
-    const isMine = msgEl.style.justifyContent.includes('flex-end');
     const maxSwipe = 80; // максимальное расстояние свайпа
     const threshold = 60; // порог для активации ответа
     
@@ -4947,14 +4946,13 @@ function initSwipeToReply() {
       currentX = e.touches[0].clientX;
       const deltaX = currentX - startX;
       
-      // Для своих сообщений свайп влево, для чужих вправо
-      const swipeDirection = isMine ? -1 : 1;
-      const swipeDistance = deltaX * swipeDirection;
+      // Свайп влево для ВСЕХ сообщений (deltaX отрицательный)
+      const swipeDistance = -deltaX; // инвертируем чтобы влево было положительным
       
-      // Ограничиваем свайп только в нужном направлении
+      // Ограничиваем свайп только влево
       if (swipeDistance > 0 && swipeDistance < maxSwipe) {
         const actualSwipe = Math.min(swipeDistance, maxSwipe);
-        bubble.style.transform = `translateX(${actualSwipe * swipeDirection}px)`;
+        bubble.style.transform = `translateX(-${actualSwipe}px)`; // всегда влево (минус)
         
         // Показываем иконку по мере свайпа
         const opacity = Math.min(actualSwipe / threshold, 1);
@@ -4967,8 +4965,7 @@ function initSwipeToReply() {
       isDragging = false;
       
       const deltaX = currentX - startX;
-      const swipeDirection = isMine ? -1 : 1;
-      const swipeDistance = deltaX * swipeDirection;
+      const swipeDistance = -deltaX; // свайп влево
       const swipeTime = Date.now() - startTime;
       
       // Быстрый свайп или достигнут порог — активируем ответ
