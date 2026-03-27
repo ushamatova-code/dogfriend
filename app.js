@@ -1113,23 +1113,25 @@ function renderPrivateChatMessages(chatId) {
         <div style="font-size:12px;color:${isMine ? 'rgba(255,255,255,0.75)' : 'var(--text-secondary)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">${escHtml((msg.replyToText || msg.reply_to_text || '').substring(0, 80))}</div>
       </div>` : '';
 
-    return `<div id="msg-${msg.dbId || idx}" style="display:flex;justify-content:${isMine ? 'flex-end' : 'flex-start'};align-items:flex-end;gap:6px;">
-      ${isMine ? `<button onclick="startReply(${idx})" style="background:none;border:none;cursor:pointer;padding:4px;opacity:0.5;flex-shrink:0;margin-bottom:2px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 00-4-4H4"/></svg>
-      </button>` : ''}
-      <div style="max-width:75%;background:${isMine ? 'var(--primary)' : 'var(--white)'};color:${isMine ? 'white' : 'var(--text-primary)'};padding:10px 14px;border-radius:${isMine ? '16px 16px 4px 16px' : '16px 16px 16px 4px'};word-wrap:break-word;font-size:14px;box-shadow:var(--shadow);">
+    return `<div id="msg-${msg.dbId || idx}" class="swipeable-msg" data-msg-idx="${idx}" style="display:flex;justify-content:${isMine ? 'flex-end' : 'flex-start'};align-items:flex-end;gap:6px;position:relative;margin-bottom:6px;">
+      <div class="swipe-reply-icon" style="position:absolute;${isMine ? 'left:10px' : 'right:10px'};top:50%;transform:translateY(-50%);opacity:0;transition:opacity 0.2s;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2">
+          <polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 00-4-4H4"/>
+        </svg>
+      </div>
+      <div class="msg-bubble" style="max-width:75%;background:${isMine ? 'var(--primary)' : 'var(--white)'};color:${isMine ? 'white' : 'var(--text-primary)'};padding:10px 14px;border-radius:${isMine ? '16px 16px 4px 16px' : '16px 16px 16px 4px'};word-wrap:break-word;font-size:14px;box-shadow:var(--shadow);transform:translateX(0);transition:transform 0.2s ease-out;">
         ${!isMine ? `<div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:4px;">${escHtml(msg.senderName || '')}</div>` : ''}
         ${replyBlock}
         ${content}
         <div style="font-size:11px;${isMine ? 'color:rgba(255,255,255,0.7)' : 'color:var(--text-secondary)'};margin-top:4px;text-align:right;">${msg.time}</div>
       </div>
-      ${!isMine ? `<button onclick="startReply(${idx})" style="background:none;border:none;cursor:pointer;padding:4px;opacity:0.5;flex-shrink:0;margin-bottom:2px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 00-4-4H4"/></svg>
-      </button>` : ''}
     </div>`;
   }).join('');
 
   container.scrollTop = container.scrollHeight;
+  
+  // Инициализируем свайп для всех сообщений
+  initSwipeToReply();
 }
 
 function sendPrivateMessage() {
@@ -4909,4 +4911,86 @@ function scrollToMsg(msgId) {
     el.style.background = 'rgba(74,144,217,0.15)';
     setTimeout(() => { el.style.background = ''; }, 1500);
   }
+}
+
+// ════════════════════════════════════════════════════════════
+// SWIPE TO REPLY — механика свайпа как в Telegram
+// ════════════════════════════════════════════════════════════
+function initSwipeToReply() {
+  const messages = document.querySelectorAll('.swipeable-msg');
+  
+  messages.forEach(msgEl => {
+    const bubble = msgEl.querySelector('.msg-bubble');
+    const icon = msgEl.querySelector('.swipe-reply-icon');
+    if (!bubble || !icon) return;
+    
+    let startX = 0;
+    let currentX = 0;
+    let isDragging = false;
+    let startTime = 0;
+    
+    const isMine = msgEl.style.justifyContent.includes('flex-end');
+    const maxSwipe = 80; // максимальное расстояние свайпа
+    const threshold = 60; // порог для активации ответа
+    
+    bubble.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      startTime = Date.now();
+      isDragging = true;
+      bubble.style.transition = 'none';
+      icon.style.transition = 'none';
+    }, { passive: true });
+    
+    bubble.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      
+      currentX = e.touches[0].clientX;
+      const deltaX = currentX - startX;
+      
+      // Для своих сообщений свайп влево, для чужих вправо
+      const swipeDirection = isMine ? -1 : 1;
+      const swipeDistance = deltaX * swipeDirection;
+      
+      // Ограничиваем свайп только в нужном направлении
+      if (swipeDistance > 0 && swipeDistance < maxSwipe) {
+        const actualSwipe = Math.min(swipeDistance, maxSwipe);
+        bubble.style.transform = `translateX(${actualSwipe * swipeDirection}px)`;
+        
+        // Показываем иконку по мере свайпа
+        const opacity = Math.min(actualSwipe / threshold, 1);
+        icon.style.opacity = opacity;
+      }
+    }, { passive: true });
+    
+    const endTouch = () => {
+      if (!isDragging) return;
+      isDragging = false;
+      
+      const deltaX = currentX - startX;
+      const swipeDirection = isMine ? -1 : 1;
+      const swipeDistance = deltaX * swipeDirection;
+      const swipeTime = Date.now() - startTime;
+      
+      // Быстрый свайп или достигнут порог — активируем ответ
+      if ((swipeDistance > threshold) || (swipeDistance > 40 && swipeTime < 200)) {
+        const msgIdx = msgEl.getAttribute('data-msg-idx');
+        startReply(parseInt(msgIdx));
+        
+        // Небольшая вибрация
+        if (navigator.vibrate) navigator.vibrate(50);
+      }
+      
+      // Возвращаем на место
+      bubble.style.transition = 'transform 0.2s ease-out';
+      icon.style.transition = 'opacity 0.2s';
+      bubble.style.transform = 'translateX(0)';
+      icon.style.opacity = '0';
+      
+      startX = 0;
+      currentX = 0;
+    };
+    
+    bubble.addEventListener('touchend', endTouch);
+    bubble.addEventListener('touchcancel', endTouch);
+  });
 }
