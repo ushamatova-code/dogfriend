@@ -2068,40 +2068,41 @@ function showInAppNotification(title, body) {
   setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity 0.3s'; setTimeout(()=>el.remove(), 300); }, 3500);
 }
 
-// Browser Push Notification (работает даже когда приложение закрыто)
-function showBrowserNotification(title, options) {
+// Browser Push Notification (работает когда приложение свёрнуто)
+async function showBrowserNotification(title, options) {
   // Проверяем поддержку
   if (!('Notification' in window)) return;
   
   // Запрашиваем разрешение если ещё не дано
   if (Notification.permission === 'default') {
-    Notification.requestPermission();
-    return;
+    await Notification.requestPermission();
   }
   
-  // Показываем уведомление если разрешено
-  if (Notification.permission === 'granted') {
-    try {
-      // Вибрация на мобильных
-      if (navigator.vibrate) {
-        navigator.vibrate([200, 100, 200]);
-      }
-      
-      // Уникальный tag для каждого чата - чтобы каждое сообщение показывалось
-      const tag = options.tag || `dogfriend-msg-${Date.now()}`;
-      
-      new Notification(title, {
-        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">🐕</text></svg>',
-        badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">🐾</text></svg>',
-        tag: tag,
-        renotify: true,
-        requireInteraction: false,
-        silent: false,
-        ...options
-      });
-    } catch(e) {
-      console.log('Notification error:', e);
+  if (Notification.permission !== 'granted') return;
+
+  const tag = options.tag || `dogfriend-msg-${Date.now()}`;
+  const notifOptions = {
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    tag: tag,
+    renotify: true,
+    requireInteraction: false,
+    silent: false,
+    ...options
+  };
+
+  try {
+    // Через Service Worker — работает когда приложение свёрнуто (iOS Safari PWA)
+    if (swRegistration) {
+      await swRegistration.showNotification(title, notifOptions);
+    } else {
+      // Fallback — обычный Notification когда приложение открыто
+      new Notification(title, notifOptions);
     }
+  } catch(e) {
+    console.log('[Notification] error:', e);
+    // Fallback на обычный Notification
+    try { new Notification(title, notifOptions); } catch(e2) {}
   }
 }
 
