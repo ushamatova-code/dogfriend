@@ -345,7 +345,7 @@ function openEventChat() {
 function openEventGroupChat(ev) {
   const roomId = 'event_' + ev.id;
   const chatId = roomId;
-  const name = '📅 ' + ev.title;
+  const name = '📅 ' + ev.title.replace(/^(📅\s*)+/, '');
 
   contactBook[chatId] = {
     name: name, initials: '📅',

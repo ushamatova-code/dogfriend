@@ -1549,13 +1549,40 @@ function loadPrivateChatsFromStorage() {
 
 // Вызывается из initSupabase после успешного подключения
 async function reloadEventChatsFromDB() {
-  if (!supabaseClient) return;
-  const eventChatIds = Object.keys(contactBook).filter(k => k.startsWith('event_'));
-  if (!eventChatIds.length) return;
-  for (const chatId of eventChatIds) {
+  if (!supabaseClient || !currentUser) return;
+
+  // Берём только события где пользователь реально участвует (из БД, не из localStorage)
+  const { data: participations, error } = await supabaseClient
+    .from('event_participants')
+    .select('event_id')
+    .eq('user_id', currentUser.id)
+    .eq('status', 'going');
+
+  if (error) { console.error('reloadEventChatsFromDB error:', error); return; }
+  if (!participations || !participations.length) return;
+
+  for (const p of participations) {
+    const chatId = 'event_' + p.event_id;
+    // Добавляем в contactBook если ещё нет
+    if (!contactBook[chatId]) {
+      contactBook[chatId] = {
+        name: '📅 Событие', initials: '📅',
+        grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)',
+        isEventChat: true, roomId: chatId
+      };
+    }
     await loadEventChatFromServer(chatId, chatId);
   }
-  // Инициализируем курсоры и запускаем фоновый polling
+
+  // Удаляем из contactBook event-чаты где пользователь больше не участвует
+  const activeIds = new Set(participations.map(p => 'event_' + p.event_id));
+  Object.keys(contactBook).forEach(k => {
+    if (k.startsWith('event_') && !activeIds.has(k)) {
+      delete contactBook[k];
+    }
+  });
+  localStorage.setItem('df_contacts', JSON.stringify(contactBook));
+
   initEventLastIds();
   startBgEventPolling();
   renderPrivateChats();
@@ -2566,8 +2593,12 @@ async function pollNewMessages() {
 
       // Пропускаем если room_id не содержит наш userId (не наш чат)
       if (!msg.room_id) return;
-      const isMyRoom = msg.room_id.includes(myUserId) || msg.room_id.startsWith('event_');
-      if (!isMyRoom) return;
+      // Для event чатов — показываем только если пользователь в contactBook этого чата (т.е. участник)
+      if (msg.room_id.startsWith('event_')) {
+        if (!contactBook[msg.room_id]) return; // не участник — пропускаем
+      } else {
+        if (!msg.room_id.includes(myUserId)) return; // не наш личный чат
+      }
 
       // Определяем chatId
       const chatId = msg.room_id.startsWith('event_') ? msg.room_id : msg.sender_id;
