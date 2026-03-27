@@ -1172,7 +1172,7 @@ function sendPrivateMessage() {
   const newMsg = {
     text, sender: 'user', time, senderName: myName, senderId: myUserId,
     created_at: new Date().toISOString(),
-    replyToId: _replyTo?.dbId || null,
+    replyToId: _replyTo?.dbId || (_replyTo?._index !== undefined ? `idx-${_replyTo._index}` : null),
     replyToText: _replyTo?.text || null,
     replyToName: _replyTo?.senderName || null,
   };
@@ -2976,9 +2976,27 @@ async function savePrivateMsgToServer(chatId, text, time, replyTo = null) {
       time: time,
     };
     if (replyTo) {
-      msgData.reply_to_id = replyTo.dbId || null;
+      let actualReplyToId = replyTo.dbId;
+      
+      // Если нет dbId но есть _index - пытаемся найти реальный dbId
+      if (!actualReplyToId && replyTo._index !== undefined) {
+        const messages = privateChats[chatId] || [];
+        const replyMsg = messages[replyTo._index];
+        if (replyMsg && replyMsg.dbId) {
+          actualReplyToId = replyMsg.dbId;
+          console.log('💾 Found real dbId from index:', replyTo._index, '→', actualReplyToId);
+        }
+      }
+      
+      msgData.reply_to_id = actualReplyToId || null;
       msgData.reply_to_text = replyTo.text || null;
       msgData.reply_to_name = replyTo.senderName || null;
+      
+      console.log('💾 Saving reply data:', {
+        reply_to_id: msgData.reply_to_id,
+        reply_to_text: msgData.reply_to_text?.substring(0, 30),
+        reply_to_name: msgData.reply_to_name
+      });
     }
     const { error } = await supabaseClient.from('direct_messages').insert(msgData);
     if (error) { console.error('Failed to save message:', error); return; }
