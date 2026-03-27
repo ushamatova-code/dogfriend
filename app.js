@@ -1805,9 +1805,12 @@ async function checkAuth() {
       currentUser = session.user;
       try { await loadUserProfile(); } catch(e) { console.warn('loadUserProfile:', e); }
       
-      // Запускаем Realtime подписку на новые сообщения (заменяет polling)
+      // Запускаем Realtime подписку на новые сообщения
       stopRealtimeDMSubscription(); // Сбрасываем если была старая
       startRealtimeDMSubscription();
+      // Polling fallback — страховка если Realtime упал
+      stopMessagePolling();
+      startMessagePolling();
 
       // Загружаем ВСЕ диалоги из БД — чтобы они появились даже после
       // переустановки PWA или очистки localStorage
@@ -1885,6 +1888,8 @@ async function supabaseLogin() {
       // Запускаем Realtime подписку
       stopRealtimeDMSubscription();
       startRealtimeDMSubscription();
+      stopMessagePolling();
+      startMessagePolling();
 
       // Загружаем все диалоги из БД
       loadAllDialogsFromDB();
@@ -2068,41 +2073,40 @@ function showInAppNotification(title, body) {
   setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity 0.3s'; setTimeout(()=>el.remove(), 300); }, 3500);
 }
 
-// Browser Push Notification (работает когда приложение свёрнуто)
-async function showBrowserNotification(title, options) {
+// Browser Push Notification (работает даже когда приложение закрыто)
+function showBrowserNotification(title, options) {
   // Проверяем поддержку
   if (!('Notification' in window)) return;
   
   // Запрашиваем разрешение если ещё не дано
   if (Notification.permission === 'default') {
-    await Notification.requestPermission();
+    Notification.requestPermission();
+    return;
   }
   
-  if (Notification.permission !== 'granted') return;
-
-  const tag = options.tag || `dogfriend-msg-${Date.now()}`;
-  const notifOptions = {
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
-    tag: tag,
-    renotify: true,
-    requireInteraction: false,
-    silent: false,
-    ...options
-  };
-
-  try {
-    // Через Service Worker — работает когда приложение свёрнуто (iOS Safari PWA)
-    if (swRegistration) {
-      await swRegistration.showNotification(title, notifOptions);
-    } else {
-      // Fallback — обычный Notification когда приложение открыто
-      new Notification(title, notifOptions);
+  // Показываем уведомление если разрешено
+  if (Notification.permission === 'granted') {
+    try {
+      // Вибрация на мобильных
+      if (navigator.vibrate) {
+        navigator.vibrate([200, 100, 200]);
+      }
+      
+      // Уникальный tag для каждого чата - чтобы каждое сообщение показывалось
+      const tag = options.tag || `dogfriend-msg-${Date.now()}`;
+      
+      new Notification(title, {
+        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">🐕</text></svg>',
+        badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">🐾</text></svg>',
+        tag: tag,
+        renotify: true,
+        requireInteraction: false,
+        silent: false,
+        ...options
+      });
+    } catch(e) {
+      console.log('Notification error:', e);
     }
-  } catch(e) {
-    console.log('[Notification] error:', e);
-    // Fallback на обычный Notification
-    try { new Notification(title, notifOptions); } catch(e2) {}
   }
 }
 
@@ -2516,6 +2520,104 @@ function stopRealtimeDMSubscription() {
   if (realtimeDMChannel) {
     realtimeDMChannel.unsubscribe();
     realtimeDMChannel = null;
+  }
+}
+
+// ============================================================
+// POLLING FALLBACK — каждые 5 сек проверяем новые сообщения
+// Страховка на случай если Realtime упал или завис
+// ============================================================
+let _pollInterval = null;
+let _lastPollTime = new Date().toISOString();
+
+function startMessagePolling() {
+  if (_pollInterval) return; // уже запущен
+  _lastPollTime = new Date(Date.now() - 10000).toISOString(); // берём с запасом 10 сек назад
+  _pollInterval = setInterval(pollNewMessages, 5000);
+  console.log('[Poll] ✅ Polling запущен каждые 5 сек');
+}
+
+function stopMessagePolling() {
+  if (_pollInterval) {
+    clearInterval(_pollInterval);
+    _pollInterval = null;
+  }
+}
+
+async function pollNewMessages() {
+  if (!supabaseClient || !currentUser) return;
+  const myUserId = currentUser.id;
+
+  try {
+    const { data: msgs, error } = await supabaseClient
+      .from('direct_messages')
+      .select('*')
+      .gt('created_at', _lastPollTime)
+      .order('created_at', { ascending: true });
+
+    if (error || !msgs || msgs.length === 0) return;
+
+    // Обновляем время последней проверки
+    _lastPollTime = msgs[msgs.length - 1].created_at;
+
+    msgs.forEach(msg => {
+      // Пропускаем свои сообщения
+      if (msg.sender_id === myUserId) return;
+
+      // Пропускаем если room_id не содержит наш userId (не наш чат)
+      if (!msg.room_id) return;
+      const isMyRoom = msg.room_id.includes(myUserId) || msg.room_id.startsWith('event_');
+      if (!isMyRoom) return;
+
+      // Определяем chatId
+      const chatId = msg.room_id.startsWith('event_') ? msg.room_id : msg.sender_id;
+
+      // Дубль?
+      if (!privateChats[chatId]) privateChats[chatId] = [];
+      const exists = privateChats[chatId].some(m =>
+        m.dbId === msg.id ||
+        (m.text === msg.text && m.senderId === msg.sender_id &&
+         Math.abs(new Date(m.created_at || 0) - new Date(msg.created_at || 0)) < 5000)
+      );
+      if (exists) return;
+
+      const time = new Date(msg.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+      privateChats[chatId].push({
+        text: msg.text,
+        sender: 'other',
+        time: msg.time || time,
+        senderName: msg.sender_name,
+        senderId: msg.sender_id,
+        created_at: msg.created_at,
+        dbId: msg.id,
+      });
+
+      // Запоминаем контакт
+      if (!contactBook[chatId] && !chatId.startsWith('event_')) {
+        contactBook[chatId] = {
+          name: msg.sender_name,
+          initials: (msg.sender_name || '??').slice(0, 2).toUpperCase(),
+          grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)'
+        };
+        localStorage.setItem('df_contacts', JSON.stringify(contactBook));
+      }
+
+      if (!chatId.startsWith('event_')) savePrivateChatsToStorage();
+
+      if (currentPrivateChatId === chatId) {
+        renderPrivateChatMessages(chatId);
+      } else {
+        addUnreadMessage(chatId);
+        playNotificationSound();
+        showInAppNotification(msg.sender_name, msg.text);
+        showBrowserNotification('Новое от ' + msg.sender_name, { body: msg.text.substring(0, 80) });
+        sendPushToUser(myUserId, { title: msg.sender_name, message: msg.text.substring(0, 100), url: '/', chatId: chatId, type: 'message' });
+      }
+      renderPrivateChats();
+    });
+  } catch(e) {
+    console.error('[Poll] Ошибка:', e);
   }
 }
 
