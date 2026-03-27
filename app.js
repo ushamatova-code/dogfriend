@@ -1055,10 +1055,13 @@ function subscribeToPrivateChat(theirId) {
       senderName: data.senderName,
       senderId: data.senderId,
       created_at: new Date().toISOString(),
-      // Поля ответа
+      // Поля ответа - оба варианта для совместимости
       replyToId: data.replyToId || null,
       replyToText: data.replyToText || null,
       replyToName: data.replyToName || null,
+      reply_to_id: data.replyToId || null,
+      reply_to_text: data.replyToText || null,
+      reply_to_name: data.replyToName || null,
     });
     savePrivateChatsToStorage();
 
@@ -1103,16 +1106,21 @@ function renderPrivateChatMessages(chatId) {
 
   console.log('🔍 renderPrivateChatMessages:', chatId, 'messages:', messages.length);
   
-  // Проверяем первые 3 сообщения на наличие replyTo
-  messages.slice(0, 3).forEach((msg, idx) => {
-    if (msg.replyToId || msg.reply_to_id) {
-      console.log(`  Msg ${idx} HAS reply:`, {
+  // Проверяем сколько сообщений имеют ответы
+  const withReply = messages.filter(m => m.replyToText || m.reply_to_text || m.replyToId || m.reply_to_id);
+  if (withReply.length > 0) {
+    console.log(`  ✅ ${withReply.length} сообщений с ответами`);
+    withReply.slice(0, 3).forEach((msg, idx) => {
+      console.log(`    Msg с ответом #${idx}:`, {
+        text: msg.text?.substring(0, 20),
         replyToId: msg.replyToId || msg.reply_to_id,
-        replyToText: (msg.replyToText || msg.reply_to_text || '').substring(0, 30),
+        replyToText: (msg.replyToText || msg.reply_to_text || '').substring(0, 20),
         replyToName: msg.replyToName || msg.reply_to_name
       });
-    }
-  });
+    });
+  } else {
+    console.log('  ℹ️ Нет сообщений с ответами');
+  }
 
   if (messages.length === 0) {
     container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text-secondary);font-size:14px;">Напишите первое сообщение</div>';
@@ -1126,10 +1134,11 @@ function renderPrivateChatMessages(chatId) {
     // Уникальный ID: используем dbId если есть, иначе индекс
     const msgUniqueId = msg.dbId || `idx-${idx}`;
 
-    // Блок цитаты если это ответ
-    const replyBlock = (msg.replyToText || msg.reply_to_text) ? `
+    // Блок цитаты если это ответ - проверяем ОБА варианта названий полей
+    const hasReply = msg.replyToText || msg.reply_to_text || msg.replyToId || msg.reply_to_id;
+    const replyBlock = hasReply ? `
       <div style="background:${isMine ? 'rgba(255,255,255,0.2)' : 'var(--bg)'};border-left:3px solid ${isMine ? 'rgba(255,255,255,0.7)' : 'var(--primary)'};border-radius:6px;padding:6px 10px;margin-bottom:6px;cursor:pointer;" onclick="scrollToMsg('${msg.replyToId || msg.reply_to_id || ''}')">
-        <div style="font-size:11px;font-weight:700;color:${isMine ? 'rgba(255,255,255,0.85)' : 'var(--primary)'};margin-bottom:2px;">${escHtml(msg.replyToName || msg.reply_to_name || '')}</div>
+        <div style="font-size:11px;font-weight:700;color:${isMine ? 'rgba(255,255,255,0.85)' : 'var(--primary)'};margin-bottom:2px;">${escHtml(msg.replyToName || msg.reply_to_name || 'Пользователь')}</div>
         <div style="font-size:12px;color:${isMine ? 'rgba(255,255,255,0.75)' : 'var(--text-secondary)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">${escHtml((msg.replyToText || msg.reply_to_text || '').substring(0, 80))}</div>
       </div>` : '';
 
@@ -1172,9 +1181,13 @@ function sendPrivateMessage() {
   const newMsg = {
     text, sender: 'user', time, senderName: myName, senderId: myUserId,
     created_at: new Date().toISOString(),
+    // Оба варианта для совместимости
     replyToId: _replyTo?.dbId || (_replyTo?._index !== undefined ? `idx-${_replyTo._index}` : null),
     replyToText: _replyTo?.text || null,
     replyToName: _replyTo?.senderName || null,
+    reply_to_id: _replyTo?.dbId || (_replyTo?._index !== undefined ? `idx-${_replyTo._index}` : null),
+    reply_to_text: _replyTo?.text || null,
+    reply_to_name: _replyTo?.senderName || null,
   };
   privateChats[chatId].push(newMsg);
 
@@ -2516,10 +2529,13 @@ function startRealtimeDMSubscription() {
           time: msg.time, senderName: msg.sender_name,
           senderId: msg.sender_id, dbId: msg.id,
           created_at: msg.created_at,
-          // Поля ответа
+          // Поля ответа - оба варианта
           replyToId: msg.reply_to_id || null,
           replyToText: msg.reply_to_text || null,
           replyToName: msg.reply_to_name || null,
+          reply_to_id: msg.reply_to_id || null,
+          reply_to_text: msg.reply_to_text || null,
+          reply_to_name: msg.reply_to_name || null,
         });
         
         if (currentPrivateChatId === chatId) {
@@ -2554,10 +2570,13 @@ function startRealtimeDMSubscription() {
         senderId: msg.sender_id,
         created_at: msg.created_at,
         dbId: msg.id,
-        // Поля ответа
+        // Поля ответа - оба варианта
         replyToId: msg.reply_to_id || null,
         replyToText: msg.reply_to_text || null,
         replyToName: msg.reply_to_name || null,
+        reply_to_id: msg.reply_to_id || null,
+        reply_to_text: msg.reply_to_text || null,
+        reply_to_name: msg.reply_to_name || null,
       });
       savePrivateChatsToStorage();
       
@@ -2945,10 +2964,13 @@ async function loadPrivateChatFromServer(chatId) {
         senderId: m.sender_id,
         created_at: m.created_at,
         dbId: m.id,
-        // Поля ответа
+        // Поля ответа - сохраняем оба варианта для совместимости
         replyToId: m.reply_to_id || null,
         replyToText: m.reply_to_text || null,
         replyToName: m.reply_to_name || null,
+        reply_to_id: m.reply_to_id || null,
+        reply_to_text: m.reply_to_text || null,
+        reply_to_name: m.reply_to_name || null,
       }));
       savePrivateChatsToStorage();
       if (currentPrivateChatId == chatId) renderPrivateChatMessages(chatId);
@@ -2978,11 +3000,16 @@ async function savePrivateMsgToServer(chatId, text, time, replyTo = null) {
     if (replyTo) {
       let actualReplyToId = replyTo.dbId;
       
+      // Исключаем временные ID формата idx-*
+      if (actualReplyToId && String(actualReplyToId).startsWith('idx-')) {
+        actualReplyToId = null;
+      }
+      
       // Если нет dbId но есть _index - пытаемся найти реальный dbId
       if (!actualReplyToId && replyTo._index !== undefined) {
         const messages = privateChats[chatId] || [];
         const replyMsg = messages[replyTo._index];
-        if (replyMsg && replyMsg.dbId) {
+        if (replyMsg && replyMsg.dbId && !String(replyMsg.dbId).startsWith('idx-')) {
           actualReplyToId = replyMsg.dbId;
           console.log('💾 Found real dbId from index:', replyTo._index, '→', actualReplyToId);
         }
