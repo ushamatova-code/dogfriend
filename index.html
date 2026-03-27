@@ -1004,6 +1004,18 @@
     </button>
   </div>
   <div class="scroll" id="pc-messages" style="padding:12px 16px;display:flex;flex-direction:column;gap:12px;flex:1;overflow-y:auto;"></div>
+  <!-- Reply preview bar -->
+  <div id="pc-reply-bar" style="display:none;padding:8px 16px;background:var(--bg);border-top:2px solid var(--primary);border-bottom:1px solid var(--border);flex-shrink:0;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:2px;" id="pc-reply-name"></div>
+        <div style="font-size:12px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="pc-reply-text"></div>
+      </div>
+      <button onclick="cancelReply()" style="background:none;border:none;cursor:pointer;padding:4px;flex-shrink:0;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
   <div style="padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));background:var(--white);border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;">
     <input type="file" id="pc-photo-input" accept="image/*" style="display:none;" onchange="sendChatPhoto(this)">
     <button class="btn btn-g" style="width:44px;height:44px;padding:0;flex-shrink:0;" onclick="triggerChatPhoto()">

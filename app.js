@@ -1102,15 +1102,30 @@ function renderPrivateChatMessages(chatId) {
     return;
   }
 
-  container.innerHTML = messages.map(msg => {
+  container.innerHTML = messages.map((msg, idx) => {
     const isMine = msg.sender === 'user';
     const content = formatMsgContent(msg.text);
-    return `<div style="display:flex;justify-content:${isMine ? 'flex-end' : 'flex-start'};">
+
+    // Блок цитаты если это ответ
+    const replyBlock = (msg.replyToText || msg.reply_to_text) ? `
+      <div style="background:${isMine ? 'rgba(255,255,255,0.2)' : 'var(--bg)'};border-left:3px solid ${isMine ? 'rgba(255,255,255,0.7)' : 'var(--primary)'};border-radius:6px;padding:6px 10px;margin-bottom:6px;cursor:pointer;" onclick="scrollToMsg('${msg.replyToId || msg.reply_to_id}')">
+        <div style="font-size:11px;font-weight:700;color:${isMine ? 'rgba(255,255,255,0.85)' : 'var(--primary)'};margin-bottom:2px;">${escHtml(msg.replyToName || msg.reply_to_name || '')}</div>
+        <div style="font-size:12px;color:${isMine ? 'rgba(255,255,255,0.75)' : 'var(--text-secondary)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">${escHtml((msg.replyToText || msg.reply_to_text || '').substring(0, 80))}</div>
+      </div>` : '';
+
+    return `<div id="msg-${msg.dbId || idx}" style="display:flex;justify-content:${isMine ? 'flex-end' : 'flex-start'};align-items:flex-end;gap:6px;">
+      ${isMine ? `<button onclick="startReply(${idx})" style="background:none;border:none;cursor:pointer;padding:4px;opacity:0.5;flex-shrink:0;margin-bottom:2px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 00-4-4H4"/></svg>
+      </button>` : ''}
       <div style="max-width:75%;background:${isMine ? 'var(--primary)' : 'var(--white)'};color:${isMine ? 'white' : 'var(--text-primary)'};padding:10px 14px;border-radius:${isMine ? '16px 16px 4px 16px' : '16px 16px 16px 4px'};word-wrap:break-word;font-size:14px;box-shadow:var(--shadow);">
         ${!isMine ? `<div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:4px;">${escHtml(msg.senderName || '')}</div>` : ''}
+        ${replyBlock}
         ${content}
         <div style="font-size:11px;${isMine ? 'color:rgba(255,255,255,0.7)' : 'color:var(--text-secondary)'};margin-top:4px;text-align:right;">${msg.time}</div>
       </div>
+      ${!isMine ? `<button onclick="startReply(${idx})" style="background:none;border:none;cursor:pointer;padding:4px;opacity:0.5;flex-shrink:0;margin-bottom:2px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 00-4-4H4"/></svg>
+      </button>` : ''}
     </div>`;
   }).join('');
 
@@ -1132,7 +1147,13 @@ function sendPrivateMessage() {
   if (!privateChats[chatId]) privateChats[chatId] = [];
 
   // Добавляем своё сообщение локально сразу (оптимистично)
-  const newMsg = { text, sender: 'user', time, senderName: myName, senderId: myUserId, created_at: new Date().toISOString() };
+  const newMsg = {
+    text, sender: 'user', time, senderName: myName, senderId: myUserId,
+    created_at: new Date().toISOString(),
+    replyToId: _replyTo?.dbId || null,
+    replyToText: _replyTo?.text || null,
+    replyToName: _replyTo?.senderName || null,
+  };
   privateChats[chatId].push(newMsg);
 
   // Для личных чатов — кэшируем в localStorage
@@ -1142,12 +1163,11 @@ function sendPrivateMessage() {
 
   input.value = '';
   input.style.height = 'auto';
+  cancelReply();
   renderPrivateChatMessages(chatId);
   renderPrivateChats();
 
-  // Сохраняем в БД (savePrivateMsgToServer уже содержит broadcast)
-  // Для event-чатов roomId = chatId, для личных = sorted join
-  savePrivateMsgToServer(chatId, text, time);
+  savePrivateMsgToServer(chatId, text, time, _replyTo);
 
   // Для личных чатов — дополнительный broadcast через свой канал
   if (!isEventChat && supabaseClient) {
@@ -1161,7 +1181,12 @@ function sendPrivateMessage() {
     }
     channel.send({
       type: 'broadcast', event: 'message',
-      payload: { text, senderName: myName, senderId: myUserId, time }
+      payload: {
+        text, senderName: myName, senderId: myUserId, time,
+        replyToId: newMsg.replyToId,
+        replyToText: newMsg.replyToText,
+        replyToName: newMsg.replyToName,
+      }
     });
   }
 }
@@ -2900,31 +2925,30 @@ async function loadPrivateChatFromServer(chatId) {
 }
 
 // Сохранить сообщение на сервере
-async function savePrivateMsgToServer(chatId, text, time) {
+async function savePrivateMsgToServer(chatId, text, time, replyTo = null) {
   if (!supabaseClient) return;
   const myUserId = currentUser?.id || userId;
   const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
 
-  // Для чатов событий room_id = chatId напрямую (event_XXX)
-  // Для личных чатов — sorted join
   const isEventChat = String(chatId).startsWith('event_');
   const roomId = isEventChat ? String(chatId) : getRoomId(myUserId, String(chatId));
 
-  // Для event чатов broadcast идёт в channel dogfriend-dm-{roomId}
-  const channelName = 'dogfriend-dm-' + roomId;
-
   try {
-    // Сохраняем в БД
-    const { error } = await supabaseClient.from('direct_messages').insert({
+    const msgData = {
       room_id: roomId,
       sender_id: myUserId,
       sender_name: p.name || 'Гость',
       text: text,
-      time: time
-    });
+      time: time,
+    };
+    if (replyTo) {
+      msgData.reply_to_id = replyTo.dbId || null;
+      msgData.reply_to_text = replyTo.text || null;
+      msgData.reply_to_name = replyTo.senderName || null;
+    }
+    const { error } = await supabaseClient.from('direct_messages').insert(msgData);
     if (error) { console.error('Failed to save message:', error); return; }
 
-    // Сохраняем localStorage для личных чатов
     if (!isEventChat) {
       savePrivateChatsToStorage();
     }
@@ -4838,5 +4862,51 @@ async function saveOneSignalPlayerId() {
     else console.log('[OneSignal] ✅ player_id сохранён');
   } catch(e) {
     console.error('[OneSignal] Error:', e);
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// REPLY — ответ на сообщение
+// ════════════════════════════════════════════════════════════
+let _replyTo = null; // текущее сообщение на которое отвечаем
+
+function startReply(msgIndex) {
+  const chatId = currentPrivateChatId;
+  if (!chatId) return;
+  const messages = privateChats[chatId] || [];
+  const msg = messages[msgIndex];
+  if (!msg) return;
+
+  _replyTo = msg;
+
+  const bar = document.getElementById('pc-reply-bar');
+  const nameEl = document.getElementById('pc-reply-name');
+  const textEl = document.getElementById('pc-reply-text');
+
+  if (bar && nameEl && textEl) {
+    nameEl.textContent = msg.senderName || 'Пользователь';
+    textEl.textContent = (msg.text || '').substring(0, 100);
+    bar.style.display = 'block';
+  }
+
+  // Фокус на поле ввода
+  const input = document.getElementById('pc-input');
+  if (input) input.focus();
+}
+
+function cancelReply() {
+  _replyTo = null;
+  const bar = document.getElementById('pc-reply-bar');
+  if (bar) bar.style.display = 'none';
+}
+
+function scrollToMsg(msgId) {
+  if (!msgId) return;
+  const el = document.getElementById('msg-' + msgId);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.style.transition = 'background 0.3s';
+    el.style.background = 'rgba(74,144,217,0.15)';
+    setTimeout(() => { el.style.background = ''; }, 1500);
   }
 }
