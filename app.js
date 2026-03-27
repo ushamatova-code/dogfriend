@@ -1178,6 +1178,13 @@ function sendPrivateMessage() {
   if (!privateChats[chatId]) privateChats[chatId] = [];
 
   // Добавляем своё сообщение локально сразу (оптимистично)
+  console.log('📤 Creating reply message, _replyTo:', {
+    dbId: _replyTo?.dbId,
+    _index: _replyTo?._index,
+    text: _replyTo?.text?.substring(0, 20),
+    senderName: _replyTo?.senderName
+  });
+  
   const newMsg = {
     text, sender: 'user', time, senderName: myName, senderId: myUserId,
     created_at: new Date().toISOString(),
@@ -1189,6 +1196,13 @@ function sendPrivateMessage() {
     reply_to_text: _replyTo?.text || null,
     reply_to_name: _replyTo?.senderName || null,
   };
+  
+  console.log('📤 New message created:', {
+    text: newMsg.text.substring(0, 20),
+    replyToId: newMsg.replyToId,
+    replyToText: newMsg.replyToText?.substring(0, 20)
+  });
+  
   privateChats[chatId].push(newMsg);
 
   // Для личных чатов — кэшируем в localStorage
