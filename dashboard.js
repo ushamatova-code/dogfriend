@@ -261,8 +261,18 @@ function renderBizDashboard(biz) {
     });
   }
 
+  // Добавляем блок товаров для магазинов
+  if (biz.type === 'shop') {
+    html += renderBizDashboardShop(biz);
+  }
+
   document.getElementById('biz-dash-content').innerHTML = html;
   renderBizPromos(biz);
+
+  // Загружаем товары для магазинов
+  if (biz.type === 'shop') {
+    loadBizProducts(biz.id);
+  }
 }
 
 async function renderBizPromos(biz) {
@@ -445,49 +455,6 @@ async function saveBizEdit() {
 
     if (error) throw error;
 
-    // Если адрес изменился — геокодируем и обновляем business_locations
-    if (formData.address && formData.address !== currentBiz.address) {
-      let lat = null, lng = null;
-      try {
-        const geoResp = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(formData.address) + '&limit=1');
-        const geoData = await geoResp.json();
-        if (geoData && geoData[0]) {
-          lat = parseFloat(geoData[0].lat);
-          lng = parseFloat(geoData[0].lon);
-        }
-      } catch(geoErr) {
-        console.warn('Geocoding failed:', geoErr);
-      }
-
-      // Обновляем координаты в таблице businesses
-      if (lat && lng) {
-        await supabaseClient.from('businesses').update({ location_lat: lat, location_lng: lng }).eq('id', currentBiz.id);
-      }
-
-      // Обновляем или создаём главную локацию в business_locations
-      const { data: existingLocs } = await supabaseClient
-        .from('business_locations')
-        .select('id')
-        .eq('business_id', currentBiz.id)
-        .eq('is_main', true);
-
-      if (existingLocs && existingLocs.length > 0) {
-        await supabaseClient.from('business_locations').update({
-          address: formData.address,
-          location_lat: lat,
-          location_lng: lng
-        }).eq('id', existingLocs[0].id);
-      } else {
-        await supabaseClient.from('business_locations').insert({
-          business_id: currentBiz.id,
-          address: formData.address,
-          is_main: true,
-          location_lat: lat,
-          location_lng: lng
-        });
-      }
-    }
-
     // Загружаем обложку если была выбрана
     if (_businessCoverFile) {
       const coverUrl = await uploadBusinessCover(currentBiz.id);
@@ -525,3 +492,189 @@ async function saveBizEdit() {
     }
   };
 })();
+
+// ════════════════════════════════════════════════════════════
+// SHOP PRODUCTS — Управление товарами для магазинов
+// ════════════════════════════════════════════════════════════
+
+let _shopProducts = [];
+let _editingProductId = null;
+
+// Показываем раздел товаров только для магазинов
+function renderBizDashboardShop(biz) {
+  if (biz.type !== 'shop') return '';
+  return `
+    <div style="margin-top:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="font-size:16px;font-weight:800;">🛍️ Товары</div>
+        <button onclick="openAddProduct()" class="btn btn-sm btn-p" style="height:36px;padding:0 14px;font-size:13px;border-radius:12px;">+ Добавить</button>
+      </div>
+      <div id="biz-products-list"></div>
+    </div>`;
+}
+
+async function loadBizProducts(businessId) {
+  if (!supabaseClient) return;
+  try {
+    const { data } = await supabaseClient
+      .from('shop_products')
+      .select('*')
+      .eq('business_id', businessId)
+      .order('created_at', { ascending: false });
+    _shopProducts = data || [];
+    renderBizProducts();
+  } catch(e) { console.error('loadBizProducts:', e); }
+}
+
+function renderBizProducts() {
+  const el = document.getElementById('biz-products-list');
+  if (!el) return;
+  if (!_shopProducts.length) {
+    el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-secondary);font-size:13px;background:var(--bg);border-radius:14px;">Товаров пока нет.<br>Нажмите «+ Добавить» чтобы добавить первый.</div>';
+    return;
+  }
+  el.innerHTML = _shopProducts.map(p => {
+    const img = (p.images && p.images[0]) ? `<img src="${p.images[0]}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">` : '<div style="font-size:20px;display:flex;align-items:center;justify-content:center;height:100%;background:var(--bg);border-radius:10px;">🛍️</div>';
+    return `
+      <div style="background:var(--white);border-radius:14px;padding:12px;box-shadow:var(--shadow);margin-bottom:8px;display:flex;gap:10px;align-items:center;">
+        <div style="width:48px;height:48px;flex-shrink:0;">${img}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}</div>
+          <div style="font-size:13px;color:var(--primary);font-weight:700;">${p.price.toLocaleString('ru')} ₽</div>
+          <div style="font-size:11px;color:${p.in_stock ? '#34C759' : '#FF3B30'};font-weight:600;">${p.in_stock ? '✓ В наличии' : '✗ Нет в наличии'}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <button onclick="openEditProduct('${p.id}')" style="background:var(--bg);border:none;border-radius:10px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer;color:var(--primary);">Ред.</button>
+          <button onclick="deleteProduct('${p.id}')" style="background:rgba(255,59,48,0.08);border:none;border-radius:10px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer;color:#FF3B30;">Удал.</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function openAddProduct() {
+  _editingProductId = null;
+  showProductModal();
+}
+
+function openEditProduct(productId) {
+  _editingProductId = productId;
+  const p = _shopProducts.find(x => x.id === productId);
+  if (!p) return;
+  showProductModal(p);
+}
+
+function showProductModal(product = null) {
+  const isEdit = !!product;
+  const attrs = product?.attributes ? JSON.stringify(product.attributes, null, 2) : '';
+
+  const CATS = [
+    {id:'food', label:'Корма'},
+    {id:'accessories', label:'Аксессуары'},
+    {id:'toys', label:'Игрушки'},
+    {id:'clothing', label:'Одежда'},
+    {id:'health', label:'Здоровье'},
+    {id:'other', label:'Другое'},
+  ];
+
+  const catOptions = CATS.map(c =>
+    `<option value="${c.id}" ${product?.category === c.id ? 'selected' : ''}>${c.label}</option>`
+  ).join('');
+
+  const modal = document.createElement('div');
+  modal.id = 'product-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1000;display:flex;align-items:flex-end;backdrop-filter:blur(4px);';
+  modal.innerHTML = `
+    <div style="background:var(--white);border-radius:24px 24px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px;">
+      <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;"></div>
+      <div style="font-size:17px;font-weight:800;margin-bottom:16px;">${isEdit ? 'Редактировать товар' : 'Новый товар'}</div>
+
+      <div style="margin-bottom:10px;"><label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Название *</label>
+        <input id="pf-name" class="input" value="${product?.name || ''}" placeholder="Например: Royal Canin Mini 2кг"></div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div><label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Цена ₽ *</label>
+          <input id="pf-price" class="input" type="number" value="${product?.price || ''}" placeholder="1500"></div>
+        <div><label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Старая цена ₽</label>
+          <input id="pf-old-price" class="input" type="number" value="${product?.old_price || ''}" placeholder="2000"></div>
+      </div>
+
+      <div style="margin-bottom:10px;"><label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Категория *</label>
+        <select id="pf-category" class="input" style="appearance:none;">${catOptions}</select></div>
+
+      <div style="margin-bottom:10px;"><label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Описание</label>
+        <textarea id="pf-description" class="input" style="min-height:72px;resize:none;" placeholder="Подробное описание товара">${product?.description || ''}</textarea></div>
+
+      <div style="margin-bottom:10px;"><label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Ссылки на фото (через запятую)</label>
+        <input id="pf-images" class="input" value="${(product?.images || []).join(', ')}" placeholder="https://...jpg, https://...jpg"></div>
+
+      <div style="margin-bottom:10px;"><label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Характеристики (JSON)</label>
+        <textarea id="pf-attrs" class="input" style="min-height:80px;resize:none;font-family:monospace;font-size:12px;" placeholder='{"Вес": "2кг", "Порода": "Мелкие", "Возраст": "Взрослые"}'>${attrs}</textarea>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Укажите любые характеристики в формате ключ: значение</div></div>
+
+      <div style="margin-bottom:16px;">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <input type="checkbox" id="pf-in-stock" ${(!product || product.in_stock) ? 'checked' : ''} style="width:18px;height:18px;">
+          <span style="font-size:14px;font-weight:700;">В наличии</span>
+        </label>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <button onclick="closeProductModal()" style="height:48px;background:var(--bg);border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;">Отмена</button>
+        <button onclick="saveProduct()" style="height:48px;background:var(--primary);color:white;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;">Сохранить</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeProductModal(); });
+}
+
+function closeProductModal() {
+  const m = document.getElementById('product-modal');
+  if (m) m.remove();
+}
+
+async function saveProduct() {
+  if (!supabaseClient || !currentBiz) return;
+  const name = document.getElementById('pf-name')?.value.trim();
+  const price = parseInt(document.getElementById('pf-price')?.value);
+  const oldPrice = parseInt(document.getElementById('pf-old-price')?.value) || null;
+  const category = document.getElementById('pf-category')?.value;
+  const description = document.getElementById('pf-description')?.value.trim();
+  const imagesRaw = document.getElementById('pf-images')?.value.trim();
+  const attrsRaw = document.getElementById('pf-attrs')?.value.trim();
+  const inStock = document.getElementById('pf-in-stock')?.checked;
+
+  if (!name || !price || !category) { showToast('❌ Заполните название, цену и категорию'); return; }
+
+  const images = imagesRaw ? imagesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+  let attributes = null;
+  if (attrsRaw) {
+    try { attributes = JSON.parse(attrsRaw); }
+    catch(e) { showToast('❌ Ошибка в характеристиках — проверьте JSON формат'); return; }
+  }
+
+  const payload = { name, price, old_price: oldPrice, category, description: description || null, images, attributes, in_stock: inStock, business_id: currentBiz.id };
+
+  try {
+    if (_editingProductId) {
+      await supabaseClient.from('shop_products').update(payload).eq('id', _editingProductId);
+    } else {
+      await supabaseClient.from('shop_products').insert(payload);
+    }
+    showToast('✅ Товар сохранён', '#34C759');
+    closeProductModal();
+    await loadBizProducts(currentBiz.id);
+  } catch(e) {
+    console.error('saveProduct:', e);
+    showToast('❌ Ошибка сохранения');
+  }
+}
+
+async function deleteProduct(productId) {
+  if (!confirm('Удалить товар?')) return;
+  try {
+    await supabaseClient.from('shop_products').delete().eq('id', productId);
+    showToast('Удалено');
+    await loadBizProducts(currentBiz.id);
+  } catch(e) { showToast('❌ Ошибка'); }
+}
