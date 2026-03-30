@@ -3575,12 +3575,13 @@ function initPlacesMap(businesses) {
 }
 
 function openPlaceModal(id) {
-  _currentPlace = _loadedPlaces.find(x => x.id === id);
-  if (!_currentPlace) {
-    // Попробуем открыть как бизнес-профиль
-    if (typeof openBusinessProfile === 'function') openBusinessProfile(id);
+  // Открываем полный профиль бизнеса
+  if (typeof openBusinessProfile === 'function') {
+    openBusinessProfile(id);
     return;
   }
+  // Fallback — старая модалка
+  _currentPlace = _loadedPlaces.find(x => x.id === id);
   const b = _currentPlace;
   const dist = b._dist < 100 ? formatDist(b._dist) : '';
   const services = b.services || [];
