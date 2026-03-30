@@ -3415,6 +3415,8 @@ getUserLocation();
 let _placesFilter = 'Все';
 let _currentPlace = null;
 let _loadedPlaces = [];
+let _placesMap = null;
+let _placesMapMarkers = [];
 
 const PLACE_TYPE_MAP = { clinic: 'Клиника', cafe: 'Кафе' };
 const PLACE_ICON_MAP = { clinic: '🏥', cafe: '☕' };
@@ -3472,16 +3474,8 @@ async function renderPlaces() {
 
     _loadedPlaces = businesses;
 
-    // Обновляем карту-плашку
-    const mapBlock = document.getElementById('dogmap-map-block');
-    if (mapBlock) {
-      const count = businesses.length;
-      mapBlock.innerHTML = `
-        <div style="font-size:32px;">📍</div>
-        <div style="font-size:14px;font-weight:800;color:#2e7d32;">${count} ${count === 0 ? 'мест' : count === 1 ? 'место' : count < 5 ? 'места' : 'мест'} рядом с вами</div>
-        <div style="font-size:12px;color:#388e3c;">${userLocationName || 'Определяем...'}</div>
-      `;
-    }
+    // Инициализируем реальную карту
+    initPlacesMap(businesses);
 
     if (businesses.length === 0) {
       list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-secondary);">📍 Пока нет мест рядом.<br>Бизнесы могут добавить себя через раздел «Для бизнеса»</div>';
@@ -3504,6 +3498,80 @@ async function renderPlaces() {
     console.error('renderPlaces error:', e);
     list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-secondary);">Ошибка загрузки</div>';
   }
+}
+
+function initPlacesMap(businesses) {
+  const loading = document.getElementById('dogmap-map-loading');
+  const mapEl = document.getElementById('dogmap-leaflet');
+  if (!mapEl) return;
+
+  // Убираем заглушку
+  if (loading) loading.style.display = 'none';
+
+  // Центр карты — позиция пользователя или Москва по умолчанию
+  const centerLat = userLat || 55.7558;
+  const centerLng = userLng || 37.6176;
+  const zoom = userLat ? 13 : 10;
+
+  // Уничтожаем старую карту если была
+  if (_placesMap) {
+    _placesMap.remove();
+    _placesMap = null;
+  }
+
+  if (!window.L) {
+    if (loading) { loading.style.display = 'flex'; loading.innerHTML = '<div style="text-align:center;font-size:13px;color:#666;">Карта недоступна</div>'; }
+    return;
+  }
+
+  _placesMap = L.map('dogmap-leaflet', { zoomControl: false, attributionControl: false }).setView([centerLat, centerLng], zoom);
+
+  // Тайлы OpenStreetMap
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(_placesMap);
+
+  // Маркер пользователя
+  if (userLat && userLng) {
+    const userIcon = L.divIcon({
+      html: '<div style="width:14px;height:14px;background:#4A90D9;border:3px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
+      iconSize: [14, 14], iconAnchor: [7, 7], className: ''
+    });
+    L.marker([userLat, userLng], { icon: userIcon }).addTo(_placesMap).bindPopup('Вы здесь');
+  }
+
+  // Маркеры бизнесов
+  _placesMapMarkers = [];
+  businesses.forEach(b => {
+    // Берём координаты — из основной локации или из business_locations
+    const locs = b.business_locations || [];
+    const mainLoc = locs.find(l => l.is_main) || locs[0];
+    const lat = mainLoc?.location_lat || b.location_lat;
+    const lng = mainLoc?.location_lng || b.location_lng;
+    if (!lat || !lng) return;
+
+    const emoji = PLACE_ICON_MAP[b.type] || '📍';
+    const markerIcon = L.divIcon({
+      html: `<div style="width:36px;height:36px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,0.2);border:2px solid #4A90D9;">${emoji}</div>`,
+      iconSize: [36, 36], iconAnchor: [18, 18], className: ''
+    });
+
+    const marker = L.marker([lat, lng], { icon: markerIcon })
+      .addTo(_placesMap)
+      .bindPopup(`<div style="font-weight:700;font-size:13px;">${b.name}</div><div style="font-size:11px;color:#666;">${b.address || ''}</div>`);
+
+    marker.on('click', () => openPlaceModal(b.id));
+    _placesMapMarkers.push(marker);
+  });
+
+  // Подгоняем карту под все маркеры если их несколько
+  if (_placesMapMarkers.length > 1) {
+    const group = L.featureGroup(_placesMapMarkers);
+    _placesMap.fitBounds(group.getBounds().pad(0.2));
+  }
+
+  // Принудительно перерисовываем (нужно если карта была скрыта)
+  setTimeout(() => { if (_placesMap) _placesMap.invalidateSize(); }, 100);
 }
 
 function openPlaceModal(id) {
@@ -4271,7 +4339,7 @@ async function enablePushFromSettings() {
   window.nav=function(id){
     _orig(id);
     if(id==='home')      { if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); if(typeof loadProfileStats==='function') loadProfileStats(); }
-    if(id==='dogmap')    renderPlaces();
+    if(id==='dogmap')    { renderPlaces(); setTimeout(() => { if (_placesMap) _placesMap.invalidateSize(); }, 300); }
     if(id==='discounts') renderDiscounts();
     if(id==='lessons')   renderLessons();
     if(id==='myPets')    renderPets();
