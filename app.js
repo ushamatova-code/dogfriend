@@ -5165,21 +5165,25 @@ function initSwipeToReply() {
     let startX = 0;
     let currentX = 0;
     let isDragging = false;
+    let swipeStarted = false; // Флаг что свайп действительно начался
     let startTime = 0;
     
     const maxSwipe = 80; // максимальное расстояние свайпа
     const threshold = 60; // порог для активации ответа
+    const minMoveToStart = 10; // минимальное движение для начала свайпа
     
     bubble.addEventListener('touchstart', (e) => {
       // Блокируем свайп если идёт двойной тап
       if (_doubleTapInProgress) {
         isDragging = false;
+        swipeStarted = false;
         return;
       }
       
       startX = e.touches[0].clientX;
       startTime = Date.now();
       isDragging = true;
+      swipeStarted = false; // Свайп ещё не начался
       bubble.style.transition = 'none';
       icon.style.transition = 'none';
     }, { passive: true });
@@ -5189,14 +5193,17 @@ function initSwipeToReply() {
       
       currentX = e.touches[0].clientX;
       const deltaX = currentX - startX;
+      const swipeDistance = -deltaX; // свайп влево
       
-      // Свайп влево для ВСЕХ сообщений (deltaX отрицательный)
-      const swipeDistance = -deltaX; // инвертируем чтобы влево было положительным
+      // Свайп начинается только если движение больше minMoveToStart
+      if (!swipeStarted && Math.abs(swipeDistance) > minMoveToStart) {
+        swipeStarted = true;
+      }
       
-      // Ограничиваем свайп только влево
-      if (swipeDistance > 0 && swipeDistance < maxSwipe) {
+      // Применяем визуальные эффекты только если свайп начался
+      if (swipeStarted && swipeDistance > 0 && swipeDistance < maxSwipe) {
         const actualSwipe = Math.min(swipeDistance, maxSwipe);
-        bubble.style.transform = `translateX(-${actualSwipe}px)`; // всегда влево (минус)
+        bubble.style.transform = `translateX(-${actualSwipe}px)`;
         
         // Показываем иконку по мере свайпа
         const opacity = Math.min(actualSwipe / threshold, 1);
@@ -5205,15 +5212,28 @@ function initSwipeToReply() {
     }, { passive: true });
     
     const endTouch = () => {
-      if (!isDragging || _doubleTapInProgress) return;
+      if (!isDragging || _doubleTapInProgress) {
+        // Всё равно сбрасываем
+        isDragging = false;
+        swipeStarted = false;
+        bubble.style.transition = 'transform 0.2s ease-out';
+        icon.style.transition = 'opacity 0.2s';
+        bubble.style.transform = 'translateX(0)';
+        icon.style.opacity = '0';
+        startX = 0;
+        currentX = 0;
+        return;
+      }
       isDragging = false;
       
       const deltaX = currentX - startX;
       const swipeDistance = -deltaX; // свайп влево
       const swipeTime = Date.now() - startTime;
       
-      // Быстрый свайп или достигнут порог — активируем ответ
-      if ((swipeDistance > threshold) || (swipeDistance > 40 && swipeTime < 200)) {
+      // Активируем ответ ТОЛЬКО если:
+      // 1. Свайп действительно начался (движение > 10px)
+      // 2. Достигнут порог (60px) ИЛИ быстрый свайп (>40px за <200ms)
+      if (swipeStarted && ((swipeDistance > threshold) || (swipeDistance > 40 && swipeTime < 200))) {
         const msgIdx = msgEl.getAttribute('data-msg-idx');
         startReply(parseInt(msgIdx));
         
@@ -5227,6 +5247,7 @@ function initSwipeToReply() {
       bubble.style.transform = 'translateX(0)';
       icon.style.opacity = '0';
       
+      swipeStarted = false;
       startX = 0;
       currentX = 0;
     };
