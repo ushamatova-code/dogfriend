@@ -1922,6 +1922,11 @@ async function checkAuth() {
       // Запускаем Realtime подписку на новые сообщения
       stopRealtimeDMSubscription(); // Сбрасываем если была старая
       startRealtimeDMSubscription();
+      
+      // Запускаем Realtime подписку на реакции
+      stopRealtimeReactionsSubscription();
+      startRealtimeReactionsSubscription();
+      
       // Polling fallback — страховка если Realtime упал
       stopMessagePolling();
       startMessagePolling();
@@ -2648,6 +2653,60 @@ function stopRealtimeDMSubscription() {
   if (realtimeDMChannel) {
     realtimeDMChannel.unsubscribe();
     realtimeDMChannel = null;
+  }
+}
+
+// ============================================================
+// REALTIME ПОДПИСКА НА РЕАКЦИИ
+// ============================================================
+let realtimeReactionsChannel = null;
+
+function startRealtimeReactionsSubscription() {
+  if (realtimeReactionsChannel || !supabaseClient) return;
+  
+  console.log('🎭 Starting Realtime subscription for reactions');
+  
+  realtimeReactionsChannel = supabaseClient
+    .channel('reactions-changes')
+    .on('postgres_changes', {
+      event: '*', // INSERT, UPDATE, DELETE
+      schema: 'public',
+      table: 'message_reactions'
+    }, (payload) => {
+      console.log('🎭 Reaction change:', payload);
+      
+      const reaction = payload.new || payload.old;
+      if (!reaction) return;
+      
+      const myUserId = currentUser?.id || userId;
+      const messageId = reaction.message_id;
+      
+      // Обновляем отображение реакций для этого сообщения
+      loadReactionsForMessage(messageId);
+      
+      // Если это не моя реакция - показываем уведомление
+      if (payload.eventType === 'INSERT' && reaction.user_id !== myUserId) {
+        const emoji = {
+          'heart': '❤️',
+          'happy': '🐶',
+          'sad': '😢'
+        }[reaction.reaction_type] || '👍';
+        
+        showInAppNotification(
+          reaction.user_name || 'Кто-то',
+          `${emoji} отреагировал на ваше сообщение`
+        );
+      }
+    })
+    .subscribe((status) => {
+      console.log('🎭 Reactions subscription status:', status);
+    });
+}
+
+function stopRealtimeReactionsSubscription() {
+  if (realtimeReactionsChannel) {
+    realtimeReactionsChannel.unsubscribe();
+    realtimeReactionsChannel = null;
   }
 }
 
@@ -5193,13 +5252,16 @@ function initMessageReactions() {
     let tapCount = 0;
     let tapTimer = null;
     let longPressTimer = null;
+    let touchStartTime = 0;
     
-    // Двойной тап для ❤️
     bubble.addEventListener('touchstart', (e) => {
+      touchStartTime = Date.now();
+      
       // Long press для меню реакций
       longPressTimer = setTimeout(() => {
         if (navigator.vibrate) navigator.vibrate(50);
-        showReactionMenu(messageId, e.touches[0].clientX, e.touches[0].clientY);
+        const touch = e.touches[0];
+        showReactionMenu(messageId, touch.clientX, touch.clientY);
       }, 500);
       
       // Двойной тап
@@ -5212,17 +5274,32 @@ function initMessageReactions() {
         clearTimeout(tapTimer);
         clearTimeout(longPressTimer);
         tapCount = 0;
+        
+        // Останавливаем всплытие чтобы не сработал свайп
+        e.preventDefault();
+        e.stopPropagation();
+        
         toggleReaction(messageId, 'heart');
         if (navigator.vibrate) navigator.vibrate(30);
       }
-    });
+    }, { passive: false });
     
-    bubble.addEventListener('touchend', () => {
+    bubble.addEventListener('touchend', (e) => {
       clearTimeout(longPressTimer);
-    });
+      
+      // Если это был быстрый двойной тап - останавливаем событие
+      const touchDuration = Date.now() - touchStartTime;
+      if (tapCount === 2 || touchDuration < 100) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, { passive: false });
     
     bubble.addEventListener('touchmove', () => {
       clearTimeout(longPressTimer);
+      // При движении сбрасываем счётчик тапов
+      tapCount = 0;
+      clearTimeout(tapTimer);
     });
   });
 }
@@ -5298,31 +5375,44 @@ async function toggleReaction(messageId, reactionType) {
   const myUserId = currentUser?.id || userId;
   const myName = (JSON.parse(localStorage.getItem('df_profile') || '{}')).name || 'Гость';
   
+  console.log('🎭 Toggle reaction:', reactionType, 'for message:', messageId);
+  
   try {
     // Проверяем есть ли уже реакция от этого пользователя
-    const { data: existing } = await supabaseClient
+    const { data: existing, error: fetchError } = await supabaseClient
       .from('message_reactions')
       .select('*')
       .eq('message_id', messageId)
-      .eq('user_id', myUserId)
-      .single();
+      .eq('user_id', myUserId);
     
-    if (existing) {
-      if (existing.reaction_type === reactionType) {
+    if (fetchError) {
+      console.error('❌ Fetch error:', fetchError);
+      return;
+    }
+    
+    const existingReaction = existing && existing.length > 0 ? existing[0] : null;
+    
+    if (existingReaction) {
+      console.log('  Found existing reaction:', existingReaction.reaction_type);
+      
+      if (existingReaction.reaction_type === reactionType) {
         // Удаляем если нажали на ту же реакцию
+        console.log('  ❌ Removing reaction');
         await supabaseClient
           .from('message_reactions')
           .delete()
-          .eq('id', existing.id);
+          .eq('id', existingReaction.id);
       } else {
         // Обновляем на другую реакцию
+        console.log('  🔄 Updating to:', reactionType);
         await supabaseClient
           .from('message_reactions')
           .update({ reaction_type: reactionType })
-          .eq('id', existing.id);
+          .eq('id', existingReaction.id);
       }
     } else {
       // Создаём новую реакцию
+      console.log('  ➕ Creating new reaction');
       await supabaseClient
         .from('message_reactions')
         .insert({
@@ -5336,7 +5426,7 @@ async function toggleReaction(messageId, reactionType) {
     // Обновляем отображение
     loadReactionsForMessage(messageId);
   } catch(e) {
-    console.error('Toggle reaction error:', e);
+    console.error('❌ Toggle reaction error:', e);
   }
 }
 
