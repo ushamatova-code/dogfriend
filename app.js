@@ -1142,17 +1142,21 @@ function renderPrivateChatMessages(chatId) {
         <div style="font-size:12px;color:${isMine ? 'rgba(255,255,255,0.75)' : 'var(--text-secondary)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">${escHtml((msg.replyToText || msg.reply_to_text || '').substring(0, 80))}</div>
       </div>` : '';
 
+    // Блок реакций (будет заполнен динамически)
+    const reactionsBlock = msg.dbId ? `<div class="msg-reactions" id="reactions-${msg.dbId}" style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;"></div>` : '';
+
     return `<div id="msg-${msgUniqueId}" class="swipeable-msg" data-msg-idx="${idx}" data-msg-dbid="${msg.dbId || ''}" style="display:flex;justify-content:${isMine ? 'flex-end' : 'flex-start'};align-items:flex-end;gap:6px;position:relative;margin-bottom:6px;">
       <div class="swipe-reply-icon" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);opacity:0;transition:opacity 0.2s;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2">
           <polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 00-4-4H4"/>
         </svg>
       </div>
-      <div class="msg-bubble" style="max-width:75%;background:${isMine ? 'var(--primary)' : 'var(--white)'};color:${isMine ? 'white' : 'var(--text-primary)'};padding:10px 14px;border-radius:${isMine ? '16px 16px 4px 16px' : '16px 16px 16px 4px'};word-wrap:break-word;font-size:14px;box-shadow:var(--shadow);transform:translateX(0);transition:transform 0.2s ease-out;">
+      <div class="msg-bubble" data-message-id="${msg.dbId || ''}" style="max-width:75%;background:${isMine ? 'var(--primary)' : 'var(--white)'};color:${isMine ? 'white' : 'var(--text-primary)'};padding:10px 14px;border-radius:${isMine ? '16px 16px 4px 16px' : '16px 16px 16px 4px'};word-wrap:break-word;font-size:14px;box-shadow:var(--shadow);transform:translateX(0);transition:transform 0.2s ease-out;">
         ${!isMine ? `<div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:4px;">${escHtml(msg.senderName || '')}</div>` : ''}
         ${replyBlock}
         ${content}
         <div style="font-size:11px;${isMine ? 'color:rgba(255,255,255,0.7)' : 'color:var(--text-secondary)'};margin-top:4px;text-align:right;">${msg.time}</div>
+        ${reactionsBlock}
       </div>
     </div>`;
   }).join('');
@@ -1161,6 +1165,14 @@ function renderPrivateChatMessages(chatId) {
   
   // Инициализируем свайп для всех сообщений
   initSwipeToReply();
+  
+  // Инициализируем реакции для всех сообщений
+  initMessageReactions();
+  
+  // Загружаем реакции для всех сообщений с dbId
+  messages.forEach(msg => {
+    if (msg.dbId) loadReactionsForMessage(msg.dbId);
+  });
 }
 
 function sendPrivateMessage() {
@@ -5157,4 +5169,259 @@ function initSwipeToReply() {
     bubble.addEventListener('touchend', endTouch);
     bubble.addEventListener('touchcancel', endTouch);
   });
+}
+
+// ════════════════════════════════════════════════════════════
+// MESSAGE REACTIONS — реакции на сообщения
+// ════════════════════════════════════════════════════════════
+const REACTIONS = {
+  heart: '❤️',
+  happy: '🐶',
+  sad: '😢'
+};
+
+let _reactionMenuTimeout = null;
+let _reactionMenuVisible = false;
+
+function initMessageReactions() {
+  const bubbles = document.querySelectorAll('.msg-bubble[data-message-id]');
+  
+  bubbles.forEach(bubble => {
+    const messageId = bubble.getAttribute('data-message-id');
+    if (!messageId || messageId === '') return;
+    
+    let tapCount = 0;
+    let tapTimer = null;
+    let longPressTimer = null;
+    
+    // Двойной тап для ❤️
+    bubble.addEventListener('touchstart', (e) => {
+      // Long press для меню реакций
+      longPressTimer = setTimeout(() => {
+        if (navigator.vibrate) navigator.vibrate(50);
+        showReactionMenu(messageId, e.touches[0].clientX, e.touches[0].clientY);
+      }, 500);
+      
+      // Двойной тап
+      tapCount++;
+      if (tapCount === 1) {
+        tapTimer = setTimeout(() => {
+          tapCount = 0;
+        }, 300);
+      } else if (tapCount === 2) {
+        clearTimeout(tapTimer);
+        clearTimeout(longPressTimer);
+        tapCount = 0;
+        toggleReaction(messageId, 'heart');
+        if (navigator.vibrate) navigator.vibrate(30);
+      }
+    });
+    
+    bubble.addEventListener('touchend', () => {
+      clearTimeout(longPressTimer);
+    });
+    
+    bubble.addEventListener('touchmove', () => {
+      clearTimeout(longPressTimer);
+    });
+  });
+}
+
+function showReactionMenu(messageId, x, y) {
+  // Удаляем старое меню если есть
+  hideReactionMenu();
+  
+  const menu = document.createElement('div');
+  menu.id = 'reaction-menu';
+  menu.style.cssText = `
+    position: fixed;
+    z-index: 99999;
+    background: var(--white);
+    border-radius: 24px;
+    padding: 8px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    display: flex;
+    gap: 4px;
+    animation: scaleIn 0.2s ease;
+  `;
+  
+  // Позиционируем меню
+  document.body.appendChild(menu);
+  const rect = menu.getBoundingClientRect();
+  menu.style.left = Math.min(x - rect.width / 2, window.innerWidth - rect.width - 10) + 'px';
+  menu.style.top = Math.max(y - rect.height - 10, 10) + 'px';
+  
+  // Добавляем кнопки реакций
+  Object.entries(REACTIONS).forEach(([type, emoji]) => {
+    const btn = document.createElement('button');
+    btn.textContent = emoji;
+    btn.style.cssText = `
+      width: 48px;
+      height: 48px;
+      border: none;
+      background: var(--bg);
+      border-radius: 50%;
+      font-size: 24px;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `;
+    btn.onclick = () => {
+      toggleReaction(messageId, type);
+      hideReactionMenu();
+    };
+    btn.onmousedown = (e) => e.preventDefault(); // Предотвращаем потерю фокуса
+    menu.appendChild(btn);
+  });
+  
+  _reactionMenuVisible = true;
+  
+  // Закрываем при клике вне меню
+  setTimeout(() => {
+    document.addEventListener('click', hideReactionMenu, { once: true });
+  }, 100);
+}
+
+function hideReactionMenu() {
+  const menu = document.getElementById('reaction-menu');
+  if (menu) {
+    menu.style.animation = 'scaleOut 0.15s ease';
+    setTimeout(() => menu.remove(), 150);
+  }
+  _reactionMenuVisible = false;
+}
+
+async function toggleReaction(messageId, reactionType) {
+  if (!supabaseClient || !messageId) return;
+  const myUserId = currentUser?.id || userId;
+  const myName = (JSON.parse(localStorage.getItem('df_profile') || '{}')).name || 'Гость';
+  
+  try {
+    // Проверяем есть ли уже реакция от этого пользователя
+    const { data: existing } = await supabaseClient
+      .from('message_reactions')
+      .select('*')
+      .eq('message_id', messageId)
+      .eq('user_id', myUserId)
+      .single();
+    
+    if (existing) {
+      if (existing.reaction_type === reactionType) {
+        // Удаляем если нажали на ту же реакцию
+        await supabaseClient
+          .from('message_reactions')
+          .delete()
+          .eq('id', existing.id);
+      } else {
+        // Обновляем на другую реакцию
+        await supabaseClient
+          .from('message_reactions')
+          .update({ reaction_type: reactionType })
+          .eq('id', existing.id);
+      }
+    } else {
+      // Создаём новую реакцию
+      await supabaseClient
+        .from('message_reactions')
+        .insert({
+          message_id: messageId,
+          user_id: myUserId,
+          user_name: myName,
+          reaction_type: reactionType
+        });
+    }
+    
+    // Обновляем отображение
+    loadReactionsForMessage(messageId);
+  } catch(e) {
+    console.error('Toggle reaction error:', e);
+  }
+}
+
+async function loadReactionsForMessage(messageId) {
+  if (!supabaseClient || !messageId) return;
+  
+  try {
+    const { data, error } = await supabaseClient
+      .from('message_reactions')
+      .select('*')
+      .eq('message_id', messageId);
+    
+    if (error) throw error;
+    
+    renderReactions(messageId, data || []);
+  } catch(e) {
+    console.error('Load reactions error:', e);
+  }
+}
+
+function renderReactions(messageId, reactions) {
+  const container = document.getElementById(`reactions-${messageId}`);
+  if (!container) return;
+  
+  if (reactions.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+  
+  // Группируем по типу
+  const grouped = {};
+  reactions.forEach(r => {
+    if (!grouped[r.reaction_type]) {
+      grouped[r.reaction_type] = [];
+    }
+    grouped[r.reaction_type].push(r);
+  });
+  
+  const myUserId = currentUser?.id || userId;
+  
+  container.innerHTML = Object.entries(grouped).map(([type, list]) => {
+    const hasMyReaction = list.some(r => r.user_id === myUserId);
+    const names = list.map(r => r.user_name || 'Пользователь').join(', ');
+    
+    return `
+      <div 
+        onclick="toggleReaction('${messageId}', '${type}')"
+        title="${names}"
+        style="
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          background: ${hasMyReaction ? 'rgba(74,144,217,0.15)' : 'rgba(0,0,0,0.05)'};
+          border: 1.5px solid ${hasMyReaction ? 'var(--primary)' : 'transparent'};
+          border-radius: 12px;
+          padding: 2px 8px;
+          font-size: 14px;
+          cursor: pointer;
+          transition: all 0.2s;
+        "
+        onmouseover="this.style.transform='scale(1.1)'"
+        onmouseout="this.style.transform='scale(1)'"
+      >
+        <span>${REACTIONS[type]}</span>
+        <span style="font-size: 12px; font-weight: 600; color: ${hasMyReaction ? 'var(--primary)' : 'var(--text-secondary)'};">${list.length}</span>
+      </div>
+    `;
+  }).join('');
+  
+  container.style.display = 'flex';
+}
+
+// Добавляем CSS анимации для меню
+if (!document.getElementById('reaction-animations')) {
+  const style = document.createElement('style');
+  style.id = 'reaction-animations';
+  style.textContent = `
+    @keyframes scaleIn {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    @keyframes scaleOut {
+      from { transform: scale(1); opacity: 1; }
+      to { transform: scale(0.8); opacity: 0; }
+    }
+  `;
+  document.head.appendChild(style);
 }
