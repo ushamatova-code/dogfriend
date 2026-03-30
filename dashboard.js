@@ -144,6 +144,36 @@ const BIZ_FIELDS = {
         ]
       },
     ]
+  },
+  shop: {
+    icon: '🛍️',
+    label: 'Зоомагазин',
+    sections: [
+      {
+        title: '📋 Основная информация',
+        fields: [
+          { id: 'name',        label: 'Название магазина', type: 'text',     placeholder: 'Зоомагазин "Лапки"', required: true },
+          { id: 'description', label: 'О магазине',        type: 'textarea', placeholder: 'Что продаёте, особенности, ассортимент...' },
+          { id: 'address',     label: 'Адрес',             type: 'text',     placeholder: 'Москва, ул. Ленина 10', required: true },
+          { id: 'schedule',    label: 'Режим работы',      type: 'text',     placeholder: 'Пн-Вс 10:00–20:00' },
+        ]
+      },
+      {
+        title: '📞 Контакты',
+        fields: [
+          { id: 'phone',    label: 'Телефон',  type: 'tel',   placeholder: '+7 (999) 123-45-67', required: true },
+          { id: 'email',    label: 'Email',    type: 'email', placeholder: 'shop@mail.ru' },
+          { id: 'telegram', label: 'Telegram', type: 'text',  placeholder: '@username' },
+          { id: 'website',  label: 'Сайт',     type: 'url',   placeholder: 'https://...' },
+        ]
+      },
+      {
+        title: '✅ Категории товаров',
+        type: 'checkboxes',
+        id: 'services',
+        options: ['Корма','Игрушки','Одежда','Аксессуары','Поводки и ошейники','Витамины','Лакомства','Переноски','Лежанки','Гигиена']
+      },
+    ]
   }
 };
 
