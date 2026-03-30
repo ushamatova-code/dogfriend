@@ -1375,7 +1375,12 @@
   <div class="scroll" style="padding:20px;">
     <input type="text" id="bf-name" class="input" placeholder="Название / ФИО" style="margin-bottom:12px;">
     <textarea id="bf-about" class="input" placeholder="О себе / услугах" style="margin-bottom:12px;min-height:80px;"></textarea>
-    <input type="text" id="bf-address" class="input" placeholder="Адрес" style="margin-bottom:12px;">
+    <!-- Адреса — можно добавить несколько -->
+    <div style="margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--text-primary);">📍 Адреса</div>
+      <div id="bf-addresses-list"></div>
+      <button type="button" onclick="addAddressField()" style="background:none;border:1.5px dashed var(--border);border-radius:12px;padding:10px 16px;font-size:13px;font-weight:600;color:var(--primary);cursor:pointer;width:100%;margin-top:6px;">+ Добавить адрес</button>
+    </div>
     <input type="tel" id="bf-phone" class="input" placeholder="Телефон" style="margin-bottom:12px;">
     <input type="email" id="bf-email" class="input" placeholder="Email (необязательно)" style="margin-bottom:12px;">
     <input type="text" id="bf-price" class="input" placeholder="Цена от (например: 3000 ₽)" style="margin-bottom:12px;">

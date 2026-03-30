@@ -471,7 +471,21 @@ async function loadBiz(){
   if(_bf==='pending')q=q.eq('is_approved',false);if(_bf==='approved')q=q.eq('is_approved',true);
   const{data}=await q;
   if(!data||!data.length){document.getElementById('bl').innerHTML='<div class="emp">Пусто</div>';return}
-  document.getElementById('bl').innerHTML=data.map(b=>`<div class="cd"><div class="lt"><div><span class="ln">${b.name}</span> <span class="badge bt">${b.type}</span></div><span class="badge ${b.is_approved?'bo':'bw'}">${b.is_approved?'Одобрен':'Ожидает'}</span></div><div class="lm" style="margin-top:4px">${b.address||''} ${b.phone?'· '+b.phone:''}<br>${b.description?b.description.substring(0,120)+'...':''}</div><div class="la">${!b.is_approved?'<button class="btn bok" onclick="apr(\''+b.id+'\')">Одобрить</button>':'<button class="btn bed" onclick="unapr(\''+b.id+'\')">Снять</button>'}<button class="btn bno" onclick="del('businesses','${b.id}')">Удалить</button></div></div>`).join('');
+
+  // Подгружаем адреса для всех бизнесов
+  const bizIds = data.map(b => b.id);
+  const {data: locs} = await sb.from('business_locations').select('*').in('business_id', bizIds);
+  const locMap = {};
+  (locs||[]).forEach(l => { if(!locMap[l.business_id]) locMap[l.business_id]=[]; locMap[l.business_id].push(l); });
+
+  document.getElementById('bl').innerHTML=data.map(b=>{
+    const bLocs = locMap[b.id] || [];
+    const addrHtml = bLocs.length > 1
+      ? bLocs.map(l => `<div>📍 ${l.address}${l.is_main?' <span style="color:var(--p);font-size:10px;">(осн.)</span>':''}</div>`).join('')
+      : `<span>📍 ${b.address||bLocs[0]?.address||'—'}</span>`;
+    return `<div class="cd"><div class="lt"><div><span class="ln">${b.name}</span> <span class="badge bt">${b.type}</span></div><span class="badge ${b.is_approved?'bo':'bw'}">${b.is_approved?'Одобрен':'Ожидает'}</span></div><div class="lm" style="margin-top:4px">${addrHtml} ${b.phone?'· '+b.phone:''}<br>${b.description?b.description.substring(0,120)+'...':''}</div><div class="la">${!b.is_approved?'<button class="btn bok" onclick="apr(\''+b.id+'\')">Одобрить</button>':'<button class="btn bed" onclick="unapr(\''+b.id+'\')">Снять</button>'}<button class="btn bno" onclick="del('businesses','${b.id}')">Удалить</button></div></div>`;
+  }).join('');
+}
 }
 
 // ═══ USERS ═══

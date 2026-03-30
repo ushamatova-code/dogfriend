@@ -1,4 +1,28 @@
 let selectedBusinessType = '';
+let _addressCount = 0;
+
+function addAddressField() {
+  const list = document.getElementById('bf-addresses-list');
+  if (!list) return;
+  const count = list.querySelectorAll('.bf-address-row').length;
+  if (count >= 10) { showToast('Максимум 10 адресов'); return; }
+  _addressCount++;
+  const id = 'addr-' + _addressCount;
+  const row = document.createElement('div');
+  row.className = 'bf-address-row';
+  row.id = id;
+  row.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px;';
+  row.innerHTML = `
+    <input type="text" class="bf-address-input input" placeholder="Введите адрес" style="flex:1;margin-bottom:0;">
+    ${count > 0 ? `<button type="button" onclick="removeAddressField('${id}')" style="background:none;border:1.5px solid var(--border);border-radius:10px;width:44px;height:44px;cursor:pointer;flex-shrink:0;color:var(--text-secondary);font-size:18px;">×</button>` : ''}
+  `;
+  list.appendChild(row);
+}
+
+function removeAddressField(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
 let loadedBusinesses = []; // Бизнесы из БД
 let _businessCoverFile = null; // Файл обложки для загрузки
 
@@ -179,6 +203,17 @@ async function openBusinessProfile(id) {
   }
   if (!b) return;
 
+  // Загружаем адреса из business_locations
+  let locations = [];
+  try {
+    const { data: locs } = await supabaseClient
+      .from('business_locations')
+      .select('*')
+      .eq('business_id', id)
+      .order('is_main', { ascending: false });
+    locations = locs || [];
+  } catch(e) {}
+
   currentSpecId = b.user_id;
 
   const typeIcons = { trainer: '🐕', clinic: '🏥', cafe: '☕' };
@@ -202,11 +237,21 @@ async function openBusinessProfile(id) {
   document.getElementById('spec-badge').textContent = typeLabels[b.type] || '✓ Dogly';
   document.getElementById('spec-rating').textContent = `⭐ ${b.rating}`;
 
-  // Опыт/стаж — из реальных данных
   const expText = b.experience || (b.type === 'clinic' ? (b.doctors ? b.doctors + ' врачей' : 'Клиника') : '');
   document.getElementById('spec-exp').textContent = expText || '';
 
-  document.getElementById('spec-location').textContent = `📍 ${b.address}`;
+  // Показываем адреса — если есть несколько из business_locations
+  const locEl = document.getElementById('spec-location');
+  if (locations.length > 1) {
+    locEl.innerHTML = locations.map((loc, i) =>
+      `<div style="display:flex;align-items:center;gap:4px;${i > 0 ? 'margin-top:4px;' : ''}">
+        <span>📍</span><span>${loc.address}</span>${loc.is_main ? '<span style="font-size:10px;color:var(--primary);font-weight:700;margin-left:4px;">основной</span>' : ''}
+      </div>`
+    ).join('');
+  } else {
+    locEl.textContent = `📍 ${locations[0]?.address || b.address}`;
+  }
+
   document.getElementById('spec-bio').textContent = b.description || 'Профессиональные услуги для вашего питомца';
 
   // Теги услуг
@@ -395,6 +440,12 @@ async function loadBusinessPromos(b) {
 
 function selectBusinessType(type) {
   selectedBusinessType = type;
+  // Инициализируем список адресов — одно поле по умолчанию
+  const list = document.getElementById('bf-addresses-list');
+  if (list) {
+    list.innerHTML = '';
+    addAddressField();
+  }
   _businessCoverFile = null;
   const titles = {trainer:'Анкета кинолога',clinic:'Анкета клиники',cafe:'Анкета кафе'};
   const services = {
@@ -438,25 +489,28 @@ async function submitBusiness() {
   if (!currentUser) {alert('Войдите в аккаунт');return;}
   const name = document.getElementById('bf-name').value.trim();
   const about = document.getElementById('bf-about').value.trim();
-  const address = document.getElementById('bf-address').value.trim();
   const phone = document.getElementById('bf-phone').value.trim();
   const email = document.getElementById('bf-email').value.trim();
   const price = document.getElementById('bf-price').value.trim();
-  if (!name || !address || !phone) {alert('Заполните все обязательные поля');return;}
+
+  // Собираем адреса из динамических полей
+  const addressInputs = document.querySelectorAll('.bf-address-input');
+  const addresses = Array.from(addressInputs).map(i => i.value.trim()).filter(Boolean);
+
+  if (!name || !addresses.length || !phone) {alert('Заполните все обязательные поля');return;}
   const checks = document.querySelectorAll('#bf-services input[type="checkbox"]:checked');
   const services = Array.from(checks).map(c => c.value);
   try {
     showToast('⏳ Отправка анкеты...', '#4A90D9');
 
-    // Геокодирование адреса — определяем координаты
+    // Геокодируем первый адрес для основных координат бизнеса
     let location_lat = null, location_lng = null;
     try {
-      const geoResp = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(address + ', Россия') + '&limit=1');
+      const geoResp = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(addresses[0] + ', Россия') + '&limit=1');
       const geoData = await geoResp.json();
       if (geoData && geoData[0]) {
         location_lat = parseFloat(geoData[0].lat);
         location_lng = parseFloat(geoData[0].lon);
-        console.log('📍 Geocoded:', address, '→', location_lat, location_lng);
       }
     } catch(geoErr) {
       console.warn('Geocoding failed:', geoErr);
@@ -467,7 +521,7 @@ async function submitBusiness() {
       type: selectedBusinessType,
       name: name,
       description: about,
-      address: address,
+      address: addresses[0], // основной адрес для обратной совместимости
       phone: phone,
       email: email,
       price_from: price,
@@ -477,7 +531,16 @@ async function submitBusiness() {
       is_approved: false
     }).select().single();
     if (error) throw error;
-    
+
+    // Сохраняем все адреса в business_locations
+    if (data && data.id && addresses.length > 0) {
+      const locRows = addresses.map((addr, i) => ({
+        business_id: data.id,
+        address: addr,
+        is_main: i === 0
+      }));
+      await supabaseClient.from('business_locations').insert(locRows);
+    }
     // Загружаем обложку если выбрана
     if (_businessCoverFile && data && data.id) {
       await uploadBusinessCover(data.id);
