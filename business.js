@@ -500,7 +500,10 @@ async function submitBusiness() {
   const addressInputs = document.querySelectorAll('.bf-address-input');
   const addresses = Array.from(addressInputs).map(i => i.value.trim()).filter(Boolean);
 
-  if (!name || !addresses.length || !phone) {alert('Заполните все обязательные поля');return;}
+  // Для магазина телефон необязателен (контакт через чат)
+  if (!name) {alert('Укажите название');return;}
+  if (!addresses.length) {alert('Укажите адрес');return;}
+  if (!phone && selectedBusinessType !== 'shop') {alert('Укажите телефон');return;}
   const checks = document.querySelectorAll('#bf-services input[type="checkbox"]:checked');
   const services = Array.from(checks).map(c => c.value);
   try {
@@ -526,8 +529,8 @@ async function submitBusiness() {
       description: about,
       address: addresses[0], // основной адрес для обратной совместимости
       phone: phone,
-      email: email,
-      price_from: price,
+      email: email || null,
+      price_from: price || null,
       services: services,
       location_lat: location_lat,
       location_lng: location_lng,
@@ -555,8 +558,9 @@ async function submitBusiness() {
     
     nav('businessPending');
   } catch(e) {
-    console.error('Submit business error:',e);
-    alert('Ошибка отправки. Попробуйте позже.');
+    console.error('Submit business error:', e);
+    const msg = e?.message || e?.error_description || JSON.stringify(e) || 'Неизвестная ошибка';
+    alert('Ошибка: ' + msg);
   }
 }
 
