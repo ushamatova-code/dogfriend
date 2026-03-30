@@ -3442,7 +3442,7 @@ async function renderPlaces() {
     // Загружаем только кафе и клиники (НЕ кинологов — они в каталоге)
     const { data, error } = await supabaseClient
       .from('businesses')
-      .select('*')
+      .select('*, business_locations(location_lat, location_lng, address, is_main)')
       .eq('is_approved', true)
       .in('type', ['cafe', 'clinic'])
       .order('rating', { ascending: false });
@@ -3457,11 +3457,18 @@ async function renderPlaces() {
       if (t) businesses = businesses.filter(b => b.type === t);
     }
 
-    // Считаем расстояние и сортируем
-    businesses = businesses.map(b => ({
-      ...b,
-      _dist: calcDistance(userLat, userLng, b.location_lat, b.location_lng)
-    })).sort((a, b) => a._dist - b._dist);
+    // Считаем расстояние — берём минимальное среди всех локаций бизнеса
+    businesses = businesses.map(b => {
+      const locs = b.business_locations || [];
+      let minDist = calcDistance(userLat, userLng, b.location_lat, b.location_lng);
+      locs.forEach(l => {
+        if (l.location_lat && l.location_lng) {
+          const d = calcDistance(userLat, userLng, l.location_lat, l.location_lng);
+          if (d < minDist) minDist = d;
+        }
+      });
+      return { ...b, _dist: minDist };
+    }).sort((a, b) => a._dist - b._dist);
 
     _loadedPlaces = businesses;
 
@@ -4664,10 +4671,17 @@ window.renderCatalog = function() {
   
   // Geo filter — only show within 50km if user has location
   if (userLat && userLng) {
-    filtered = filtered.map(b => ({
-      ...b,
-      _dist: (b.location_lat && b.location_lng) ? calcDistance(userLat, userLng, b.location_lat, b.location_lng) : 999
-    })).filter(b => b._dist < 50).sort((a, b) => a._dist - b._dist);
+    filtered = filtered.map(b => {
+      const locs = b.business_locations || [];
+      let minDist = (b.location_lat && b.location_lng) ? calcDistance(userLat, userLng, b.location_lat, b.location_lng) : 999;
+      locs.forEach(l => {
+        if (l.location_lat && l.location_lng) {
+          const d = calcDistance(userLat, userLng, l.location_lat, l.location_lng);
+          if (d < minDist) minDist = d;
+        }
+      });
+      return { ...b, _dist: minDist };
+    }).filter(b => b._dist < 50).sort((a, b) => a._dist - b._dist);
   }
   
   // Apply search

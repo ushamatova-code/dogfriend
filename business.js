@@ -30,11 +30,18 @@ let _businessCoverFile = null; // Файл обложки для загрузк�
 async function loadBusinesses(type = null) {
   if (!supabaseClient) return [];
   try {
-    let query = supabaseClient.from('businesses').select('*').eq('is_approved', true);
+    let query = supabaseClient.from('businesses')
+      .select('*, business_locations(id, address, location_lat, location_lng, is_main)')
+      .eq('is_approved', true);
     if (type) query = query.eq('type', type);
     const { data, error } = await query.order('rating', { ascending: false });
     if (error) throw error;
     loadedBusinesses = data || [];
+    return loadedBusinesses;
+  } catch(e) {
+    console.error('Load businesses error:', e);
+    return [];
+  }
     return loadedBusinesses;
   } catch(e) {
     console.error('Load businesses error:', e);
@@ -532,12 +539,16 @@ async function submitBusiness() {
     }).select().single();
     if (error) throw error;
 
-    // Сохраняем все адреса в business_locations
+    // Сохраняем все адреса в business_locations с геокодированием каждого
     if (data && data.id && addresses.length > 0) {
-      const locRows = addresses.map((addr, i) => ({
-        business_id: data.id,
-        address: addr,
-        is_main: i === 0
+      const locRows = await Promise.all(addresses.map(async (addr, i) => {
+        let lat = null, lng = null;
+        try {
+          const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(addr + ', Россия') + '&limit=1');
+          const d = await r.json();
+          if (d && d[0]) { lat = parseFloat(d[0].lat); lng = parseFloat(d[0].lon); }
+        } catch(e) {}
+        return { business_id: data.id, address: addr, is_main: i === 0, location_lat: lat, location_lng: lng };
       }));
       await supabaseClient.from('business_locations').insert(locRows);
     }
