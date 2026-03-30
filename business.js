@@ -449,11 +449,12 @@ function selectBusinessType(type) {
     addAddressField();
   }
   _businessCoverFile = null;
-  const titles = {trainer:'Анкета кинолога',clinic:'Анкета клиники',cafe:'Анкета кафе'};
+  const titles = {trainer:'Анкета кинолога',clinic:'Анкета клиники',cafe:'Анкета кафе',shop:'Анкета магазина'};
   const services = {
     trainer:['ОКД','Щенки','Послушание','Аджилити','Коррекция поведения'],
     clinic:['Терапия','Хирургия','Стоматология','Вакцинация','Анализы'],
-    cafe:['Веранда','Миски','Лакомства','Wi-Fi','Детская зона']
+    cafe:['Веранда','Миски','Лакомства','Wi-Fi','Детская зона'],
+    shop:['Корма','Игрушки','Одежда','Аксессуары','Поводки','Витамины','Лакомства','Переноски','Лежанки','Гигиена']
   };
   document.getElementById('bf-title').textContent = titles[type];
   
