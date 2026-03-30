@@ -42,11 +42,6 @@ async function loadBusinesses(type = null) {
     console.error('Load businesses error:', e);
     return [];
   }
-    return loadedBusinesses;
-  } catch(e) {
-    console.error('Load businesses error:', e);
-    return [];
-  }
 }
 
 // HTML для аватарки/обложки бизнеса в карточках каталога

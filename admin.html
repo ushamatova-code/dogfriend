@@ -486,7 +486,6 @@ async function loadBiz(){
     return `<div class="cd"><div class="lt"><div><span class="ln">${b.name}</span> <span class="badge bt">${b.type}</span></div><span class="badge ${b.is_approved?'bo':'bw'}">${b.is_approved?'Одобрен':'Ожидает'}</span></div><div class="lm" style="margin-top:4px">${addrHtml} ${b.phone?'· '+b.phone:''}<br>${b.description?b.description.substring(0,120)+'...':''}</div><div class="la">${!b.is_approved?'<button class="btn bok" onclick="apr(\''+b.id+'\')">Одобрить</button>':'<button class="btn bed" onclick="unapr(\''+b.id+'\')">Снять</button>'}<button class="btn bno" onclick="del('businesses','${b.id}')">Удалить</button></div></div>`;
   }).join('');
 }
-}
 
 // ═══ USERS ═══
 let _allUsers = [];        // все пользователи — кэш
