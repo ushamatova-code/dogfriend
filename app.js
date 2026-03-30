@@ -5171,6 +5171,12 @@ function initSwipeToReply() {
     const threshold = 60; // порог для активации ответа
     
     bubble.addEventListener('touchstart', (e) => {
+      // Блокируем свайп если идёт двойной тап
+      if (_doubleTapInProgress) {
+        isDragging = false;
+        return;
+      }
+      
       startX = e.touches[0].clientX;
       startTime = Date.now();
       isDragging = true;
@@ -5179,7 +5185,7 @@ function initSwipeToReply() {
     }, { passive: true });
     
     bubble.addEventListener('touchmove', (e) => {
-      if (!isDragging) return;
+      if (!isDragging || _doubleTapInProgress) return;
       
       currentX = e.touches[0].clientX;
       const deltaX = currentX - startX;
@@ -5199,7 +5205,7 @@ function initSwipeToReply() {
     }, { passive: true });
     
     const endTouch = () => {
-      if (!isDragging) return;
+      if (!isDragging || _doubleTapInProgress) return;
       isDragging = false;
       
       const deltaX = currentX - startX;
@@ -5241,6 +5247,7 @@ const REACTIONS = {
 
 let _reactionMenuTimeout = null;
 let _reactionMenuVisible = false;
+let _doubleTapInProgress = false; // Флаг для блокировки свайпа при двойном тапе
 
 function initMessageReactions() {
   const bubbles = document.querySelectorAll('.msg-bubble[data-message-id]');
@@ -5274,6 +5281,10 @@ function initMessageReactions() {
         clearTimeout(tapTimer);
         clearTimeout(longPressTimer);
         tapCount = 0;
+        
+        // Устанавливаем флаг чтобы заблокировать свайп
+        _doubleTapInProgress = true;
+        setTimeout(() => { _doubleTapInProgress = false; }, 500);
         
         // Останавливаем всплытие чтобы не сработал свайп
         e.preventDefault();
