@@ -445,6 +445,49 @@ async function saveBizEdit() {
 
     if (error) throw error;
 
+    // Если адрес изменился — геокодируем и обновляем business_locations
+    if (formData.address && formData.address !== currentBiz.address) {
+      let lat = null, lng = null;
+      try {
+        const geoResp = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(formData.address) + '&limit=1');
+        const geoData = await geoResp.json();
+        if (geoData && geoData[0]) {
+          lat = parseFloat(geoData[0].lat);
+          lng = parseFloat(geoData[0].lon);
+        }
+      } catch(geoErr) {
+        console.warn('Geocoding failed:', geoErr);
+      }
+
+      // Обновляем координаты в таблице businesses
+      if (lat && lng) {
+        await supabaseClient.from('businesses').update({ location_lat: lat, location_lng: lng }).eq('id', currentBiz.id);
+      }
+
+      // Обновляем или создаём главную локацию в business_locations
+      const { data: existingLocs } = await supabaseClient
+        .from('business_locations')
+        .select('id')
+        .eq('business_id', currentBiz.id)
+        .eq('is_main', true);
+
+      if (existingLocs && existingLocs.length > 0) {
+        await supabaseClient.from('business_locations').update({
+          address: formData.address,
+          location_lat: lat,
+          location_lng: lng
+        }).eq('id', existingLocs[0].id);
+      } else {
+        await supabaseClient.from('business_locations').insert({
+          business_id: currentBiz.id,
+          address: formData.address,
+          is_main: true,
+          location_lat: lat,
+          location_lng: lng
+        });
+      }
+    }
+
     // Загружаем обложку если была выбрана
     if (_businessCoverFile) {
       const coverUrl = await uploadBusinessCover(currentBiz.id);
