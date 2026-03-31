@@ -205,26 +205,24 @@ function openShopProduct(productId) {
 
   // Фото
   const imgEl = document.getElementById('product-images');
+  imgEl.style.display = 'block';
+  imgEl.style.overflowX = 'hidden';
+
   if (product.images && product.images.length) {
-    if (product.images.length === 1) {
-      imgEl.innerHTML = `<img src="${product.images[0]}" style="width:100%;height:100%;object-fit:cover;">`;
-      imgEl.style.overflowX = 'hidden';
-    } else {
-      // Галерея с горизонтальным скроллом
-      imgEl.style.overflowX = 'auto';
-      imgEl.style.scrollSnapType = 'x mandatory';
-      imgEl.style.display = 'flex';
-      imgEl.innerHTML = product.images.map((src, i) => `
-        <div style="min-width:100%;height:100%;scroll-snap-align:start;flex-shrink:0;position:relative;">
-          <img src="${src}" style="width:100%;height:100%;object-fit:cover;">
-          ${product.images.length > 1 ? `<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:5px;">
-            ${product.images.map((_,j) => `<div style="width:6px;height:6px;border-radius:50%;background:${i===j?'white':'rgba(255,255,255,0.5)'}"></div>`).join('')}
-          </div>` : ''}
-        </div>`).join('');
-    }
+    // Обёртка — горизонтальный скролл с snap
+    imgEl.innerHTML = `
+      <div id="product-gallery-wrap" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;height:280px;" onscroll="updateGalleryDots(this)">
+        ${product.images.map(src => `
+          <div style="min-width:100%;height:280px;scroll-snap-align:start;flex-shrink:0;background:var(--bg);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+            <img src="${src}" style="width:100%;height:100%;object-fit:contain;">
+          </div>`).join('')}
+      </div>
+      ${product.images.length > 1 ? `
+      <div id="product-gallery-dots" style="display:flex;justify-content:center;gap:6px;padding:8px 0;">
+        ${product.images.map((_,i) => `<div style="width:7px;height:7px;border-radius:50%;background:${i===0?'var(--primary)':'var(--border)'};transition:background 0.2s;"></div>`).join('')}
+      </div>` : ''}`;
   } else {
-    imgEl.style.display = 'flex';
-    imgEl.innerHTML = `<div style="font-size:64px;width:100%;display:flex;align-items:center;justify-content:center;">${getCatEmoji(product.category)}</div>`;
+    imgEl.innerHTML = `<div style="height:280px;display:flex;align-items:center;justify-content:center;font-size:64px;background:var(--bg);">${getCatEmoji(product.category)}</div>`;
   }
 
   // Название
@@ -425,6 +423,14 @@ function sendCartToSeller() {
 }
 
 // ── Вспомогательные
+function updateGalleryDots(el) {
+  const index = Math.round(el.scrollLeft / el.offsetWidth);
+  const dots = document.querySelectorAll('#product-gallery-dots div');
+  dots.forEach((d, i) => {
+    d.style.background = i === index ? 'var(--primary)' : 'var(--border)';
+  });
+}
+
 function getCatEmoji(cat) {
   const map = { food:'🍖', accessories:'🦮', toys:'🎾', clothing:'🧥', health:'💊', other:'📦' };
   return map[cat] || '🛍️';
