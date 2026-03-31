@@ -362,11 +362,22 @@ function openBusinessDashboard() {
   nav('bizDashboard');
 }
 
-function openBizEdit() {
+async function openBizEdit() {
   if (!currentBiz) return;
   const cfg = BIZ_FIELDS[currentBiz.type];
   if (!cfg) return;
   document.getElementById('biz-edit-title').textContent = 'Редактировать: ' + currentBiz.name;
+
+  // Загружаем текущие адреса из business_locations
+  let existingLocs = [];
+  try {
+    const { data: locs } = await supabaseClient
+      .from('business_locations')
+      .select('*')
+      .eq('business_id', currentBiz.id)
+      .order('is_main', { ascending: false });
+    existingLocs = locs || [];
+  } catch(e) {}
 
   let html = '';
   
@@ -381,6 +392,7 @@ function openBizEdit() {
       <input type="file" accept="image/*" onchange="handleBusinessCoverSelect(event); document.getElementById('biz-cover-preview').innerHTML='<div style=\\'padding:12px;text-align:center;color:var(--primary);font-weight:700;\\'>✅ Фото выбрано</div>'" style="display:none;">
     </label>
   </div>`;
+
   cfg.sections.forEach(sec => {
     html += `<div style="margin-bottom:20px;">
       <div style="font-size:15px;font-weight:800;margin-bottom:12px;padding-top:16px;border-top:2px solid var(--border);">${sec.title}</div>`;
@@ -398,11 +410,31 @@ function openBizEdit() {
       html += `</div>`;
     } else {
       sec.fields.forEach(f => {
-        const val = currentBiz[f.id] || '';
-        if (f.type === 'textarea') {
-          html += `<div style="margin-bottom:12px;"><label class="lbl">${f.label}${f.required ? ' *' : ''}</label><textarea class="input" id="biz-f-${f.id}" placeholder="${f.placeholder}" style="min-height:72px;padding:12px;resize:none;">${val}</textarea></div>`;
+        // Поле address — заменяем на динамический список адресов
+        if (f.id === 'address') {
+          const addrRows = existingLocs.length
+            ? existingLocs.map((loc, i) => `
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;" id="biz-addr-row-${i}">
+                <input type="text" class="input biz-addr-input" value="${loc.address || ''}" placeholder="Город, улица, дом — например: Москва, ул. Ленина 10" style="flex:1;margin-bottom:0;">
+                ${i > 0 ? `<button type="button" onclick="this.parentElement.remove()" style="width:44px;height:44px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;cursor:pointer;font-size:20px;color:var(--text-secondary);flex-shrink:0;">×</button>` : ''}
+              </div>`).join('')
+            : `<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+                <input type="text" class="input biz-addr-input" value="${currentBiz.address || ''}" placeholder="Город, улица, дом — например: Москва, ул. Ленина 10" style="flex:1;margin-bottom:0;">
+              </div>`;
+
+          html += `<div style="margin-bottom:12px;">
+            <label class="lbl">${f.label}${f.required ? ' *' : ''}</label>
+            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">Укажите полный адрес с городом</div>
+            <div id="biz-addresses-list">${addrRows}</div>
+            <button type="button" onclick="addBizAddressRow()" style="background:none;border:1.5px dashed var(--border);border-radius:12px;padding:10px 16px;font-size:13px;font-weight:600;color:var(--primary);cursor:pointer;width:100%;margin-top:4px;">+ Добавить адрес</button>
+          </div>`;
         } else {
-          html += `<div style="margin-bottom:12px;"><label class="lbl">${f.label}${f.required ? ' *' : ''}</label><input class="input" id="biz-f-${f.id}" type="${f.type}" placeholder="${f.placeholder}" value="${val.replace(/"/g, '&quot;')}"></div>`;
+          const val = currentBiz[f.id] || '';
+          if (f.type === 'textarea') {
+            html += `<div style="margin-bottom:12px;"><label class="lbl">${f.label}${f.required ? ' *' : ''}</label><textarea class="input" id="biz-f-${f.id}" placeholder="${f.placeholder}" style="min-height:72px;padding:12px;resize:none;">${val}</textarea></div>`;
+          } else {
+            html += `<div style="margin-bottom:12px;"><label class="lbl">${f.label}${f.required ? ' *' : ''}</label><input class="input" id="biz-f-${f.id}" type="${f.type}" placeholder="${f.placeholder}" value="${val.replace(/"/g, '&quot;')}"></div>`;
+          }
         }
       });
     }
@@ -411,6 +443,20 @@ function openBizEdit() {
 
   document.getElementById('biz-edit-form').innerHTML = html;
   nav('bizEdit');
+}
+
+function addBizAddressRow() {
+  const list = document.getElementById('biz-addresses-list');
+  if (!list) return;
+  const count = list.querySelectorAll('.biz-addr-input').length;
+  if (count >= 10) { showToast('Максимум 10 адресов'); return; }
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px;';
+  row.innerHTML = `
+    <input type="text" class="input biz-addr-input" placeholder="Город, улица, дом — например: Москва, ул. Ленина 10" style="flex:1;margin-bottom:0;">
+    <button type="button" onclick="this.parentElement.remove()" style="width:44px;height:44px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;cursor:pointer;font-size:20px;color:var(--text-secondary);flex-shrink:0;">×</button>`;
+  list.appendChild(row);
+  row.querySelector('.biz-addr-input').focus();
 }
 
 function toggleBizCheck(label, fieldId) {
@@ -430,6 +476,10 @@ async function saveBizEdit() {
   const cfg = BIZ_FIELDS[currentBiz.type];
   if (!cfg) return;
 
+  // Собираем адреса из динамических полей
+  const addrInputs = document.querySelectorAll('.biz-addr-input');
+  const addresses = Array.from(addrInputs).map(i => i.value.trim()).filter(Boolean);
+
   // Собираем все значения из формы
   const formData = {};
   cfg.sections.forEach(sec => {
@@ -440,8 +490,13 @@ async function saveBizEdit() {
       }
     } else {
       sec.fields.forEach(f => {
-        const el = document.getElementById('biz-f-' + f.id);
-        if (el) formData[f.id] = el.value.trim();
+        if (f.id === 'address') {
+          // Берём первый адрес для основного поля
+          formData[f.id] = addresses[0] || '';
+        } else {
+          const el = document.getElementById('biz-f-' + f.id);
+          if (el) formData[f.id] = el.value.trim();
+        }
       });
     }
   });
@@ -449,7 +504,10 @@ async function saveBizEdit() {
   // Валидация обязательных
   const allFields = cfg.sections.flatMap(s => s.fields || []);
   for (const f of allFields) {
-    if (f.required && !formData[f.id]) {
+    if (f.required && f.id === 'address' && !addresses.length) {
+      showToast('❌ Укажите хотя бы один адрес');
+      return;
+    } else if (f.required && f.id !== 'address' && !formData[f.id]) {
       showToast('❌ Заполните: ' + f.label);
       return;
     }
@@ -489,6 +547,32 @@ async function saveBizEdit() {
     if (_businessCoverFile) {
       const coverUrl = await uploadBusinessCover(currentBiz.id);
       if (coverUrl) currentBiz.cover_url = coverUrl;
+    }
+
+    // Сохраняем адреса в business_locations
+    if (addresses.length > 0) {
+      // Удаляем старые и вставляем новые
+      await supabaseClient.from('business_locations').delete().eq('business_id', currentBiz.id);
+
+      const locRows = await Promise.all(addresses.map(async (addr, i) => {
+        let lat = null, lng = null;
+        try {
+          const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(addr) + '&limit=1');
+          const d = await r.json();
+          if (d && d[0]) { lat = parseFloat(d[0].lat); lng = parseFloat(d[0].lon); }
+        } catch(e) {}
+        return { business_id: currentBiz.id, address: addr, is_main: i === 0, location_lat: lat, location_lng: lng };
+      }));
+      await supabaseClient.from('business_locations').insert(locRows);
+
+      // Обновляем координаты основного адреса в businesses
+      const mainLoc = locRows[0];
+      if (mainLoc.location_lat) {
+        await supabaseClient.from('businesses').update({
+          location_lat: mainLoc.location_lat,
+          location_lng: mainLoc.location_lng
+        }).eq('id', currentBiz.id);
+      }
     }
 
     // Обновляем локальный объект
