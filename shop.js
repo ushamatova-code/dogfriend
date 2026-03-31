@@ -75,12 +75,12 @@ async function loadShopsList() {
       const locs = shop.business_locations || [];
       const addr = (locs.find(l => l.is_main) || locs[0])?.address || shop.address || '';
       const avatar = shop.cover_url
-        ? `<img src="${shop.cover_url}" style="width:100%;height:100%;object-fit:cover;border-radius:18px;">`
+        ? `<img src="${shop.cover_url}" style="width:100%;height:100%;object-fit:contain;border-radius:18px;background:white;padding:8px;">`
         : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;background:linear-gradient(135deg,#EEF6FF,#DBEAFE);border-radius:18px;">🏪</div>`;
 
       return `
         <div onclick="openShop('${shop.id}')" style="background:var(--white);border-radius:20px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);cursor:pointer;display:flex;gap:14px;align-items:center;margin-bottom:12px;transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 12px rgba(0,0,0,0.08)'">
-          <div style="width:72px;height:72px;flex-shrink:0;border-radius:18px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);">${avatar}</div>
+          <div style="width:72px;height:72px;flex-shrink:0;border-radius:18px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);background:white;">${avatar}</div>
           <div style="flex:1;min-width:0;">
             <div style="font-size:16px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px;">${shop.name}</div>
             <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">⭐ ${shop.rating} · ${shop.description ? shop.description.substring(0,40)+'...' : 'Зоомагазин'}</div>
@@ -142,9 +142,8 @@ function renderShopCategories() {
       background:${active ? 'var(--primary)' : 'var(--bg)'};
       color:${active ? 'white' : 'var(--text-primary)'};
       border:none;border-radius:20px;padding:7px 14px;
-      font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;
-      display:flex;align-items:center;gap:5px;">
-      ${cat.emoji} ${cat.label}
+      font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">
+      ${cat.label}
     </button>`;
   }).join('');
 }
@@ -495,3 +494,125 @@ window.nav = function(id) {
     if (list) list.innerHTML = '';
   }
 };
+
+// ════════════════════════════════════════════════════════════
+// IMAGE CROPPER — для загрузки логотипов магазинов
+// ════════════════════════════════════════════════════════════
+
+let _cropperInstance = null;
+let _cropperCallback = null;
+
+// Открыть кроппер
+function openImageCropper(file, callback, aspectRatio = 1) {
+  if (!file || !file.type.startsWith('image/')) {
+    if (typeof showToast === 'function') showToast('Выберите изображение', '#FF3B30');
+    return;
+  }
+  
+  _cropperCallback = callback;
+  
+  // Создаём модалку кроппера если её нет
+  let modal = document.getElementById('image-cropper-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'image-cropper-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:10000;display:flex;flex-direction:column;';
+    modal.innerHTML = `
+      <div style="padding:20px;display:flex;justify-content:space-between;align-items:center;color:white;">
+        <h3 style="font-size:18px;font-weight:800;">Обрезать изображение</h3>
+        <button onclick="closeCropper()" style="background:none;border:none;color:white;font-size:28px;cursor:pointer;width:40px;height:40px;">×</button>
+      </div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:20px;overflow:hidden;">
+        <img id="cropper-image" style="max-width:100%;max-height:100%;">
+      </div>
+      <div style="padding:20px;display:flex;gap:10px;">
+        <button onclick="closeCropper()" style="flex:1;padding:14px;background:#666;color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;">Отмена</button>
+        <button onclick="applyCrop()" style="flex:1;padding:14px;background:linear-gradient(135deg,var(--primary),#6B5CE7);color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;">Готово</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+  
+  modal.style.display = 'flex';
+  
+  const img = document.getElementById('cropper-image');
+  const reader = new FileReader();
+  
+  reader.onload = (e) => {
+    img.src = e.target.result;
+    
+    // Уничтожаем старый кроппер если был
+    if (_cropperInstance) {
+      _cropperInstance.destroy();
+    }
+    
+    // Инициализируем Cropper.js (используем встроенный в браузер или подключаем CDN)
+    if (typeof Cropper !== 'undefined') {
+      _cropperInstance = new Cropper(img, {
+        aspectRatio: aspectRatio,
+        viewMode: 1,
+        dragMode: 'move',
+        autoCropArea: 1,
+        restore: false,
+        guides: true,
+        center: true,
+        highlight: false,
+        cropBoxMovable: true,
+        cropBoxResizable: true,
+        toggleDragModeOnDblclick: false,
+      });
+    } else {
+      // Fallback без кроппера - просто возвращаем оригинал
+      console.warn('Cropper.js не загружен, используем оригинальное изображение');
+    }
+  };
+  
+  reader.readAsDataURL(file);
+}
+
+// Применить обрезку
+async function applyCrop() {
+  if (!_cropperInstance || !_cropperCallback) {
+    closeCropper();
+    return;
+  }
+  
+  try {
+    // Получаем обрезанное изображение
+    const canvas = _cropperInstance.getCroppedCanvas({
+      width: 512,
+      height: 512,
+      imageSmoothingQuality: 'high'
+    });
+    
+    // Конвертируем в blob
+    canvas.toBlob((blob) => {
+      if (blob && _cropperCallback) {
+        _cropperCallback(blob);
+      }
+      closeCropper();
+    }, 'image/jpeg', 0.9);
+    
+  } catch(e) {
+    console.error('Crop error:', e);
+    closeCropper();
+  }
+}
+
+// Закрыть кроппер
+function closeCropper() {
+  const modal = document.getElementById('image-cropper-modal');
+  if (modal) modal.style.display = 'none';
+  
+  if (_cropperInstance) {
+    _cropperInstance.destroy();
+    _cropperInstance = null;
+  }
+  
+  _cropperCallback = null;
+}
+
+// Экспортируем функции
+window.openImageCropper = openImageCropper;
+window.applyCrop = applyCrop;
+window.closeCropper = closeCropper;
