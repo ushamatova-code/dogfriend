@@ -134,33 +134,101 @@ async function renderCatalogTrainers() {
 }
 
 // Рендер клиник (загружаем из БД)
+// Кэш клиник для фильтрации без повторного запроса
+let _healthBusinesses = [];
+let _healthFilter = 'Все';
+
 async function renderHealthClinics() {
-  const businesses = await loadBusinesses('clinic');
+  _healthBusinesses = await loadBusinesses('clinic');
+
+  // Подгружаем активные акции для всех клиник
+  try {
+    const bizIds = _healthBusinesses.map(b => b.id);
+    if (bizIds.length) {
+      const { data: promos } = await supabaseClient
+        .from('promotions')
+        .select('business_id, title, discount_percent, promo_code')
+        .in('business_id', bizIds)
+        .eq('is_active', true);
+      // Прикрепляем акцию к бизнесу
+      const promoMap = {};
+      (promos || []).forEach(p => { if (!promoMap[p.business_id]) promoMap[p.business_id] = p; });
+      _healthBusinesses = _healthBusinesses.map(b => ({ ...b, _promo: promoMap[b.id] || null }));
+    }
+  } catch(e) {}
+
+  _healthFilter = 'Все';
+  document.querySelectorAll('#health-chips .chip').forEach(c => c.classList.remove('on'));
+  const firstChip = document.querySelector('#health-chips .chip');
+  if (firstChip) firstChip.classList.add('on');
+  _renderHealthList();
+}
+
+function filterHealth(val, el) {
+  _healthFilter = val;
+  document.querySelectorAll('#health-chips .chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  _renderHealthList();
+}
+
+function _renderHealthList() {
   const list = document.getElementById('health-list');
   if (!list) return;
-  
-  if (businesses.length === 0) {
-    list.innerHTML = '<p style="padding:20px;text-align:center;color:var(--text-secondary);">Пока нет клиник. Добавьте свою!</p>';
+
+  let businesses = _healthBusinesses;
+
+  // Фильтр по специализации (через services)
+  if (_healthFilter !== 'Все' && _healthFilter !== 'Клиника') {
+    businesses = businesses.filter(b =>
+      b.services && b.services.some(s => s.toLowerCase().includes(_healthFilter.toLowerCase()))
+    );
+  }
+
+  if (!businesses.length) {
+    list.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--text-secondary);">
+      <div style="font-size:40px;margin-bottom:12px;">🏥</div>
+      <div style="font-size:15px;font-weight:700;">Ничего не найдено</div>
+    </div>`;
     return;
   }
-  
-  list.innerHTML = businesses.map(b => `
-    <div class="scard" onclick='openBusinessProfile("${b.id}")' style="margin:0 16px 12px;">
-      ${businessAvatarHtml(b, 54)}
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
-          <div style="font-weight:800;font-size:15px;">${b.name}</div>
-          <span class="tag tag-g">Проверено</span>
+
+  list.innerHTML = businesses.map(b => {
+    // Логотип — object-fit:contain чтобы был виден целиком
+    const avatar = b.cover_url
+      ? `<div style="width:60px;height:60px;border-radius:16px;overflow:hidden;flex-shrink:0;background:white;border:1px solid var(--border);">
+          <img src="${b.cover_url}" style="width:100%;height:100%;object-fit:contain;padding:4px;" onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:100%;background:linear-gradient(135deg,#EEF6FF,#DBEAFE);display:flex;align-items:center;justify-content:center;font-size:26px;\'>🏥</div>'">
+        </div>`
+      : `<div style="width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,#EEF6FF,#DBEAFE);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">🏥</div>`;
+
+    const price = b.price_from ? `<span style="font-size:13px;font-weight:800;color:var(--primary);">от ${b.price_from}</span>` : '';
+
+    // Показываем только первые 3 услуги — не все
+    const topServices = (b.services || []).slice(0, 3);
+    const servicesHtml = topServices.length
+      ? `<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;">
+          ${topServices.map(s => `<span style="background:var(--bg);border-radius:8px;padding:3px 8px;font-size:11px;font-weight:600;color:var(--text-secondary);">${s}</span>`).join('')}
+          ${b.services.length > 3 ? `<span style="background:var(--bg);border-radius:8px;padding:3px 8px;font-size:11px;font-weight:600;color:var(--text-secondary);">+${b.services.length - 3}</span>` : ''}
+        </div>` : '';
+
+    return `
+      <div onclick='openBusinessProfile("${b.id}")' style="background:var(--white);border-radius:18px;padding:14px;margin:0 16px 10px;box-shadow:var(--shadow);cursor:pointer;display:flex;gap:12px;align-items:flex-start;">
+        ${avatar}
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+            <div style="font-size:15px;font-weight:800;">${b.name}</div>
+            ${b.is_approved ? `<span style="background:rgba(52,199,89,0.1);color:#34C759;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:700;">Проверено</span>` : ''}
+            ${price}
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:2px;">⭐ ${b.rating} · ${b.reviews_count || 0} отзывов</div>
+          <div style="font-size:12px;color:var(--text-secondary);">📍 ${b.address || '—'}</div>
+          ${b._promo ? `<div style="display:flex;align-items:center;gap:6px;margin-top:6px;background:rgba(46,125,50,0.08);border-radius:10px;padding:5px 10px;">
+            <span style="font-size:13px;">🎁</span>
+            <span style="font-size:12px;font-weight:700;color:#2E7D32;">${b._promo.title}${b._promo.discount_percent ? ' −' + b._promo.discount_percent + '%' : ''}${b._promo.promo_code ? ' · ' + b._promo.promo_code : ''}</span>
+          </div>` : ''}
+          ${servicesHtml}
         </div>
-        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">⭐ ${b.rating} · ${b.reviews_count || 0} отзывов</div>
-        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">📍 ${b.address}</div>
-        ${b.services && b.services.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;">${b.services.map(s => `<span class="tag tag-b" style="font-size:11px;">${s}</span>`).join('')}</div>` : ''}
-      </div>
-      <div style="text-align:right;flex-shrink:0;">
-        <div style="font-weight:800;font-size:14px;color:var(--primary);">${b.price_from || 'от 2500 ₽'}</div>
-      </div>
-    </div>
-  `).join('');
+      </div>`;
+  }).join('');
 }
 
 // Рендер кафе (загружаем из БД)
@@ -489,11 +557,6 @@ function selectBusinessType(type) {
 }
 
 async function submitBusiness() {
-  // currentUser может не быть установлен — берём из сессии напрямую
-  if (!currentUser && supabaseClient) {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session) window.currentUser = session.user;
-  }
   if (!currentUser) {alert('Войдите в аккаунт');return;}
   const name = document.getElementById('bf-name').value.trim();
   const about = document.getElementById('bf-about').value.trim();

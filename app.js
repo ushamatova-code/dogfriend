@@ -798,12 +798,7 @@ function renderHealth() {
   list.innerHTML = html || '<div style="padding:40px;text-align:center;color:var(--text-secondary);">Ничего не найдено</div>';
 }
 
-function filterHealth(val, el) {
-  healthFilter = val;
-  document.querySelectorAll('#health-chips .chip').forEach(c => c.classList.remove('on'));
-  el.classList.add('on');
-  renderHealth();
-}
+// filterHealth перенесена в business.js
 
 function openSpecialistHealth(id) {
   const v = HEALTH_DATA.find(x => x.id === id);
