@@ -75,7 +75,7 @@ async function loadShopsList() {
       const locs = shop.business_locations || [];
       const addr = (locs.find(l => l.is_main) || locs[0])?.address || shop.address || '';
       const avatar = shop.cover_url
-        ? `<img src="${shop.cover_url}" style="width:100%;height:100%;object-fit:cover;border-radius:16px;">`
+        ? `<img src="${shop.cover_url}" style="width:100%;height:100%;object-fit:contain;border-radius:16px;background:white;padding:4px;">`
         : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;background:linear-gradient(135deg,#EEF6FF,#DBEAFE);border-radius:16px;">🏪</div>`;
 
       return `
