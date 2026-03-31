@@ -206,23 +206,30 @@ function openShopProduct(productId) {
   // Фото
   const imgEl = document.getElementById('product-images');
   imgEl.style.display = 'block';
-  imgEl.style.overflowX = 'hidden';
+  imgEl.style.overflow = 'hidden';
 
   if (product.images && product.images.length) {
-    // Обёртка — горизонтальный скролл с snap
+    const W = imgEl.offsetWidth || window.innerWidth;
+    const H = 280;
+    imgEl.style.height = H + 'px';
+    imgEl.style.position = 'relative';
+
     imgEl.innerHTML = `
-      <div id="product-gallery-wrap" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;height:280px;" onscroll="updateGalleryDots(this)">
+      <div id="pgw" style="display:flex;width:${W * product.images.length}px;height:${H}px;transition:transform 0.3s ease;" data-index="0" data-w="${W}" data-count="${product.images.length}">
         ${product.images.map(src => `
-          <div style="min-width:100%;height:280px;scroll-snap-align:start;flex-shrink:0;background:var(--bg);display:flex;align-items:center;justify-content:center;overflow:hidden;">
-            <img src="${src}" style="width:100%;height:100%;object-fit:contain;">
+          <div style="width:${W}px;height:${H}px;flex-shrink:0;background:#f5f5f5;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+            <img src="${src}" style="width:${W}px;height:${H}px;object-fit:cover;" onerror="this.style.display='none'">
           </div>`).join('')}
       </div>
       ${product.images.length > 1 ? `
-      <div id="product-gallery-dots" style="display:flex;justify-content:center;gap:6px;padding:8px 0;">
-        ${product.images.map((_,i) => `<div style="width:7px;height:7px;border-radius:50%;background:${i===0?'var(--primary)':'var(--border)'};transition:background 0.2s;"></div>`).join('')}
-      </div>` : ''}`;
+      <div id="product-gallery-dots" style="position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:6px;">
+        ${product.images.map((_,i) => `<div style="width:7px;height:7px;border-radius:50%;background:${i===0?'white':'rgba(255,255,255,0.5)'};box-shadow:0 1px 3px rgba(0,0,0,0.3);transition:background 0.2s;"></div>`).join('')}
+      </div>
+      <button onclick="slideGallery(-1)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.3);border:none;color:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">‹</button>
+      <button onclick="slideGallery(1)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.3);border:none;color:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">›</button>` : ''}`;
   } else {
-    imgEl.innerHTML = `<div style="height:280px;display:flex;align-items:center;justify-content:center;font-size:64px;background:var(--bg);">${getCatEmoji(product.category)}</div>`;
+    imgEl.style.height = '280px';
+    imgEl.innerHTML = `<div style="width:100%;height:280px;display:flex;align-items:center;justify-content:center;font-size:64px;background:#f5f5f5;">${getCatEmoji(product.category)}</div>`;
   }
 
   // Название
@@ -423,11 +430,19 @@ function sendCartToSeller() {
 }
 
 // ── Вспомогательные
-function updateGalleryDots(el) {
-  const index = Math.round(el.scrollLeft / el.offsetWidth);
+function slideGallery(dir) {
+  const wrap = document.getElementById('pgw');
+  if (!wrap) return;
+  const count = parseInt(wrap.dataset.count);
+  const w = parseInt(wrap.dataset.w);
+  let idx = parseInt(wrap.dataset.index) + dir;
+  if (idx < 0) idx = 0;
+  if (idx >= count) idx = count - 1;
+  wrap.dataset.index = idx;
+  wrap.style.transform = `translateX(-${idx * w}px)`;
   const dots = document.querySelectorAll('#product-gallery-dots div');
   dots.forEach((d, i) => {
-    d.style.background = i === index ? 'var(--primary)' : 'var(--border)';
+    d.style.background = i === idx ? 'white' : 'rgba(255,255,255,0.5)';
   });
 }
 
