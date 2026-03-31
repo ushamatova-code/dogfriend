@@ -3577,32 +3577,18 @@ function initPlacesMap(businesses) {
 
   // Маркеры бизнесов
   _placesMapMarkers = [];
-  
-  for (const b of businesses) {
+  businesses.forEach(b => {
     // Берём координаты — из основной локации или из business_locations
     const locs = b.business_locations || [];
     const mainLoc = locs.find(l => l.is_main) || locs[0];
-    let lat = mainLoc?.location_lat || b.location_lat;
-    let lng = mainLoc?.location_lng || b.location_lng;
+    const lat = mainLoc?.location_lat || b.location_lat;
+    const lng = mainLoc?.location_lng || b.location_lng;
     
-    // Если координат нет, но есть адрес — пытаемся геокодировать
-    if ((!lat || !lng) && (mainLoc?.address || b.address)) {
-      try {
-        const addr = mainLoc?.address || b.address;
-        const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr + ', Москва')}&limit=1`;
-        const geoRes = await fetch(geocodeUrl);
-        const geoData = await geoRes.json();
-        if (geoData && geoData[0]) {
-          lat = parseFloat(geoData[0].lat);
-          lng = parseFloat(geoData[0].lon);
-          console.log(`Геокодирован адрес для ${b.name}: ${lat}, ${lng}`);
-        }
-      } catch(e) {
-        console.warn(`Не удалось геокодировать адрес для ${b.name}`);
-      }
+    // Если нет координат — пропускаем
+    if (!lat || !lng) {
+      console.warn(`У бизнеса ${b.name} нет координат, пропускаем на карте`);
+      return;
     }
-    
-    if (!lat || !lng) continue;
 
     const emoji = PLACE_ICON_MAP[b.type] || '📍';
     const markerIcon = L.divIcon({
@@ -3612,11 +3598,11 @@ function initPlacesMap(businesses) {
 
     const marker = L.marker([lat, lng], { icon: markerIcon })
       .addTo(_placesMap)
-      .bindPopup(`<div style="font-weight:700;font-size:13px;">${b.name}</div><div style="font-size:11px;color:#666;">${b.address || mainLoc?.address || ''}</div>`);
+      .bindPopup(`<div style="font-weight:700;font-size:13px;">${b.name}</div><div style="font-size:11px;color:#666;">${mainLoc?.address || b.address || ''}</div>`);
 
     marker.on('click', () => openPlaceModal(b.id));
     _placesMapMarkers.push(marker);
-  }
+  });
 
   // Подгоняем карту под все маркеры если их несколько
   if (_placesMapMarkers.length > 1) {
