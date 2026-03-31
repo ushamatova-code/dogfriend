@@ -2068,10 +2068,21 @@ async function supabaseRegister() {
       document.getElementById('confirm-email-display').textContent = email;
     } else {
       // Email подтверждён сразу (или confirmation выключен)
+      // ФИКС: устанавливаем currentUser сразу после регистрации
+      if (data && data.user) {
+        window.currentUser = data.user;
+        currentUser = data.user;
+      }
+      if (data && data.session) {
+        try { await loadUserProfile(); } catch(e) {}
+        stopRealtimeDMSubscription();
+        startRealtimeDMSubscription();
+        stopMessagePolling();
+        startMessagePolling();
+        checkUserBusiness();
+      }
       localStorage.setItem('df_registered', '1');
       nav('home');
-      // Запрашиваем разрешение на уведомления сразу после регистрации
-      // Небольшая задержка чтобы экран home успел отрисоваться
       setTimeout(() => askPushPermission(), 1500);
     }
   } catch(err) {
