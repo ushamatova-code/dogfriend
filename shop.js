@@ -206,9 +206,25 @@ function openShopProduct(productId) {
   // Фото
   const imgEl = document.getElementById('product-images');
   if (product.images && product.images.length) {
-    imgEl.innerHTML = `<img src="${product.images[0]}" style="width:100%;height:100%;object-fit:cover;">`;
+    if (product.images.length === 1) {
+      imgEl.innerHTML = `<img src="${product.images[0]}" style="width:100%;height:100%;object-fit:cover;">`;
+      imgEl.style.overflowX = 'hidden';
+    } else {
+      // Галерея с горизонтальным скроллом
+      imgEl.style.overflowX = 'auto';
+      imgEl.style.scrollSnapType = 'x mandatory';
+      imgEl.style.display = 'flex';
+      imgEl.innerHTML = product.images.map((src, i) => `
+        <div style="min-width:100%;height:100%;scroll-snap-align:start;flex-shrink:0;position:relative;">
+          <img src="${src}" style="width:100%;height:100%;object-fit:cover;">
+          ${product.images.length > 1 ? `<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:5px;">
+            ${product.images.map((_,j) => `<div style="width:6px;height:6px;border-radius:50%;background:${i===j?'white':'rgba(255,255,255,0.5)'}"></div>`).join('')}
+          </div>` : ''}
+        </div>`).join('');
+    }
   } else {
-    imgEl.innerHTML = `<div style="font-size:64px;">${getCatEmoji(product.category)}</div>`;
+    imgEl.style.display = 'flex';
+    imgEl.innerHTML = `<div style="font-size:64px;width:100%;display:flex;align-items:center;justify-content:center;">${getCatEmoji(product.category)}</div>`;
   }
 
   // Название
