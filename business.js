@@ -489,6 +489,11 @@ function selectBusinessType(type) {
 }
 
 async function submitBusiness() {
+  // currentUser может не быть установлен — берём из сессии напрямую
+  if (!currentUser && supabaseClient) {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) window.currentUser = session.user;
+  }
   if (!currentUser) {alert('Войдите в аккаунт');return;}
   const name = document.getElementById('bf-name').value.trim();
   const about = document.getElementById('bf-about').value.trim();
