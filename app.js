@@ -3,6 +3,74 @@
 // ============================================================
 const histStack = [];
 
+// ============================================================
+// ADMIN / OWNER ACCOUNT
+// ============================================================
+// ВАЖНО: Замените на свой user_id из таблицы auth.users
+const OWNER_USER_ID = 'de1e5bb9-1904-4d78-8be4-7543151cf1fe'; // Ваш UUID из Supabase
+
+// Приветственные сообщения для новых пользователей
+const WELCOME_MESSAGES = [
+  {
+    text: `Привет! 👋 
+
+Я Егор, создатель Dogly. Спасибо, что присоединились к нашему сообществу владельцев собак!
+
+Рад видеть вас здесь 🐕`,
+    delay: 1000 // 1 секунда после регистрации
+  },
+  {
+    text: `Несколько советов для начала:
+
+📍 Укажите ваш район в профиле — так вы увидите места и услуги рядом с вами
+
+🐕 Добавьте своего питомца — это поможет кинологам и ветеринарам подобрать подходящие услуги
+
+💬 Загляните в чаты по районам — там много полезной информации и дружелюбных собачников
+
+Если будут вопросы — пишите мне прямо сюда, отвечу как можно быстрее!`,
+    delay: 4000 // 4 секунды после первого
+  }
+];
+
+// Отправить приветственные сообщения новому пользователю
+async function sendWelcomeMessages(newUserId) {
+  if (!supabaseClient || !newUserId || newUserId === OWNER_USER_ID) return;
+  
+  try {
+    // Формируем room_id (всегда сортированные ID через underscore)
+    const roomId = [OWNER_USER_ID, newUserId].sort().join('_');
+    
+    // Отправляем сообщения с задержками
+    for (const msg of WELCOME_MESSAGES) {
+      await new Promise(resolve => setTimeout(resolve, msg.delay));
+      
+      const { error } = await supabaseClient
+        .from('direct_messages')
+        .insert({
+          room_id: roomId,
+          sender_id: OWNER_USER_ID,
+          recipient_id: newUserId,
+          text: msg.text,
+          is_read: false,
+          created_at: new Date().toISOString()
+        });
+      
+      if (error) {
+        console.error('Welcome message error:', error);
+      } else {
+        console.log('✅ Welcome message sent to', newUserId);
+      }
+    }
+    
+    // Обновляем счётчик непрочитанных для нового пользователя
+    updateUnreadCount();
+    
+  } catch(e) {
+    console.error('Send welcome messages error:', e);
+  }
+}
+
 function nav(id) {
   const curr = document.querySelector('.screen.active');
   const next = document.getElementById(id);
@@ -556,18 +624,48 @@ function clearUnreadMessages(chatId) {
   }
   updateUnreadBadge();
   renderPrivateChats(); // Обновляем список чтобы убрать бейдж
+  
+  // Отмечаем сообщения прочитанными в базе данных
+  markMessagesAsRead(chatId);
+}
+
+// Отметить сообщения прочитанными в базе данных
+async function markMessagesAsRead(senderId) {
+  if (!supabaseClient || !currentUser) return;
+  
+  try {
+    // Формируем room_id
+    const roomId = [currentUser.id, senderId].sort().join('_');
+    
+    // Отмечаем все непрочитанные сообщения от этого отправителя как прочитанные
+    const { error } = await supabaseClient
+      .from('direct_messages')
+      .update({ is_read: true })
+      .eq('room_id', roomId)
+      .eq('recipient_id', currentUser.id)
+      .eq('is_read', false);
+    
+    if (error) {
+      console.error('Mark as read error:', error);
+    } else {
+      console.log(`✅ Messages from ${senderId} marked as read`);
+    }
+  } catch(e) {
+    console.error('Mark messages as read error:', e);
+  }
 }
 
 function updateUnreadBadge() {
-  const badge = document.getElementById('chat-nav-badge');
-  if (badge) {
+  // Обновляем все бейджи на странице (их может быть несколько в разных навигациях)
+  const badges = document.querySelectorAll('.chat-unread-badge');
+  badges.forEach(badge => {
     if (unreadCount > 0) {
       badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-      badge.style.display = 'block';
+      badge.style.display = 'flex';
     } else {
       badge.style.display = 'none';
     }
-  }
+  });
   
   // Обновляем badge в PWA
   if ('setAppBadge' in navigator) {
@@ -576,6 +674,50 @@ function updateUnreadBadge() {
     } else {
       navigator.clearAppBadge().catch(() => {});
     }
+  }
+}
+
+// Подсчитать непрочитанные сообщения из базы данных
+async function updateUnreadCount() {
+  if (!supabaseClient || !currentUser) return;
+  
+  try {
+    // Получаем все непрочитанные сообщения для текущего пользователя
+    const { data, error } = await supabaseClient
+      .from('direct_messages')
+      .select('sender_id, room_id')
+      .eq('recipient_id', currentUser.id)
+      .eq('is_read', false);
+    
+    if (error) throw error;
+    
+    // Группируем по отправителям (чтобы знать от кого сколько)
+    const unreadBySender = {};
+    let totalUnread = 0;
+    
+    (data || []).forEach(msg => {
+      if (!unreadBySender[msg.sender_id]) {
+        unreadBySender[msg.sender_id] = 0;
+      }
+      unreadBySender[msg.sender_id]++;
+      totalUnread++;
+    });
+    
+    // Обновляем глобальные переменные
+    unreadChats = unreadBySender;
+    unreadCount = totalUnread;
+    
+    // Сохраняем в localStorage
+    localStorage.setItem('unread_chats', JSON.stringify(unreadChats));
+    localStorage.setItem('unread_count', unreadCount.toString());
+    
+    // Обновляем UI
+    updateUnreadBadge();
+    
+    console.log(`📬 Непрочитанных сообщений: ${totalUnread}`);
+    
+  } catch(e) {
+    console.error('Update unread count error:', e);
   }
 }
 
@@ -2067,6 +2209,9 @@ async function supabaseRegister() {
       if (data && data.user) {
         window.currentUser = data.user;
         currentUser = data.user;
+        
+        // Отправляем приветственные сообщения от владельца
+        sendWelcomeMessages(data.user.id);
       }
       if (data && data.session) {
         try { await loadUserProfile(); } catch(e) {}
@@ -2141,6 +2286,9 @@ async function loadUserProfile() {
       
       // Обновляем UI
       loadProfile();
+      
+      // Подсчитываем непрочитанные сообщения
+      updateUnreadCount();
     } else {
       // Новый пользователь — создаём профиль в Supabase из localStorage / метаданных регистрации
       console.log(' No profile in Supabase, creating...');
