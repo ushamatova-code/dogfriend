@@ -75,18 +75,18 @@ async function loadShopsList() {
       const locs = shop.business_locations || [];
       const addr = (locs.find(l => l.is_main) || locs[0])?.address || shop.address || '';
       const avatar = shop.cover_url
-        ? `<img src="${shop.cover_url}" style="width:100%;height:100%;object-fit:contain;border-radius:16px;background:white;padding:4px;">`
-        : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;background:linear-gradient(135deg,#EEF6FF,#DBEAFE);border-radius:16px;">🏪</div>`;
+        ? `<img src="${shop.cover_url}" style="width:100%;height:100%;object-fit:cover;border-radius:18px;">`
+        : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;background:linear-gradient(135deg,#EEF6FF,#DBEAFE);border-radius:18px;">🏪</div>`;
 
       return `
-        <div onclick="openShop('${shop.id}')" style="background:var(--white);border-radius:18px;padding:14px;box-shadow:var(--shadow);cursor:pointer;display:flex;gap:12px;align-items:center;margin-bottom:10px;">
-          <div style="width:60px;height:60px;flex-shrink:0;border-radius:16px;overflow:hidden;">${avatar}</div>
+        <div onclick="openShop('${shop.id}')" style="background:var(--white);border-radius:20px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);cursor:pointer;display:flex;gap:14px;align-items:center;margin-bottom:12px;transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 12px rgba(0,0,0,0.08)'">
+          <div style="width:72px;height:72px;flex-shrink:0;border-radius:18px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);">${avatar}</div>
           <div style="flex:1;min-width:0;">
-            <div style="font-size:15px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${shop.name}</div>
-            <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">⭐ ${shop.rating} · ${shop.description ? shop.description.substring(0,40)+'...' : 'Зоомагазин'}</div>
-            ${addr ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">📍 ${addr}</div>` : ''}
+            <div style="font-size:16px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px;">${shop.name}</div>
+            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">⭐ ${shop.rating} · ${shop.description ? shop.description.substring(0,40)+'...' : 'Зоомагазин'}</div>
+            ${addr ? `<div style="font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${addr.length > 35 ? addr.substring(0, 35) + '...' : addr}</div>` : ''}
           </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
         </div>`;
     }).join('');
 
@@ -174,24 +174,29 @@ function renderShopProducts() {
   grid.innerHTML = products.map(p => {
     const img = (p.images && p.images[0])
       ? `<img src="${p.images[0]}" style="width:100%;height:100%;object-fit:cover;">`
-      : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;">${getCatEmoji(p.category)}</div>`;
+      : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;background:linear-gradient(135deg,#f5f5f5,#e8e8e8);">${getCatEmoji(p.category)}</div>`;
 
-    const discount = p.old_price
-      ? `<span style="background:#FF3B30;color:white;font-size:10px;font-weight:800;padding:2px 6px;border-radius:6px;margin-left:6px;">-${Math.round((1 - p.price/p.old_price)*100)}%</span>`
+    const discountBadge = p.old_price
+      ? `<div style="position:absolute;top:8px;right:8px;background:#FF3B30;color:white;font-size:11px;font-weight:800;padding:4px 8px;border-radius:12px;box-shadow:0 2px 8px rgba(255,59,48,0.3);">-${Math.round((1 - p.price/p.old_price)*100)}%</div>`
       : '';
 
     return `
-      <div onclick="openShopProduct('${p.id}')" style="background:var(--white);border-radius:16px;box-shadow:var(--shadow);cursor:pointer;overflow:hidden;">
-        <div style="width:100%;height:140px;background:var(--bg);overflow:hidden;">${img}</div>
-        <div style="padding:10px;">
-          <div style="font-size:13px;font-weight:700;line-height:1.3;margin-bottom:6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${p.name}</div>
-          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
-            <span style="font-size:15px;font-weight:900;color:var(--primary);">${p.price.toLocaleString('ru')} ₽</span>
-            ${p.old_price ? `<span style="font-size:11px;color:var(--text-secondary);text-decoration:line-through;">${p.old_price.toLocaleString('ru')} ₽</span>` : ''}
-            ${discount}
+      <div onclick="openShopProduct('${p.id}')" style="background:var(--white);border-radius:18px;box-shadow:0 2px 12px rgba(0,0,0,0.08);cursor:pointer;overflow:hidden;transition:transform 0.2s,box-shadow 0.2s;position:relative;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 12px rgba(0,0,0,0.08)'">
+        <div style="width:100%;height:160px;background:var(--bg);overflow:hidden;position:relative;">
+          ${img}
+          ${discountBadge}
+        </div>
+        <div style="padding:12px;">
+          <div style="font-size:14px;font-weight:700;line-height:1.4;margin-bottom:8px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:38px;">${p.name}</div>
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+            <span style="font-size:17px;font-weight:900;color:var(--primary);">${p.price.toLocaleString('ru')} ₽</span>
+            ${p.old_price ? `<span style="font-size:12px;color:var(--text-secondary);text-decoration:line-through;">${p.old_price.toLocaleString('ru')} ₽</span>` : ''}
           </div>
-          ${!p.in_stock ? '<div style="font-size:11px;color:#FF3B30;font-weight:700;margin-top:4px;">Нет в наличии</div>' : ''}
-          <button onclick="event.stopPropagation();quickAddToCart('${p.id}')" style="width:100%;margin-top:8px;background:var(--primary);color:white;border:none;border-radius:10px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">+ В корзину</button>
+          ${!p.in_stock 
+            ? '<div style="font-size:12px;color:#FF3B30;font-weight:700;padding:6px 10px;background:#FFF5F5;border-radius:10px;text-align:center;margin-bottom:8px;">Нет в наличии</div>' 
+            : '<div style="font-size:12px;color:#34C759;font-weight:700;padding:6px 10px;background:#F0FFF4;border-radius:10px;text-align:center;margin-bottom:8px;">✓ В наличии</div>'
+          }
+          <button onclick="event.stopPropagation();quickAddToCart('${p.id}')" style="width:100%;background:linear-gradient(135deg,var(--primary),#6B5CE7);color:white;border:none;border-radius:12px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(74,144,217,0.3);transition:transform 0.1s;" ${!p.in_stock ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''} onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">🛒 В корзину</button>
         </div>
       </div>`;
   }).join('');
@@ -271,9 +276,9 @@ function openShopProduct(productId) {
   const attrEl = document.getElementById('product-attributes');
   if (product.attributes && Object.keys(product.attributes).length) {
     attrEl.innerHTML = Object.entries(product.attributes).map(([key, val]) =>
-      `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
-        <span style="color:var(--text-secondary);">${key}</span>
-        <span style="font-weight:700;">${val}</span>
+      `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--bg);border-radius:12px;font-size:14px;margin-bottom:8px;">
+        <span style="color:var(--text-secondary);font-weight:600;">${key}</span>
+        <span style="font-weight:800;color:var(--text-primary);">${val}</span>
       </div>`
     ).join('');
     attrBlock.style.display = '';
@@ -367,20 +372,20 @@ function renderShopCart() {
 
   itemsEl.innerHTML = _shopCart.map(item => {
     const img = item.image
-      ? `<img src="${item.image}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">`
-      : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:24px;background:var(--bg);border-radius:12px;">🛍️</div>`;
+      ? `<img src="${item.image}" style="width:100%;height:100%;object-fit:cover;border-radius:14px;">`
+      : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;background:linear-gradient(135deg,#f5f5f5,#e8e8e8);border-radius:14px;">🛍️</div>`;
 
     return `
-      <div style="background:var(--white);border-radius:16px;padding:12px;box-shadow:var(--shadow);margin-bottom:10px;display:flex;gap:12px;align-items:center;">
-        <div style="width:56px;height:56px;flex-shrink:0;">${img}</div>
+      <div style="background:var(--white);border-radius:18px;padding:14px;box-shadow:0 2px 12px rgba(0,0,0,0.08);margin-bottom:12px;display:flex;gap:14px;align-items:center;">
+        <div style="width:72px;height:72px;flex-shrink:0;overflow:hidden;">${img}</div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.name}</div>
-          <div style="font-size:13px;color:var(--primary);font-weight:800;margin-top:2px;">${item.price.toLocaleString('ru')} ₽</div>
+          <div style="font-size:15px;font-weight:700;line-height:1.3;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.name}</div>
+          <div style="font-size:17px;color:var(--primary);font-weight:900;">${item.price.toLocaleString('ru')} ₽</div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-          <button onclick="changeCartQty('${item.product_id}',-1)" style="width:30px;height:30px;border-radius:10px;background:var(--bg);border:none;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
-          <span style="font-size:15px;font-weight:800;min-width:20px;text-align:center;">${item.quantity}</span>
-          <button onclick="changeCartQty('${item.product_id}',1)" style="width:30px;height:30px;border-radius:10px;background:var(--primary);border:none;font-size:18px;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;">+</button>
+        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+          <button onclick="changeCartQty('${item.product_id}',-1)" style="width:34px;height:34px;border-radius:50%;background:var(--bg);border:none;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;transition:all 0.2s;" onmouseover="this.style.background='#e0e0e0'" onmouseout="this.style.background='var(--bg)'">−</button>
+          <span style="font-size:16px;font-weight:800;min-width:24px;text-align:center;">${item.quantity}</span>
+          <button onclick="changeCartQty('${item.product_id}',1)" style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#6B5CE7);border:none;font-size:20px;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;box-shadow:0 2px 8px rgba(74,144,217,0.3);transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform=''">+</button>
         </div>
       </div>`;
   }).join('');
