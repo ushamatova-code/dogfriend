@@ -20,7 +20,7 @@ function nav(id) {
   } else if (id === 'health') {
     renderHealthClinics();
   } else if (id === 'dogmap') {
-    renderCafes();
+    renderPlaces();
   }
   
   histStack.push(curr.id);
@@ -3442,6 +3442,9 @@ async function renderPlaces() {
   if (!supabaseClient) return;
   const list = document.getElementById('places-list');
   if (!list) return;
+
+  // Показываем загрузку СРАЗУ
+  list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-secondary);"><div style="font-size:32px;margin-bottom:8px;">📍</div><div>Загружаем места...</div></div>';
 
   // Дожидаемся геолокации если ещё нет
   if (!userLat) await getUserLocation();
