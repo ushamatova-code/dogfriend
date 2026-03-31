@@ -770,9 +770,9 @@ async function uploadProductPhotos(businessId, productId) {
     try {
       const ext = file.name.split('.').pop();
       const path = `products/${businessId}/${productId}/${Date.now()}.${ext}`;
-      const { error } = await supabaseClient.storage.from('businesses').upload(path, file, { upsert: true });
+      const { error } = await supabaseClient.storage.from('products').upload(path, file, { upsert: true });
       if (!error) {
-        const { data: pub } = supabaseClient.storage.from('businesses').getPublicUrl(path);
+        const { data: pub } = supabaseClient.storage.from('products').getPublicUrl(path);
         if (pub?.publicUrl) uploaded.push(pub.publicUrl);
       }
     } catch(e) { console.error('upload photo error:', e); }
