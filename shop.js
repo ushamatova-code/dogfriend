@@ -25,21 +25,21 @@ function switchCatalogTab(tab) {
   const shopPane = document.getElementById('catalog-pane-shops');
   const servBtn  = document.getElementById('catalog-tab-services');
   const shopBtn  = document.getElementById('catalog-tab-shops');
+  if (!servPane || !shopPane) return;
 
   if (tab === 'services') {
     servPane.style.display = '';
     shopPane.style.display = 'none';
-    servBtn.style.color = 'var(--primary)';
-    servBtn.style.borderBottom = '2.5px solid var(--primary)';
-    shopBtn.style.color = 'var(--text-secondary)';
-    shopBtn.style.borderBottom = '2.5px solid transparent';
+    if (servBtn) { servBtn.style.color = 'var(--primary)'; servBtn.style.borderBottom = '2.5px solid var(--primary)'; }
+    if (shopBtn) { shopBtn.style.color = 'var(--text-secondary)'; shopBtn.style.borderBottom = '2.5px solid transparent'; }
   } else {
     servPane.style.display = 'none';
     shopPane.style.display = '';
-    shopBtn.style.color = 'var(--primary)';
-    shopBtn.style.borderBottom = '2.5px solid var(--primary)';
-    servBtn.style.color = 'var(--text-secondary)';
-    servBtn.style.borderBottom = '2.5px solid transparent';
+    if (shopBtn) { shopBtn.style.color = 'var(--primary)'; shopBtn.style.borderBottom = '2.5px solid var(--primary)'; }
+    if (servBtn) { servBtn.style.color = 'var(--text-secondary)'; servBtn.style.borderBottom = '2.5px solid transparent'; }
+    // Всегда сбрасываем и перезагружаем список магазинов
+    const list = document.getElementById('shops-list');
+    if (list) list.innerHTML = '';
     loadShopsList();
   }
 }
@@ -435,10 +435,17 @@ window.nav = function(id) {
   _origNavShop(id);
   if (id === 'shopCart') renderShopCart();
   if (id === 'catalog') {
-    // Сброс на вкладку специалистов
-    const pane = document.getElementById('catalog-pane-services');
-    if (pane) pane.style.display = '';
+    // Всегда возвращаемся на вкладку специалистов и сбрасываем состояние магазинов
+    const servPane = document.getElementById('catalog-pane-services');
     const shopPane = document.getElementById('catalog-pane-shops');
-    if (shopPane) shopPane.style.display = 'none';
+    const servBtn  = document.getElementById('catalog-tab-services');
+    const shopBtn  = document.getElementById('catalog-tab-shops');
+    if (servPane) servPane.style.display = '';
+    if (shopPane) { shopPane.style.display = 'none'; }
+    if (servBtn) { servBtn.style.color = 'var(--primary)'; servBtn.style.borderBottom = '2.5px solid var(--primary)'; }
+    if (shopBtn) { shopBtn.style.color = 'var(--text-secondary)'; shopBtn.style.borderBottom = '2.5px solid transparent'; }
+    // Сбрасываем список магазинов чтобы при следующем открытии загрузился заново
+    const list = document.getElementById('shops-list');
+    if (list) list.innerHTML = '';
   }
 };
