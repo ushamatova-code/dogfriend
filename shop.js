@@ -402,8 +402,12 @@ function changeCartQty(productId, delta) {
 }
 
 // ── Написать продавцу с содержимым корзины
-function sendCartToSeller() {
+async function sendCartToSeller() {
   if (!_shopCart.length) return;
+  if (!currentUser && typeof supabaseClient !== 'undefined' && supabaseClient) {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) { window.currentUser = session.user; currentUser = session.user; }
+  }
   if (!currentUser) { if (typeof showToast === 'function') showToast('Войдите в аккаунт'); return; }
 
   // Формируем сообщение
