@@ -593,73 +593,191 @@ function openEditProduct(productId) {
   showProductModal(p);
 }
 
+// Хранилище фото для текущего товара
+let _productPhotoFiles = []; // File объекты
+let _productPhotoUrls = [];  // уже загруженные URL
+
 function showProductModal(product = null) {
   const isEdit = !!product;
-  const attrs = product?.attributes ? JSON.stringify(product.attributes, null, 2) : '';
+  _productPhotoFiles = [];
+  _productPhotoUrls = product?.images ? [...product.images] : [];
 
   const CATS = [
-    {id:'food', label:'Корма'},
-    {id:'accessories', label:'Аксессуары'},
-    {id:'toys', label:'Игрушки'},
-    {id:'clothing', label:'Одежда'},
-    {id:'health', label:'Здоровье'},
-    {id:'other', label:'Другое'},
+    {id:'food', label:'🍖 Корма'},
+    {id:'accessories', label:'🦮 Аксессуары'},
+    {id:'toys', label:'🎾 Игрушки'},
+    {id:'clothing', label:'🧥 Одежда'},
+    {id:'health', label:'💊 Здоровье'},
+    {id:'other', label:'📦 Другое'},
   ];
 
   const catOptions = CATS.map(c =>
-    `<option value="${c.id}" ${product?.category === c.id ? 'selected' : ''}>${c.label}</option>`
+    `<option value="${c.id.split(' ')[0]}" ${product?.category === c.id.split(' ')[0] ? 'selected' : ''}>${c.label}</option>`
   ).join('');
+
+  // Существующие характеристики
+  const existingAttrs = product?.attributes ? Object.entries(product.attributes) : [];
 
   const modal = document.createElement('div');
   modal.id = 'product-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1000;display:flex;align-items:flex-end;backdrop-filter:blur(4px);';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:flex-end;backdrop-filter:blur(6px);';
   modal.innerHTML = `
-    <div style="background:var(--white);border-radius:24px 24px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px;">
-      <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;"></div>
-      <div style="font-size:17px;font-weight:800;margin-bottom:16px;">${isEdit ? 'Редактировать товар' : 'Новый товар'}</div>
+    <div style="background:var(--white);border-radius:24px 24px 0 0;width:100%;max-height:92vh;overflow-y:auto;padding:20px 16px;">
+      <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px;"></div>
+      <div style="font-size:18px;font-weight:900;margin-bottom:20px;">${isEdit ? 'Редактировать товар' : 'Новый товар'}</div>
 
-      <div style="margin-bottom:10px;"><label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Название *</label>
-        <input id="pf-name" class="input" value="${product?.name || ''}" placeholder="Например: Royal Canin Mini 2кг"></div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-        <div><label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Цена ₽ *</label>
-          <input id="pf-price" class="input" type="number" value="${product?.price || ''}" placeholder="1500"></div>
-        <div><label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Старая цена ₽</label>
-          <input id="pf-old-price" class="input" type="number" value="${product?.old_price || ''}" placeholder="2000"></div>
-      </div>
-
-      <div style="margin-bottom:10px;"><label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Категория *</label>
-        <select id="pf-category" class="input" style="appearance:none;">${catOptions}</select></div>
-
-      <div style="margin-bottom:10px;"><label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Описание</label>
-        <textarea id="pf-description" class="input" style="min-height:72px;resize:none;" placeholder="Подробное описание товара">${product?.description || ''}</textarea></div>
-
-      <div style="margin-bottom:10px;"><label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Ссылки на фото (через запятую)</label>
-        <input id="pf-images" class="input" value="${(product?.images || []).join(', ')}" placeholder="https://...jpg, https://...jpg"></div>
-
-      <div style="margin-bottom:10px;"><label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Характеристики (JSON)</label>
-        <textarea id="pf-attrs" class="input" style="min-height:80px;resize:none;font-family:monospace;font-size:12px;" placeholder='{"Вес": "2кг", "Порода": "Мелкие", "Возраст": "Взрослые"}'>${attrs}</textarea>
-        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Укажите любые характеристики в формате ключ: значение</div></div>
-
-      <div style="margin-bottom:16px;">
-        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-          <input type="checkbox" id="pf-in-stock" ${(!product || product.in_stock) ? 'checked' : ''} style="width:18px;height:18px;">
-          <span style="font-size:14px;font-weight:700;">В наличии</span>
+      <!-- ФОТО -->
+      <div style="margin-bottom:18px;">
+        <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">Фотографии товара (до 5 штук)</div>
+        <div id="pf-photos-row" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;"></div>
+        <label style="display:flex;align-items:center;gap:8px;background:var(--bg);border:1.5px dashed var(--border);border-radius:14px;padding:12px 16px;cursor:pointer;font-size:14px;font-weight:600;color:var(--primary);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          Добавить фото
+          <input type="file" id="pf-photo-input" accept="image/*" multiple style="display:none;" onchange="handleProductPhotos(this)">
         </label>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <button onclick="closeProductModal()" style="height:48px;background:var(--bg);border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;">Отмена</button>
-        <button onclick="saveProduct()" style="height:48px;background:var(--primary);color:white;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;">Сохранить</button>
+      <!-- НАЗВАНИЕ -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">Название *</div>
+        <input id="pf-name" class="input" value="${product?.name || ''}" placeholder="Например: Ошейник кожаный, размер M">
+      </div>
+
+      <!-- ЦЕНА -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">Цена ₽ *</div>
+          <input id="pf-price" class="input" type="number" value="${product?.price || ''}" placeholder="1 500">
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">Старая цена ₽</div>
+          <input id="pf-old-price" class="input" type="number" value="${product?.old_price || ''}" placeholder="2 000">
+        </div>
+      </div>
+
+      <!-- КАТЕГОРИЯ -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">Категория *</div>
+        <select id="pf-category" class="input" style="appearance:none;">${catOptions}</select>
+      </div>
+
+      <!-- ОПИСАНИЕ -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">Описание товара</div>
+        <textarea id="pf-description" class="input" style="min-height:80px;resize:none;" placeholder="Расскажите о товаре — состав, особенности, для кого подходит...">${product?.description || ''}</textarea>
+      </div>
+
+      <!-- ХАРАКТЕРИСТИКИ -->
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="font-size:13px;font-weight:700;color:var(--text-secondary);">Характеристики</div>
+          <button onclick="addAttrRow()" style="background:none;border:none;color:var(--primary);font-size:13px;font-weight:700;cursor:pointer;padding:4px 8px;">+ Добавить</button>
+        </div>
+        <div id="pf-attrs-list" style="display:flex;flex-direction:column;gap:8px;">
+          ${existingAttrs.map(([k,v], i) => `
+            <div style="display:flex;gap:8px;align-items:center;" id="attr-row-${i}">
+              <input class="input pf-attr-key" value="${k}" placeholder="Параметр (напр. Вес)" style="flex:1;margin-bottom:0;">
+              <input class="input pf-attr-val" value="${v}" placeholder="Значение (напр. 2 кг)" style="flex:1;margin-bottom:0;">
+              <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:20px;padding:0 4px;flex-shrink:0;">×</button>
+            </div>`).join('')}
+        </div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Например: Вес → 2 кг, Порода → Мелкие, Возраст → Взрослые</div>
+      </div>
+
+      <!-- НАЛИЧИЕ -->
+      <div style="margin-bottom:20px;background:var(--bg);border-radius:14px;padding:14px;">
+        <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+          <div>
+            <div style="font-size:14px;font-weight:700;">Товар в наличии</div>
+            <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">Покупатели смогут его заказать</div>
+          </div>
+          <input type="checkbox" id="pf-in-stock" ${(!product || product.in_stock) ? 'checked' : ''} style="width:22px;height:22px;">
+        </label>
+      </div>
+
+      <!-- КНОПКИ -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-bottom:env(safe-area-inset-bottom,0px);">
+        <button onclick="closeProductModal()" style="height:52px;background:var(--bg);border:none;border-radius:16px;font-size:15px;font-weight:700;cursor:pointer;">Отмена</button>
+        <button onclick="saveProduct()" id="pf-save-btn" style="height:52px;background:var(--primary);color:white;border:none;border-radius:16px;font-size:15px;font-weight:700;cursor:pointer;">Сохранить</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if (e.target === modal) closeProductModal(); });
+  renderProductPhotosRow();
+}
+
+function renderProductPhotosRow() {
+  const row = document.getElementById('pf-photos-row');
+  if (!row) return;
+  const all = [..._productPhotoUrls.map(u => ({type:'url', src:u})), ..._productPhotoFiles.map(f => ({type:'file', src:URL.createObjectURL(f), file:f}))];
+  if (!all.length) { row.innerHTML = ''; return; }
+  row.innerHTML = all.map((item, i) => `
+    <div style="position:relative;width:72px;height:72px;border-radius:12px;overflow:hidden;flex-shrink:0;">
+      <img src="${item.src}" style="width:100%;height:100%;object-fit:cover;">
+      <button onclick="removeProductPhoto(${i},'${item.type}')" style="position:absolute;top:2px;right:2px;width:20px;height:20px;background:rgba(0,0,0,0.6);border:none;border-radius:50%;color:white;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>
+    </div>`).join('');
+}
+
+function removeProductPhoto(index, type) {
+  const urlCount = _productPhotoUrls.length;
+  if (index < urlCount) {
+    _productPhotoUrls.splice(index, 1);
+  } else {
+    _productPhotoFiles.splice(index - urlCount, 1);
+  }
+  renderProductPhotosRow();
+}
+
+function handleProductPhotos(input) {
+  const files = Array.from(input.files);
+  const total = _productPhotoUrls.length + _productPhotoFiles.length + files.length;
+  if (total > 5) {
+    showToast('Максимум 5 фотографий');
+    const allowed = 5 - _productPhotoUrls.length - _productPhotoFiles.length;
+    _productPhotoFiles.push(...files.slice(0, allowed));
+  } else {
+    _productPhotoFiles.push(...files);
+  }
+  input.value = '';
+  renderProductPhotosRow();
+}
+
+function addAttrRow() {
+  const list = document.getElementById('pf-attrs-list');
+  if (!list) return;
+  const id = 'attr-row-' + Date.now();
+  const row = document.createElement('div');
+  row.id = id;
+  row.style.cssText = 'display:flex;gap:8px;align-items:center;';
+  row.innerHTML = `
+    <input class="input pf-attr-key" placeholder="Параметр" style="flex:1;margin-bottom:0;">
+    <input class="input pf-attr-val" placeholder="Значение" style="flex:1;margin-bottom:0;">
+    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:20px;padding:0 4px;flex-shrink:0;">×</button>`;
+  list.appendChild(row);
+  row.querySelector('.pf-attr-key').focus();
 }
 
 function closeProductModal() {
   const m = document.getElementById('product-modal');
   if (m) m.remove();
+  _productPhotoFiles = [];
+  _productPhotoUrls = [];
+}
+
+async function uploadProductPhotos(businessId, productId) {
+  const uploaded = [..._productPhotoUrls];
+  for (const file of _productPhotoFiles) {
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `products/${businessId}/${productId}/${Date.now()}.${ext}`;
+      const { error } = await supabaseClient.storage.from('businesses').upload(path, file, { upsert: true });
+      if (!error) {
+        const { data: pub } = supabaseClient.storage.from('businesses').getPublicUrl(path);
+        if (pub?.publicUrl) uploaded.push(pub.publicUrl);
+      }
+    } catch(e) { console.error('upload photo error:', e); }
+  }
+  return uploaded;
 }
 
 async function saveProduct() {
@@ -669,34 +787,56 @@ async function saveProduct() {
   const oldPrice = parseInt(document.getElementById('pf-old-price')?.value) || null;
   const category = document.getElementById('pf-category')?.value;
   const description = document.getElementById('pf-description')?.value.trim();
-  const imagesRaw = document.getElementById('pf-images')?.value.trim();
-  const attrsRaw = document.getElementById('pf-attrs')?.value.trim();
   const inStock = document.getElementById('pf-in-stock')?.checked;
 
-  if (!name || !price || !category) { showToast('❌ Заполните название, цену и категорию'); return; }
+  if (!name) { showToast('❌ Укажите название товара'); return; }
+  if (!price || price <= 0) { showToast('❌ Укажите цену'); return; }
+  if (!category) { showToast('❌ Выберите категорию'); return; }
 
-  const images = imagesRaw ? imagesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
-
+  // Собираем характеристики из строк ключ-значение
+  const attrKeys = document.querySelectorAll('.pf-attr-key');
+  const attrVals = document.querySelectorAll('.pf-attr-val');
   let attributes = null;
-  if (attrsRaw) {
-    try { attributes = JSON.parse(attrsRaw); }
-    catch(e) { showToast('❌ Ошибка в характеристиках — проверьте JSON формат'); return; }
+  if (attrKeys.length) {
+    const obj = {};
+    attrKeys.forEach((k, i) => {
+      const key = k.value.trim();
+      const val = attrVals[i]?.value.trim();
+      if (key && val) obj[key] = val;
+    });
+    if (Object.keys(obj).length) attributes = obj;
   }
 
-  const payload = { name, price, old_price: oldPrice, category, description: description || null, images, attributes, in_stock: inStock, business_id: currentBiz.id };
+  const saveBtn = document.getElementById('pf-save-btn');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Сохраняем...'; }
 
   try {
-    if (_editingProductId) {
-      await supabaseClient.from('shop_products').update(payload).eq('id', _editingProductId);
+    let productId = _editingProductId;
+
+    // Сначала создаём/обновляем товар без фото
+    const payload = { name, price, old_price: oldPrice, category, description: description || null, attributes, in_stock: inStock, business_id: currentBiz.id, images: _productPhotoUrls };
+
+    if (productId) {
+      await supabaseClient.from('shop_products').update(payload).eq('id', productId);
     } else {
-      await supabaseClient.from('shop_products').insert(payload);
+      const { data, error } = await supabaseClient.from('shop_products').insert(payload).select().single();
+      if (error) throw error;
+      productId = data.id;
     }
+
+    // Загружаем новые фото и обновляем images
+    if (_productPhotoFiles.length > 0) {
+      const allImages = await uploadProductPhotos(currentBiz.id, productId);
+      await supabaseClient.from('shop_products').update({ images: allImages }).eq('id', productId);
+    }
+
     showToast('✅ Товар сохранён', '#34C759');
     closeProductModal();
     await loadBizProducts(currentBiz.id);
   } catch(e) {
     console.error('saveProduct:', e);
-    showToast('❌ Ошибка сохранения');
+    showToast('❌ ' + (e.message || 'Ошибка сохранения'));
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Сохранить'; }
   }
 }
 
