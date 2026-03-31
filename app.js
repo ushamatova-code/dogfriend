@@ -3424,11 +3424,29 @@ let _loadedPlaces = [];
 let _placesMap = null;
 let _placesMapMarkers = [];
 
-const PLACE_TYPE_MAP = { clinic: 'Клиника', cafe: 'Кафе' };
-const PLACE_ICON_MAP = { clinic: '🏥', cafe: '☕' };
+const PLACE_TYPE_MAP = { 
+  clinic: 'Клиника', 
+  cafe: 'Кафе',
+  park: 'Парк',
+  shop: 'Магазин',
+  groomer: 'Грумер',
+  playground: 'Площадка'
+};
+const PLACE_ICON_MAP = { 
+  clinic: '🏥', 
+  cafe: '☕',
+  park: '🌳',
+  shop: '🏪',
+  groomer: '✂️',
+  playground: '🎪'
+};
 const PLACE_GRAD_MAP = {
   clinic: 'linear-gradient(135deg,#4CAF50,#009688)',
-  cafe: 'linear-gradient(135deg,#FF9800,#FFD54F)'
+  cafe: 'linear-gradient(135deg,#FF9800,#FFD54F)',
+  park: 'linear-gradient(135deg,#8BC34A,#4CAF50)',
+  shop: 'linear-gradient(135deg,#2196F3,#03A9F4)',
+  groomer: 'linear-gradient(135deg,#9C27B0,#E1BEE7)',
+  playground: 'linear-gradient(135deg,#FF5722,#FF9800)'
 };
 
 function filterPlaces(val, el) {
@@ -3450,12 +3468,12 @@ async function renderPlaces() {
   if (!userLat) await getUserLocation();
 
   try {
-    // Загружаем только кафе и клиники (НЕ кинологов — они в каталоге)
+    // Загружаем места: кафе, клиники, парки, магазины, грумеры, площадки (НЕ кинологов — они в каталоге)
     const { data, error } = await supabaseClient
       .from('businesses')
       .select('*, business_locations(location_lat, location_lng, address, is_main)')
       .eq('is_approved', true)
-      .in('type', ['cafe', 'clinic'])
+      .in('type', ['cafe', 'clinic', 'park', 'shop', 'groomer', 'playground'])
       .order('rating', { ascending: false });
     if (error) throw error;
 
@@ -3463,9 +3481,21 @@ async function renderPlaces() {
 
     // Фильтр по типу через чипсы
     if (_placesFilter !== 'Все') {
-      const typeMap = { 'Кафе': 'cafe', 'Клиника': 'clinic' };
+      const typeMap = { 
+        'Кафе': 'cafe', 
+        'Клиника': 'clinic',
+        'Парк': 'park',
+        'Магазин': 'shop',
+        'Грумер': 'groomer',
+        'Площадка': 'playground'
+      };
       const t = typeMap[_placesFilter];
-      if (t) businesses = businesses.filter(b => b.type === t);
+      if (t) {
+        businesses = businesses.filter(b => b.type === t);
+      } else {
+        // Если категория не найдена — показываем пустой список
+        businesses = [];
+      }
     }
 
     // Считаем расстояние — берём минимальное среди всех локаций бизнеса
