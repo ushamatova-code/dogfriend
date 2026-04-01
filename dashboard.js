@@ -639,21 +639,7 @@ async function saveBizEdit() {
   }
 }
 
-// Вызываем после авторизации
-// Проверяем бизнес при каждом заходе в профиль и при первом home
-// Используем небольшой delay чтобы currentUser точно был установлен
-(function patchCheckAuth() {
-  const origNav = window.nav;
-  window.nav = function(id) {
-    origNav(id);
-    if (id === 'home' || id === 'profile') {
-      // Небольшой delay — currentUser может ещё не быть установлен
-      setTimeout(() => {
-        if (currentUser) checkUserBusiness();
-      }, 300);
-    }
-  };
-})();
+// checkUserBusiness вызывается из патча nav() в app.js
 
 // ════════════════════════════════════════════════════════════
 // SHOP PRODUCTS — Управление товарами для магазинов
