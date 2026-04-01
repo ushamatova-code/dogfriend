@@ -34,14 +34,109 @@ function switchCatalogTab(tab) {
     if (shopBtn) { shopBtn.style.color = 'var(--text-secondary)'; shopBtn.style.borderBottom = '2.5px solid transparent'; }
   } else {
     servPane.style.display = 'none';
-    shopPane.style.display = '';
+    shopPane.style.display = 'flex';
     if (shopBtn) { shopBtn.style.color = 'var(--primary)'; shopBtn.style.borderBottom = '2.5px solid var(--primary)'; }
     if (servBtn) { servBtn.style.color = 'var(--text-secondary)'; servBtn.style.borderBottom = '2.5px solid transparent'; }
     // Всегда сбрасываем и перезагружаем список магазинов
     const list = document.getElementById('shops-list');
     if (list) list.innerHTML = '';
+    _shopsAll = [];
+    _shopsFilter = 'all';
     loadShopsList();
   }
+}
+
+// ── Категории магазинов (из services бизнеса)
+const SHOP_REGISTRY_CATEGORIES = [
+  { id: 'all',        label: 'Все' },
+  { id: 'food',       label: 'Корма' },
+  { id: 'accessories',label: 'Аксессуары' },
+  { id: 'toys',       label: 'Игрушки' },
+  { id: 'clothing',   label: 'Одежда' },
+  { id: 'health',     label: 'Здоровье' },
+  { id: 'grooming',   label: 'Груминг' },
+  { id: 'other',      label: 'Другое' },
+];
+
+let _shopsAll = [];
+let _shopsFilter = 'all';
+
+function renderShopRegistryCategories(data) {
+  const wrap = document.getElementById('shops-categories-row');
+  if (!wrap) return;
+
+  // Собираем какие категории реально есть
+  const existing = new Set(['all']);
+  data.forEach(s => (s.services || []).forEach(sv => existing.add(sv)));
+
+  const cats = SHOP_REGISTRY_CATEGORIES.filter(c => existing.has(c.id));
+
+  wrap.innerHTML = cats.map(c => {
+    const active = _shopsFilter === c.id;
+    return `<button onclick="filterShopsList('${c.id}')" style="
+      flex-shrink:0;white-space:nowrap;padding:8px 18px;border-radius:24px;border:none;
+      font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;
+      transition:all 0.15s;
+      background:${active ? 'var(--primary)' : 'var(--white)'};
+      color:${active ? 'white' : 'var(--text-secondary)'};
+      box-shadow:${active ? '0 2px 12px rgba(74,144,217,0.25)' : 'var(--shadow)'};
+    ">${c.label}</button>`;
+  }).join('');
+}
+
+function filterShopsList(catId) {
+  _shopsFilter = catId;
+  renderShopRegistryCategories(_shopsAll);
+  _renderShopsGrid();
+}
+
+function _renderShopsGrid() {
+  const list = document.getElementById('shops-list');
+  if (!list) return;
+
+  let data = _shopsAll;
+  if (_shopsFilter !== 'all') {
+    data = data.filter(s => (s.services || []).includes(_shopsFilter));
+  }
+
+  if (!data.length) {
+    list.innerHTML = `
+      <div style="text-align:center;padding:48px 20px;color:var(--text-secondary);">
+        <div style="font-size:48px;margin-bottom:12px;">🏪</div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:6px;">Магазинов нет</div>
+        <div style="font-size:13px;line-height:1.5;">Попробуйте другую категорию</div>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = data.map(shop => {
+    const locs = shop.business_locations || [];
+    const addr = (locs.find(l => l.is_main) || locs[0])?.address || shop.address || '';
+
+    // Логотип — contain чтобы не обрезался
+    const avatar = shop.cover_url
+      ? `<img src="${shop.cover_url}" style="width:100%;height:100%;object-fit:contain;padding:8px;" onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;color:var(--text-secondary);\'>${shop.name.substring(0,2).toUpperCase()}</div>'">`
+      : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;color:var(--primary);background:rgba(74,144,217,0.06);">${shop.name.substring(0,2).toUpperCase()}</div>`;
+
+    // Описание — полная первая строка (не обрезаем на 40 символов)
+    const desc = shop.description
+      ? (shop.description.length > 60 ? shop.description.substring(0, 60) + '...' : shop.description)
+      : '';
+
+    return `
+      <div onclick="openShop('${shop.id}')" style="background:var(--white);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);cursor:pointer;display:flex;gap:14px;align-items:center;margin-bottom:10px;border:1px solid rgba(0,0,0,0.03);transition:box-shadow 0.2s;">
+        <div style="width:68px;height:68px;flex-shrink:0;border-radius:16px;overflow:hidden;border:1px solid var(--border);background:var(--white);">${avatar}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:15px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px;">${shop.name}</div>
+          ${desc ? `<div style="font-size:12px;color:var(--text-secondary);margin-bottom:3px;line-height:1.4;">${desc}</div>` : ''}
+          ${addr ? `<div style="font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            ${addr.length > 40 ? addr.substring(0, 40) + '...' : addr}
+          </div>` : ''}
+        </div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--border)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>`;
+  }).join('');
 }
 
 // ── Загрузка списка магазинов
@@ -49,7 +144,7 @@ async function loadShopsList() {
   const list = document.getElementById('shops-list');
   if (!list || !supabaseClient) return;
 
-  list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text-secondary);"><div style="font-size:32px;margin-bottom:8px;">🛍️</div><div>Загружаем магазины...</div></div>';
+  list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text-secondary);font-size:14px;">Загружаем...</div>';
 
   try {
     const { data, error } = await supabaseClient
@@ -64,31 +159,16 @@ async function loadShopsList() {
     if (!data || !data.length) {
       list.innerHTML = `
         <div style="text-align:center;padding:48px 20px;color:var(--text-secondary);">
-          <div style="font-size:48px;margin-bottom:12px;">🏪</div>
           <div style="font-size:16px;font-weight:700;margin-bottom:6px;">Магазинов пока нет</div>
           <div style="font-size:13px;line-height:1.5;">Зарегистрируйте свой магазин<br>через раздел «Для бизнеса»</div>
         </div>`;
       return;
     }
 
-    list.innerHTML = data.map(shop => {
-      const locs = shop.business_locations || [];
-      const addr = (locs.find(l => l.is_main) || locs[0])?.address || shop.address || '';
-      const avatar = shop.cover_url
-        ? `<img src="${shop.cover_url}" style="width:100%;height:100%;object-fit:contain;border-radius:18px;background:white;padding:8px;">`
-        : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;background:linear-gradient(135deg,#EEF6FF,#DBEAFE);border-radius:18px;">🏪</div>`;
-
-      return `
-        <div onclick="openShop('${shop.id}')" style="background:var(--white);border-radius:20px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);cursor:pointer;display:flex;gap:14px;align-items:center;margin-bottom:12px;transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 12px rgba(0,0,0,0.08)'">
-          <div style="width:72px;height:72px;flex-shrink:0;border-radius:18px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);background:white;">${avatar}</div>
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:16px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px;">${shop.name}</div>
-            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">⭐ ${shop.rating} · ${shop.description ? shop.description.substring(0,40)+'...' : 'Зоомагазин'}</div>
-            ${addr ? `<div style="font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${addr.length > 35 ? addr.substring(0, 35) + '...' : addr}</div>` : ''}
-          </div>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-        </div>`;
-    }).join('');
+    _shopsAll = data;
+    _shopsFilter = 'all';
+    renderShopRegistryCategories(data);
+    _renderShopsGrid();
 
   } catch(e) {
     console.error('loadShopsList error:', e);
@@ -101,7 +181,7 @@ async function openShop(businessId) {
   if (!supabaseClient) return;
   try {
     const [{ data: biz }, { data: products }] = await Promise.all([
-      supabaseClient.from('businesses').select('*').eq('id', businessId).single(),
+      supabaseClient.from('businesses').select('*, business_locations(address,is_main)').eq('id', businessId).single(),
       supabaseClient.from('shop_products').select('*').eq('business_id', businessId).eq('is_active', true).order('created_at', { ascending: false })
     ]);
 
@@ -111,13 +191,58 @@ async function openShop(businessId) {
     _shopBusinessSellerId = biz.user_id;
     _currentShopCategory = 'all';
 
-    // Заполняем шапку
+    // Шапка
     document.getElementById('shop-name').textContent = biz.name;
-    document.getElementById('shop-meta').textContent = `⭐ ${biz.rating} · ${(products||[]).length} товаров`;
+    document.getElementById('shop-meta').textContent = `${biz.rating > 0 ? '⭐ ' + biz.rating + ' · ' : ''}${(products||[]).length} товаров`;
 
-    // Рендерим категории
+    // Блок информации о магазине
+    const infoEl = document.getElementById('shop-info-block');
+    if (infoEl) {
+      const locs = biz.business_locations || [];
+      const addr = (locs.find(l => l.is_main) || locs[0])?.address || biz.address || '';
+      const rows = [];
+      if (biz.description) rows.push(`<div style="font-size:13px;color:var(--text-secondary);line-height:1.6;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:12px;">${biz.description}</div>`);
+      if (addr) rows.push(`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+        <div style="width:32px;height:32px;border-radius:10px;background:rgba(74,144,217,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <div style="font-size:13px;font-weight:600;">${addr}</div>
+      </div>`);
+      if (biz.schedule) rows.push(`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+        <div style="width:32px;height:32px;border-radius:10px;background:rgba(74,144,217,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <div style="font-size:13px;font-weight:600;">${biz.schedule}</div>
+      </div>`);
+      if (biz.phone) rows.push(`<a href="tel:${biz.phone.replace(/[^\d+]/g,'')}" style="display:flex;align-items:center;gap:10px;padding:8px 0;text-decoration:none;color:inherit;">
+        <div style="width:32px;height:32px;border-radius:10px;background:rgba(52,199,89,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#34C759" stroke-width="2.5" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+        </div>
+        <div style="font-size:13px;font-weight:700;color:var(--primary);">${biz.phone}</div>
+      </a>`);
+      if (biz.telegram) rows.push(`<a href="https://t.me/${biz.telegram.replace('@','')}" target="_blank" style="display:flex;align-items:center;gap:10px;padding:8px 0;text-decoration:none;color:inherit;">
+        <div style="width:32px;height:32px;border-radius:10px;background:rgba(74,144,217,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </div>
+        <div style="font-size:13px;font-weight:700;color:var(--primary);">${biz.telegram}</div>
+      </a>`);
+      if (biz.website) rows.push(`<a href="${biz.website.startsWith('http')?biz.website:'https://'+biz.website}" target="_blank" style="display:flex;align-items:center;gap:10px;padding:8px 0;text-decoration:none;color:inherit;">
+        <div style="width:32px;height:32px;border-radius:10px;background:rgba(99,102,241,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+        </div>
+        <div style="font-size:13px;font-weight:700;color:#6366F1;">${biz.website}</div>
+      </a>`);
+
+      if (rows.length) {
+        infoEl.innerHTML = rows.join('');
+        infoEl.style.display = '';
+      } else {
+        infoEl.style.display = 'none';
+      }
+    }
+
+    // Рендерим категории и товары
     renderShopCategories();
-    // Рендерим товары
     renderShopProducts();
 
     nav('shopView');
@@ -171,21 +296,37 @@ function renderShopProducts() {
   }
 
   grid.innerHTML = products.map(p => {
+    // Фото товара — всегда cover, контейнер фиксированной высоты
     const img = (p.images && p.images[0])
-      ? `<img src="${p.images[0]}" style="width:100%;height:100%;object-fit:cover;">`
-      : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;background:linear-gradient(135deg,#f5f5f5,#e8e8e8);">${getCatEmoji(p.category)}</div>`;
+      ? `<img src="${p.images[0]}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;background:var(--bg);\'>${getCatEmoji(p.category)}</div>'">`
+      : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;background:var(--bg);">${getCatEmoji(p.category)}</div>`;
 
     const discountBadge = p.old_price
-      ? `<div style="position:absolute;top:8px;right:8px;background:#FF3B30;color:white;font-size:11px;font-weight:800;padding:4px 8px;border-radius:12px;box-shadow:0 2px 8px rgba(255,59,48,0.3);">-${Math.round((1 - p.price/p.old_price)*100)}%</div>`
+      ? `<div style="position:absolute;top:8px;right:8px;background:#D0021B;color:white;font-size:11px;font-weight:800;padding:3px 8px;border-radius:10px;">-${Math.round((1 - p.price/p.old_price)*100)}%</div>`
       : '';
 
+    const stockBadge = p.in_stock
+      ? `<div style="font-size:11px;color:#2d8a4e;font-weight:700;padding:5px 0;background:rgba(52,199,89,0.08);border-radius:8px;text-align:center;margin-bottom:8px;">В наличии</div>`
+      : `<div style="font-size:11px;color:#D0021B;font-weight:700;padding:5px 0;background:rgba(208,2,27,0.06);border-radius:8px;text-align:center;margin-bottom:8px;">Нет в наличии</div>`;
+
     return `
-      <div onclick="openShopProduct('${p.id}')" style="background:var(--white);border-radius:18px;box-shadow:0 2px 12px rgba(0,0,0,0.08);cursor:pointer;overflow:hidden;transition:transform 0.2s,box-shadow 0.2s;position:relative;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 12px rgba(0,0,0,0.08)'">
-        <div style="width:100%;height:160px;background:var(--bg);overflow:hidden;position:relative;">
+      <div onclick="openShopProduct('${p.id}')" style="background:var(--white);border-radius:18px;box-shadow:var(--shadow);cursor:pointer;overflow:hidden;position:relative;border:1px solid rgba(0,0,0,0.03);">
+        <div style="width:100%;aspect-ratio:4/3;overflow:hidden;position:relative;background:var(--bg);">
           ${img}
           ${discountBadge}
         </div>
-        <div style="padding:12px;">
+        <div style="padding:10px 10px 12px;">
+          <div style="font-size:13px;font-weight:700;line-height:1.4;margin-bottom:6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:36px;">${p.name}</div>
+          <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+            <span style="font-size:16px;font-weight:900;color:var(--primary);">${p.price.toLocaleString('ru')} ₽</span>
+            ${p.old_price ? `<span style="font-size:11px;color:var(--text-secondary);text-decoration:line-through;">${p.old_price.toLocaleString('ru')} ₽</span>` : ''}
+          </div>
+          ${stockBadge}
+          <button onclick="event.stopPropagation();quickAddToCart('${p.id}')" ${!p.in_stock ? 'disabled' : ''} style="width:100%;background:${p.in_stock ? 'linear-gradient(135deg,var(--primary),var(--primary-dark))' : 'var(--border)'};color:${p.in_stock ? 'white' : 'var(--text-secondary)'};border:none;border-radius:12px;padding:9px;font-size:13px;font-weight:700;cursor:${p.in_stock ? 'pointer' : 'not-allowed'};font-family:inherit;box-shadow:${p.in_stock ? '0 2px 10px rgba(74,144,217,0.25)' : 'none'};transition:opacity 0.15s;">В корзину</button>
+        </div>
+      </div>`;
+  }).join('');
+}
           <div style="font-size:14px;font-weight:700;line-height:1.4;margin-bottom:8px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:38px;">${p.name}</div>
           <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
             <span style="font-size:17px;font-weight:900;color:var(--primary);">${p.price.toLocaleString('ru')} ₽</span>
@@ -214,15 +355,15 @@ function openShopProduct(productId) {
 
   if (product.images && product.images.length) {
     const W = imgEl.offsetWidth || window.innerWidth;
-    const H = 280;
+    const H = Math.round(W * 0.75); // 4:3 соотношение
     imgEl.style.height = H + 'px';
     imgEl.style.position = 'relative';
 
     imgEl.innerHTML = `
       <div id="pgw" style="display:flex;width:${W * product.images.length}px;height:${H}px;transition:transform 0.3s ease;" data-index="0" data-w="${W}" data-count="${product.images.length}">
         ${product.images.map(src => `
-          <div style="width:${W}px;height:${H}px;flex-shrink:0;background:#f5f5f5;display:flex;align-items:center;justify-content:center;overflow:hidden;">
-            <img src="${src}" style="width:${W}px;height:${H}px;object-fit:cover;" onerror="this.style.display='none'">
+          <div style="width:${W}px;height:${H}px;flex-shrink:0;background:var(--bg);overflow:hidden;">
+            <img src="${src}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'">
           </div>`).join('')}
       </div>
       ${product.images.length > 1 ? `
@@ -489,9 +630,13 @@ window.nav = function(id) {
     if (shopPane) { shopPane.style.display = 'none'; }
     if (servBtn) { servBtn.style.color = 'var(--primary)'; servBtn.style.borderBottom = '2.5px solid var(--primary)'; }
     if (shopBtn) { shopBtn.style.color = 'var(--text-secondary)'; shopBtn.style.borderBottom = '2.5px solid transparent'; }
-    // Сбрасываем список магазинов чтобы при следующем открытии загрузился заново
+    // Сбрасываем список магазинов и категории чтобы при следующем открытии загрузились заново
     const list = document.getElementById('shops-list');
     if (list) list.innerHTML = '';
+    const catRow = document.getElementById('shops-categories-row');
+    if (catRow) catRow.innerHTML = '';
+    _shopsAll = [];
+    _shopsFilter = 'all';
   }
 };
 
