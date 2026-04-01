@@ -4995,11 +4995,26 @@ window.renderCatalog = function() {
   const cat = SERVICE_CATEGORIES[_currentServiceCategory];
   const searchVal = (document.getElementById('catalog-search')?.value || '').toLowerCase();
   
-  // Filter businesses by category type
+  // Filter businesses by category — trainer-type бизнесы фильтруем по services (выбранным категориям)
+  // Остальные типы (clinic, cafe, shop) фильтруем по type
   let filtered = loadedBusinesses.filter(b => b.is_approved);
   
   if (cat && cat.type) {
-    filtered = filtered.filter(b => b.type === cat.type);
+    if (cat.type === 'trainer') {
+      // Кинологи — у кого type=trainer И нет доп. категорий, или services содержит 'trainer'
+      filtered = filtered.filter(b => b.type === 'trainer' && (
+        !b.services || !b.services.length ||
+        b.services.includes('trainer') ||
+        // Если services пустой или не содержит специализаций — показываем как кинолога
+        !b.services.some(s => ['grooming','boarding','psychologist','walking'].includes(s))
+      ));
+    } else if (['grooming','boarding','psychologist','walking'].includes(cat.type)) {
+      // Специализации — ищем всех у кого в services есть эта категория (тип trainer)
+      filtered = filtered.filter(b => b.type === 'trainer' && b.services && b.services.includes(cat.type));
+    } else {
+      // Другие типы (clinic, cafe, shop) — фильтруем по type
+      filtered = filtered.filter(b => b.type === cat.type);
+    }
   }
   
   // Geo filter — only show within 50km if user has location
@@ -5047,6 +5062,11 @@ window.renderCatalog = function() {
   list.innerHTML = filtered.map(b => {
     const initials = (b.name || 'XX').substring(0,2).toUpperCase();
     const distText = b._dist < 1 ? (b._dist * 1000).toFixed(0) + ' м' : b._dist.toFixed(1) + ' км';
+    // Определяем специализацию из services
+    const CAT_LABELS = {trainer:'Кинолог',grooming:'Груминг',boarding:'Передержка',psychologist:'Зоопсихолог',walking:'Выгул'};
+    const specLabel = b.services && b.services.length
+      ? b.services.map(s => CAT_LABELS[s]).filter(Boolean).join(' · ') || 'Кинолог'
+      : 'Кинолог';
     return `<div class="card" style="margin:0 16px 10px;cursor:pointer;" onclick="openBusinessProfile('${b.id}')">
       <div style="display:flex;gap:14px;align-items:center;">
         <div class="avatar" style="width:52px;height:52px;font-size:18px;flex-shrink:0;overflow:hidden;${b.cover_url?'padding:0;background:none;':''}">
@@ -5054,6 +5074,7 @@ window.renderCatalog = function() {
         </div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:15px;font-weight:800;">${b.name}</div>
+          <div style="font-size:11px;color:var(--primary);font-weight:700;margin-top:1px;">${specLabel}</div>
           <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${b.address || ''}</div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
             <span style="font-size:12px;font-weight:700;color:var(--primary);">${b.rating || '5.0'}</span>

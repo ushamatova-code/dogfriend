@@ -699,7 +699,7 @@ async function renderHomeSpecialists() {
           </div>
           <div style="text-align:center;width:100%;">
             <div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${b.name}</div>
-            <div style="font-size:11px;color:var(--text-secondary);">Кинолог</div>
+            <div style="font-size:11px;color:var(--text-secondary);">${(()=>{const m={trainer:'Кинолог',grooming:'Груминг',boarding:'Передержка',psychologist:'Зоопсихолог',walking:'Выгул'};const s=b.services&&b.services.length?b.services.map(x=>m[x]).filter(Boolean):[];return s.length?s[0]:'Кинолог';})()}</div>
             <div style="font-size:11px;color:var(--secondary);font-weight:700;">⭐ ${b.rating}</div>
             <div style="font-size:11px;color:var(--primary);font-weight:700;">${b.price_from || ''}</div>
           </div>
