@@ -1963,8 +1963,20 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let supabaseClient = null;
 let currentUser = null;
 let currentUserProfile = null;
-// Флаг — пришли по ссылке восстановления пароля, не редиректить на home
-let _isPasswordRecovery = false;
+// Проверяем хэш СИНХРОННО при загрузке — до Supabase createClient и до checkAuth
+// Supabase редиректит с #access_token=...&type=recovery в URL
+let _isPasswordRecovery = (function() {
+  try {
+    const hash = window.location.hash;
+    if (!hash) return false;
+    const p = new URLSearchParams(hash.replace(/^#/, ''));
+    if (p.get('type') === 'recovery' && p.get('access_token')) {
+      console.log('🔑 Recovery detected in URL');
+      return true;
+    }
+  } catch(e) {}
+  return false;
+})();
 
 // Загружаем Supabase SDK
 if (!window.supabaseLoaded) {
@@ -2120,6 +2132,7 @@ async function checkAuth() {
 
   // Запасной таймер — никогда не зависнем на сплэше
   const fallback = setTimeout(() => {
+    if (_isPasswordRecovery) return;
     const active = document.querySelector('.screen.active');
     if (active && active.id === 'splash') {
       nav(localStorage.getItem('df_registered') === '1' ? 'home' : 'login');
