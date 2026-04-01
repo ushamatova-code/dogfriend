@@ -1896,7 +1896,8 @@ async function loadAllDialogsFromDB() {
     // Для каждой комнаты определяем собеседника и восстанавливаем чат
     for (const [roomId, messages] of Object.entries(rooms)) {
       // chatId = userId собеседника (тот кто не myUserId в room_id)
-      const parts = roomId.split('__');
+      // room_id формат: uuid1_uuid2 (одинарное подчёркивание)
+      const parts = roomId.split('_');
       const theirId = parts.find(p => p !== myUserId);
       if (!theirId) continue;
 
@@ -1935,7 +1936,10 @@ async function loadAllDialogsFromDB() {
     console.log('✅ Loaded', Object.keys(rooms).length, 'dialogs from DB');
     
     // Загружаем реальные имена из profiles для всех контактов
-    const contactIds = Object.keys(contactBook).filter(id => id.length > 20);
+    // Проверяем что это UUID (формат: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+    const contactIds = Object.keys(contactBook).filter(id => {
+      return id.length === 36 && id.includes('-') && !id.includes('_');
+    });
     for (const userId of contactIds) {
       loadContactName(userId);
     }
@@ -2835,7 +2839,8 @@ function startRealtimeDMSubscription() {
         localStorage.setItem('df_contacts', JSON.stringify(contactBook));
         
         // Загружаем реальное имя из profiles асинхронно
-        if (chatId.length > 20) { // UUID
+        // Проверяем что это UUID
+        if (chatId.length === 36 && chatId.includes('-') && !chatId.includes('_')) {
           loadContactName(chatId);
         }
       }
