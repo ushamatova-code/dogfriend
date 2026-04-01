@@ -8,8 +8,8 @@ let _currentShopProducts = [];
 let _currentProduct = null;
 let _currentShopCategory = 'all';
 let _shopBusinessSellerId = null; // user_id продавца текущего магазина
-let _allShops = []; // Все магазины для фильтрации
-let _currentShopFilter = 'all'; // Текущий фильтр магазинов по категориям
+let _allShops = [];
+let _currentShopFilter = 'all';
 
 const SHOP_CATEGORIES = [
   { id: 'all',         label: 'Все',        emoji: '🛍️' },
@@ -71,6 +71,12 @@ async function loadShopsList() {
           <div style="font-size:48px;margin-bottom:12px;">🏪</div>
           <div style="font-size:16px;font-weight:700;margin-bottom:6px;">Магазинов пока нет</div>
           <div style="font-size:13px;line-height:1.5;">Зарегистрируйте свой магазин<br>через раздел «Для бизнеса»</div>
+        </div>`;
+      return;
+    }
+
+    renderShopCategories();
+    renderShopsList();
 
   } catch(e) {
     console.error('loadShopsList error:', e);
@@ -84,7 +90,7 @@ async function openShop(businessId) {
   try {
     const [{ data: biz }, { data: products }] = await Promise.all([
       supabaseClient.from('businesses').select('*, business_locations(address,is_main)').eq('id', businessId).single(),
-      supabaseClient.from('shop_products').select('*').eq('business_id', businessId).eq('is_active', true).order('created_at', { ascending: false})
+      supabaseClient.from('shop_products').select('*').eq('business_id', businessId).eq('is_active', true).order('created_at', { ascending: false })
     ]);
 
     if (!biz) return;
@@ -95,7 +101,8 @@ async function openShop(businessId) {
 
     // Заполняем шапку
     document.getElementById('shop-name').textContent = biz.name;
-    document.getElementById('shop-meta').textContent = `⭐ ${biz.rating} • ${(products||[]).length} товаров`;
+    const pcount = (products||[]).length;
+    document.getElementById('shop-meta').textContent = '⭐ ' + biz.rating + ' | ' + pcount + ' товаров';
 
     // Блок информации о магазине
     const infoEl = document.getElementById('shop-info-block');
@@ -105,52 +112,30 @@ async function openShop(businessId) {
       const rows = [];
       
       if (biz.description) {
-        rows.push(`<div style="font-size:13px;color:var(--text-secondary);line-height:1.6;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:12px;">${biz.description}</div>`);
+        rows.push('<div style="font-size:13px;color:var(--text-secondary);line-height:1.6;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:12px;">' + biz.description + '</div>');
       }
       
       if (addr) {
-        rows.push(`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
-          <div style="width:36px;height:36px;border-radius:12px;background:rgba(74,144,217,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          </div>
-          <div style="font-size:13px;font-weight:600;line-height:1.4;">${addr}</div>
-        </div>`);
+        rows.push('<div style="display:flex;align-items:center;gap:10px;padding:8px 0;"><div style="width:36px;height:36px;border-radius:12px;background:rgba(74,144,217,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div style="font-size:13px;font-weight:600;line-height:1.4;">' + addr + '</div></div>');
       }
       
       if (biz.schedule) {
-        rows.push(`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
-          <div style="width:36px;height:36px;border-radius:12px;background:rgba(74,144,217,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-          </div>
-          <div style="font-size:13px;font-weight:600;">${biz.schedule}</div>
-        </div>`);
+        rows.push('<div style="display:flex;align-items:center;gap:10px;padding:8px 0;"><div style="width:36px;height:36px;border-radius:12px;background:rgba(74,144,217,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><div style="font-size:13px;font-weight:600;">' + biz.schedule + '</div></div>');
       }
       
       if (biz.phone) {
-        rows.push(`<a href="tel:${biz.phone.replace(/[^\d+]/g,'')}" style="display:flex;align-items:center;gap:10px;padding:8px 0;text-decoration:none;color:inherit;">
-          <div style="width:36px;height:36px;border-radius:12px;background:rgba(52,199,89,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34C759" stroke-width="2.5" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
-          </div>
-          <div style="font-size:13px;font-weight:700;color:var(--primary);">${biz.phone}</div>
-        </a>`);
+        const cleanPhone = biz.phone.replace(/[^\d+]/g, '');
+        rows.push('<a href="tel:' + cleanPhone + '" style="display:flex;align-items:center;gap:10px;padding:8px 0;text-decoration:none;color:inherit;"><div style="width:36px;height:36px;border-radius:12px;background:rgba(52,199,89,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34C759" stroke-width="2.5" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></div><div style="font-size:13px;font-weight:700;color:var(--primary);">' + biz.phone + '</div></a>');
       }
       
       if (biz.telegram) {
-        rows.push(`<a href="https://t.me/${biz.telegram.replace('@','')}" target="_blank" style="display:flex;align-items:center;gap:10px;padding:8px 0;text-decoration:none;color:inherit;">
-          <div style="width:36px;height:36px;border-radius:12px;background:rgba(0,136,204,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="#0088CC"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.781-.417-1.21.258-1.911.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.009-1.252-.242-1.865-.442-.751-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.477-1.635.099-.002.321.023.465.141.121.099.155.232.171.326.016.094.036.308.02.475z"/></svg>
-          </div>
-          <div style="font-size:13px;font-weight:600;color:#0088CC;">@${biz.telegram.replace('@','')}</div>
-        </a>`);
+        const tg = biz.telegram.replace('@', '');
+        rows.push('<a href="https://t.me/' + tg + '" target="_blank" style="display:flex;align-items:center;gap:10px;padding:8px 0;text-decoration:none;color:inherit;"><div style="width:36px;height:36px;border-radius:12px;background:rgba(0,136,204,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="#0088CC"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.693-1.653-1.124-2.678-1.8-1.185-.781-.417-1.21.258-1.911.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.009-1.252-.242-1.865-.442-.751-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.477-1.635.099-.002.321.023.465.141.121.099.155.232.171.326.016.094.036.308.02.475z"/></svg></div><div style="font-size:13px;font-weight:600;color:#0088CC;">@' + tg + '</div></a>');
       }
       
       if (biz.website) {
-        rows.push(`<a href="${biz.website.startsWith('http') ? biz.website : 'https://' + biz.website}" target="_blank" style="display:flex;align-items:center;gap:10px;padding:8px 0;text-decoration:none;color:inherit;">
-          <div style="width:36px;height:36px;border-radius:12px;background:rgba(74,144,217,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
-          </div>
-          <div style="font-size:13px;font-weight:600;color:var(--primary);">Сайт</div>
-        </a>`);
+        const url = biz.website.startsWith('http') ? biz.website : 'https://' + biz.website;
+        rows.push('<a href="' + url + '" target="_blank" style="display:flex;align-items:center;gap:10px;padding:8px 0;text-decoration:none;color:inherit;"><div style="width:36px;height:36px;border-radius:12px;background:rgba(74,144,217,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></div><div style="font-size:13px;font-weight:600;color:var(--primary);">Сайт</div></a>');
       }
       
       if (rows.length) {
@@ -218,32 +203,17 @@ function renderShopProducts() {
 
   grid.innerHTML = products.map(p => {
     const img = (p.images && p.images[0])
-      ? `<img src="${p.images[0]}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.innerHTML='<div style=\\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;background:linear-gradient(135deg,#f5f5f5,#e8e8e8);\\'>${getCatEmoji(p.category)}</div>'">`
-      : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;background:linear-gradient(135deg,#f5f5f5,#e8e8e8);">${getCatEmoji(p.category)}</div>`;
+      ? '<img src="' + p.images[0] + '" style="width:100%;height:100%;object-fit:cover;display:block;">'
+      : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;background:linear-gradient(135deg,#f5f5f5,#e8e8e8);">' + getCatEmoji(p.category) + '</div>';
 
     const discountBadge = p.old_price
-      ? `<div style="position:absolute;top:8px;right:8px;background:#FF3B30;color:white;font-size:11px;font-weight:800;padding:4px 8px;border-radius:12px;box-shadow:0 2px 8px rgba(255,59,48,0.3);">-${Math.round((1 - p.price/p.old_price)*100)}%</div>`
+      ? '<div style="position:absolute;top:8px;right:8px;background:#FF3B30;color:white;font-size:11px;font-weight:800;padding:4px 8px;border-radius:12px;box-shadow:0 2px 8px rgba(255,59,48,0.3);">-' + Math.round((1 - p.price/p.old_price)*100) + '%</div>'
       : '';
+    
+    const priceOld = p.old_price ? '<span style="font-size:12px;color:var(--text-secondary);text-decoration:line-through;">' + p.old_price.toLocaleString('ru') + ' ₽</span>' : '';
+    const stockBadge = !p.in_stock ? '<div style="font-size:12px;color:#FF3B30;font-weight:700;padding:6px 10px;background:#FFF5F5;border-radius:10px;text-align:center;margin-bottom:8px;">Нет в наличии</div>' : '<div style="font-size:12px;color:#34C759;font-weight:700;padding:6px 10px;background:#F0FFF4;border-radius:10px;text-align:center;margin-bottom:8px;">✓ В наличии</div>';
 
-    return `
-      <div onclick="openShopProduct('${p.id}')" style="background:var(--white);border-radius:18px;box-shadow:0 2px 12px rgba(0,0,0,0.08);cursor:pointer;overflow:hidden;transition:transform 0.2s,box-shadow 0.2s;position:relative;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 12px rgba(0,0,0,0.08)'">
-        <div style="width:100%;aspect-ratio:4/3;background:var(--bg);overflow:hidden;position:relative;">
-          ${img}
-          ${discountBadge}
-        </div>
-        <div style="padding:12px;">
-          <div style="font-size:14px;font-weight:700;line-height:1.4;margin-bottom:8px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:38px;">${p.name}</div>
-          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
-            <span style="font-size:17px;font-weight:900;color:var(--primary);">${p.price.toLocaleString('ru')} ₽</span>
-            ${p.old_price ? `<span style="font-size:12px;color:var(--text-secondary);text-decoration:line-through;">${p.old_price.toLocaleString('ru')} ₽</span>` : ''}
-          </div>
-          ${!p.in_stock 
-            ? '<div style="font-size:12px;color:#FF3B30;font-weight:700;padding:6px 10px;background:#FFF5F5;border-radius:10px;text-align:center;margin-bottom:8px;">Нет в наличии</div>' 
-            : '<div style="font-size:12px;color:#34C759;font-weight:700;padding:6px 10px;background:#F0FFF4;border-radius:10px;text-align:center;margin-bottom:8px;">✓ В наличии</div>'
-          }
-          <button onclick="event.stopPropagation();quickAddToCart('${p.id}')" style="width:100%;background:linear-gradient(135deg,var(--primary),#6B5CE7);color:white;border:none;border-radius:12px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(74,144,217,0.3);transition:transform 0.1s;" ${!p.in_stock ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''} onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">🛒 В корзину</button>
-        </div>
-      </div>`;
+    return '<div onclick="openShopProduct(\'' + p.id + '\')" style="background:var(--white);border-radius:18px;box-shadow:0 2px 12px rgba(0,0,0,0.08);cursor:pointer;overflow:hidden;transition:transform 0.2s,box-shadow 0.2s;position:relative;" onmouseover="this.style.transform=\'translateY(-4px)\';this.style.boxShadow=\'0 8px 24px rgba(0,0,0,0.12)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'0 2px 12px rgba(0,0,0,0.08)\'"><div style="width:100%;aspect-ratio:4/3;background:var(--bg);overflow:hidden;position:relative;">' + img + discountBadge + '</div><div style="padding:12px;"><div style="font-size:14px;font-weight:700;line-height:1.4;margin-bottom:8px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:38px;">' + p.name + '</div><div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:10px;"><span style="font-size:17px;font-weight:900;color:var(--primary);">' + p.price.toLocaleString('ru') + ' ₽</span>' + priceOld + '</div>' + stockBadge + '<button onclick="event.stopPropagation();quickAddToCart(\'' + p.id + '\')" style="width:100%;background:linear-gradient(135deg,var(--primary),#6B5CE7);color:white;border:none;border-radius:12px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(74,144,217,0.3);transition:transform 0.1s;" ' + (!p.in_stock ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '') + ' onmousedown="this.style.transform=\'scale(0.95)\'" onmouseup="this.style.transform=\'\'" onmouseleave="this.style.transform=\'\'">🛒 В корзину</button></div></div>';
   }).join('');
 }
 
@@ -260,28 +230,19 @@ function openShopProduct(productId) {
 
   if (product.images && product.images.length) {
     const W = imgEl.offsetWidth || window.innerWidth;
-    const H = Math.round(W * 0.75); // 4:3 aspect ratio
+    const H = Math.round(W * 0.75);
     imgEl.style.height = H + 'px';
     imgEl.style.position = 'relative';
 
-    imgEl.innerHTML = `
-      <div id="pgw" style="display:flex;width:${W * product.images.length}px;height:${H}px;transition:transform 0.3s ease;" data-index="0" data-w="${W}" data-count="${product.images.length}">
-        ${product.images.map(src => `
-          <div style="width:${W}px;height:${H}px;flex-shrink:0;background:#f5f5f5;display:flex;align-items:center;justify-content:center;overflow:hidden;">
-            <img src="${src}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'">
-          </div>`).join('')}
-      </div>
-      ${product.images.length > 1 ? `
-      <div id="product-gallery-dots" style="position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:6px;">
-        ${product.images.map((_,i) => `<div style="width:7px;height:7px;border-radius:50%;background:${i===0?'white':'rgba(255,255,255,0.5)'};box-shadow:0 1px 3px rgba(0,0,0,0.3);transition:background 0.2s;"></div>`).join('')}
-      </div>
-      <button onclick="slideGallery(-1)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.3);border:none;color:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">‹</button>
-      <button onclick="slideGallery(1)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.3);border:none;color:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">›</button>` : ''}`;
+    const imgTags = product.images.map(src => '<div style="width:' + W + 'px;height:' + H + 'px;flex-shrink:0;background:#f5f5f5;display:flex;align-items:center;justify-content:center;overflow:hidden;"><img src="' + src + '" style="width:100%;height:100%;object-fit:cover;display:block;"></div>').join('');
+    const dots = product.images.length > 1 ? '<div id="product-gallery-dots" style="position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:6px;">' + product.images.map((_, i) => '<div style="width:7px;height:7px;border-radius:50%;background:' + (i === 0 ? 'white' : 'rgba(255,255,255,0.5)') + ';box-shadow:0 1px 3px rgba(0,0,0,0.3);transition:background 0.2s;"></div>').join('') + '</div><button onclick="slideGallery(-1)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.3);border:none;color:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">‹</button><button onclick="slideGallery(1)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.3);border:none;color:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">›</button>' : '';
+    
+    imgEl.innerHTML = '<div id="pgw" style="display:flex;width:' + (W * product.images.length) + 'px;height:' + H + 'px;transition:transform 0.3s ease;" data-index="0" data-w="' + W + '" data-count="' + product.images.length + '">' + imgTags + '</div>' + dots;
   } else {
     const W = imgEl.offsetWidth || window.innerWidth;
     const H = Math.round(W * 0.75);
     imgEl.style.height = H + 'px';
-    imgEl.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:64px;background:#f5f5f5;">${getCatEmoji(product.category)}</div>`;
+    imgEl.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:64px;background:#f5f5f5;">' + getCatEmoji(product.category) + '</div>';
   }
 
   // Название
@@ -670,7 +631,6 @@ function renderShopCategories() {
   const container = document.getElementById('shops-categories-row');
   if (!container) return;
   
-  // Собираем уникальные категории из services всех магазинов
   const categoryCounts = {};
   _allShops.forEach(shop => {
     const services = shop.services || [];
@@ -679,7 +639,6 @@ function renderShopCategories() {
     });
   });
   
-  // Маппинг ID категорий на названия
   const categoryLabels = {
     food: 'Корма',
     accessories: 'Аксессуары',
@@ -703,19 +662,7 @@ function renderShopCategories() {
   
   container.innerHTML = categories.map(cat => {
     const isActive = _currentShopFilter === cat.id;
-    return `<div onclick="filterShopsByCategory('${cat.id}')" style="
-      padding:10px 18px;
-      border-radius:16px;
-      background:${isActive ? 'linear-gradient(135deg,var(--primary),var(--primary-dark))' : 'var(--white)'};
-      color:${isActive ? 'white' : 'var(--text-primary)'};
-      font-size:14px;
-      font-weight:700;
-      cursor:pointer;
-      white-space:nowrap;
-      box-shadow:${isActive ? '0 4px 12px rgba(74,144,217,0.3)' : '0 2px 8px rgba(0,0,0,0.06)'};
-      transition:all 0.2s;
-      border:${isActive ? 'none' : '1px solid rgba(0,0,0,0.04)'};
-    ">${cat.label} ${cat.count > 0 ? `<span style="opacity:0.8;">(${cat.count})</span>` : ''}</div>`;
+    return '<div onclick="filterShopsByCategory(\'' + cat.id + '\')" style="padding:10px 18px;border-radius:16px;background:' + (isActive ? 'linear-gradient(135deg,var(--primary),var(--primary-dark))' : 'var(--white)') + ';color:' + (isActive ? 'white' : 'var(--text-primary)') + ';font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:' + (isActive ? '0 4px 12px rgba(74,144,217,0.3)' : '0 2px 8px rgba(0,0,0,0.06)') + ';transition:all 0.2s;border:' + (isActive ? 'none' : '1px solid rgba(0,0,0,0.04)') + ';">' + cat.label + ' (' + cat.count + ')</div>';
   }).join('');
 }
 
@@ -726,7 +673,7 @@ function filterShopsByCategory(categoryId) {
   renderShopsList();
 }
 
-// Рендер списка магазинов (с учётом фильтра)
+// Рендер списка магазинов
 function renderShopsList() {
   const list = document.getElementById('shops-list');
   if (!list) return;
@@ -740,32 +687,35 @@ function renderShopsList() {
   }
   
   if (!filtered.length) {
-    list.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text-secondary);">
-      <div style="font-size:32px;margin-bottom:8px;">🔍</div>
-      <div>Магазинов в этой категории нет</div>
-    </div>`;
+    list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text-secondary);"><div style="font-size:32px;margin-bottom:8px;">🔍</div><div>Магазинов в этой категории нет</div></div>';
     return;
   }
   
   list.innerHTML = filtered.map(shop => {
     const locs = shop.business_locations || [];
     const addr = (locs.find(l => l.is_main) || locs[0])?.address || shop.address || '';
-    const avatar = shop.cover_url
-      ? `<img src="${shop.cover_url}" style="width:100%;height:100%;object-fit:contain;border-radius:18px;background:white;padding:8px;">`
-      : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;background:linear-gradient(135deg,#EEF6FF,#DBEAFE);border-radius:18px;">🏪</div>`;
-
-    return `
-      <div onclick="openShop('${shop.id}')" style="background:var(--white);border-radius:20px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);cursor:pointer;display:flex;gap:14px;align-items:center;margin-bottom:12px;transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 12px rgba(0,0,0,0.08)'">
-        <div style="width:72px;height:72px;flex-shrink:0;border-radius:18px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);background:white;">${avatar}</div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:16px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px;">${shop.name}</div>
-          <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">⭐ ${shop.rating} · ${shop.description ? shop.description.substring(0,40)+'...' : 'Зоомагазин'}</div>
-          ${addr ? `<div style="font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${addr.length > 35 ? addr.substring(0, 35) + '...' : addr}</div>` : ''}
-        </div>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>`;
+    const avatar = shop.cover_url ? '<img src="' + shop.cover_url + '" style="width:100%;height:100%;object-fit:contain;border-radius:18px;background:white;padding:8px;">' : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;background:linear-gradient(135deg,#EEF6FF,#DBEAFE);border-radius:18px;">🏪</div>';
+    
+    const desc = shop.description ? shop.description.substring(0,40) + '...' : 'Зоомагазин';
+    const addrHtml = addr ? '<div style="font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>' + (addr.length > 35 ? addr.substring(0, 35) + '...' : addr) + '</div>' : '';
+    
+    return '<div onclick="openShop(\'' + shop.id + '\')" style="background:var(--white);border-radius:20px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);cursor:pointer;display:flex;gap:14px;align-items:center;margin-bottom:12px;transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'0 8px 24px rgba(0,0,0,0.12)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'0 2px 12px rgba(0,0,0,0.08)\'"><div style="width:72px;height:72px;flex-shrink:0;border-radius:18px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);background:white;">' + avatar + '</div><div style="flex:1;min-width:0;"><div style="font-size:16px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px;">' + shop.name + '</div><div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">⭐ ' + shop.rating + ' | ' + desc + '</div>' + addrHtml + '</div><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>';
   }).join('');
 }
 
-window.filterShopsByCategory = filterShopsByCategory;
 
+// Window экспорты
+window.switchCatalogTab = switchCatalogTab;
+window.openShop = openShop;
+window.openShopProduct = openShopProduct;
+window.closeShopProduct = closeShopProduct;
+window.filterShopByCategory = filterShopByCategory;
+window.filterShopsByCategory = filterShopsByCategory;
+window.slideGallery = slideGallery;
+window.quickAddToCart = quickAddToCart;
+window.addToCart = addToCart;
+window.removeFromCart = removeFromCart;
+window.clearCart = clearCart;
+window.openImageCropper = openImageCropper;
+window.applyCrop = applyCrop;
+window.closeCropper = closeCropper;
