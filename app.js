@@ -694,10 +694,12 @@ async function updateUnreadCount() {
   
   try {
     // Получаем все непрочитанные сообщения для текущего пользователя
+    // НЕ считаем сообщения от самого себя
     const { data, error } = await supabaseClient
       .from('direct_messages')
       .select('sender_id, room_id')
       .eq('recipient_id', currentUser.id)
+      .neq('sender_id', currentUser.id)
       .eq('is_read', false);
     
     if (error) throw error;
@@ -729,6 +731,44 @@ async function updateUnreadCount() {
     
   } catch(e) {
     console.error('Update unread count error:', e);
+  }
+}
+
+// Загрузить имя контакта из таблицы profiles
+async function loadContactName(userId) {
+  if (!supabaseClient || !userId || userId.length < 20) return;
+  
+  try {
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('name')
+      .eq('user_id', userId)
+      .single();
+    
+    if (error) throw error;
+    
+    if (data && data.name) {
+      // Обновляем contactBook
+      if (!contactBook[userId]) {
+        contactBook[userId] = {
+          name: data.name,
+          initials: data.name.slice(0, 2).toUpperCase(),
+          grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)'
+        };
+      } else {
+        contactBook[userId].name = data.name;
+        contactBook[userId].initials = data.name.slice(0, 2).toUpperCase();
+      }
+      
+      localStorage.setItem('df_contacts', JSON.stringify(contactBook));
+      
+      // Перерисовываем список чатов
+      renderPrivateChats();
+      
+      console.log(`✅ Loaded contact name for ${userId}: ${data.name}`);
+    }
+  } catch(e) {
+    console.error('Load contact name error:', e);
   }
 }
 
@@ -1892,7 +1932,13 @@ async function loadAllDialogsFromDB() {
     savePrivateChatsToStorage();
     renderPrivateChats();
 
-    console.log('Loaded', Object.keys(rooms).length, 'dialogs from DB');
+    console.log('✅ Loaded', Object.keys(rooms).length, 'dialogs from DB');
+    
+    // Загружаем реальные имена из profiles для всех контактов
+    const contactIds = Object.keys(contactBook).filter(id => id.length > 20);
+    for (const userId of contactIds) {
+      loadContactName(userId);
+    }
   } catch(e) {
     console.error('loadAllDialogsFromDB exception:', e);
   }
@@ -2778,14 +2824,20 @@ function startRealtimeDMSubscription() {
       });
       savePrivateChatsToStorage();
       
-      // Запоминаем контакт
+      // Запоминаем контакт и загружаем имя из profiles если нужно
       if (!contactBook[chatId]) {
+        const senderName = msg.sender_name || 'Пользователь';
         contactBook[chatId] = { 
-          name: msg.sender_name, 
-          initials: msg.sender_name.slice(0,2).toUpperCase(), 
+          name: senderName, 
+          initials: senderName.slice(0,2).toUpperCase(), 
           grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)' 
         };
         localStorage.setItem('df_contacts', JSON.stringify(contactBook));
+        
+        // Загружаем реальное имя из profiles асинхронно
+        if (chatId.length > 20) { // UUID
+          loadContactName(chatId);
+        }
       }
       
       // Подписываемся на broadcast-канал для мгновенной доставки
