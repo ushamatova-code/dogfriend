@@ -4958,10 +4958,9 @@ function installPWA() {
 const SERVICE_CATEGORIES = {
   trainer: { title: 'Кинологи', type: 'trainer' },
   grooming: { title: 'Груминг', type: 'grooming' },
-  dogsitting: { title: 'Передержка', type: 'dogsitting' },
+  boarding: { title: 'Передержка', type: 'boarding' },
   psychologist: { title: 'Зоопсихолог', type: 'psychologist' },
   walking: { title: 'Выгул собак', type: 'walking' },
-  training_ground: { title: 'Дрессировочные площадки', type: 'training_ground' },
   all: { title: 'Все специалисты', type: null },
 };
 

@@ -286,8 +286,24 @@ async function openBusinessProfile(id) {
 
   currentSpecId = b.user_id;
 
-  const typeIcons = { trainer: '🐕', clinic: '🏥', cafe: '☕' };
-  const typeLabels = { trainer: 'Кинолог / Тренер', clinic: 'Ветеринарная клиника', cafe: 'Dog-friendly место' };
+  const typeIcons = { 
+    trainer: '🐕', 
+    clinic: '🏥', 
+    cafe: '☕', 
+    psychologist: '🧠',
+    grooming: '✂️',
+    boarding: '🏠',
+    walking: '🚶'
+  };
+  const typeLabels = { 
+    trainer: 'Кинолог / Тренер', 
+    clinic: 'Ветеринарная клиника', 
+    cafe: 'Dog-friendly место', 
+    psychologist: 'Зоопсихолог',
+    grooming: 'Груминг',
+    boarding: 'Передержка',
+    walking: 'Выгул собак'
+  };
 
   // Шапка
   document.getElementById('spec-topbar-name').textContent = b.name;
@@ -517,12 +533,25 @@ function selectBusinessType(type) {
     addAddressField();
   }
   _businessCoverFile = null;
-  const titles = {trainer:'Анкета кинолога',clinic:'Анкета клиники',cafe:'Анкета кафе',shop:'Анкета магазина'};
+  const titles = {
+    trainer:'Анкета кинолога',
+    clinic:'Анкета клиники',
+    cafe:'Анкета кафе',
+    shop:'Анкета магазина',
+    psychologist:'Анкета зоопсихолога',
+    grooming:'Анкета грумера',
+    boarding:'Анкета передержки',
+    walking:'Анкета выгульщика'
+  };
   const services = {
     trainer:['ОКД','Щенки','Послушание','Аджилити','Коррекция поведения'],
     clinic:['Терапия','Хирургия','Стоматология','Вакцинация','Анализы'],
     cafe:['Веранда','Миски','Лакомства','Wi-Fi','Детская зона'],
-    shop:['Корма','Игрушки','Одежда','Аксессуары','Поводки','Витамины','Лакомства','Переноски','Лежанки','Гигиена']
+    shop:['Корма','Игрушки','Одежда','Аксессуары','Поводки','Витамины','Лакомства','Переноски','Лежанки','Гигиена'],
+    psychologist:['Коррекция агрессии','Страхи и фобии','Социализация','Консультации','Поведенческая терапия'],
+    grooming:['Стрижка','Мытьё','Тримминг','Подстригание когтей','Чистка ушей'],
+    boarding:['Дневная передержка','Длительная передержка','Уход за щенками','Выгул','Игры'],
+    walking:['Индивидуальный выгул','Групповой выгул','Активные прогулки','Социализация','Дрессировка на прогулке']
   };
   document.getElementById('bf-title').textContent = titles[type];
   

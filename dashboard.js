@@ -4,6 +4,17 @@
 
 let currentBiz = null; // текущий бизнес пользователя
 
+// ══════════════════════════════════════════════════════════════
+// КАТЕГОРИИ УСЛУГ (множественный выбор для специалистов)
+// ══════════════════════════════════════════════════════════════
+const SERVICE_CATEGORIES = [
+  { id: 'trainer', label: 'Кинолог / Тренер', icon: '🐕' },
+  { id: 'grooming', label: 'Груминг', icon: '✂️' },
+  { id: 'boarding', label: 'Передержка', icon: '🏠' },
+  { id: 'psychologist', label: 'Зоопсихолог', icon: '🧠' },
+  { id: 'walking', label: 'Выгул собак', icon: '🚶' }
+];
+
 // Поля для каждого типа
 const BIZ_FIELDS = {
   trainer: {
@@ -267,6 +278,42 @@ function renderBizDashboard(biz) {
       <div style="font-size:11px;color:var(--text-secondary);font-weight:600;">Записей</div>
     </div>
   </div>`;
+
+  // ══════════════════════════════════════════════════════════════
+  // ВЫБОР КАТЕГОРИЙ УСЛУГ (только для trainer типа)
+  // ══════════════════════════════════════════════════════════════
+  if (biz.type === 'trainer' && biz.is_approved) {
+    const currentServices = biz.services || [];
+    html += `<div style="background:var(--white);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);">
+      <div style="font-size:15px;font-weight:800;margin-bottom:4px;">🎯 Категории услуг</div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">Выберите услуги которые вы оказываете</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;" id="service-categories-container">
+        ${SERVICE_CATEGORIES.map(cat => {
+          const isSelected = currentServices.includes(cat.id);
+          return `<div onclick="toggleServiceCategory('${cat.id}')" 
+            id="service-cat-${cat.id}"
+            style="
+              padding:10px 16px;
+              border-radius:12px;
+              border:2px solid ${isSelected ? 'var(--primary)' : 'var(--border)'};
+              background:${isSelected ? 'rgba(74,144,217,0.1)' : 'var(--bg)'};
+              color:${isSelected ? 'var(--primary)' : 'var(--text-secondary)'};
+              font-size:14px;
+              font-weight:700;
+              cursor:pointer;
+              display:flex;
+              align-items:center;
+              gap:6px;
+              transition:all 0.2s;
+            ">
+            <span>${cat.icon}</span>
+            <span>${cat.label}</span>
+            ${isSelected ? '<span style="font-size:12px;">✓</span>' : ''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
 
   // Детали по секциям
   if (cfg) {
@@ -932,3 +979,58 @@ async function deleteProduct(productId) {
     await loadBizProducts(currentBiz.id);
   } catch(e) { showToast('❌ Ошибка'); }
 }
+
+
+// ══════════════════════════════════════════════════════════════
+// УПРАВЛЕНИЕ КАТЕГОРИЯМИ УСЛУГ
+// ══════════════════════════════════════════════════════════════
+
+async function toggleServiceCategory(categoryId) {
+  if (!currentBiz) return;
+  
+  try {
+    // Получаем текущие услуги
+    let services = currentBiz.services || [];
+    
+    // Переключаем категорию
+    if (services.includes(categoryId)) {
+      services = services.filter(s => s !== categoryId);
+    } else {
+      services.push(categoryId);
+    }
+    
+    // Сохраняем в БД
+    const { error } = await supabaseClient
+      .from('businesses')
+      .update({ services: services })
+      .eq('id', currentBiz.id);
+    
+    if (error) throw error;
+    
+    // Обновляем локальный объект
+    currentBiz.services = services;
+    
+    // Обновляем UI
+    const elem = document.getElementById(`service-cat-${categoryId}`);
+    const isSelected = services.includes(categoryId);
+    if (elem) {
+      elem.style.borderColor = isSelected ? 'var(--primary)' : 'var(--border)';
+      elem.style.background = isSelected ? 'rgba(74,144,217,0.1)' : 'var(--bg)';
+      elem.style.color = isSelected ? 'var(--primary)' : 'var(--text-secondary)';
+      elem.innerHTML = `
+        <span>${SERVICE_CATEGORIES.find(c => c.id === categoryId)?.icon}</span>
+        <span>${SERVICE_CATEGORIES.find(c => c.id === categoryId)?.label}</span>
+        ${isSelected ? '<span style="font-size:12px;">✓</span>' : ''}
+      `;
+    }
+    
+    showToast(isSelected ? '✅ Услуга добавлена' : 'Услуга убрана', isSelected ? '#34C759' : '#8E8E93');
+    
+  } catch(e) {
+    console.error('toggleServiceCategory error:', e);
+    showToast('❌ Ошибка сохранения');
+  }
+}
+
+window.toggleServiceCategory = toggleServiceCategory;
+
