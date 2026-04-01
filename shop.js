@@ -22,61 +22,61 @@ const SHOP_FILTER_CATEGORIES = [
   { 
     id: 'Корма', 
     label: 'Корма', 
-    svg: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="9" r="2" fill="currentColor"/></svg>',
+    svg: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M19 3H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 10h8M8 14h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
     color: '#FF6B6B'
   },
   { 
     id: 'Игрушки', 
     label: 'Игрушки', 
-    svg: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    svg: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M12 2v4M12 18v4M22 12h-4M6 12H2M18.36 5.64l-2.83 2.83M8.47 15.53l-2.83 2.83M18.36 18.36l-2.83-2.83M8.47 8.47L5.64 5.64" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
     color: '#FFB84D'
   },
   { 
     id: 'Одежда', 
     label: 'Одежда', 
-    svg: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M16 3l4 4v14H4V7l4-4h8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8 7l4-4 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    svg: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M16 3L20 7v14H4V7l4-4h8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 7l3-3 3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     color: '#9B59B6'
   },
   { 
     id: 'Аксессуары', 
     label: 'Аксессуары', 
-    svg: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    svg: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/></svg>',
     color: '#3498DB'
   },
   { 
     id: 'Поводки', 
     label: 'Поводки', 
-    svg: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 12h16M12 4v16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>',
+    svg: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><ellipse cx="12" cy="17" rx="7" ry="5" stroke="currentColor" stroke-width="2"/><path d="M12 6v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
     color: '#16A085'
   },
   { 
     id: 'Витамины', 
     label: 'Витамины', 
-    svg: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="2"/><path d="M9 6h6M9 10h6M9 14h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    svg: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="6" y="2" width="12" height="20" rx="2" stroke="currentColor" stroke-width="2"/><path d="M9 7h6M9 12h6M9 17h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2"/><path d="M10 10l4 4M14 10l-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
     color: '#E74C3C'
   },
   { 
     id: 'Лакомства', 
     label: 'Лакомства', 
-    svg: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2l3 7h7l-5.5 4.5L19 21l-7-5-7 5 2.5-7.5L2 9h7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+    svg: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke="currentColor" stroke-width="2"/><path d="M12 6v6M12 18h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="9" r="1" fill="currentColor"/><circle cx="15" cy="9" r="1" fill="currentColor"/><path d="M8 14s1.5 2 4 2 4-2 4-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
     color: '#F39C12'
   },
   { 
     id: 'Переноски', 
     label: 'Переноски', 
-    svg: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="8" width="18" height="12" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 8V6a4 4 0 018 0v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    svg: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="8" width="18" height="11" rx="2" stroke="currentColor" stroke-width="2"/><path d="M7 8V6a2 2 0 012-2h6a2 2 0 012 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M10 12h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
     color: '#8E44AD'
   },
   { 
     id: 'Лежанки', 
     label: 'Лежанки', 
-    svg: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="2" y="10" width="20" height="10" rx="2" stroke="currentColor" stroke-width="2"/><path d="M5 10V8a2 2 0 012-2h10a2 2 0 012 2v2" stroke="currentColor" stroke-width="2"/></svg>',
+    svg: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="2" y="11" width="20" height="9" rx="2" stroke="currentColor" stroke-width="2"/><path d="M4 11V9a2 2 0 012-2h12a2 2 0 012 2v2" stroke="currentColor" stroke-width="2"/><ellipse cx="12" cy="15" rx="4" ry="2" fill="currentColor" opacity="0.3"/></svg>',
     color: '#27AE60'
   },
   { 
     id: 'Гигиена', 
     label: 'Гигиена', 
-    svg: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2v20M8 6h8a4 4 0 010 8H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    svg: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2v20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 6h8c2.2 0 4 1.8 4 4s-1.8 4-4 4H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="18" r="2" fill="currentColor" opacity="0.3"/><circle cx="12" cy="6" r="1.5" fill="currentColor"/></svg>',
     color: '#1ABC9C'
   },
 ];
