@@ -38,12 +38,17 @@ async function sendWelcomeMessages(newUserId) {
   if (!supabaseClient || !newUserId || newUserId === OWNER_USER_ID) return;
   
   try {
+    console.log('🎉 Sending welcome messages to new user:', newUserId);
+    
     // Формируем room_id (всегда сортированные ID через underscore)
     const roomId = [OWNER_USER_ID, newUserId].sort().join('_');
     
     // Отправляем сообщения с задержками
     for (const msg of WELCOME_MESSAGES) {
       await new Promise(resolve => setTimeout(resolve, msg.delay));
+      
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
       
       const { error } = await supabaseClient
         .from('direct_messages')
@@ -52,22 +57,21 @@ async function sendWelcomeMessages(newUserId) {
           sender_id: OWNER_USER_ID,
           recipient_id: newUserId,
           text: msg.text,
+          sender_name: 'Егор',
+          time: timeStr,
           is_read: false,
-          created_at: new Date().toISOString()
+          created_at: now.toISOString()
         });
       
       if (error) {
-        console.error('Welcome message error:', error);
+        console.error('❌ Welcome message error:', error);
       } else {
         console.log('✅ Welcome message sent to', newUserId);
       }
     }
     
-    // Обновляем счётчик непрочитанных для нового пользователя
-    updateUnreadCount();
-    
   } catch(e) {
-    console.error('Send welcome messages error:', e);
+    console.error('❌ Send welcome messages error:', e);
   }
 }
 
@@ -528,6 +532,13 @@ window.addEventListener('load', () => {
   
   // Ждём инициализации — checkAuth сама обработает любой случай
   setTimeout(() => checkAuth(), 2500);
+  
+  // Обновляем счётчик непрочитанных если пользователь уже залогинен
+  setTimeout(() => {
+    if (currentUser && supabaseClient) {
+      updateUnreadCount();
+    }
+  }, 3000);
 });
 
 // ============================================================
@@ -2211,7 +2222,8 @@ async function supabaseRegister() {
         currentUser = data.user;
         
         // Отправляем приветственные сообщения от владельца
-        sendWelcomeMessages(data.user.id);
+        console.log('📧 Registered new user:', data.user.id, 'Sending welcome messages...');
+        sendWelcomeMessages(data.user.id).catch(e => console.error('Failed to send welcome:', e));
       }
       if (data && data.session) {
         try { await loadUserProfile(); } catch(e) {}
@@ -2793,7 +2805,9 @@ function startRealtimeDMSubscription() {
     .subscribe((status) => {
       console.log(' Realtime DM subscription status:', status);
       if (status === 'SUBSCRIBED') {
-        console.log('Realtime DM subscription active');
+        console.log('✅ Realtime DM subscription active');
+        // Обновляем счётчик непрочитанных при подключении
+        updateUnreadCount();
       } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
         console.error('Realtime DM subscription failed:', status);
         // Retry
