@@ -1895,11 +1895,12 @@ async function loadAllDialogsFromDB() {
 
     // Для каждой комнаты определяем собеседника и восстанавливаем чат
     for (const [roomId, messages] of Object.entries(rooms)) {
-      // chatId = userId собеседника (тот кто не myUserId в room_id)
-      // room_id формат: uuid1_uuid2 (одинарное подчёркивание)
-      const parts = roomId.split('_');
-      const theirId = parts.find(p => p !== myUserId);
-      if (!theirId) continue;
+      // chatId = userId собеседника
+      // room_id формат: uuid1_uuid2 - убираем свой UUID и оставляем чужой
+      let theirId = roomId.replace(myUserId, '').replace(/_+/g, '').trim();
+      
+      // Пропускаем если это не валидный UUID
+      if (!theirId || theirId.length !== 36 || !theirId.includes('-')) continue;
 
       // Восстанавливаем сообщения
       privateChats[theirId] = messages.map(m => ({
