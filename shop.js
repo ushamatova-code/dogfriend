@@ -75,7 +75,7 @@ async function loadShopsList() {
       return;
     }
 
-    renderShopCategories();
+    renderShopsRegistryCategories();
     renderShopsList();
 
   } catch(e) {
@@ -158,7 +158,7 @@ async function openShop(businessId) {
 }
 
 // ── Рендер категорий
-function renderShopCategories() {
+function renderShopsRegistryCategories() {
   const container = document.getElementById('shop-categories');
   if (!container) return;
 
@@ -203,7 +203,7 @@ function renderShopProducts() {
 
   grid.innerHTML = products.map(p => {
     const img = (p.images && p.images[0])
-      ? '<img src="' + p.images[0] + '" style="width:100%;height:100%;object-fit:cover;display:block;">'
+      ? '<img src="' + p.images[0] + '" style="width:100%;height:100%;object-fit:contain;display:block;">'
       : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;background:linear-gradient(135deg,#f5f5f5,#e8e8e8);">' + getCatEmoji(p.category) + '</div>';
 
     const discountBadge = p.old_price
@@ -234,7 +234,7 @@ function openShopProduct(productId) {
     imgEl.style.height = H + 'px';
     imgEl.style.position = 'relative';
 
-    const imgTags = product.images.map(src => '<div style="width:' + W + 'px;height:' + H + 'px;flex-shrink:0;background:#f5f5f5;display:flex;align-items:center;justify-content:center;overflow:hidden;"><img src="' + src + '" style="width:100%;height:100%;object-fit:cover;display:block;"></div>').join('');
+    const imgTags = product.images.map(src => '<div style="width:' + W + 'px;height:' + H + 'px;flex-shrink:0;background:#f5f5f5;display:flex;align-items:center;justify-content:center;overflow:hidden;"><img src="' + src + '" style="width:100%;height:100%;object-fit:contain;display:block;"></div>').join('');
     const dots = product.images.length > 1 ? '<div id="product-gallery-dots" style="position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:6px;">' + product.images.map((_, i) => '<div style="width:7px;height:7px;border-radius:50%;background:' + (i === 0 ? 'white' : 'rgba(255,255,255,0.5)') + ';box-shadow:0 1px 3px rgba(0,0,0,0.3);transition:background 0.2s;"></div>').join('') + '</div><button onclick="slideGallery(-1)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.3);border:none;color:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">‹</button><button onclick="slideGallery(1)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.3);border:none;color:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">›</button>' : '';
     
     imgEl.innerHTML = '<div id="pgw" style="display:flex;width:' + (W * product.images.length) + 'px;height:' + H + 'px;transition:transform 0.3s ease;" data-index="0" data-w="' + W + '" data-count="' + product.images.length + '">' + imgTags + '</div>' + dots;
@@ -627,7 +627,7 @@ window.applyCrop = applyCrop;
 window.closeCropper = closeCropper;
 
 // Рендер категорий магазинов
-function renderShopCategories() {
+function renderShopsRegistryCategories() {
   const container = document.getElementById('shops-categories-row');
   if (!container) return;
   
@@ -669,7 +669,7 @@ function renderShopCategories() {
 // Фильтр магазинов по категории
 function filterShopsByCategory(categoryId) {
   _currentShopFilter = categoryId;
-  renderShopCategories();
+  renderShopsRegistryCategories();
   renderShopsList();
 }
 
