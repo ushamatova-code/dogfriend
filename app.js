@@ -1963,6 +1963,8 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let supabaseClient = null;
 let currentUser = null;
 let currentUserProfile = null;
+// Флаг — пришли по ссылке восстановления пароля, не редиректить на home
+let _isPasswordRecovery = false;
 
 // Загружаем Supabase SDK
 if (!window.supabaseLoaded) {
@@ -2078,6 +2080,22 @@ async function initSupabase() {
   if (window.supabase) {
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     console.log('Supabase connected');
+
+    // Подписываемся ДО checkAuth — Supabase сразу эмитит события при создании клиента
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      console.log('Auth event:', event);
+      if (event === 'PASSWORD_RECOVERY') {
+        _isPasswordRecovery = true;
+        if (session) currentUser = session.user;
+        // Чистим хэш из URL
+        history.replaceState(null, '', window.location.pathname);
+        // Убираем сплэш если ещё показывается
+        const splash = document.getElementById('splash');
+        if (splash) { splash.classList.remove('active'); splash.style.display = 'none'; }
+        nav('resetPassword');
+      }
+    });
+
     // checkAuth вызывается из splash-таймера
   }
 }
@@ -2109,12 +2127,6 @@ async function checkAuth() {
   }, 5000);
 
   try {
-    // Проверяем — пришёл ли пользователь по ссылке восстановления пароля
-    if (await handleAuthRedirect()) {
-      clearTimeout(fallback);
-      return;
-    }
-
     const { data: { session }, error } = await supabaseClient.auth.getSession();
     clearTimeout(fallback);
 
@@ -2127,6 +2139,14 @@ async function checkAuth() {
     if (session) {
       console.log('User authenticated:', session.user.email);
       currentUser = session.user;
+
+      // Если пришли по ссылке восстановления — onAuthStateChange уже открыл resetPassword,
+      // не перебиваем его редиректом на home
+      if (_isPasswordRecovery) {
+        console.log('Password recovery mode — skipping nav to home');
+        return;
+      }
+
       try { await loadUserProfile(); } catch(e) { console.warn('loadUserProfile:', e); }
       
       // Запускаем Realtime подписку на новые сообщения
@@ -2354,57 +2374,14 @@ async function confirmPasswordReset() {
     if (!supabaseClient) throw new Error('Нет подключения');
     const { error } = await supabaseClient.auth.updateUser({ password: newPwd });
     if (error) throw error;
+    _isPasswordRecovery = false;
     showToast('Пароль успешно изменён', '#34C759');
-    setTimeout(() => nav('home'), 1200);
+    setTimeout(() => nav('login'), 1200);
   } catch(err) {
     console.error('Update password error:', err);
     showToast('Ошибка: ' + (err.message || 'Попробуйте ещё раз'));
     if (btn) { btn.disabled = false; btn.textContent = 'Сохранить пароль'; }
   }
-}
-
-async function handleAuthRedirect() {
-  try {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-
-    if (code) {
-      console.log('Recovery: ?code= found, exchanging...');
-      // Чистим URL сразу чтобы при обновлении не срабатывало
-      history.replaceState(null, '', window.location.pathname);
-      // Убираем сплэш
-      const splash = document.getElementById('splash');
-      if (splash) { splash.classList.remove('active'); splash.style.display = 'none'; }
-
-      const { data, error } = await supabaseClient.auth.exchangeCodeForSession(code);
-      console.log('exchangeCodeForSession:', data?.session?.user?.email, error?.message);
-
-      if (!error && data?.session) currentUser = data.session.user;
-
-      nav('resetPassword');
-      return true;
-    }
-
-    // Implicit flow fallback: #access_token=...&type=recovery
-    const hash = window.location.hash;
-    if (hash) {
-      const params = new URLSearchParams(hash.replace(/^#/, ''));
-      if (params.get('type') === 'recovery' && params.get('access_token')) {
-        console.log('Recovery: implicit hash flow');
-        history.replaceState(null, '', window.location.pathname);
-        const { data, error } = await supabaseClient.auth.setSession({
-          access_token: params.get('access_token'),
-          refresh_token: params.get('refresh_token') || ''
-        });
-        if (!error && data?.session) currentUser = data.session.user;
-        nav('resetPassword');
-        return true;
-      }
-    }
-  } catch(e) {
-    console.error('handleAuthRedirect error:', e);
-  }
-  return false;
 }
 
 // Загрузка профиля пользователя
