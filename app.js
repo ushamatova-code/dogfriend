@@ -4959,31 +4959,36 @@ function installPWA() {
 const SERVICE_CATEGORIES = {
   trainer: { title: 'Кинологи', type: 'trainer' },
   grooming: { title: 'Груминг', type: 'grooming' },
+  dogsitting: { title: 'Передержка', type: 'dogsitting' },
   boarding: { title: 'Передержка', type: 'boarding' },
   psychologist: { title: 'Зоопсихолог', type: 'psychologist' },
   walking: { title: 'Выгул собак', type: 'walking' },
+  training_ground: { title: 'Площадки', type: 'training_ground' },
   all: { title: 'Все специалисты', type: null },
 };
 
 let _currentServiceCategory = 'all';
 
-function openServiceCategory(catKey) {
+async function openServiceCategory(catKey) {
   const cat = SERVICE_CATEGORIES[catKey] || SERVICE_CATEGORIES.all;
   _currentServiceCategory = catKey;
   
   document.getElementById('catalog-filter-title').textContent = cat.title;
   
-  // Update chips based on category
   const chipsEl = document.getElementById('catalog-chips');
   if (chipsEl) {
-    if (catKey === 'all' || catKey === 'trainer') {
-      chipsEl.style.display = 'flex';
-    } else {
-      chipsEl.style.display = 'none';
-    }
+    chipsEl.style.display = (catKey === 'all' || catKey === 'trainer') ? 'flex' : 'none';
   }
   
   nav('catalogFiltered');
+  
+  // Показываем загрузку
+  const list = document.getElementById('catalog-trainers-list');
+  if (list) list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-secondary);">Загружаем...</div>';
+  
+  // Всегда загружаем свежие данные всех trainer-бизнесов
+  await loadBusinesses('trainer');
+  
   renderCatalog();
 }
 
@@ -5008,9 +5013,11 @@ window.renderCatalog = function() {
         // Если services пустой или не содержит специализаций — показываем как кинолога
         !b.services.some(s => ['grooming','boarding','psychologist','walking'].includes(s))
       ));
-    } else if (['grooming','boarding','psychologist','walking'].includes(cat.type)) {
+    } else if (['grooming','boarding','dogsitting','psychologist','walking','training_ground'].includes(cat.type)) {
       // Специализации — ищем всех у кого в services есть эта категория (тип trainer)
-      filtered = filtered.filter(b => b.type === 'trainer' && b.services && b.services.includes(cat.type));
+      // dogsitting = boarding (алиасы)
+      const serviceKey = cat.type === 'dogsitting' ? 'boarding' : cat.type;
+      filtered = filtered.filter(b => b.type === 'trainer' && b.services && b.services.includes(serviceKey));
     } else {
       // Другие типы (clinic, cafe, shop) — фильтруем по type
       filtered = filtered.filter(b => b.type === cat.type);
