@@ -758,6 +758,10 @@ function closeCropper() {
 }
 
 // Экспортируем функции
+window.openShop = openShop;
+window.openShopProduct = openShopProduct;
+window.closeShopProduct = closeShopProduct;
+window.addToCart = addToCart;
 window.openImageCropper = openImageCropper;
 window.applyCrop = applyCrop;
 window.closeCropper = closeCropper;
