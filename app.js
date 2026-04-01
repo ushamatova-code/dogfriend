@@ -4604,6 +4604,7 @@ async function enablePushFromSettings() {
   window.nav=function(id){
     _orig(id);
     if(id==='home')      { if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); if(typeof loadProfileStats==='function') loadProfileStats(); }
+    if(id==='profile')   { if(typeof checkUserBusiness==='function' && currentUser) checkUserBusiness(); }
     if(id==='dogmap')    { renderPlaces(); setTimeout(() => { if (_placesMap) _placesMap.invalidateSize(); }, 300); }
     if(id==='discounts') renderDiscounts();
     if(id==='lessons')   renderLessons();
