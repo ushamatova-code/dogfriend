@@ -1959,6 +1959,11 @@ async function loadAllDialogsFromDB() {
 const SUPABASE_URL = 'https://nxrztljcxphkdfbfubba.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cnp0bGpjeHBoa2RmYmZ1YmJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwNDkzNzQsImV4cCI6MjA4ODYyNTM3NH0.nCunfVYOwBKAMbbuDu4zTQ0tZhjNoWk680VFSWPwuUk';
 
+// Объявляем здесь — до любых вызовов initSupabase
+let supabaseClient = null;
+let currentUser = null;
+let currentUserProfile = null;
+
 // Загружаем Supabase SDK
 if (!window.supabaseLoaded) {
   const cdns = [
@@ -2069,27 +2074,10 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
-let supabaseClient = null;
-let currentUser = null;
-let currentUserProfile = null;
-
 async function initSupabase() {
   if (window.supabase) {
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     console.log('Supabase connected');
-
-    // Слушаем PASSWORD_RECOVERY — страховка на случай если handleAuthRedirect не успел
-    supabaseClient.auth.onAuthStateChange((event, session) => {
-      console.log('Auth event:', event);
-      if (event === 'PASSWORD_RECOVERY') {
-        if (session) currentUser = session.user;
-        history.replaceState(null, '', window.location.pathname);
-        const splash = document.getElementById('splash');
-        if (splash) { splash.classList.remove('active'); splash.style.display = 'none'; }
-        nav('resetPassword');
-      }
-    });
-
     // checkAuth вызывается из splash-таймера
   }
 }
@@ -2375,32 +2363,24 @@ async function confirmPasswordReset() {
   }
 }
 
-// Перехват токена восстановления.
-// КЛЮЧЕВОЙ ФИКСc: сами вызываем exchangeCodeForSession не ожидая onAuthStateChange.
 async function handleAuthRedirect() {
   try {
-    // PKCE flow: ?code= в URL
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
 
     if (code) {
-      console.log('Recovery: ?code= found, exchanging for session...');
-      // Чистим URL сразу
+      console.log('Recovery: ?code= found, exchanging...');
+      // Чистим URL сразу чтобы при обновлении не срабатывало
       history.replaceState(null, '', window.location.pathname);
-
       // Убираем сплэш
       const splash = document.getElementById('splash');
       if (splash) { splash.classList.remove('active'); splash.style.display = 'none'; }
 
-      // Обмениваем code на сессию — это основной шаг
       const { data, error } = await supabaseClient.auth.exchangeCodeForSession(code);
-      console.log('exchangeCodeForSession result:', data?.session?.user?.email, error);
+      console.log('exchangeCodeForSession:', data?.session?.user?.email, error?.message);
 
-      if (!error && data?.session) {
-        currentUser = data.session.user;
-      }
+      if (!error && data?.session) currentUser = data.session.user;
 
-      // Показываем форму нового пароля в любом случае (даже если ошибка — пусть попробует)
       nav('resetPassword');
       return true;
     }
@@ -2410,7 +2390,7 @@ async function handleAuthRedirect() {
     if (hash) {
       const params = new URLSearchParams(hash.replace(/^#/, ''));
       if (params.get('type') === 'recovery' && params.get('access_token')) {
-        console.log('Recovery: implicit flow via hash');
+        console.log('Recovery: implicit hash flow');
         history.replaceState(null, '', window.location.pathname);
         const { data, error } = await supabaseClient.auth.setSession({
           access_token: params.get('access_token'),
