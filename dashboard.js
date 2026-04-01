@@ -7,7 +7,7 @@ let currentBiz = null; // текущий бизнес пользователя
 // ══════════════════════════════════════════════════════════════
 // КАТЕГОРИИ УСЛУГ (множественный выбор для специалистов)
 // ══════════════════════════════════════════════════════════════
-const SERVICE_CATEGORIES = [
+const BIZ_SERVICE_CATEGORIES = [
   { id: 'trainer', label: 'Кинолог / Тренер', icon: '🐕' },
   { id: 'grooming', label: 'Груминг', icon: '✂️' },
   { id: 'boarding', label: 'Передержка', icon: '🏠' },
@@ -289,7 +289,7 @@ function renderBizDashboard(biz) {
       <div style="font-size:15px;font-weight:800;margin-bottom:4px;">🎯 Категории услуг</div>
       <div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">Выберите услуги которые вы оказываете</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;" id="service-categories-container">
-        ${SERVICE_CATEGORIES.map(cat => {
+        ${BIZ_SERVICE_CATEGORIES.map(cat => {
           const isSelected = currentServices.includes(cat.id);
           return `<div onclick="toggleServiceCategory('${cat.id}')" 
             id="service-cat-${cat.id}"
@@ -1005,8 +1005,8 @@ async function toggleServiceCategory(categoryId) {
       elem.style.background = isSelected ? 'rgba(74,144,217,0.1)' : 'var(--bg)';
       elem.style.color = isSelected ? 'var(--primary)' : 'var(--text-secondary)';
       elem.innerHTML = `
-        <span>${SERVICE_CATEGORIES.find(c => c.id === categoryId)?.icon}</span>
-        <span>${SERVICE_CATEGORIES.find(c => c.id === categoryId)?.label}</span>
+        <span>${BIZ_SERVICE_CATEGORIES.find(c => c.id === categoryId)?.icon}</span>
+        <span>${BIZ_SERVICE_CATEGORIES.find(c => c.id === categoryId)?.label}</span>
         ${isSelected ? '<span style="font-size:12px;">✓</span>' : ''}
       `;
     }
