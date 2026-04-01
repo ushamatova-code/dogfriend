@@ -4,9 +4,7 @@
 
 let currentBiz = null; // текущий бизнес пользователя
 
-// ══════════════════════════════════════════════════════════════
-// КАТЕГОРИИ УСЛУГ (множественный выбор для специалистов)
-// ══════════════════════════════════════════════════════════════
+// Категории услуг для специалистов
 const SERVICE_CATEGORIES = [
   { id: 'trainer', label: 'Кинолог / Тренер', icon: '🐕' },
   { id: 'grooming', label: 'Груминг', icon: '✂️' },
@@ -279,15 +277,13 @@ function renderBizDashboard(biz) {
     </div>
   </div>`;
 
-  // ══════════════════════════════════════════════════════════════
-  // ВЫБОР КАТЕГОРИЙ УСЛУГ (только для trainer типа)
-  // ══════════════════════════════════════════════════════════════
+  // Выбор категорий услуг (только для trainer после одобрения)
   if (biz.type === 'trainer' && biz.is_approved) {
     const currentServices = biz.services || [];
     html += `<div style="background:var(--white);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);">
       <div style="font-size:15px;font-weight:800;margin-bottom:4px;">🎯 Категории услуг</div>
       <div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">Выберите услуги которые вы оказываете</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;" id="service-categories-container">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
         ${SERVICE_CATEGORIES.map(cat => {
           const isSelected = currentServices.includes(cat.id);
           return `<div onclick="toggleServiceCategory('${cat.id}')" 
@@ -980,26 +976,19 @@ async function deleteProduct(productId) {
   } catch(e) { showToast('❌ Ошибка'); }
 }
 
-
-// ══════════════════════════════════════════════════════════════
-// УПРАВЛЕНИЕ КАТЕГОРИЯМИ УСЛУГ
-// ══════════════════════════════════════════════════════════════
-
+// Переключение категорий услуг
 async function toggleServiceCategory(categoryId) {
   if (!currentBiz) return;
   
   try {
-    // Получаем текущие услуги
     let services = currentBiz.services || [];
     
-    // Переключаем категорию
     if (services.includes(categoryId)) {
       services = services.filter(s => s !== categoryId);
     } else {
       services.push(categoryId);
     }
     
-    // Сохраняем в БД
     const { error } = await supabaseClient
       .from('businesses')
       .update({ services: services })
@@ -1007,19 +996,18 @@ async function toggleServiceCategory(categoryId) {
     
     if (error) throw error;
     
-    // Обновляем локальный объект
     currentBiz.services = services;
     
-    // Обновляем UI
     const elem = document.getElementById(`service-cat-${categoryId}`);
     const isSelected = services.includes(categoryId);
-    if (elem) {
+    const cat = SERVICE_CATEGORIES.find(c => c.id === categoryId);
+    if (elem && cat) {
       elem.style.borderColor = isSelected ? 'var(--primary)' : 'var(--border)';
       elem.style.background = isSelected ? 'rgba(74,144,217,0.1)' : 'var(--bg)';
       elem.style.color = isSelected ? 'var(--primary)' : 'var(--text-secondary)';
       elem.innerHTML = `
-        <span>${SERVICE_CATEGORIES.find(c => c.id === categoryId)?.icon}</span>
-        <span>${SERVICE_CATEGORIES.find(c => c.id === categoryId)?.label}</span>
+        <span>${cat.icon}</span>
+        <span>${cat.label}</span>
         ${isSelected ? '<span style="font-size:12px;">✓</span>' : ''}
       `;
     }
@@ -1033,4 +1021,3 @@ async function toggleServiceCategory(categoryId) {
 }
 
 window.toggleServiceCategory = toggleServiceCategory;
-
