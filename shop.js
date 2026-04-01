@@ -95,7 +95,7 @@ async function openShop(businessId) {
 
     // Заполняем шапку
     document.getElementById('shop-name').textContent = biz.name;
-    document.getElementById('shop-meta').textContent = `⭐ ${biz.rating} · ${(products||[]).length} товаров`;
+    document.getElementById('shop-meta').textContent = `⭐ ${biz.rating} • ${(products||[]).length} товаров`;
 
     // Блок информации о магазине
     const infoEl = document.getElementById('shop-info-block');
