@@ -2108,6 +2108,12 @@ async function checkAuth() {
   }, 5000);
 
   try {
+    // Проверяем — пришёл ли пользователь по ссылке восстановления пароля
+    if (handleAuthRedirect()) {
+      clearTimeout(fallback);
+      return;
+    }
+
     const { data: { session }, error } = await supabaseClient.auth.getSession();
     clearTimeout(fallback);
 
@@ -2305,6 +2311,115 @@ async function supabaseRegister() {
   }
 }
 
+
+// ============================================================
+// ВОССТАНОВЛЕНИЕ ПАРОЛЯ
+// ============================================================
+
+// Шаг 1 — отправить письмо со ссылкой
+async function sendPasswordReset() {
+  const email = document.getElementById('forgot-email').value.trim();
+
+  if (!email || !email.includes('@')) {
+    showToast('Введите корректный email');
+    return;
+  }
+
+  const btn = document.getElementById('forgot-submit-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Отправляем...'; }
+
+  try {
+    if (!supabaseClient) throw new Error('Нет подключения к серверу');
+
+    const redirectTo = window.location.origin + window.location.pathname;
+
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+      redirectTo
+    });
+
+    if (error) throw error;
+
+    document.getElementById('forgot-sent-email').textContent = email;
+    nav('forgotSent');
+
+  } catch(err) {
+    console.error('Reset password error:', err);
+    // Не раскрываем — существует ли email (безопасность)
+    document.getElementById('forgot-sent-email').textContent = email;
+    nav('forgotSent');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Отправить ссылку'; }
+  }
+}
+
+// Шаг 2 — пользователь вернулся по ссылке и вводит новый пароль
+async function confirmPasswordReset() {
+  const newPwd = document.getElementById('reset-new-password').value;
+  const confirmPwd = document.getElementById('reset-confirm-password').value;
+
+  if (!newPwd || newPwd.length < 6) {
+    showToast('Пароль минимум 6 символов');
+    return;
+  }
+  if (newPwd !== confirmPwd) {
+    showToast('Пароли не совпадают');
+    return;
+  }
+
+  const btn = document.getElementById('reset-submit-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Сохраняем...'; }
+
+  try {
+    if (!supabaseClient) throw new Error('Нет подключения');
+
+    const { error } = await supabaseClient.auth.updateUser({ password: newPwd });
+
+    if (error) throw error;
+
+    showToast('Пароль успешно изменён', '#34C759');
+    setTimeout(() => nav('home'), 1200);
+
+  } catch(err) {
+    console.error('Update password error:', err);
+    showToast('Ошибка: ' + (err.message || 'Попробуйте ещё раз'));
+    if (btn) { btn.disabled = false; btn.textContent = 'Сохранить пароль'; }
+  }
+}
+
+// Перехват Supabase hash-токена при возврате из письма (type=recovery)
+function handleAuthRedirect() {
+  try {
+    const hash = window.location.hash;
+    if (!hash) return false;
+
+    const params = new URLSearchParams(hash.replace(/^#/, ''));
+    const type = params.get('type');
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+
+    if (type === 'recovery' && accessToken) {
+      if (supabaseClient) {
+        supabaseClient.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken || ''
+        })
+          .then(({ data, error }) => {
+            if (!error && data?.session) {
+              currentUser = data.session.user;
+            }
+          })
+          .catch(e => console.error('setSession error:', e));
+      }
+      // Чистим хэш из адресной строки
+      history.replaceState(null, '', window.location.pathname);
+      nav('resetPassword');
+      return true;
+    }
+  } catch(e) {
+    console.error('handleAuthRedirect error:', e);
+  }
+  return false;
+}
 
 // Загрузка профиля пользователя
 async function loadUserProfile() {
