@@ -2078,14 +2078,12 @@ async function initSupabase() {
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     console.log('Supabase connected');
 
-    // ── Слушаем PASSWORD_RECOVERY сразу после создания клиента ──
-    // Supabase эмитит это событие когда обнаруживает ?code= в URL
+    // Слушаем PASSWORD_RECOVERY — страховка на случай если handleAuthRedirect не успел
     supabaseClient.auth.onAuthStateChange((event, session) => {
       console.log('Auth event:', event);
       if (event === 'PASSWORD_RECOVERY') {
         if (session) currentUser = session.user;
         history.replaceState(null, '', window.location.pathname);
-        // Убираем сплэш если он ещё показывается
         const splash = document.getElementById('splash');
         if (splash) { splash.classList.remove('active'); splash.style.display = 'none'; }
         nav('resetPassword');
@@ -2331,7 +2329,6 @@ async function supabaseRegister() {
 // ВОССТАНОВЛЕНИЕ ПАРОЛЯ
 // ============================================================
 
-// Шаг 1 — отправить письмо со ссылкой
 async function sendPasswordReset() {
   const email = document.getElementById('forgot-email').value.trim();
   if (!email || !email.includes('@')) { showToast('Введите корректный email'); return; }
@@ -2348,7 +2345,6 @@ async function sendPasswordReset() {
     nav('forgotSent');
   } catch(err) {
     console.error('Reset password error:', err);
-    // Не раскрываем — существует ли email
     document.getElementById('forgot-sent-email').textContent = email;
     nav('forgotSent');
   } finally {
@@ -2356,7 +2352,6 @@ async function sendPasswordReset() {
   }
 }
 
-// Шаг 2 — пользователь ввёл новый пароль
 async function confirmPasswordReset() {
   const newPwd = document.getElementById('reset-new-password').value;
   const confirmPwd = document.getElementById('reset-confirm-password').value;
@@ -2380,17 +2375,34 @@ async function confirmPasswordReset() {
   }
 }
 
-// Проверяем URL — если есть ?code= или #type=recovery, значит пришли из письма.
-// Основная обработка идёт через onAuthStateChange(PASSWORD_RECOVERY) в initSupabase.
-// Эта функция нужна как fallback для implicit flow (#access_token).
+// Перехват токена восстановления.
+// КЛЮЧЕВОЙ ФИКСc: сами вызываем exchangeCodeForSession не ожидая onAuthStateChange.
 async function handleAuthRedirect() {
   try {
-    // PKCE: ?code= — onAuthStateChange уже обработает, просто сигнализируем что это recovery
+    // PKCE flow: ?code= в URL
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('code')) {
-      console.log('Recovery code detected in URL — waiting for onAuthStateChange...');
-      // Не чистим URL здесь — Supabase должен сам обменять code через onAuthStateChange
-      return true; // блокируем стандартный checkAuth — PASSWORD_RECOVERY откроет нужный экран
+    const code = urlParams.get('code');
+
+    if (code) {
+      console.log('Recovery: ?code= found, exchanging for session...');
+      // Чистим URL сразу
+      history.replaceState(null, '', window.location.pathname);
+
+      // Убираем сплэш
+      const splash = document.getElementById('splash');
+      if (splash) { splash.classList.remove('active'); splash.style.display = 'none'; }
+
+      // Обмениваем code на сессию — это основной шаг
+      const { data, error } = await supabaseClient.auth.exchangeCodeForSession(code);
+      console.log('exchangeCodeForSession result:', data?.session?.user?.email, error);
+
+      if (!error && data?.session) {
+        currentUser = data.session.user;
+      }
+
+      // Показываем форму нового пароля в любом случае (даже если ошибка — пусть попробует)
+      nav('resetPassword');
+      return true;
     }
 
     // Implicit flow fallback: #access_token=...&type=recovery
