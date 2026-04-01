@@ -5024,19 +5024,26 @@ window.renderCatalog = function() {
     }
   }
   
-  // Geo filter — only show within 50km if user has location
+  // Geo sort — сортируем по расстоянию если есть геолокация
+  // Бизнесы без координат показываем тоже (в конце списка)
   if (userLat && userLng) {
     filtered = filtered.map(b => {
       const locs = b.business_locations || [];
-      let minDist = (b.location_lat && b.location_lng) ? calcDistance(userLat, userLng, b.location_lat, b.location_lng) : 999;
+      let minDist = (b.location_lat && b.location_lng) ? calcDistance(userLat, userLng, b.location_lat, b.location_lng) : null;
       locs.forEach(l => {
         if (l.location_lat && l.location_lng) {
           const d = calcDistance(userLat, userLng, l.location_lat, l.location_lng);
-          if (d < minDist) minDist = d;
+          if (minDist === null || d < minDist) minDist = d;
         }
       });
       return { ...b, _dist: minDist };
-    }).filter(b => b._dist < 50).sort((a, b) => a._dist - b._dist);
+    }).sort((a, b) => {
+      // Сначала те у кого есть координаты и они ближе
+      if (a._dist === null && b._dist === null) return 0;
+      if (a._dist === null) return 1;
+      if (b._dist === null) return -1;
+      return a._dist - b._dist;
+    });
   }
   
   // Apply search
@@ -5057,11 +5064,10 @@ window.renderCatalog = function() {
   }
   
   if (!filtered.length) {
-    const noGeo = !userLat || !userLng;
     list.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--text-secondary);">
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--border)" stroke-width="1.5" style="margin-bottom:12px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <div style="font-size:16px;font-weight:700;margin-bottom:6px;">${noGeo ? 'Укажите район' : 'Пока нет специалистов'}</div>
-      <div style="font-size:13px;">${noGeo ? 'Зайдите в профиль и укажите район чтобы видеть специалистов рядом' : 'В вашем городе ещё никто не зарегистрировался'}</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:6px;">Пока нет специалистов</div>
+      <div style="font-size:13px;">В этой категории ещё никто не зарегистрировался</div>
     </div>`;
     return;
   }
@@ -5086,7 +5092,7 @@ window.renderCatalog = function() {
           <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
             <span style="font-size:12px;font-weight:700;color:var(--primary);">${b.rating || '5.0'}</span>
             ${b.price_from ? '<span style="font-size:12px;color:var(--text-secondary);">от ' + b.price_from + '</span>' : ''}
-            ${b._dist < 50 ? '<span style="font-size:11px;color:var(--text-secondary);">' + distText + '</span>' : ''}
+            ${b._dist !== null && b._dist !== undefined ? '<span style="font-size:11px;color:var(--text-secondary);">' + distText + '</span>' : ''}
           </div>
         </div>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
