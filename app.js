@@ -2077,6 +2077,21 @@ async function initSupabase() {
   if (window.supabase) {
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     console.log('Supabase connected');
+
+    // ── Слушаем PASSWORD_RECOVERY сразу после создания клиента ──
+    // Supabase эмитит это событие когда обнаруживает ?code= в URL
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      console.log('Auth event:', event);
+      if (event === 'PASSWORD_RECOVERY') {
+        if (session) currentUser = session.user;
+        history.replaceState(null, '', window.location.pathname);
+        // Убираем сплэш если он ещё показывается
+        const splash = document.getElementById('splash');
+        if (splash) { splash.classList.remove('active'); splash.style.display = 'none'; }
+        nav('resetPassword');
+      }
+    });
+
     // checkAuth вызывается из splash-таймера
   }
 }
@@ -2109,7 +2124,7 @@ async function checkAuth() {
 
   try {
     // Проверяем — пришёл ли пользователь по ссылке восстановления пароля
-    if (handleAuthRedirect()) {
+    if (await handleAuthRedirect()) {
       clearTimeout(fallback);
       return;
     }
@@ -2319,32 +2334,21 @@ async function supabaseRegister() {
 // Шаг 1 — отправить письмо со ссылкой
 async function sendPasswordReset() {
   const email = document.getElementById('forgot-email').value.trim();
-
-  if (!email || !email.includes('@')) {
-    showToast('Введите корректный email');
-    return;
-  }
+  if (!email || !email.includes('@')) { showToast('Введите корректный email'); return; }
 
   const btn = document.getElementById('forgot-submit-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Отправляем...'; }
 
   try {
     if (!supabaseClient) throw new Error('Нет подключения к серверу');
-
     const redirectTo = window.location.origin + window.location.pathname;
-
-    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-      redirectTo
-    });
-
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo });
     if (error) throw error;
-
     document.getElementById('forgot-sent-email').textContent = email;
     nav('forgotSent');
-
   } catch(err) {
     console.error('Reset password error:', err);
-    // Не раскрываем — существует ли email (безопасность)
+    // Не раскрываем — существует ли email
     document.getElementById('forgot-sent-email').textContent = email;
     nav('forgotSent');
   } finally {
@@ -2352,33 +2356,23 @@ async function sendPasswordReset() {
   }
 }
 
-// Шаг 2 — пользователь вернулся по ссылке и вводит новый пароль
+// Шаг 2 — пользователь ввёл новый пароль
 async function confirmPasswordReset() {
   const newPwd = document.getElementById('reset-new-password').value;
   const confirmPwd = document.getElementById('reset-confirm-password').value;
 
-  if (!newPwd || newPwd.length < 6) {
-    showToast('Пароль минимум 6 символов');
-    return;
-  }
-  if (newPwd !== confirmPwd) {
-    showToast('Пароли не совпадают');
-    return;
-  }
+  if (!newPwd || newPwd.length < 6) { showToast('Пароль минимум 6 символов'); return; }
+  if (newPwd !== confirmPwd) { showToast('Пароли не совпадают'); return; }
 
   const btn = document.getElementById('reset-submit-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Сохраняем...'; }
 
   try {
     if (!supabaseClient) throw new Error('Нет подключения');
-
     const { error } = await supabaseClient.auth.updateUser({ password: newPwd });
-
     if (error) throw error;
-
     showToast('Пароль успешно изменён', '#34C759');
     setTimeout(() => nav('home'), 1200);
-
   } catch(err) {
     console.error('Update password error:', err);
     showToast('Ошибка: ' + (err.message || 'Попробуйте ещё раз'));
@@ -2386,34 +2380,34 @@ async function confirmPasswordReset() {
   }
 }
 
-// Перехват Supabase hash-токена при возврате из письма (type=recovery)
-function handleAuthRedirect() {
+// Проверяем URL — если есть ?code= или #type=recovery, значит пришли из письма.
+// Основная обработка идёт через onAuthStateChange(PASSWORD_RECOVERY) в initSupabase.
+// Эта функция нужна как fallback для implicit flow (#access_token).
+async function handleAuthRedirect() {
   try {
+    // PKCE: ?code= — onAuthStateChange уже обработает, просто сигнализируем что это recovery
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('code')) {
+      console.log('Recovery code detected in URL — waiting for onAuthStateChange...');
+      // Не чистим URL здесь — Supabase должен сам обменять code через onAuthStateChange
+      return true; // блокируем стандартный checkAuth — PASSWORD_RECOVERY откроет нужный экран
+    }
+
+    // Implicit flow fallback: #access_token=...&type=recovery
     const hash = window.location.hash;
-    if (!hash) return false;
-
-    const params = new URLSearchParams(hash.replace(/^#/, ''));
-    const type = params.get('type');
-    const accessToken = params.get('access_token');
-    const refreshToken = params.get('refresh_token');
-
-    if (type === 'recovery' && accessToken) {
-      if (supabaseClient) {
-        supabaseClient.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken || ''
-        })
-          .then(({ data, error }) => {
-            if (!error && data?.session) {
-              currentUser = data.session.user;
-            }
-          })
-          .catch(e => console.error('setSession error:', e));
+    if (hash) {
+      const params = new URLSearchParams(hash.replace(/^#/, ''));
+      if (params.get('type') === 'recovery' && params.get('access_token')) {
+        console.log('Recovery: implicit flow via hash');
+        history.replaceState(null, '', window.location.pathname);
+        const { data, error } = await supabaseClient.auth.setSession({
+          access_token: params.get('access_token'),
+          refresh_token: params.get('refresh_token') || ''
+        });
+        if (!error && data?.session) currentUser = data.session.user;
+        nav('resetPassword');
+        return true;
       }
-      // Чистим хэш из адресной строки
-      history.replaceState(null, '', window.location.pathname);
-      nav('resetPassword');
-      return true;
     }
   } catch(e) {
     console.error('handleAuthRedirect error:', e);
