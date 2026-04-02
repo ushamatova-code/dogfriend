@@ -1833,7 +1833,7 @@ function startRealtimeDMSubscription() {
         playNotificationSound();
         showInAppNotification(msg.sender_name, msg.text);
         showBrowserNotification('Новое от ' + msg.sender_name, { body: msg.text.substring(0, 80) });
-        sendPushToUser(msg.sender_id, { title: msg.sender_name, message: msg.text.substring(0, 100), url: '/', chatId: chatId, type: 'message' });
+        sendPushToUser(myUserId, { title: msg.sender_name, message: msg.text.substring(0, 100), url: '/', chatId: chatId, type: 'message' });
       } else {
         renderPrivateChatMessages(chatId);
       }
@@ -2408,6 +2408,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ⚡ Фоновые ЛС-уведомления — без захода в публичный чат
   initBackgroundDM();
+
 
   const inp = document.getElementById('chat-input');
   if (!inp) return;
