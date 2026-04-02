@@ -2351,8 +2351,15 @@ async function savePrivateMsgToServer(chatId, text, time, replyTo = null) {
         reply_to_name: msgData.reply_to_name
       });
     }
-    const { error } = await supabaseClient.from('direct_messages').insert(msgData);
+    const { data: inserted, error } = await supabaseClient.from('direct_messages').insert(msgData).select('id').single();
     if (error) { console.error('Failed to save message:', error); return; }
+
+    // Сохраняем dbId в локальном сообщении чтобы polling не создавал дубль
+    if (inserted && inserted.id) {
+      const msgs = privateChats[chatId] || [];
+      const localMsg = msgs.find(m => !m.dbId && m.text === text && m.senderId === myUserId);
+      if (localMsg) localMsg.dbId = inserted.id;
+    }
 
     if (!isEventChat) {
       savePrivateChatsToStorage();
