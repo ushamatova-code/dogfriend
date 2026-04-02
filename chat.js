@@ -1784,9 +1784,11 @@ function startRealtimeDMSubscription() {
       const chatId = msg.sender_id;
       if (!privateChats[chatId]) privateChats[chatId] = [];
       
-      // Дубль? (может прийти и через broadcast и через postgres_changes)
+      // Дубль? проверяем по dbId и по тексту/времени
+      const myId2 = currentUser?.id || userId;
       const exists = privateChats[chatId].some(m => 
-        m.dbId === msg.id || (m.text === msg.text && m.senderId === msg.sender_id && Math.abs(new Date(m.created_at || 0) - new Date(msg.created_at || 0)) < 5000)
+        m.dbId === msg.id ||
+        (m.text === msg.text && Math.abs(new Date(m.created_at || 0) - new Date(msg.created_at || 0)) < 5000)
       );
       if (exists) return;
       
@@ -1970,8 +1972,7 @@ async function pollNewMessages() {
       if (!privateChats[chatId]) privateChats[chatId] = [];
       const exists = privateChats[chatId].some(m =>
         m.dbId === msg.id ||
-        (m.text === msg.text && m.senderId === msg.sender_id &&
-         Math.abs(new Date(m.created_at || 0) - new Date(msg.created_at || 0)) < 5000)
+        (m.text === msg.text && Math.abs(new Date(m.created_at || 0) - new Date(msg.created_at || 0)) < 5000)
       );
       if (exists) return;
 
@@ -2291,6 +2292,13 @@ async function loadPrivateChatFromServer(chatId) {
       privateChats[chatId] = [...dbMessages, ...optimistic];
 
       savePrivateChatsToStorage();
+      // Обновляем _lastPollTime чтобы polling не добавлял уже загруженные сообщения
+      if (data.length > 0) {
+        const lastMsg = data[data.length - 1];
+        if (lastMsg.created_at > _lastPollTime) {
+          _lastPollTime = lastMsg.created_at;
+        }
+      }
       if (currentPrivateChatId == chatId) renderPrivateChatMessages(chatId);
     }
   } catch(e) {
