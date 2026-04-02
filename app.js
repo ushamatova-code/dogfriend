@@ -1978,6 +1978,12 @@ let _isPasswordRecovery = (function() {
   return false;
 })();
 
+// Промис-защёлка: резолвится когда onAuthStateChange сработал первый раз
+// Нужна чтобы checkAuth не обгонял PASSWORD_RECOVERY событие
+let _authStateResolved = false;
+let _authStateResolve = null;
+const _authStatePromise = new Promise(r => { _authStateResolve = r; });
+
 // Загружаем Supabase SDK
 if (!window.supabaseLoaded) {
   const cdns = [
@@ -2096,6 +2102,13 @@ async function initSupabase() {
     // Подписываемся ДО checkAuth — Supabase сразу эмитит события при создании клиента
     supabaseClient.auth.onAuthStateChange((event, session) => {
       console.log('Auth event:', event);
+
+      // Резолвим защёлку при первом любом событии
+      if (!_authStateResolved) {
+        _authStateResolved = true;
+        _authStateResolve(event);
+      }
+
       if (event === 'PASSWORD_RECOVERY') {
         _isPasswordRecovery = true;
         if (session) currentUser = session.user;
@@ -2129,6 +2142,20 @@ async function checkAuth() {
   }
 
   console.log('Checking auth...');
+
+  // Если в URL был recovery-хэш — ждём onAuthStateChange (он придёт почти сразу после createClient)
+  // Это гарантирует что PASSWORD_RECOVERY событие обработается ДО любого nav()
+  if (_isPasswordRecovery) {
+    console.log('🔑 Recovery URL detected — waiting for onAuthStateChange...');
+    await Promise.race([
+      _authStatePromise,
+      new Promise(r => setTimeout(r, 4000)) // страховочный таймаут 4 сек
+    ]);
+    // К этому моменту onAuthStateChange уже вызвал nav('resetPassword')
+    // Просто выходим — не трогаем навигацию
+    console.log('🔑 Auth state resolved, staying on resetPassword');
+    return;
+  }
 
   // Запасной таймер — никогда не зависнем на сплэше
   const fallback = setTimeout(() => {
