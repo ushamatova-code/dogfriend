@@ -331,24 +331,31 @@ function openNamedDistrictChat(district) {
 function switchCommTab(tab) {
   const districts = document.getElementById('comm-panel-districts');
   const dms = document.getElementById('comm-panel-dms');
+  const feed = document.getElementById('comm-panel-feed');
   const tabD = document.getElementById('comm-tab-districts');
   const tabDM = document.getElementById('comm-tab-dms');
+  const tabFeed = document.getElementById('comm-tab-feed');
   if (!districts || !dms) return;
-  
+
+  // Скрываем все панели
+  districts.style.display = 'none';
+  dms.style.display = 'none';
+  if (feed) feed.style.display = 'none';
+
+  // Сбрасываем все табы
+  const resetTab = (t) => { if(t) { t.style.color = 'var(--text-secondary)'; t.style.borderBottom = '2.5px solid var(--border)'; }};
+  resetTab(tabD); resetTab(tabDM); resetTab(tabFeed);
+
   if (tab === 'districts') {
     districts.style.display = 'block';
-    dms.style.display = 'none';
-    tabD.style.color = 'var(--primary)';
-    tabD.style.borderBottom = '2.5px solid var(--primary)';
-    tabDM.style.color = 'var(--text-secondary)';
-    tabDM.style.borderBottom = '2.5px solid var(--border)';
+    if (tabD) { tabD.style.color = 'var(--primary)'; tabD.style.borderBottom = '2.5px solid var(--primary)'; }
+  } else if (tab === 'feed') {
+    if (feed) feed.style.display = 'block';
+    if (tabFeed) { tabFeed.style.color = 'var(--primary)'; tabFeed.style.borderBottom = '2.5px solid var(--primary)'; }
+    if (typeof renderFeed === 'function') renderFeed();
   } else {
-    districts.style.display = 'none';
     dms.style.display = 'block';
-    tabDM.style.color = 'var(--primary)';
-    tabDM.style.borderBottom = '2.5px solid var(--primary)';
-    tabD.style.color = 'var(--text-secondary)';
-    tabD.style.borderBottom = '2.5px solid var(--border)';
+    if (tabDM) { tabDM.style.color = 'var(--primary)'; tabDM.style.borderBottom = '2.5px solid var(--primary)'; }
   }
 }
 
