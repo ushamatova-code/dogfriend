@@ -121,14 +121,28 @@ async function loadFeedPosts() {
       return;
     }
 
-    // Загружаем лайки текущего пользователя для этих постов
-    const myLikes = await getMyLikes(data.map(p => p.id));
-
     _feedPosts = [..._feedPosts, ...data];
     _feedOffset += data.length;
     if (data.length < FEED_PAGE_SIZE) _feedHasMore = false;
 
-    renderFeedPosts(data, myLikes);
+    // Сразу показываем посты без лайков — быстро
+    renderFeedPosts(data, new Set());
+
+    // Лайки подгружаем фоном и обновляем UI
+    if (currentUser) {
+      getMyLikes(data.map(p => p.id)).then(myLikes => {
+        if (!myLikes.size) return;
+        data.forEach(post => {
+          if (!myLikes.has(post.id)) return;
+          const btn = document.getElementById(`like-btn-${post.id}`);
+          if (!btn) return;
+          const svg = btn.querySelector('svg');
+          btn.setAttribute('data-liked', '1');
+          btn.style.color = '#E91E63';
+          if (svg) { svg.setAttribute('fill', '#E91E63'); svg.setAttribute('stroke', '#E91E63'); }
+        });
+      });
+    }
 
   } catch(e) {
     console.error('Feed load error:', e);
