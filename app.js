@@ -1647,11 +1647,17 @@ function startPrivateChatWithUser(nick) {
 
 // Удалить чат только локально (БД не трогаем — собеседник ничего не теряет)
 function deleteLocalChat(chatId) {
-  // Чаты событий нельзя удалить — история хранится в БД и восстановится
-  // Просто убираем из локального списка, при следующем открытии загрузится снова
   const isEventChat = String(chatId).startsWith('event_');
 
   delete privateChats[chatId];
+  
+  // FIX: для event-чатов удаляем и из contactBook, 
+  // иначе пустой чат продолжит показываться в списке
+  if (isEventChat) {
+    delete contactBook[chatId];
+    localStorage.setItem('df_contacts', JSON.stringify(contactBook));
+  }
+  
   savePrivateChatsToStorage();
 
   if (unreadChats[chatId]) {
@@ -1837,26 +1843,42 @@ async function reloadEventChatsFromDB() {
     .eq('status', 'going');
 
   if (error) { console.error('reloadEventChatsFromDB error:', error); return; }
-  if (!participations || !participations.length) return;
+  
+  const activeParticipations = participations || [];
 
-  for (const p of participations) {
+  // Загружаем название событий для отображения в списке чатов
+  const eventIds = activeParticipations.map(p => p.event_id);
+  let eventNames = {};
+  if (eventIds.length) {
+    try {
+      const { data: events } = await supabaseClient
+        .from('events')
+        .select('id, title')
+        .in('id', eventIds);
+      (events || []).forEach(ev => { eventNames[ev.id] = ev.title; });
+    } catch(e) {}
+  }
+
+  for (const p of activeParticipations) {
     const chatId = 'event_' + p.event_id;
-    // Добавляем в contactBook если ещё нет
-    if (!contactBook[chatId]) {
-      contactBook[chatId] = {
-        name: '📅 Событие', initials: '📅',
-        grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)',
-        isEventChat: true, roomId: chatId
-      };
-    }
+    const evTitle = eventNames[p.event_id] || 'Событие';
+    // Добавляем/обновляем в contactBook с реальным названием
+    contactBook[chatId] = {
+      name: '📅 ' + evTitle.replace(/^(📅\s*)+/, ''),
+      initials: '📅',
+      grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)',
+      isEventChat: true, roomId: chatId
+    };
     await loadEventChatFromServer(chatId, chatId);
   }
 
   // Удаляем из contactBook event-чаты где пользователь больше не участвует
-  const activeIds = new Set(participations.map(p => 'event_' + p.event_id));
+  const activeIds = new Set(activeParticipations.map(p => 'event_' + p.event_id));
   Object.keys(contactBook).forEach(k => {
     if (k.startsWith('event_') && !activeIds.has(k)) {
       delete contactBook[k];
+      // Также чистим privateChats чтобы не было мусора
+      delete privateChats[k];
     }
   });
   localStorage.setItem('df_contacts', JSON.stringify(contactBook));
