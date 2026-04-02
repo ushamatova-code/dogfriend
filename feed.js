@@ -60,8 +60,9 @@ function startFeedRealtime() {
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts' }, (payload) => {
       const newPost = payload.new;
       if (!newPost) return;
-      // Если пост уже есть в ленте — не дублируем
+      // Если пост уже есть в кэше или в DOM — не дублируем
       if (_feedPosts.find(p => p.id === newPost.id)) return;
+      if (document.getElementById(`feed-post-${newPost.id}`)) return;
 
       _feedPosts.unshift(newPost);
       const list = document.getElementById('feed-list');
@@ -562,6 +563,9 @@ async function submitPost() {
 
     closeModal('m-create-post');
     showToast('Опубликовано!', '#34C759');
+
+    // Добавляем в кэш ПЕРЕД рендером — чтобы Realtime INSERT не задублировал
+    _feedPosts.unshift(data);
 
     // Добавляем пост в начало ленты
     const list = document.getElementById('feed-list');
