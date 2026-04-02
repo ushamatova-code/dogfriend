@@ -501,20 +501,22 @@ async function sendCartToSeller() {
 
   // Открываем чат с продавцом
   const sellerId = _shopCart[0]?.seller_user_id;
+  const sellerName = _shopCart[0]?.business_name || 'Магазин';
   if (!sellerId) { if (typeof showToast === 'function') showToast('Не удалось найти продавца'); return; }
 
-  // Устанавливаем текст в поле ввода и открываем чат
-  if (typeof openPrivateChatWith === 'function') {
-    openPrivateChatWith(sellerId, _shopCart[0].business_name, msg);
-  } else {
-    // fallback — просто открываем чат
-    currentPrivateChatId = sellerId;
-    nav('privateChat');
-    setTimeout(() => {
-      const input = document.getElementById('pc-input');
-      if (input) { input.value = msg; input.focus(); }
-    }, 300);
-  }
+  // FIX: используем openChatWithUser (которая реально существует)
+  const initials = sellerName.substring(0, 2).toUpperCase();
+  openChatWithUser(sellerId, sellerName, initials, 'linear-gradient(135deg,#4A90D9,#7B5EA7)');
+  
+  // Ждём пока экран чата откроется, затем вставляем текст заказа
+  setTimeout(() => {
+    const input = document.getElementById('pc-input');
+    if (input) {
+      input.value = msg;
+      input.focus();
+      if (typeof chatInputResize === 'function') chatInputResize(input);
+    }
+  }, 400);
 }
 
 // ── Вспомогательные

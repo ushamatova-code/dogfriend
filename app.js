@@ -3226,6 +3226,7 @@ function sendChatMsg() {
     supabaseClient.from('direct_messages').insert({
       room_id: roomId,
       sender_id: myUserId,
+      recipient_id: null,   // FIX: общий/районный чат — нет конкретного получателя
       sender_name: p.name || chatNick,
       text: text,
       time: time
@@ -3477,6 +3478,14 @@ async function savePrivateMsgToServer(chatId, text, time, replyTo = null) {
       text: text,
       time: time,
     };
+
+    // FIX: устанавливаем recipient_id
+    if (isEventChat) {
+      msgData.recipient_id = null; // Event-чат: групповой, нет конкретного получателя
+    } else {
+      msgData.recipient_id = chatId; // Личный чат: получатель = собеседник
+    }
+
     if (replyTo) {
       let actualReplyToId = replyTo.dbId;
       
