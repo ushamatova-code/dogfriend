@@ -1947,5 +1947,33 @@ function showVPNError(){
   </div>
 </div>
 
+
+<!-- МОДАЛКА КРОППЕРА ДЛЯ ПОСТОВ -->
+<div class="modal-ov" id="m-post-cropper" style="background:rgba(0,0,0,0.92);z-index:99999;">
+  <div style="width:100%;max-width:480px;display:flex;flex-direction:column;height:100%;padding:0;" onclick="event.stopPropagation()">
+    <!-- Шапка -->
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:rgba(0,0,0,0.8);">
+      <button onclick="cancelPostCrop()" style="background:none;border:none;color:white;font-size:15px;font-weight:600;cursor:pointer;padding:8px 0;">Отмена</button>
+      <span style="color:white;font-size:15px;font-weight:700;">Кадрировать</span>
+      <button onclick="confirmPostCrop()" style="background:var(--primary);border:none;color:white;font-size:15px;font-weight:700;cursor:pointer;padding:8px 16px;border-radius:20px;">Готово</button>
+    </div>
+    <!-- Выбор соотношения -->
+    <div style="display:flex;gap:8px;justify-content:center;padding:12px;background:rgba(0,0,0,0.6);">
+      <button onclick="setPostCropRatio(1,1)" id="crop-ratio-1" style="padding:6px 14px;border-radius:20px;border:1.5px solid white;background:white;color:black;font-size:12px;font-weight:700;cursor:pointer;">1:1</button>
+      <button onclick="setPostCropRatio(4,3)" id="crop-ratio-2" style="padding:6px 14px;border-radius:20px;border:1.5px solid rgba(255,255,255,0.4);background:none;color:white;font-size:12px;font-weight:700;cursor:pointer;">4:3</button>
+      <button onclick="setPostCropRatio(4,5)" id="crop-ratio-3" style="padding:6px 14px;border-radius:20px;border:1.5px solid rgba(255,255,255,0.4);background:none;color:white;font-size:12px;font-weight:700;cursor:pointer;">4:5</button>
+      <button onclick="setPostCropRatio(16,9)" id="crop-ratio-4" style="padding:6px 14px;border-radius:20px;border:1.5px solid rgba(255,255,255,0.4);background:none;color:white;font-size:12px;font-weight:700;cursor:pointer;">16:9</button>
+    </div>
+    <!-- Область кроппера -->
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#000;min-height:300px;">
+      <img id="post-crop-image" style="max-width:100%;max-height:60vh;display:block;">
+    </div>
+    <!-- Подсказка -->
+    <div style="text-align:center;padding:12px;color:rgba(255,255,255,0.5);font-size:12px;background:rgba(0,0,0,0.6);">
+      Двигайте и масштабируйте фото двумя пальцами
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

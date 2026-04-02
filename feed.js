@@ -369,30 +369,144 @@ function selectPostAuthor(type) {
   }
 }
 
+// ════════════════════════════════════════════════════════════
+// КРОППЕР ФОТО
+// ════════════════════════════════════════════════════════════
+let _cropperInstance = null;
+let _cropCurrentFile = null; // { base64, type }
+let _cropPendingFiles = []; // очередь файлов для кропа
+
 function handlePostPhotos(event) {
   const files = Array.from(event.target.files);
   if (_postPhotosData.length + files.length > 5) {
     showToast('Максимум 5 фото');
+    event.target.value = '';
     return;
   }
+  event.target.value = '';
+
+  // Читаем все файлы и ставим в очередь на кроп
+  _cropPendingFiles = [];
+  let loaded = 0;
   files.forEach(file => {
     const reader = new FileReader();
     reader.onload = e => {
-      _postPhotosData.push({ base64: e.target.result, type: file.type });
-      renderPostPhotosPreview();
+      _cropPendingFiles.push({ base64: e.target.result, type: file.type });
+      loaded++;
+      if (loaded === files.length) {
+        // Все загружены — начинаем кроп первого
+        openNextCrop();
+      }
     };
     reader.readAsDataURL(file);
   });
-  event.target.value = '';
+}
+
+function openNextCrop() {
+  if (!_cropPendingFiles.length) return;
+  _cropCurrentFile = _cropPendingFiles.shift();
+  openPostCropper(_cropCurrentFile);
+}
+
+function openPostCropper(fileData) {
+  const modal = document.getElementById('m-post-cropper');
+  const img = document.getElementById('post-crop-image');
+  if (!modal || !img) return;
+
+  // Уничтожаем старый экземпляр
+  if (_cropperInstance) {
+    _cropperInstance.destroy();
+    _cropperInstance = null;
+  }
+
+  img.src = fileData.base64;
+  modal.style.display = 'flex';
+
+  // Инициализируем Cropper после загрузки изображения
+  img.onload = () => {
+    _cropperInstance = new Cropper(img, {
+      aspectRatio: 1, // по умолчанию 1:1
+      viewMode: 1,
+      dragMode: 'move',
+      autoCropArea: 0.9,
+      restore: false,
+      guides: true,
+      center: true,
+      highlight: false,
+      cropBoxMovable: false,
+      cropBoxResizable: false,
+      toggleDragModeOnDblclick: false,
+      background: true,
+    });
+    // Выделяем кнопку 1:1
+    setActiveCropBtn('crop-ratio-1');
+  };
+}
+
+function setPostCropRatio(w, h) {
+  if (!_cropperInstance) return;
+  _cropperInstance.setAspectRatio(w / h);
+  // Подсвечиваем активную кнопку
+  const map = { '1/1': 'crop-ratio-1', '4/3': 'crop-ratio-2', '4/5': 'crop-ratio-3', '16/9': 'crop-ratio-4' };
+  setActiveCropBtn(map[`${w}/${h}`]);
+}
+
+function setActiveCropBtn(activeId) {
+  ['crop-ratio-1','crop-ratio-2','crop-ratio-3','crop-ratio-4'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    if (id === activeId) {
+      btn.style.background = 'white';
+      btn.style.color = 'black';
+      btn.style.border = '1.5px solid white';
+    } else {
+      btn.style.background = 'none';
+      btn.style.color = 'white';
+      btn.style.border = '1.5px solid rgba(255,255,255,0.4)';
+    }
+  });
+}
+
+function confirmPostCrop() {
+  if (!_cropperInstance || !_cropCurrentFile) return;
+
+  const canvas = _cropperInstance.getCroppedCanvas({ maxWidth: 1200, maxHeight: 1200 });
+  const type = _cropCurrentFile.type || 'image/jpeg';
+  const base64 = canvas.toDataURL(type, 0.88);
+
+  _postPhotosData.push({ base64, type });
+  renderPostPhotosPreview();
+
+  closePostCropper();
+
+  // Если есть ещё файлы в очереди — открываем следующий
+  if (_cropPendingFiles.length > 0) {
+    setTimeout(() => openNextCrop(), 300);
+  }
+}
+
+function cancelPostCrop() {
+  _cropPendingFiles = []; // сбрасываем очередь
+  closePostCropper();
+}
+
+function closePostCropper() {
+  const modal = document.getElementById('m-post-cropper');
+  if (modal) modal.style.display = 'none';
+  if (_cropperInstance) {
+    _cropperInstance.destroy();
+    _cropperInstance = null;
+  }
+  _cropCurrentFile = null;
 }
 
 function renderPostPhotosPreview() {
   const preview = document.getElementById('post-photos-preview');
   if (!preview) return;
   preview.innerHTML = _postPhotosData.map((p, i) => `
-    <div style="position:relative;width:70px;height:70px;">
-      <img src="${p.base64}" style="width:70px;height:70px;object-fit:cover;border-radius:10px;">
-      <button onclick="removePostPhoto(${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#FF3B30;color:white;border:none;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;">×</button>
+    <div style="position:relative;width:80px;height:80px;">
+      <img src="${p.base64}" style="width:80px;height:80px;object-fit:cover;border-radius:12px;">
+      <button onclick="removePostPhoto(${i})" style="position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:#FF3B30;color:white;border:none;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;box-shadow:0 2px 6px rgba(0,0,0,0.3);">×</button>
     </div>`).join('');
 }
 
