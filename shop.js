@@ -581,7 +581,7 @@ window.nav = function(id) {
 // IMAGE CROPPER — для загрузки логотипов магазинов
 // ════════════════════════════════════════════════════════════
 
-let _cropperInstance = null;
+let _shopCropperInstance = null;
 let _cropperCallback = null;
 
 // Открыть кроппер
@@ -624,13 +624,13 @@ function openImageCropper(file, callback, aspectRatio = 1) {
     img.src = e.target.result;
     
     // Уничтожаем старый кроппер если был
-    if (_cropperInstance) {
-      _cropperInstance.destroy();
+    if (_shopCropperInstance) {
+      _shopCropperInstance.destroy();
     }
     
     // Инициализируем Cropper.js (используем встроенный в браузер или подключаем CDN)
     if (typeof Cropper !== 'undefined') {
-      _cropperInstance = new Cropper(img, {
+      _shopCropperInstance = new Cropper(img, {
         aspectRatio: aspectRatio,
         viewMode: 1,
         dragMode: 'move',
@@ -654,14 +654,14 @@ function openImageCropper(file, callback, aspectRatio = 1) {
 
 // Применить обрезку
 async function applyCrop() {
-  if (!_cropperInstance || !_cropperCallback) {
+  if (!_shopCropperInstance || !_cropperCallback) {
     closeCropper();
     return;
   }
   
   try {
     // Получаем обрезанное изображение
-    const canvas = _cropperInstance.getCroppedCanvas({
+    const canvas = _shopCropperInstance.getCroppedCanvas({
       width: 512,
       height: 512,
       imageSmoothingQuality: 'high'
@@ -686,9 +686,9 @@ function closeCropper() {
   const modal = document.getElementById('image-cropper-modal');
   if (modal) modal.style.display = 'none';
   
-  if (_cropperInstance) {
-    _cropperInstance.destroy();
-    _cropperInstance = null;
+  if (_shopCropperInstance) {
+    _shopCropperInstance.destroy();
+    _shopCropperInstance = null;
   }
   
   _cropperCallback = null;
