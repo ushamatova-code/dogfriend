@@ -78,7 +78,8 @@ async function sendWelcomeMessages(newUserId) {
 function nav(id) {
   const curr = document.querySelector('.screen.active');
   const next = document.getElementById(id);
-  if (!next || curr === next) return;
+  if (!next) return;
+  if (curr === next) return;
   
   // Сбрасываем currentPrivateChatId когда уходим с экрана личного чата
   if (curr && curr.id === 'privateChat' && id !== 'privateChat') {
@@ -95,9 +96,11 @@ function nav(id) {
     renderPlaces();
   }
   
-  histStack.push(curr.id);
-  curr.classList.remove('active');
-  curr.style.display = 'none';
+  if (curr) {
+    histStack.push(curr.id);
+    curr.classList.remove('active');
+    curr.style.display = 'none';
+  }
   next.classList.add('active');
   // chatConv uses position:fixed flex
   next.style.display = 'flex';
@@ -2095,6 +2098,7 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 async function initSupabase() {
+  if (supabaseClient) return; // уже инициализирован — не создаём второй клиент
   if (window.supabase) {
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     console.log('Supabase connected');
@@ -2110,13 +2114,12 @@ async function initSupabase() {
       }
 
       if (event === 'PASSWORD_RECOVERY') {
+        if (_isPasswordRecovery && currentUser) return; // защита от повторного вызова при двойном клиенте
         _isPasswordRecovery = true;
         if (session) currentUser = session.user;
         // Чистим хэш из URL
         history.replaceState(null, '', window.location.pathname);
-        // Убираем сплэш если ещё показывается
-        const splash = document.getElementById('splash');
-        if (splash) { splash.classList.remove('active'); splash.style.display = 'none'; }
+        // nav() сам скроет текущий экран (splash), просто вызываем
         nav('resetPassword');
       }
     });
@@ -3528,7 +3531,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ⚡ Запускаем Supabase сразу при загрузке
   chatNick = getChatNick();
-  if (window.supabaseLoaded) initSupabase();
+  if (window.supabaseLoaded && !supabaseClient) initSupabase();
 
   // ⚡ Фоновые ЛС-уведомления — без захода в публичный чат
   initBackgroundDM();
