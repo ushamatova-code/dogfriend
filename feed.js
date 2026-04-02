@@ -115,6 +115,56 @@ function renderFeedPosts(posts, myLikes) {
   }
 }
 
+function openUserProfileById(userId) {
+  if (!userId) return;
+  // Используем существующий механизм открытия профиля
+  if (typeof openChatWithUser === 'function') {
+    // Открываем профиль через модалку
+    const contact = contactBook && contactBook[userId];
+    const name = contact ? contact.name : 'Пользователь';
+    const initials = name.slice(0,2).toUpperCase();
+    showUserProfile(userId, name, initials, 'linear-gradient(135deg,#4A90D9,#7B5EA7)');
+  }
+}
+
+function showUserProfile(userId, name, initials, grad) {
+  let modal = document.getElementById('m-user-profile');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'm-user-profile';
+    modal.className = 'modal-ov';
+    modal.onclick = (e) => { if (e.target === modal) closeModal('m-user-profile'); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `<div class="modal" onclick="event.stopPropagation()" style="max-height:85%;overflow-y:auto;">
+    <div class="mhandle"></div>
+    <div id="m-user-profile-body"><div style="padding:20px;text-align:center;color:var(--text-secondary);">Загружаем...</div></div>
+  </div>`;
+  openModal('m-user-profile');
+
+  // Загружаем профиль
+  if (supabaseClient) {
+    supabaseClient.from('profiles').select('*').eq('user_id', userId).single().then(({ data }) => {
+      const body = document.getElementById('m-user-profile-body');
+      if (!body) return;
+      const p = data || {};
+      const avatarHtml = p.avatar_url
+        ? `<img src="${p.avatar_url}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;">`
+        : `<div style="width:72px;height:72px;border-radius:50%;background:${grad};display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:white;">${initials}</div>`;
+      body.innerHTML = `
+        <div style="text-align:center;padding:16px 0 20px;">
+          <div style="display:flex;justify-content:center;margin-bottom:12px;">${avatarHtml}</div>
+          <div style="font-size:18px;font-weight:800;margin-bottom:4px;">${p.name || name}</div>
+          ${p.district ? `<div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">📍 ${p.district}</div>` : '<div style="margin-bottom:16px;"></div>'}
+          <button class="btn btn-p" style="margin-bottom:8px;" onclick="closeModal('m-user-profile');openChatWithUser('${userId}','${p.name || name}','${initials}','${grad}')">
+            Написать сообщение
+          </button>
+          <button class="btn btn-g" onclick="closeModal('m-user-profile')">Закрыть</button>
+        </div>`;
+    });
+  }
+}
+
 function buildPostCard(post, iLiked) {
   const timeStr = formatPostTime(post.created_at);
   const avatarHtml = post.author_avatar
@@ -122,9 +172,11 @@ function buildPostCard(post, iLiked) {
     : `<span style="font-size:16px;font-weight:700;color:white;">${(post.author_name||'?').substring(0,1).toUpperCase()}</span>`;
 
   const photosHtml = (post.photos && post.photos.length)
-    ? `<div style="display:grid;grid-template-columns:${post.photos.length === 1 ? '1fr' : '1fr 1fr'};gap:4px;margin:10px 0;border-radius:12px;overflow:hidden;">
-        ${post.photos.map((url, i) => `<img src="${url}" style="width:100%;${post.photos.length===1?'max-height:320px;':'height:160px;'}object-fit:cover;cursor:pointer;" onclick="openPhotoFull('${url}')">`).join('')}
-       </div>`
+    ? `<div style="margin:10px 0;border-radius:12px;overflow:hidden;">${
+        post.photos.length === 1
+          ? `<img src="${post.photos[0]}" style="width:100%;max-height:400px;object-fit:contain;background:#f5f5f5;border-radius:12px;cursor:pointer;display:block;" onclick="openPhotoFull('${post.photos[0]}')">`
+          : `<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;">${post.photos.map(url => `<img src="${url}" style="width:100%;height:150px;object-fit:cover;cursor:pointer;" onclick="openPhotoFull('${url}')">`).join('')}</div>`
+      }</div>`
     : '';
 
   const textHtml = post.text
@@ -139,14 +191,14 @@ function buildPostCard(post, iLiked) {
   const isAuthor = myId === post.user_id;
 
   return `
-    <div style="background:var(--white);margin:0 0 8px;border-bottom:1px solid var(--border);padding:14px 16px;">
+    <div style="background:var(--white);margin:8px 16px;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06);padding:14px 16px;border:0.5px solid var(--border);">
       <!-- Шапка -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+        <div onclick="${!post.business_id ? `openUserProfileById('${post.user_id}')` : ''}" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;${!post.business_id ? 'cursor:pointer;' : ''}">
           ${avatarHtml}
         </div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-weight:700;font-size:14px;">${escFeed(post.author_name)}${districtHtml}</div>
+        <div style="flex:1;min-width:0;" onclick="${!post.business_id ? `openUserProfileById('${post.user_id}')` : ''}" style="cursor:pointer;">
+          <div style="font-weight:700;font-size:14px;${!post.business_id ? 'cursor:pointer;' : ''}">${escFeed(post.author_name)}${districtHtml}</div>
           <div style="font-size:12px;color:var(--text-secondary);">${timeStr}</div>
         </div>
         <button onclick="showPostMenu('${post.id}', ${isAuthor})" style="background:none;border:none;font-size:20px;color:var(--text-secondary);cursor:pointer;padding:4px 8px;line-height:1;">···</button>
@@ -156,7 +208,7 @@ function buildPostCard(post, iLiked) {
       ${photosHtml}
       <!-- Действия -->
       <div style="display:flex;gap:20px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
-        <button id="like-btn-${post.id}" onclick="togglePostLike('${post.id}')" style="display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;font-size:13px;font-weight:600;color:${iLiked ? '#E91E63' : 'var(--text-secondary)'};padding:0;">
+        <button id="like-btn-${post.id}" data-liked="${iLiked ? '1' : '0'}" onclick="togglePostLike('${post.id}')" style="display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;font-size:13px;font-weight:600;color:${iLiked ? '#E91E63' : 'var(--text-secondary)'};padding:0;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="${iLiked ? '#E91E63' : 'none'}" stroke="${iLiked ? '#E91E63' : 'currentColor'}" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
           <span id="likes-count-${post.id}">${post.likes_count || 0}</span>
         </button>
@@ -369,12 +421,13 @@ async function togglePostLike(postId) {
   const btn = document.getElementById(`like-btn-${postId}`);
   const countEl = document.getElementById(`likes-count-${postId}`);
   const svg = btn ? btn.querySelector('svg') : null;
-  const isLiked = svg && svg.getAttribute('fill') !== 'none';
+  const isLiked = btn && btn.getAttribute('data-liked') === '1';
   const currentCount = parseInt(countEl ? countEl.textContent : '0') || 0;
 
   // Оптимистичное обновление UI
+  const newLiked = !isLiked;
   if (btn && svg && countEl) {
-    const newLiked = !isLiked;
+    btn.setAttribute('data-liked', newLiked ? '1' : '0');
     svg.setAttribute('fill', newLiked ? '#E91E63' : 'none');
     svg.setAttribute('stroke', newLiked ? '#E91E63' : 'currentColor');
     btn.style.color = newLiked ? '#E91E63' : 'var(--text-secondary)';
@@ -393,6 +446,7 @@ async function togglePostLike(postId) {
     console.error('Like error:', e);
     // Откатываем UI при ошибке
     if (btn && svg && countEl) {
+      btn.setAttribute('data-liked', isLiked ? '1' : '0');
       svg.setAttribute('fill', isLiked ? '#E91E63' : 'none');
       svg.setAttribute('stroke', isLiked ? '#E91E63' : 'currentColor');
       btn.style.color = isLiked ? '#E91E63' : 'var(--text-secondary)';
