@@ -5,6 +5,11 @@
 // ============================================================
 
 // ============================================================
+// SHARED VARIABLES (declared here so all modules can access)
+// ============================================================
+var _petsCache = [];
+
+// ============================================================
 // NAVIGATION
 // ============================================================
 const histStack = [];
@@ -99,7 +104,7 @@ function nav(id) {
   } else if (id === 'health') {
     renderHealthClinics();
   } else if (id === 'dogmap') {
-    renderPlaces();
+    if (typeof renderPlaces === 'function') renderPlaces();
   }
   
   if (curr) {
