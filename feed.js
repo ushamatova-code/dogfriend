@@ -214,24 +214,70 @@ function showUserProfile(userId, name, initials, grad) {
   </div>`;
   openModal('m-user-profile');
 
-  // Загружаем профиль
+  // Загружаем профиль + питомцев параллельно
   if (supabaseClient) {
-    supabaseClient.from('profiles').select('*').eq('user_id', userId).single().then(({ data }) => {
+    Promise.all([
+      supabaseClient.from('profiles').select('*').eq('user_id', userId).single(),
+      supabaseClient.from('pets').select('name,breed,photo_url').eq('user_id', userId).order('created_at', { ascending: true })
+    ]).then(([{ data: p }, { data: pets }]) => {
       const body = document.getElementById('m-user-profile-body');
       if (!body) return;
-      const p = data || {};
+      p = p || {};
+      pets = pets || [];
+
       const avatarHtml = p.avatar_url
-        ? `<img src="${p.avatar_url}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;">`
-        : `<div style="width:72px;height:72px;border-radius:50%;background:${grad};display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:white;">${initials}</div>`;
+        ? `<img src="${p.avatar_url}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--white);box-shadow:0 2px 12px rgba(0,0,0,0.12);">`
+        : `<div style="width:80px;height:80px;border-radius:50%;background:${grad};display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:white;">${initials}</div>`;
+
+      // Питомцы
+      const petsHtml = pets.length ? `
+        <div style="margin:14px 0 0;text-align:left;">
+          <div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;padding:0 16px;">ПИТОМЦЫ</div>
+          <div style="display:flex;gap:10px;padding:0 16px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;">
+            ${pets.map(pet => {
+              const petAvatar = pet.photo_url
+                ? `<img src="${pet.photo_url}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;">`
+                : `<div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);display:flex;align-items:center;justify-content:center;font-size:20px;">🐕</div>`;
+              return `<div style="text-align:center;flex-shrink:0;">
+                ${petAvatar}
+                <div style="font-size:11px;font-weight:700;margin-top:4px;max-width:52px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pet.name}</div>
+                ${pet.breed ? `<div style="font-size:10px;color:var(--text-secondary);max-width:52px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pet.breed}</div>` : ''}
+              </div>`;
+            }).join('')}
+          </div>
+        </div>` : '';
+
+      // Статистика приютов
+      const shelterAmount = p.shelter_donated || 0;
+      const shelterHtml = shelterAmount > 0 ? `
+        <div style="margin:14px 16px 0;background:linear-gradient(135deg,#4A90D9,#7B5EA7);border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:22px;">❤️</span>
+          <div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.8);">Помощь приютам</div>
+            <div style="font-size:16px;font-weight:800;color:white;">${shelterAmount} ₽ собрано</div>
+          </div>
+        </div>` : '';
+
+      const displayName = p.name || name;
+      const safeId = userId.replace(/'/g, "\'");
+      const safeName = displayName.replace(/'/g, "\'");
+
       body.innerHTML = `
-        <div style="text-align:center;padding:16px 0 20px;">
-          <div style="display:flex;justify-content:center;margin-bottom:12px;">${avatarHtml}</div>
-          <div style="font-size:18px;font-weight:800;margin-bottom:4px;">${p.name || name}</div>
-          ${p.district ? `<div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">📍 ${p.district}</div>` : '<div style="margin-bottom:16px;"></div>'}
-          <button class="btn btn-p" style="margin-bottom:8px;" onclick="closeModal('m-user-profile');openChatWithUser('${userId}','${p.name || name}','${initials}','${grad}')">
-            Написать сообщение
-          </button>
-          <button class="btn btn-g" onclick="closeModal('m-user-profile')">Закрыть</button>
+        <div style="padding-bottom:16px;">
+          <!-- Шапка профиля -->
+          <div style="background:linear-gradient(135deg,#4A90D9,#7B5EA7);padding:24px 16px 20px;text-align:center;border-radius:0 0 24px 24px;margin-bottom:4px;">
+            <div style="display:flex;justify-content:center;margin-bottom:12px;">${avatarHtml}</div>
+            <div style="font-size:18px;font-weight:800;color:white;margin-bottom:4px;">${escFeed(displayName)}</div>
+            ${p.district ? `<div style="font-size:13px;color:rgba(255,255,255,0.8);">📍 ${escFeed(p.district)}</div>` : ''}
+          </div>
+          ${petsHtml}
+          ${shelterHtml}
+          <div style="padding:16px 16px 0;display:flex;flex-direction:column;gap:8px;">
+            <button class="btn btn-p" onclick="closeModal('m-user-profile');openChatWithUser('${safeId}','${safeName}','${initials}','${grad}')">
+              Написать сообщение
+            </button>
+            <button class="btn btn-g" onclick="closeModal('m-user-profile')">Закрыть</button>
+          </div>
         </div>`;
     });
   }
@@ -534,7 +580,10 @@ async function submitPost() {
 
     if (_postAuthorType === 'user') {
       authorName = profile.name || 'Пользователь';
-      authorAvatar = profile.avatar_url || null;
+      // Берём аватар из currentUserProfile (актуальный) или из localStorage
+      authorAvatar = (typeof currentUserProfile !== 'undefined' && currentUserProfile && currentUserProfile.avatar_url)
+        ? currentUserProfile.avatar_url
+        : (profile.avatar_url || null);
     } else {
       const biz = _userBusinesses.find(b => b.id === _postAuthorType);
       authorName = biz ? biz.name : 'Бизнес';
