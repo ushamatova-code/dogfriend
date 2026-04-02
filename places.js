@@ -1,9 +1,9 @@
 // ============================================================
 // PLACES.JS — Geolocation, map, places, discounts
 // Depends on: globals.js
+// ВСЕ переменные объявлены в globals.js
 // ============================================================
 
-// userLat, userLng, userLocationName объявлены в globals.js
 
 async function geocodeAddress(address) {
   try {
@@ -118,11 +118,6 @@ getUserLocation();
 // PLACES — загрузка из Supabase + карта
 // (только кафе, клиники и подобные места — НЕ кинологи)
 // ════════════════════════════════════════════════════════════
-let _placesFilter = 'Все';
-let _currentPlace = null;
-let _loadedPlaces = [];
-let _placesMap = null;
-let _placesMapMarkers = [];
 
 const PLACE_TYPE_MAP = { 
   cafe: 'Кафе',
@@ -356,9 +351,6 @@ function openYandexMap() {
 // ════════════════════════════════════════════════════════════
 // DISCOUNTS — загрузка из Supabase (таблица promotions)
 // ════════════════════════════════════════════════════════════
-let _discFilter = 'Все';
-let _currentDisc = null;
-let _loadedPromotions = [];
 
 function filterDiscounts(val, el) {
   _discFilter = val;
@@ -520,3 +512,5 @@ function copyPromoCode() {
   if (!_currentDisc || !_currentDisc.promo_code) return;
   navigator.clipboard.writeText(_currentDisc.promo_code)
     .then(()=>showToast('Промокод ' + _currentDisc.promo_code + ' скопирован!','#7ED321'))
+    .catch(()=>showToast('Промокод: ' + _currentDisc.promo_code));
+}

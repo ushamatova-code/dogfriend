@@ -1,12 +1,9 @@
 // ============================================================
 // PETS.JS — Pets CRUD + Medical records
 // Depends on: globals.js
+// ВСЕ переменные объявлены в globals.js
 // ============================================================
 
-// PETS — Supabase (таблица pets + Storage для фото)
-// ════════════════════════════════════════════════════════════
-let _petSex = 'м';
-let _petsCache = [];
 
 function selectPetSex(s) {
   _petSex = s;
@@ -179,8 +176,6 @@ const MED_ICONS={
   'Другое':'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
 };
 const MED_BG={'Вакцинация':'rgba(74,144,217,.1)','Приём':'rgba(76,175,80,.1)','Анализ':'rgba(156,39,176,.1)','Операция':'rgba(208,2,27,.1)','Другое':'rgba(142,142,147,.08)'};
-let _medType='Вакцинация';
-let _medRecordsCache = [];
 
 function selectMedType(t,el){_medType=t;document.querySelectorAll('#med-type-chips .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');}
 

@@ -665,3 +665,10 @@ let _currentBookingItem = null;
 
 // Discounts
 let _discFilter = 'Все';
+let _loadedPromotions = [];
+let _currentDisc = null;
+
+// Pets
+let _petSex = 'м';
+let _medType = 'Вакцинация';
+let _medRecordsCache = [];
