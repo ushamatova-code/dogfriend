@@ -665,10 +665,14 @@ let _currentBookingItem = null;
 
 // Discounts
 let _discFilter = 'Все';
-let _loadedPromotions = [];
-let _currentDisc = null;
 
-// Pets
-let _petSex = 'м';
-let _medType = 'Вакцинация';
-let _medRecordsCache = [];
+// ════════════════════════════════════════════════════════════
+// TOAST — должен быть в globals.js чтобы все файлы могли использовать
+// ════════════════════════════════════════════════════════════
+function showToast(msg, bg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:'+(bg||'#1A1A1A')+';color:white;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:700;z-index:99999;white-space:nowrap;max-width:90vw;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,0.25);';
+  document.body.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},2500);
+}
