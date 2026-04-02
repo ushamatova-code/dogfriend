@@ -18,6 +18,8 @@ let _userBusinesses = []; // бизнесы пользователя
 // ИНИЦИАЛИЗАЦИЯ
 // ════════════════════════════════════════════════════════════
 
+let _feedRealtimeChannel = null;
+
 async function renderFeed() {
   _feedPosts = [];
   _feedOffset = 0;
@@ -30,6 +32,61 @@ async function renderFeed() {
 
   await loadFeedPosts();
   checkFeedDeeplink();
+  startFeedRealtime();
+}
+
+function startFeedRealtime() {
+  if (_feedRealtimeChannel || !supabaseClient) return;
+
+  _feedRealtimeChannel = supabaseClient
+    .channel('feed-posts-changes')
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'posts' }, (payload) => {
+      const updated = payload.new;
+      if (!updated) return;
+
+      // Обновляем в кэше
+      const idx = _feedPosts.findIndex(p => p.id === updated.id);
+      if (idx !== -1) {
+        _feedPosts[idx].likes_count = updated.likes_count;
+        _feedPosts[idx].comments_count = updated.comments_count;
+      }
+
+      // Обновляем счётчики в UI
+      const likesEl = document.getElementById(`likes-count-${updated.id}`);
+      const commentsEl = document.getElementById(`comments-count-${updated.id}`);
+      if (likesEl) likesEl.textContent = updated.likes_count || 0;
+      if (commentsEl) commentsEl.textContent = updated.comments_count || 0;
+    })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts' }, (payload) => {
+      const newPost = payload.new;
+      if (!newPost) return;
+      // Если пост уже есть в ленте — не дублируем
+      if (_feedPosts.find(p => p.id === newPost.id)) return;
+
+      _feedPosts.unshift(newPost);
+      const list = document.getElementById('feed-list');
+      if (list) {
+        const el = document.createElement('div');
+        el.id = `feed-post-${newPost.id}`;
+        el.innerHTML = buildPostCard(newPost, false);
+        list.insertBefore(el, list.firstChild);
+      }
+    })
+    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'posts' }, (payload) => {
+      const id = payload.old && payload.old.id;
+      if (!id) return;
+      _feedPosts = _feedPosts.filter(p => p.id !== id);
+      const el = document.getElementById(`feed-post-${id}`);
+      if (el) el.remove();
+    })
+    .subscribe();
+}
+
+function stopFeedRealtime() {
+  if (_feedRealtimeChannel && supabaseClient) {
+    supabaseClient.removeChannel(_feedRealtimeChannel);
+    _feedRealtimeChannel = null;
+  }
 }
 
 async function loadFeedPosts() {
