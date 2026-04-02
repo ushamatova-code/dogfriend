@@ -441,6 +441,22 @@ async function togglePostLike(postId) {
     } else {
       await supabaseClient.from('post_likes').insert({ post_id: postId, user_id: currentUser.id });
       await supabaseClient.from('posts').update({ likes_count: currentCount + 1 }).eq('id', postId);
+
+      // Push автору поста (если не сам себе лайкнул)
+      const post = _feedPosts.find(p => p.id === postId);
+      if (post && post.user_id !== currentUser.id) {
+        const profile = JSON.parse(localStorage.getItem('df_profile') || '{}');
+        const myName = profile.name || 'Кто-то';
+        if (typeof sendPushToUser === 'function') {
+          sendPushToUser(post.user_id, {
+            title: myName + ' оценил вашу публикацию ❤️',
+            message: post.text ? post.text.substring(0, 60) : 'Нажмите чтобы посмотреть',
+            url: location.origin + location.pathname + '?post=' + postId,
+            chatId: null,
+            type: 'like'
+          });
+        }
+      }
     }
   } catch(e) {
     console.error('Like error:', e);
@@ -530,19 +546,34 @@ async function submitComment() {
     });
     if (error) throw error;
 
-    // Обновляем счётчик в посте
+    // Обновляем счётчик локально и в БД
     const post = _feedPosts.find(p => p.id === _currentPostId);
+    const newCount = (post ? (post.comments_count || 0) : 0) + 1;
     if (post) {
-      post.comments_count = (post.comments_count || 0) + 1;
-      const countEl = document.getElementById(`comments-count-${_currentPostId}`);
-      if (countEl) countEl.textContent = post.comments_count;
+      post.comments_count = newCount;
     }
+    // Обновляем счётчик на карточке в ленте
+    const countEl = document.getElementById(`comments-count-${_currentPostId}`);
+    if (countEl) countEl.textContent = newCount;
 
-    // Обновляем счётчик в БД
-    const newCount = (post ? post.comments_count : 1);
+    // Сохраняем в БД
     await supabaseClient.from('posts').update({ comments_count: newCount }).eq('id', _currentPostId);
 
-    // Перезагружаем комментарии
+    // Push автору поста (если не сам себе)
+    if (post && post.user_id !== currentUser.id) {
+      const myName = profile.name || 'Кто-то';
+      if (typeof sendPushToUser === 'function') {
+        sendPushToUser(post.user_id, {
+          title: myName + ' прокомментировал вашу публикацию 💬',
+          message: text.substring(0, 80),
+          url: location.origin + location.pathname + '?post=' + _currentPostId,
+          chatId: null,
+          type: 'comment'
+        });
+      }
+    }
+
+    // Перезагружаем комментарии в модалке
     openPostDetail(_currentPostId);
   } catch(e) {
     console.error('Comment error:', e);
