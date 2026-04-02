@@ -3,9 +3,7 @@
 // Depends on: globals.js
 // ============================================================
 
-let userLat = null;
-let userLng = null;
-let userLocationName = '';
+// userLat, userLng, userLocationName объявлены в globals.js
 
 async function geocodeAddress(address) {
   try {
