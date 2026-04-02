@@ -71,7 +71,7 @@ async function markMessagesAsRead(senderId) {
   
   try {
     // Формируем room_id
-    const roomId = [currentUser.id, senderId].sort().join('_');
+    const roomId = [currentUser.id, senderId].sort().join('__');
     
     // Отмечаем все непрочитанные сообщения от этого отправителя как прочитанные
     const { error } = await supabaseClient
