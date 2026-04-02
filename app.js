@@ -1909,8 +1909,9 @@ async function loadAllDialogsFromDB() {
         continue;
       }
 
-      // Восстанавливаем сообщения
-      privateChats[theirId] = messages.map(m => ({
+      // Восстанавливаем сообщения — мержим с существующими чтобы не потерять
+      // optimistic-сообщения которые ещё не успели сохраниться в БД
+      const dbMessages = messages.map(m => ({
         text: m.text,
         sender: m.sender_id === myUserId ? 'user' : 'other',
         time: m.time,
@@ -1918,7 +1919,17 @@ async function loadAllDialogsFromDB() {
         senderId: m.sender_id,
         created_at: m.created_at,
         dbId: m.id,
+        replyToId: m.reply_to_id || null,
+        replyToText: m.reply_to_text || null,
+        replyToName: m.reply_to_name || null,
+        reply_to_id: m.reply_to_id || null,
+        reply_to_text: m.reply_to_text || null,
+        reply_to_name: m.reply_to_name || null,
       }));
+      const dbIds = new Set(dbMessages.map(m => m.dbId).filter(Boolean));
+      // Сохраняем optimistic-сообщения (без dbId) которых ещё нет в БД
+      const optimistic = (privateChats[theirId] || []).filter(m => !m.dbId && !dbIds.has(m.dbId));
+      privateChats[theirId] = [...dbMessages, ...optimistic];
 
       // Восстанавливаем контакт если не знаем
       if (!contactBook[theirId]) {
@@ -3091,6 +3102,7 @@ async function pollNewMessages() {
       .from('direct_messages')
       .select('*')
       .gt('created_at', _lastPollTime)
+      .or(`room_id.like.%${myUserId}%,room_id.like.event_%`)
       .order('created_at', { ascending: true });
 
     if (error || !msgs || msgs.length === 0) return;
@@ -3133,6 +3145,13 @@ async function pollNewMessages() {
         senderId: msg.sender_id,
         created_at: msg.created_at,
         dbId: msg.id,
+        // Поля ответа
+        replyToId: msg.reply_to_id || null,
+        replyToText: msg.reply_to_text || null,
+        replyToName: msg.reply_to_name || null,
+        reply_to_id: msg.reply_to_id || null,
+        reply_to_text: msg.reply_to_text || null,
+        reply_to_name: msg.reply_to_name || null,
       });
 
       // Запоминаем контакт
@@ -3392,7 +3411,7 @@ async function loadPrivateChatFromServer(chatId) {
       .select('*')
       .eq('room_id', roomId)
       .order('created_at', { ascending: true })
-      .limit(100);
+      .limit(500);
     
     if (error) {
       console.error('❌ DB load error:', error);
@@ -3402,8 +3421,8 @@ async function loadPrivateChatFromServer(chatId) {
     console.log('✅ Loaded', data?.length || 0, 'messages from DB');
     
     if (data && data.length > 0) {
-      // Полностью заменяем данные из БД - БД это источник правды!
-      privateChats[chatId] = data.map(m => {
+      // Мержим с существующими — сохраняем optimistic-сообщения без dbId
+      const dbMessages = data.map(m => {
         const hasReply = m.reply_to_id || m.reply_to_text;
         if (hasReply) {
           console.log('  📎 Message with reply:', {
@@ -3413,7 +3432,6 @@ async function loadPrivateChatFromServer(chatId) {
             reply_to_text: m.reply_to_text?.substring(0, 20)
           });
         }
-        
         return {
           text: m.text,
           sender: m.sender_id === myUserId ? 'user' : 'other',
@@ -3422,7 +3440,6 @@ async function loadPrivateChatFromServer(chatId) {
           senderId: m.sender_id,
           created_at: m.created_at,
           dbId: m.id,
-          // Поля ответа - сохраняем оба варианта для совместимости
           replyToId: m.reply_to_id || null,
           replyToText: m.reply_to_text || null,
           replyToName: m.reply_to_name || null,
@@ -3431,7 +3448,10 @@ async function loadPrivateChatFromServer(chatId) {
           reply_to_name: m.reply_to_name || null,
         };
       });
-      
+      const dbIds = new Set(dbMessages.map(m => m.dbId).filter(Boolean));
+      const optimistic = (privateChats[chatId] || []).filter(m => !m.dbId && !dbIds.has(m.dbId));
+      privateChats[chatId] = [...dbMessages, ...optimistic];
+
       savePrivateChatsToStorage();
       if (currentPrivateChatId == chatId) renderPrivateChatMessages(chatId);
     }

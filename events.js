@@ -355,7 +355,8 @@ function openEventGroupChat(ev) {
   localStorage.setItem('df_contacts', JSON.stringify(contactBook));
 
   currentPrivateChatId = chatId;
-  privateChats[chatId] = []; // очищаем — сейчас загрузим из БД
+  // НЕ очищаем privateChats[chatId] — показываем кэш пока грузится БД
+  if (!privateChats[chatId]) privateChats[chatId] = [];
 
   document.getElementById('pc-avatar').textContent = '📅';
   document.getElementById('pc-avatar').style.background = 'linear-gradient(135deg,#4A90D9,#7B5EA7)';
@@ -383,14 +384,26 @@ async function loadEventChatFromServer(chatId, roomId) {
       .limit(500);
 
     const myUserId = currentUser?.id || userId;
-    privateChats[chatId] = (data || []).map(m => ({
+    const dbMessages = (data || []).map(m => ({
       text: m.text,
       sender: m.sender_id === myUserId ? 'user' : 'other',
       time: m.time,
       senderName: m.sender_name,
       senderId: m.sender_id,
       dbId: m.id,
+      created_at: m.created_at,
+      // Поля ответа — оба варианта для совместимости
+      replyToId: m.reply_to_id || null,
+      replyToText: m.reply_to_text || null,
+      replyToName: m.reply_to_name || null,
+      reply_to_id: m.reply_to_id || null,
+      reply_to_text: m.reply_to_text || null,
+      reply_to_name: m.reply_to_name || null,
     }));
+    // Мержим: сохраняем optimistic-сообщения без dbId которых ещё нет в БД
+    const dbIds = new Set(dbMessages.map(m => m.dbId).filter(Boolean));
+    const optimistic = (privateChats[chatId] || []).filter(m => !m.dbId && !dbIds.has(m.dbId));
+    privateChats[chatId] = [...dbMessages, ...optimistic];
     if (currentPrivateChatId === chatId) renderPrivateChatMessages(chatId);
   } catch(e) { console.error('loadEventChat error:', e); }
 }
