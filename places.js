@@ -3,89 +3,9 @@
 // Depends on: globals.js
 // ============================================================
 
-// ════════════════════════════════════════════════════════════
-// TOAST
-// ════════════════════════════════════════════════════════════
-function showToast(msg, bg) {
-  const t = document.createElement('div');
-  t.textContent = msg;
-  t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:'+(bg||'#1A1A1A')+';color:white;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:700;z-index:99999;white-space:nowrap;max-width:90vw;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,0.25);';
-  document.body.appendChild(t);
-  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},2500);
-}
-
-// ════════════════════════════════════════════════════════════
-// CLINIC BOOKING  (called by button in m-clinic modal)
-// ════════════════════════════════════════════════════════════
-// Monkey-patch openClinicModal to capture current item
-(function(){
-  const orig = window.openClinicModal;
-  window.openClinicModal = function(id) {
-    if (typeof HEALTH_DATA !== 'undefined') {
-      _currentBookingItem = HEALTH_DATA.find(x => x.id === id) || null;
-    }
-    orig && orig(id);
-  };
-})();
-
-function bookFromClinicModal() {
-  const item = _currentBookingItem;
-  const name = item ? item.name : 'Специалист';
-  const now  = new Date();
-  const dateStr = now.toLocaleDateString('ru-RU');
-
-  // save to localStorage (CRM feed)
-  let appts = JSON.parse(localStorage.getItem('df_appointments') || '[]');
-  const rec = {
-    id: Date.now(),
-    name,
-    type: item ? (item.type === 'clinic' ? 'Клиника' : 'Специалист') : '—',
-    spec: item ? (item.subtitle || item.spec || '') : '',
-    addr: item ? (item.addr || item.dist || '') : '',
-    date: dateStr, time: '10:00', status: 'pending',
-    createdAt: now.toISOString()
-  };
-  appts.push(rec);
-  localStorage.setItem('df_appointments', JSON.stringify(appts));
-
-  // auto-add med record
-  const p = JSON.parse(localStorage.getItem('df_profile') || '{}');
-  if (supabaseClient && currentUser) {
-    supabaseClient.from('med_records').insert({
-      user_id: currentUser.id,
-      type: 'Приём',
-      pet_name: p.dogname || '',
-      title: 'Запись: ' + name,
-      date: now.toISOString().split('T')[0],
-      doctor: name,
-      notes: 'Создано через Dogly'
-    }).then(({ error }) => { if (error) console.error('Auto med record error:', error); });
-  } else {
-    let recs = JSON.parse(localStorage.getItem('df_med_records') || '[]');
-    recs.unshift({ id: Date.now()+1, type:'Приём', petName: p.dogname||'', title:'Запись: '+name, date: now.toISOString().split('T')[0], doctor: name, notes: 'Создано через Dogly' });
-    localStorage.setItem('df_med_records', JSON.stringify(recs));
-  }
-
-  closeModal('m-clinic');
-
-  // show success screen
-  document.getElementById('appt-success-text').textContent = 'Заявка на приём в «' + name + '» отправлена.';
-  document.getElementById('appt-success-card').innerHTML =
-    '<div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;">'
-    + '<div style="width:44px;height:44px;background:'+(item&&item.grad?item.grad:'linear-gradient(135deg,#4A90D9,#7B5EA7)')+';border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">'+(item&&item.icon?item.icon:(item&&item.initials?item.initials:'🏥'))+'</div>'
-    + '<div><div style="font-weight:800;font-size:15px;">'+name+'</div><div style="font-size:13px;color:var(--text-secondary);">'+(rec.spec)+'</div></div></div>'
-    + '<div style="font-size:13px;color:var(--text-secondary);line-height:1.9;">'
-    + '📅 Дата заявки: <strong>'+dateStr+'</strong><br>'
-    + '🕐 Ориентировочно: <strong>10:00–12:00</strong><br>'
-    + (rec.addr ? '📍 '+rec.addr+'<br>' : '')
-    + 'Менеджер свяжется для подтверждения времени</div>';
-  nav('apptSuccess');
-}
-
-// ════════════════════════════════════════════════════════════
-// GEOLOCATION — определение позиции пользователя
-// Приоритет: 1) район из профиля  2) GPS  3) попросить указать
-// ════════════════════════════════════════════════════════════
+let userLat = null;
+let userLng = null;
+let userLocationName = '';
 
 async function geocodeAddress(address) {
   try {
@@ -200,6 +120,11 @@ getUserLocation();
 // PLACES — загрузка из Supabase + карта
 // (только кафе, клиники и подобные места — НЕ кинологи)
 // ════════════════════════════════════════════════════════════
+let _placesFilter = 'Все';
+let _currentPlace = null;
+let _loadedPlaces = [];
+let _placesMap = null;
+let _placesMapMarkers = [];
 
 const PLACE_TYPE_MAP = { 
   cafe: 'Кафе',
@@ -433,6 +358,7 @@ function openYandexMap() {
 // ════════════════════════════════════════════════════════════
 // DISCOUNTS — загрузка из Supabase (таблица promotions)
 // ════════════════════════════════════════════════════════════
+let _discFilter = 'Все';
 let _currentDisc = null;
 let _loadedPromotions = [];
 
@@ -568,3 +494,31 @@ function openDiscountModal(id) {
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:8px;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
       Получить скидку
     </button>
+  `;
+  openModal('m-discount');
+}
+
+function contactBizFromPromo() {
+  if (!_currentDisc) return;
+  const biz = _currentDisc.biz;
+  if (!biz) return;
+  // Ищем business в loadedBusinesses чтобы получить user_id
+  if (typeof openBusinessProfile === 'function') {
+    // Загружаем бизнес и открываем чат
+    if (supabaseClient) {
+      supabaseClient.from('businesses').select('user_id,name').eq('id', _currentDisc.business_id).single()
+        .then(({ data }) => {
+          if (data && data.user_id) {
+            openChatWithUser(data.user_id, data.name || biz.name || 'Бизнес', (data.name || 'BZ').substring(0,2).toUpperCase());
+          } else {
+            showToast('Не удалось найти контакт бизнеса');
+          }
+        });
+    }
+  }
+}
+
+function copyPromoCode() {
+  if (!_currentDisc || !_currentDisc.promo_code) return;
+  navigator.clipboard.writeText(_currentDisc.promo_code)
+    .then(()=>showToast('Промокод ' + _currentDisc.promo_code + ' скопирован!','#7ED321'))

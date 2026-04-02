@@ -3,38 +3,6 @@
 // Depends on: globals.js
 // ============================================================
 
-  `;
-  openModal('m-discount');
-}
-
-function contactBizFromPromo() {
-  if (!_currentDisc) return;
-  const biz = _currentDisc.biz;
-  if (!biz) return;
-  // Ищем business в loadedBusinesses чтобы получить user_id
-  if (typeof openBusinessProfile === 'function') {
-    // Загружаем бизнес и открываем чат
-    if (supabaseClient) {
-      supabaseClient.from('businesses').select('user_id,name').eq('id', _currentDisc.business_id).single()
-        .then(({ data }) => {
-          if (data && data.user_id) {
-            openChatWithUser(data.user_id, data.name || biz.name || 'Бизнес', (data.name || 'BZ').substring(0,2).toUpperCase());
-          } else {
-            showToast('Не удалось найти контакт бизнеса');
-          }
-        });
-    }
-  }
-}
-
-function copyPromoCode() {
-  if (!_currentDisc || !_currentDisc.promo_code) return;
-  navigator.clipboard.writeText(_currentDisc.promo_code)
-    .then(()=>showToast('Промокод ' + _currentDisc.promo_code + ' скопирован!','#7ED321'))
-    .catch(()=>showToast('Промокод: ' + _currentDisc.promo_code));
-}
-
-// ════════════════════════════════════════════════════════════
 // PETS — Supabase (таблица pets + Storage для фото)
 // ════════════════════════════════════════════════════════════
 let _petSex = 'м';
@@ -440,3 +408,4 @@ async function deleteMedRecord(id) {
   await renderMedRecords();
   showToast('Запись удалена', '#FF3B30');
 }
+
