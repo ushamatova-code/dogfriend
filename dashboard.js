@@ -225,23 +225,24 @@ async function checkUserBusiness() {
 function renderBizDashboard(biz) {
   currentBiz = biz;
   const cfg = BIZ_FIELDS[biz.type];
-  const typeIcons = { trainer: '🐕', clinic: '🏥', cafe: '☕' };
-  const typeLabels = { trainer: 'Кинолог / Тренер', clinic: 'Ветеринарная клиника', cafe: 'Dog-friendly место' };
+  const typeIcons = { trainer: '🐕', clinic: '🏥', cafe: '☕', shop: '🛍️' };
+  const typeLabels = { trainer: 'Кинолог / Тренер', clinic: 'Ветеринарная клиника', cafe: 'Dog-friendly место', shop: 'Магазин' };
+  const SERVICE_LABELS = {
+    trainer: 'Кинолог / Тренер', grooming: 'Груминг', boarding: 'Передержка',
+    psychologist: 'Зоопсихолог', walking: 'Выгул', training_ground: 'Площадка',
+    'Онлайн-консультация': 'Онлайн-консультация'
+  };
 
   document.getElementById('biz-dash-title').textContent = '💼 Мой бизнес';
-
-  const status = biz.is_approved
-    ? '<span class="tag tag-g">✓ Опубликовано</span>'
-    : '<span class="tag tag-o">⏳ На модерации</span>';
 
   // Переключатель если несколько бизнесов
   let switcherHtml = '';
   if (userBusinesses.length > 1) {
-    switcherHtml = `<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;">` +
+    switcherHtml = `<div style="display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px;margin-bottom:16px;">` +
       userBusinesses.map((b, i) => {
         const icon = typeIcons[b.type] || '💼';
         const active = b.id === biz.id;
-        return `<div onclick="renderBizDashboard(userBusinesses[${i}])" style="flex-shrink:0;display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:12px;border:2px solid ${active ? 'var(--primary)' : 'var(--border)'};background:${active ? 'rgba(74,144,217,0.08)' : 'var(--white)'};cursor:pointer;font-size:13px;font-weight:700;color:${active ? 'var(--primary)' : 'var(--text-secondary)'};">
+        return `<div onclick="renderBizDashboard(userBusinesses[${i}])" style="flex-shrink:0;display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;border:2px solid ${active ? 'var(--primary)' : 'var(--border)'};background:${active ? 'var(--primary)' : 'var(--white)'};cursor:pointer;font-size:13px;font-weight:700;color:${active ? 'white' : 'var(--text-secondary)'};">
           <span>${icon}</span><span style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.name}</span>
         </div>`;
       }).join('') + `</div>`;
@@ -249,97 +250,105 @@ function renderBizDashboard(biz) {
 
   let html = switcherHtml;
 
-  // Карточка бизнеса
-  html += `<div style="background:linear-gradient(135deg,var(--primary),#6BB8F0);border-radius:var(--radius);padding:20px;color:white;margin-bottom:16px;">
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
-      <div style="width:60px;height:60px;background:rgba(255,255,255,0.2);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden;">
-        ${biz.cover_url ? `<img src="${biz.cover_url}" style="width:100%;height:100%;object-fit:cover;">` : (typeIcons[biz.type] || '💼')}
+  // Шапка бизнеса
+  const avatarHtml = biz.cover_url
+    ? `<img src="${biz.cover_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+    : `<span style="font-size:28px;">${typeIcons[biz.type] || '💼'}</span>`;
+
+  const statusBadge = biz.is_approved
+    ? `<span style="background:rgba(52,199,89,0.2);color:#34C759;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;">✓ Опубликовано</span>`
+    : `<span style="background:rgba(255,149,0,0.2);color:#FF9500;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;">⏳ На модерации</span>`;
+
+  html += `<div style="background:linear-gradient(135deg,#4A90D9,#7B5EA7);border-radius:20px;padding:20px;color:white;margin-bottom:16px;">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+      <div style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;border:3px solid rgba(255,255,255,0.35);">
+        ${avatarHtml}
       </div>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:18px;font-weight:800;margin-bottom:2px;">${biz.name}</div>
-        <div style="font-size:13px;opacity:0.85;">${typeLabels[biz.type] || ''}</div>
+        <div style="font-size:19px;font-weight:800;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${biz.name}</div>
+        <div style="font-size:13px;opacity:0.85;margin-bottom:8px;">${typeLabels[biz.type] || ''}</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">${statusBadge}<span style="font-size:13px;opacity:0.85;">⭐ ${biz.rating || '5.0'} · ${biz.reviews_count || 0} отз.</span></div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">${status}<span style="font-size:13px;opacity:0.8;">⭐ ${biz.rating || '5.0'} · ${biz.reviews_count || 0} отзывов</span></div>
   </div>`;
 
   // Статистика
-  const msgCount = Object.values(privateChats).reduce((sum, msgs) => sum + msgs.length, 0);
-  html += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
-    <div style="background:var(--white);border-radius:14px;padding:14px;text-align:center;box-shadow:var(--shadow);">
-      <div style="font-size:24px;font-weight:900;font-family:'Nunito',sans-serif;color:var(--primary);">0</div>
-      <div style="font-size:11px;color:var(--text-secondary);font-weight:600;">Просмотры</div>
+  const msgCount = Object.values(privateChats || {}).reduce((sum, msgs) => sum + msgs.length, 0);
+  html += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
+    <div style="background:var(--white);border-radius:16px;padding:14px 8px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+      <div style="font-size:20px;margin-bottom:4px;">👁</div>
+      <div style="font-size:22px;font-weight:900;color:#4A90D9;font-family:'Nunito',sans-serif;">0</div>
+      <div style="font-size:11px;color:var(--text-secondary);font-weight:600;margin-top:2px;">Просмотры</div>
     </div>
-    <div style="background:var(--white);border-radius:14px;padding:14px;text-align:center;box-shadow:var(--shadow);">
-      <div style="font-size:24px;font-weight:900;font-family:'Nunito',sans-serif;color:var(--primary);">${msgCount}</div>
-      <div style="font-size:11px;color:var(--text-secondary);font-weight:600;">Сообщений</div>
+    <div style="background:var(--white);border-radius:16px;padding:14px 8px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+      <div style="font-size:20px;margin-bottom:4px;">💬</div>
+      <div style="font-size:22px;font-weight:900;color:#7B5EA7;font-family:'Nunito',sans-serif;">${msgCount}</div>
+      <div style="font-size:11px;color:var(--text-secondary);font-weight:600;margin-top:2px;">Сообщений</div>
     </div>
-    <div style="background:var(--white);border-radius:14px;padding:14px;text-align:center;box-shadow:var(--shadow);">
-      <div style="font-size:24px;font-weight:900;font-family:'Nunito',sans-serif;color:var(--primary);">0</div>
-      <div style="font-size:11px;color:var(--text-secondary);font-weight:600;">Записей</div>
+    <div style="background:var(--white);border-radius:16px;padding:14px 8px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+      <div style="font-size:20px;margin-bottom:4px;">📅</div>
+      <div style="font-size:22px;font-weight:900;color:#34C759;font-family:'Nunito',sans-serif;">0</div>
+      <div style="font-size:11px;color:var(--text-secondary);font-weight:600;margin-top:2px;">Записей</div>
     </div>
   </div>`;
 
-  // ══════════════════════════════════════════════════════════════
-  // ВЫБОР КАТЕГОРИЙ УСЛУГ (только для trainer типа)
-  // ══════════════════════════════════════════════════════════════
+  // Быстрые действия
+  html += `<div style="display:flex;gap:10px;margin-bottom:16px;">
+    <button onclick="openBizSettings()" style="flex:1;padding:14px;background:var(--primary);color:white;border:none;border-radius:16px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Редактировать
+    </button>
+    <button onclick="openCreatePromo()" style="flex:1;padding:14px;background:var(--white);color:var(--primary);border:2px solid var(--primary);border-radius:16px;font-size:14px;font-weight:700;cursor:pointer;">
+      🎁 Акция
+    </button>
+  </div>`;
+
+  // Категории услуг (trainer)
   if (biz.type === 'trainer' && biz.is_approved) {
     const currentServices = biz.services || [];
-    html += `<div style="background:var(--white);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);">
-      <div style="font-size:15px;font-weight:800;margin-bottom:4px;">🎯 Категории услуг</div>
-      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">Выберите услуги которые вы оказываете</div>
+    html += `<div style="background:var(--white);border-radius:18px;padding:18px;margin-bottom:12px;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+      <div style="font-size:15px;font-weight:800;margin-bottom:4px;">🎯 Мои услуги</div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">Нажмите чтобы добавить или убрать</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;" id="service-categories-container">
         ${BIZ_SERVICE_CATEGORIES.map(cat => {
           const isSelected = currentServices.includes(cat.id);
-          return `<div onclick="toggleServiceCategory('${cat.id}')" 
-            id="service-cat-${cat.id}"
-            style="
-              padding:10px 16px;
-              border-radius:12px;
-              border:2px solid ${isSelected ? 'var(--primary)' : 'var(--border)'};
-              background:${isSelected ? 'rgba(74,144,217,0.1)' : 'var(--bg)'};
-              color:${isSelected ? 'var(--primary)' : 'var(--text-secondary)'};
-              font-size:14px;
-              font-weight:700;
-              cursor:pointer;
-              display:flex;
-              align-items:center;
-              gap:6px;
-              transition:all 0.2s;
-            ">
-            <span>${cat.icon}</span>
-            <span>${cat.label}</span>
-            ${isSelected ? '<span style="font-size:12px;">✓</span>' : ''}
+          return `<div onclick="toggleServiceCategory('${cat.id}')" id="service-cat-${cat.id}"
+            style="padding:9px 16px;border-radius:20px;border:2px solid ${isSelected ? 'var(--primary)' : 'var(--border)'};background:${isSelected ? 'var(--primary)' : 'var(--bg)'};color:${isSelected ? 'white' : 'var(--text-secondary)'};font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">
+            <span>${cat.icon}</span><span>${cat.label}</span>
           </div>`;
         }).join('')}
       </div>
     </div>`;
   }
 
-  // Детали по секциям
+  // Информация по секциям — только заполненные поля
   if (cfg) {
     cfg.sections.forEach(sec => {
-      html += `<div style="background:var(--white);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);">
-        <div style="font-size:15px;font-weight:800;margin-bottom:12px;">${sec.title}</div>`;
+      let secContent = '';
       if (sec.type === 'checkboxes') {
-        const vals = biz[sec.id] || [];
-        html += vals.length
-          ? `<div style="display:flex;flex-wrap:wrap;gap:6px;">${vals.map(v => `<span class="tag tag-b">${v}</span>`).join('')}</div>`
-          : `<div style="color:var(--text-secondary);font-size:13px;">Не указано — нажмите ✏️ Изменить</div>`;
+        const vals = (biz[sec.id] || []).map(v => SERVICE_LABELS[v] || v);
+        if (vals.length) {
+          secContent = `<div style="display:flex;flex-wrap:wrap;gap:6px;">${vals.map(v => `<span style="background:rgba(74,144,217,0.1);color:var(--primary);font-size:13px;font-weight:600;padding:5px 12px;border-radius:20px;">${v}</span>`).join('')}</div>`;
+        }
       } else {
-        sec.fields.forEach(f => {
-          const val = biz[f.id] || '';
-          html += `<div style="margin-bottom:8px;">
-            <div style="font-size:12px;color:var(--text-secondary);font-weight:600;margin-bottom:2px;">${f.label}</div>
-            <div style="font-size:14px;font-weight:600;color:${val ? 'var(--text-primary)' : 'var(--border)'};">${val || '—'}</div>
-          </div>`;
-        });
+        const filledFields = sec.fields.filter(f => biz[f.id]);
+        if (filledFields.length) {
+          secContent = `<div style="display:flex;flex-direction:column;">` + filledFields.map(f => `
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);">
+              <span style="font-size:13px;color:var(--text-secondary);flex-shrink:0;margin-right:12px;">${f.label}</span>
+              <span style="font-size:13px;font-weight:600;text-align:right;max-width:60%;">${biz[f.id]}</span>
+            </div>`).join('') + `</div>`;
+        }
       }
-      html += `</div>`;
+      if (!secContent) return;
+      html += `<div style="background:var(--white);border-radius:18px;padding:18px;margin-bottom:12px;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+        <div style="font-size:15px;font-weight:800;margin-bottom:12px;">${sec.title}</div>
+        ${secContent}
+      </div>`;
     });
   }
 
-  // Добавляем блок товаров для магазинов
+  // Товары для магазинов
   if (biz.type === 'shop') {
     html += renderBizDashboardShop(biz);
   }
@@ -347,7 +356,6 @@ function renderBizDashboard(biz) {
   document.getElementById('biz-dash-content').innerHTML = html;
   renderBizPromos(biz);
 
-  // Загружаем товары для магазинов
   if (biz.type === 'shop') {
     loadBizProducts(biz.id);
   }
@@ -437,7 +445,7 @@ async function openBizEdit() {
     </div>
     <label style="display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:var(--bg);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;">
       📸 Выбрать фото
-      <input type="file" accept="image/*" onchange="handleBusinessCoverSelect(event)" style="display:none;">
+      <input type="file" accept="image/*" onchange="handleBusinessCoverSelect(event); document.getElementById('biz-cover-preview').innerHTML='<div style=\\'padding:12px;text-align:center;color:var(--primary);font-weight:700;\\'>✅ Фото выбрано</div>'" style="display:none;">
     </label>
   </div>`;
 
@@ -594,14 +602,7 @@ async function saveBizEdit() {
     // Загружаем обложку если была выбрана
     if (_businessCoverFile) {
       const coverUrl = await uploadBusinessCover(currentBiz.id);
-      if (coverUrl) {
-        currentBiz.cover_url = coverUrl;
-        // Обновляем в глобальном массиве loadedBusinesses чтобы каталог тоже обновился
-        if (typeof loadedBusinesses !== 'undefined') {
-          const bizIdx = loadedBusinesses.findIndex(b => b.id === currentBiz.id);
-          if (bizIdx !== -1) loadedBusinesses[bizIdx].cover_url = coverUrl;
-        }
-      }
+      if (coverUrl) currentBiz.cover_url = coverUrl;
     }
 
     // Сохраняем адреса в business_locations
