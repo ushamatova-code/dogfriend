@@ -592,29 +592,30 @@ function openImageCropper(file, callback, aspectRatio = 1) {
   }
   
   _cropperCallback = callback;
-  
-  // Создаём модалку кроппера если её нет
-  let modal = document.getElementById('image-cropper-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'image-cropper-modal';
-    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:10000;display:flex;flex-direction:column;';
-    modal.innerHTML = `
-      <div style="padding:20px;display:flex;justify-content:space-between;align-items:center;color:white;">
-        <h3 style="font-size:18px;font-weight:800;">Обрезать изображение</h3>
-        <button onclick="closeCropper()" style="background:none;border:none;color:white;font-size:28px;cursor:pointer;width:40px;height:40px;">×</button>
-      </div>
-      <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:20px;overflow:hidden;">
-        <img id="cropper-image" style="max-width:100%;max-height:100%;">
-      </div>
-      <div style="padding:20px;display:flex;gap:10px;">
-        <button onclick="closeCropper()" style="flex:1;padding:14px;background:#666;color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;">Отмена</button>
-        <button onclick="applyCrop()" style="flex:1;padding:14px;background:linear-gradient(135deg,var(--primary),#6B5CE7);color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;">Готово</button>
-      </div>
-    `;
-    document.body.appendChild(modal);
-  }
-  
+
+  // Удаляем старую модалку чтобы пересоздать с правильным соотношением
+  const oldModal = document.getElementById('image-cropper-modal');
+  if (oldModal) oldModal.remove();
+  if (_shopCropperInstance) { _shopCropperInstance.destroy(); _shopCropperInstance = null; }
+
+  const ratioLabel = aspectRatio === 1 ? '1:1 (квадрат)' : aspectRatio > 1 ? '16:9 (горизонталь)' : '4:5 (вертикаль)';
+
+  const modal = document.createElement('div');
+  modal.id = 'image-cropper-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:10000;display:flex;flex-direction:column;';
+  modal.innerHTML = `
+    <div style="padding:16px 20px;display:flex;justify-content:space-between;align-items:center;color:white;">
+      <button onclick="closeCropper()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:15px;font-weight:600;cursor:pointer;padding:8px 0;">Отмена</button>
+      <span style="font-size:15px;font-weight:700;">Кадрировать</span>
+      <button onclick="applyCrop()" style="background:var(--primary);border:none;color:white;font-size:15px;font-weight:700;cursor:pointer;padding:8px 16px;border-radius:20px;">Готово</button>
+    </div>
+    <div style="text-align:center;padding:6px;color:rgba(255,255,255,0.5);font-size:12px;">${ratioLabel}</div>
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#000;">
+      <img id="cropper-image" style="max-width:100%;display:block;">
+    </div>
+    <div style="padding:12px;text-align:center;color:rgba(255,255,255,0.4);font-size:12px;">Двигайте и масштабируйте двумя пальцами</div>
+  `;
+  document.body.appendChild(modal);
   modal.style.display = 'flex';
   
   const img = document.getElementById('cropper-image');

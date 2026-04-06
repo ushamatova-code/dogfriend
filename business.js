@@ -75,7 +75,7 @@ function handleBusinessCoverSelect(event) {
         preview.innerHTML = `<img src="${url}" style="width:120px;height:120px;object-fit:cover;border-radius:16px;display:block;">`;
       }
       showToast('✅ Обложка выбрана');
-    }, 16/9);
+    }, 1);
   } else {
     // Fallback без кроппера
     _businessCoverFile = file;
