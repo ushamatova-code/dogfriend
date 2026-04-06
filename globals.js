@@ -8,6 +8,8 @@
 // SHARED VARIABLES (declared here so all modules can access)
 // ============================================================
 var _petsCache = [];
+var _petSex = 'м';
+var _medType = 'Приём';
 
 // ============================================================
 // NAVIGATION

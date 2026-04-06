@@ -77,16 +77,27 @@ function handleBusinessCoverSelect(event) {
       showToast('✅ Обложка выбрана');
     }, 1);
   } else {
-    // Fallback без кроппера
-    _businessCoverFile = file;
-    if (preview) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        preview.innerHTML = `<img src="${e.target.result}" style="width:120px;height:120px;object-fit:cover;border-radius:16px;display:block;">`;
-      };
-      reader.readAsDataURL(file);
+    // Fallback без кроппера — сжимаем для быстрой загрузки
+    if (typeof compressImage === 'function') {
+      compressImage(file, 512, 0.85).then(blob => {
+        _businessCoverFile = blob;
+        if (preview) {
+          const url = URL.createObjectURL(blob);
+          preview.innerHTML = `<img src="${url}" style="width:120px;height:120px;object-fit:cover;border-radius:16px;display:block;">`;
+        }
+        showToast('✅ Обложка выбрана');
+      });
+    } else {
+      _businessCoverFile = file;
+      if (preview) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          preview.innerHTML = `<img src="${e.target.result}" style="width:120px;height:120px;object-fit:cover;border-radius:16px;display:block;">`;
+        };
+        reader.readAsDataURL(file);
+      }
+      showToast('✅ Обложка выбрана');
     }
-    showToast('✅ Обложка выбрана');
   }
 }
 
@@ -94,6 +105,7 @@ function handleBusinessCoverSelect(event) {
 async function uploadBusinessCover(businessId) {
   if (!_businessCoverFile || !supabaseClient) return null;
   try {
+    showToast('⏳ Загрузка обложки...', '#4A90D9');
     // Определяем тип — Blob от кроппера или File от input
     const mimeType = _businessCoverFile.type || 'image/jpeg';
     const ext = mimeType.includes('png') ? 'png' : 'jpg';
@@ -111,12 +123,15 @@ async function uploadBusinessCover(businessId) {
     const publicUrl = urlData.publicUrl + '?t=' + Date.now();
 
     // Сохраняем URL в БД
-    await supabaseClient.from('businesses').update({ cover_url: publicUrl }).eq('id', businessId);
+    const { error: updateError } = await supabaseClient.from('businesses').update({ cover_url: publicUrl }).eq('id', businessId);
+    if (updateError) throw updateError;
 
     _businessCoverFile = null;
+    showToast('✅ Обложка сохранена!', '#34C759');
     return publicUrl;
   } catch(e) {
     console.error('❌ Cover upload error:', e);
+    showToast('❌ Ошибка загрузки обложки', '#FF3B30');
     return null;
   }
 }

@@ -445,7 +445,7 @@ async function openBizEdit() {
     </div>
     <label style="display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:var(--bg);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;">
       📸 Выбрать фото
-      <input type="file" accept="image/*" onchange="handleBusinessCoverSelect(event); document.getElementById('biz-cover-preview').innerHTML='<div style=\\'padding:12px;text-align:center;color:var(--primary);font-weight:700;\\'>✅ Фото выбрано</div>'" style="display:none;">
+      <input type="file" accept="image/*" onchange="handleBusinessCoverSelect(event)" style="display:none;">
     </label>
   </div>`;
 
@@ -610,25 +610,33 @@ async function saveBizEdit() {
       // Удаляем старые и вставляем новые
       await supabaseClient.from('business_locations').delete().eq('business_id', currentBiz.id);
 
-      const locRows = await Promise.all(addresses.map(async (addr, i) => {
-        let lat = null, lng = null;
-        try {
-          const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(addr) + '&limit=1');
-          const d = await r.json();
-          if (d && d[0]) { lat = parseFloat(d[0].lat); lng = parseFloat(d[0].lon); }
-        } catch(e) {}
-        return { business_id: currentBiz.id, address: addr, is_main: i === 0, location_lat: lat, location_lng: lng };
+      // Сохраняем адреса сразу без геокодинга чтобы не тормозить
+      const locRows = addresses.map((addr, i) => ({
+        business_id: currentBiz.id, address: addr, is_main: i === 0, location_lat: null, location_lng: null
       }));
       await supabaseClient.from('business_locations').insert(locRows);
 
-      // Обновляем координаты основного адреса в businesses
-      const mainLoc = locRows[0];
-      if (mainLoc.location_lat) {
-        await supabaseClient.from('businesses').update({
-          location_lat: mainLoc.location_lat,
-          location_lng: mainLoc.location_lng
-        }).eq('id', currentBiz.id);
-      }
+      // Геокодинг в фоне — не блокируем сохранение
+      (async () => {
+        try {
+          for (let i = 0; i < addresses.length; i++) {
+            try {
+              const controller = new AbortController();
+              const timer = setTimeout(() => controller.abort(), 5000);
+              const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(addresses[i]) + '&limit=1', { signal: controller.signal });
+              clearTimeout(timer);
+              const d = await r.json();
+              if (d && d[0]) {
+                const lat = parseFloat(d[0].lat), lng = parseFloat(d[0].lon);
+                await supabaseClient.from('business_locations').update({ location_lat: lat, location_lng: lng }).eq('business_id', currentBiz.id).eq('address', addresses[i]);
+                if (i === 0) {
+                  await supabaseClient.from('businesses').update({ location_lat: lat, location_lng: lng }).eq('id', currentBiz.id);
+                }
+              }
+            } catch(e) { /* geocoding failed, skip */ }
+          }
+        } catch(e) {}
+      })();
     }
 
     // Обновляем локальный объект
