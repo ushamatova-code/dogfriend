@@ -101,13 +101,13 @@ function switchCatalogTab(tab) {
   if (!servPane || !shopPane) return;
 
   if (tab === 'services') {
-    servPane.style.display = '';
+    servPane.style.display = 'block';
     shopPane.style.display = 'none';
     if (servBtn) { servBtn.style.color = 'var(--primary)'; servBtn.style.borderBottom = '2.5px solid var(--primary)'; }
     if (shopBtn) { shopBtn.style.color = 'var(--text-secondary)'; shopBtn.style.borderBottom = '2.5px solid transparent'; }
   } else {
     servPane.style.display = 'none';
-    shopPane.style.display = '';
+    shopPane.style.display = 'flex';
     if (shopBtn) { shopBtn.style.color = 'var(--primary)'; shopBtn.style.borderBottom = '2.5px solid var(--primary)'; }
     if (servBtn) { servBtn.style.color = 'var(--text-secondary)'; servBtn.style.borderBottom = '2.5px solid transparent'; }
     // Всегда сбрасываем и перезагружаем список магазинов

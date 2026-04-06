@@ -362,7 +362,7 @@
 </div>
 
 <!-- SERVICES HUB -->
-<div class="screen" id="catalog">
+<div class="screen" id="catalog" style="display:flex;flex-direction:column;">
   <div style="padding:calc(16px + env(safe-area-inset-top, 0px)) 20px 0;background:var(--white);">
     <h1 style="font-size:22px;">Услуги</h1>
     <p style="font-size:14px;color:var(--text-secondary);margin-top:4px;">Специалисты и товары для вашего питомца</p>
@@ -372,7 +372,7 @@
     </div>
   </div>
   <!-- Вкладка специалисты -->
-  <div id="catalog-pane-services" class="scroll" style="padding:12px 16px 20px;">
+  <div id="catalog-pane-services" class="scroll" style="padding:12px 16px 20px;flex:1;">
     <!-- Category cards grid -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div onclick="openServiceCategory('trainer')" style="background:var(--white);border-radius:18px;padding:20px 16px;box-shadow:var(--shadow);cursor:pointer;text-align:center;">
@@ -433,11 +433,11 @@
   </div>
 
   <!-- Вкладка магазины -->
-  <div id="catalog-pane-shops" style="display:none;flex-direction:column;flex:1;min-height:0;">
+  <div id="catalog-pane-shops" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
     <!-- Категории магазинов -->
     <div id="shops-categories-row" style="display:flex;gap:8px;padding:12px 16px 10px;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
     </div>
-    <div class="scroll" style="padding:0 16px 20px;">
+    <div class="scroll" style="padding:0 16px 80px;">
       <div id="shops-list"></div>
     </div>
   </div>
