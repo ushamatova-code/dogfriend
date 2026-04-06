@@ -94,13 +94,15 @@ function handleBusinessCoverSelect(event) {
 async function uploadBusinessCover(businessId) {
   if (!_businessCoverFile || !supabaseClient) return null;
   try {
-    const compressed = await compressImage(_businessCoverFile, 800, 0.8);
-    const ext = _businessCoverFile.name.split('.').pop() || 'jpg';
-    const filePath = `covers/${businessId}.${ext}`;
+    // Определяем тип — Blob от кроппера или File от input
+    const mimeType = _businessCoverFile.type || 'image/jpeg';
+    const ext = mimeType.includes('png') ? 'png' : 'jpg';
+    const filePath = `covers/${businessId}_${Date.now()}.${ext}`;
 
+    // Загружаем напрямую без compressImage (кроппер уже оптимизировал)
     const { error: uploadError } = await supabaseClient.storage
       .from('avatars')
-      .upload(filePath, compressed, { upsert: true, contentType: compressed.type });
+      .upload(filePath, _businessCoverFile, { upsert: true, contentType: mimeType });
     if (uploadError) throw uploadError;
 
     const { data: urlData } = supabaseClient.storage
@@ -108,7 +110,7 @@ async function uploadBusinessCover(businessId) {
       .getPublicUrl(filePath);
     const publicUrl = urlData.publicUrl + '?t=' + Date.now();
 
-    // Сохраняем URL обложки в запись бизнеса
+    // Сохраняем URL в БД
     await supabaseClient.from('businesses').update({ cover_url: publicUrl }).eq('id', businessId);
 
     _businessCoverFile = null;
