@@ -362,7 +362,7 @@
 </div>
 
 <!-- SERVICES HUB -->
-<div class="screen" id="catalog" style="display:flex;flex-direction:column;">
+<div class="screen" id="catalog">
   <div style="padding:calc(16px + env(safe-area-inset-top, 0px)) 20px 0;background:var(--white);">
     <h1 style="font-size:22px;">Услуги</h1>
     <p style="font-size:14px;color:var(--text-secondary);margin-top:4px;">Специалисты и товары для вашего питомца</p>
@@ -372,7 +372,7 @@
     </div>
   </div>
   <!-- Вкладка специалисты -->
-  <div id="catalog-pane-services" class="scroll" style="padding:12px 16px 20px;flex:1;">
+  <div id="catalog-pane-services" class="scroll" style="padding:12px 16px 80px;">
     <!-- Category cards grid -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div onclick="openServiceCategory('trainer')" style="background:var(--white);border-radius:18px;padding:20px 16px;box-shadow:var(--shadow);cursor:pointer;text-align:center;">
@@ -433,7 +433,7 @@
   </div>
 
   <!-- Вкладка магазины -->
-  <div id="catalog-pane-shops" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
+  <div id="catalog-pane-shops" style="display:none;flex-direction:column;">
     <!-- Категории магазинов -->
     <div id="shops-categories-row" style="display:flex;gap:8px;padding:12px 16px 10px;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
     </div>
@@ -745,7 +745,7 @@
   </div>
   <div class="scroll">
     <div style="background:var(--white);border-radius:var(--radius);margin:16px 16px 12px;box-shadow:var(--shadow);overflow:hidden;">
-      <div class="prof-row" onclick="openModal('m-orders')"><div class="prof-row-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div class="prof-row-lbl">Мои заказы</div><div class="badge" style="margin-right:8px;">12</div><div class="prof-row-arr">›</div></div>
+      <div class="prof-row" onclick="openModal('m-orders')"><div class="prof-row-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div class="prof-row-lbl">Мои заказы</div><div class="badge" id="orders-badge" style="margin-right:8px;display:none;">0</div><div class="prof-row-arr">›</div></div>
       <div class="prof-row" onclick="nav('payments')"><div class="prof-row-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><div class="prof-row-lbl">Способы оплаты</div><div class="prof-row-arr">›</div></div>
       <div class="prof-row" onclick="nav('myPets')"><div class="prof-row-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div><div class="prof-row-lbl">Мои собаки</div><div class="prof-row-arr">›</div></div>
       <div class="prof-row" onclick="nav('events')"><div class="prof-row-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="prof-row-lbl">Мои события</div><div class="prof-row-arr">›</div></div>

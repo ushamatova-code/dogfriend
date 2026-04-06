@@ -107,7 +107,7 @@ function switchCatalogTab(tab) {
     if (shopBtn) { shopBtn.style.color = 'var(--text-secondary)'; shopBtn.style.borderBottom = '2.5px solid transparent'; }
   } else {
     servPane.style.display = 'none';
-    shopPane.style.display = 'flex';
+    shopPane.style.display = 'block';
     if (shopBtn) { shopBtn.style.color = 'var(--primary)'; shopBtn.style.borderBottom = '2.5px solid var(--primary)'; }
     if (servBtn) { servBtn.style.color = 'var(--text-secondary)'; servBtn.style.borderBottom = '2.5px solid transparent'; }
     // Всегда сбрасываем и перезагружаем список магазинов
