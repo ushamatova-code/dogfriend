@@ -437,7 +437,7 @@ async function openBizEdit() {
     </div>
     <label style="display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:var(--bg);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;">
       📸 Выбрать фото
-      <input type="file" accept="image/*" onchange="handleBusinessCoverSelect(event); document.getElementById('biz-cover-preview').innerHTML='<div style=\\'padding:12px;text-align:center;color:var(--primary);font-weight:700;\\'>✅ Фото выбрано</div>'" style="display:none;">
+      <input type="file" accept="image/*" onchange="handleBusinessCoverSelect(event)" style="display:none;">
     </label>
   </div>`;
 
@@ -594,7 +594,14 @@ async function saveBizEdit() {
     // Загружаем обложку если была выбрана
     if (_businessCoverFile) {
       const coverUrl = await uploadBusinessCover(currentBiz.id);
-      if (coverUrl) currentBiz.cover_url = coverUrl;
+      if (coverUrl) {
+        currentBiz.cover_url = coverUrl;
+        // Обновляем в глобальном массиве loadedBusinesses чтобы каталог тоже обновился
+        if (typeof loadedBusinesses !== 'undefined') {
+          const bizIdx = loadedBusinesses.findIndex(b => b.id === currentBiz.id);
+          if (bizIdx !== -1) loadedBusinesses[bizIdx].cover_url = coverUrl;
+        }
+      }
     }
 
     // Сохраняем адреса в business_locations
@@ -846,40 +853,18 @@ function removeProductPhoto(index, type) {
   renderProductPhotosRow();
 }
 
-let _productCropQueue = []; // очередь файлов для кропа
-
 function handleProductPhotos(input) {
   const files = Array.from(input.files);
-  input.value = '';
-
   const total = _productPhotoUrls.length + _productPhotoFiles.length + files.length;
-  const allowed = Math.min(files.length, 5 - _productPhotoUrls.length - _productPhotoFiles.length);
-  if (allowed <= 0) { showToast('Максимум 5 фотографий'); return; }
-
-  const toProcess = files.slice(0, allowed);
-
-  if (typeof openImageCropper === 'function') {
-    // Открываем кроппер для каждого фото по очереди
-    _productCropQueue = [...toProcess];
-    openNextProductCrop();
+  if (total > 5) {
+    showToast('Максимум 5 фотографий');
+    const allowed = 5 - _productPhotoUrls.length - _productPhotoFiles.length;
+    _productPhotoFiles.push(...files.slice(0, allowed));
   } else {
-    _productPhotoFiles.push(...toProcess);
-    renderProductPhotosRow();
+    _productPhotoFiles.push(...files);
   }
-}
-
-function openNextProductCrop() {
-  if (!_productCropQueue.length) return;
-  const file = _productCropQueue.shift();
-  openImageCropper(file, (croppedBlob) => {
-    croppedBlob.name = file.name;
-    _productPhotoFiles.push(croppedBlob);
-    renderProductPhotosRow();
-    // Следующий файл в очереди
-    if (_productCropQueue.length > 0) {
-      setTimeout(() => openNextProductCrop(), 300);
-    }
-  }, 1); // 1:1 для товаров
+  input.value = '';
+  renderProductPhotosRow();
 }
 
 function addAttrRow() {
