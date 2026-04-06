@@ -383,6 +383,17 @@ async function loadProfileStats() {
   
   const ordersStat = document.getElementById('prof-stat-orders');
   if (ordersStat) ordersStat.textContent = ordersCount;
+
+  // Обновляем бейдж "Мои заказы" — показываем только если есть заказы
+  const ordersBadge = document.getElementById('orders-badge');
+  if (ordersBadge) {
+    if (ordersCount > 0) {
+      ordersBadge.textContent = ordersCount;
+      ordersBadge.style.display = 'flex';
+    } else {
+      ordersBadge.style.display = 'none';
+    }
+  }
   
   const charityStat = document.getElementById('prof-stat-charity');
   if (charityStat) charityStat.textContent = charityAmount.toLocaleString('ru-RU') + ' ₽';
