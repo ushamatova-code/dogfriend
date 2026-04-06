@@ -441,7 +441,7 @@ async function openBizEdit() {
   html += `<div style="margin-bottom:20px;">
     <div style="font-size:15px;font-weight:800;margin-bottom:12px;padding-top:16px;border-top:2px solid var(--border);">📷 Обложка бизнеса</div>
     <div id="biz-cover-preview" style="margin-bottom:8px;">
-      ${currentBiz.cover_url ? `<img src="${currentBiz.cover_url}" style="width:100%;height:120px;object-fit:cover;border-radius:12px;">` : '<div style="background:var(--bg);border-radius:12px;padding:20px;text-align:center;color:var(--text-secondary);font-size:13px;">Нет обложки</div>'}
+      ${currentBiz.cover_url ? `<img src="${currentBiz.cover_url}" style="width:120px;height:120px;object-fit:cover;border-radius:16px;display:block;">` : '<div style="background:var(--bg);border-radius:12px;padding:20px;text-align:center;color:var(--text-secondary);font-size:13px;">Нет обложки</div>'}
     </div>
     <label style="display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:var(--bg);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;">
       📸 Выбрать фото

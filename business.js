@@ -72,7 +72,7 @@ function handleBusinessCoverSelect(event) {
       _businessCoverFile = croppedBlob;
       if (preview) {
         const url = URL.createObjectURL(croppedBlob);
-        preview.innerHTML = `<img src="${url}" style="width:100%;height:120px;object-fit:cover;border-radius:12px;">`;
+        preview.innerHTML = `<img src="${url}" style="width:120px;height:120px;object-fit:cover;border-radius:16px;display:block;">`;
       }
       showToast('✅ Обложка выбрана');
     }, 16/9);
@@ -82,7 +82,7 @@ function handleBusinessCoverSelect(event) {
     if (preview) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        preview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:120px;object-fit:cover;border-radius:12px;">`;
+        preview.innerHTML = `<img src="${e.target.result}" style="width:120px;height:120px;object-fit:cover;border-radius:16px;display:block;">`;
       };
       reader.readAsDataURL(file);
     }
