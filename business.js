@@ -58,20 +58,35 @@ function businessAvatarHtml(b, size = 54) {
 // Обработка выбора обложки бизнеса
 function handleBusinessCoverSelect(event) {
   const file = event.target.files[0];
+  event.target.value = '';
   if (!file) return;
   if (!file.type.startsWith('image/')) { showToast('❌ Выберите изображение', '#FF3B30'); return; }
   if (file.size > 5 * 1024 * 1024) { showToast('❌ Макс. размер 5 МБ', '#FF3B30'); return; }
-  _businessCoverFile = file;
-  // Показываем превью
-  const preview = document.getElementById('bf-cover-preview');
-  if (preview) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      preview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:120px;object-fit:cover;border-radius:12px;">`;
-    };
-    reader.readAsDataURL(file);
+
+  // Открываем кроппер (16:9 для обложки бизнеса)
+  if (typeof openImageCropper === 'function') {
+    openImageCropper(file, (croppedBlob) => {
+      _businessCoverFile = croppedBlob;
+      const preview = document.getElementById('bf-cover-preview') || document.getElementById('biz-cover-preview');
+      if (preview) {
+        const url = URL.createObjectURL(croppedBlob);
+        preview.innerHTML = `<img src="${url}" style="width:100%;height:120px;object-fit:cover;border-radius:12px;">`;
+      }
+      showToast('✅ Обложка выбрана');
+    }, 16/9);
+  } else {
+    // Fallback без кроппера
+    _businessCoverFile = file;
+    const preview = document.getElementById('bf-cover-preview') || document.getElementById('biz-cover-preview');
+    if (preview) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        preview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:120px;object-fit:cover;border-radius:12px;">`;
+      };
+      reader.readAsDataURL(file);
+    }
+    showToast('✅ Обложка выбрана');
   }
-  showToast('✅ Обложка выбрана');
 }
 
 // Загрузка обложки бизнеса в Supabase Storage

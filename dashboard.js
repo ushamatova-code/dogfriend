@@ -846,18 +846,40 @@ function removeProductPhoto(index, type) {
   renderProductPhotosRow();
 }
 
+let _productCropQueue = []; // очередь файлов для кропа
+
 function handleProductPhotos(input) {
   const files = Array.from(input.files);
-  const total = _productPhotoUrls.length + _productPhotoFiles.length + files.length;
-  if (total > 5) {
-    showToast('Максимум 5 фотографий');
-    const allowed = 5 - _productPhotoUrls.length - _productPhotoFiles.length;
-    _productPhotoFiles.push(...files.slice(0, allowed));
-  } else {
-    _productPhotoFiles.push(...files);
-  }
   input.value = '';
-  renderProductPhotosRow();
+
+  const total = _productPhotoUrls.length + _productPhotoFiles.length + files.length;
+  const allowed = Math.min(files.length, 5 - _productPhotoUrls.length - _productPhotoFiles.length);
+  if (allowed <= 0) { showToast('Максимум 5 фотографий'); return; }
+
+  const toProcess = files.slice(0, allowed);
+
+  if (typeof openImageCropper === 'function') {
+    // Открываем кроппер для каждого фото по очереди
+    _productCropQueue = [...toProcess];
+    openNextProductCrop();
+  } else {
+    _productPhotoFiles.push(...toProcess);
+    renderProductPhotosRow();
+  }
+}
+
+function openNextProductCrop() {
+  if (!_productCropQueue.length) return;
+  const file = _productCropQueue.shift();
+  openImageCropper(file, (croppedBlob) => {
+    croppedBlob.name = file.name;
+    _productPhotoFiles.push(croppedBlob);
+    renderProductPhotosRow();
+    // Следующий файл в очереди
+    if (_productCropQueue.length > 0) {
+      setTimeout(() => openNextProductCrop(), 300);
+    }
+  }, 1); // 1:1 для товаров
 }
 
 function addAttrRow() {
