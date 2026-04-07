@@ -634,6 +634,7 @@ CREATE POLICY "Anyone can insert" ON visits FOR INSERT WITH CHECK (true);
 CREATE POLICY "Admin can read" ON visits FOR SELECT USING (true);</pre>
     <button class="btn bed" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);toast('SQL скопирован')">Копировать SQL</button>`;
   }
+}
 
 async function apr(id){const{error}=await sb.from('businesses').update({is_approved:true}).eq('id',id);if(error){toast('Ошибка: '+error.message);return}toast('Одобрено ✓');loadDash();loadBiz()}
 async function unapr(id){await sb.from('businesses').update({is_approved:false}).eq('id',id);toast('Снято');loadBiz()}
