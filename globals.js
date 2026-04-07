@@ -689,3 +689,29 @@ function showToast(msg, bg) {
   document.body.appendChild(t);
   setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},2500);
 }
+
+// ============================================================
+// VISIT TRACKING
+// ============================================================
+async function trackVisit() {
+  if (!supabaseClient) return;
+  const uid = currentUser?.id || userId;
+  if (!uid) return;
+
+  // Не записываем чаще чем раз в 5 минут (чтобы не спамить при перезагрузках)
+  const lastVisit = localStorage.getItem('df_last_visit');
+  const now = Date.now();
+  if (lastVisit && now - parseInt(lastVisit) < 5 * 60 * 1000) return;
+  localStorage.setItem('df_last_visit', now.toString());
+
+  try {
+    await supabaseClient.from('visits').insert({
+      user_id: uid,
+      visited_at: new Date().toISOString(),
+      user_agent: navigator.userAgent || ''
+    });
+  } catch(e) {
+    // Таблица может не существовать — молча игнорируем
+    console.log('Visit track:', e.message || '');
+  }
+}

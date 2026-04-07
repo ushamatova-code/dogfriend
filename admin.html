@@ -97,6 +97,7 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); c
 /* ── STAT GRID ── */
 .sg { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
 @media (min-width: 640px) { .sg { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 1100px) { .sg { grid-template-columns: repeat(4, 1fr); } }
 .sc { background: var(--w); border-radius: var(--r); padding: 16px; box-shadow: var(--shadow); border: 1px solid var(--b); }
 .sc .lb { font-size: 11px; color: var(--m); font-weight: 500; margin-bottom: 6px; }
 .sc .vl { font-size: 26px; font-weight: 800; font-family: 'Nunito'; color: var(--t); line-height: 1; }
@@ -293,7 +294,10 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); c
     <!-- DASHBOARD -->
     <div class="sec on" id="s-dash">
       <div class="sg" id="stats"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;" id="dash-charts"></div>
       <div class="cd"><h2>⏳ Ожидают одобрения</h2><div id="pend"></div></div>
+      <div class="cd"><h2>👀 Заходы сегодня</h2><div id="dash-visits"></div></div>
+      <div class="cd"><h2>🆕 Последние регистрации</h2><div id="dash-recent-users"></div></div>
     </div>
 
     <!-- BUSINESSES -->
@@ -303,6 +307,19 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); c
         <div class="tab" onclick="fb('pending',this)">Ожидают</div>
         <div class="tab" onclick="fb('approved',this)">Одобрены</div>
       </div>
+      <div class="search-wrap">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--m)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" id="biz-search" placeholder="Поиск по названию, телефону, адресу..." oninput="filterBiz()">
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+        <button class="uf-btn on" onclick="setBizType('all',this)">Все типы</button>
+        <button class="uf-btn" onclick="setBizType('trainer',this)">Кинологи</button>
+        <button class="uf-btn" onclick="setBizType('grooming',this)">Груминг</button>
+        <button class="uf-btn" onclick="setBizType('dogsitting',this)">Передержка</button>
+        <button class="uf-btn" onclick="setBizType('shop',this)">Магазины</button>
+        <button class="uf-btn" onclick="setBizType('clinic',this)">Клиники</button>
+      </div>
+      <div id="biz-count" style="font-size:12px;color:var(--m);margin-bottom:8px;"></div>
       <div id="bl"></div>
     </div>
 
@@ -366,7 +383,15 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); c
 
     <!-- MODERATION -->
     <div class="sec" id="s-moderation">
-      <div class="tabs"><div class="tab on" onclick="loadModerationTab('public',this)">Общий чат</div><div class="tab" onclick="loadModerationTab('private',this)">Личные</div><div class="tab" onclick="loadModerationTab('reports',this)">Жалобы</div></div>
+      <div class="tabs"><div class="tab on" onclick="loadModerationTab('public',this)">Общий чат</div><div class="tab" onclick="loadModerationTab('private',this)">Личные</div><div class="tab" onclick="loadModerationTab('banned',this)">Забаненные</div></div>
+      <div class="search-wrap" style="margin-top:8px">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--m)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" id="mod-search" placeholder="Поиск по тексту, имени отправителя..." oninput="filterModMessages()">
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;margin-top:6px;flex-wrap:wrap;">
+        <button class="btn bed" id="mod-select-all-btn" onclick="toggleSelectAllMod()" style="font-size:11px;">☐ Выбрать все</button>
+        <button class="btn bno" id="mod-bulk-delete-btn" onclick="bulkDeleteMessages()" style="font-size:11px;display:none;">🗑 Удалить выбранные</button>
+      </div>
       <div id="mod-list"></div>
     </div>
 
@@ -453,11 +478,162 @@ if(id==='push'){const k=localStorage.getItem('os_api_key');if(k)document.getElem
 
 // ═══ DASHBOARD ═══
 async function loadDash(){
-  const[b,u,e,p,pe]=await Promise.all([sb.from('businesses').select('id,is_approved,created_at,name,type'),sb.from('profiles').select('id'),sb.from('events').select('id'),sb.from('promotions').select('id,is_active'),sb.from('pets').select('id')]);
-  const bd=b.data||[],ud=u.data||[],ed=e.data||[],pd=p.data||[],ped=pe.data||[],pn=bd.filter(x=>!x.is_approved);
-  document.getElementById('stats').innerHTML=`<div class="sc"><div class="lb">Пользователи</div><div class="vl">${ud.length}</div></div><div class="sc"><div class="lb">Бизнесы</div><div class="vl">${bd.length}</div><div class="sub">${pn.length} ожидают</div></div><div class="sc"><div class="lb">События</div><div class="vl">${ed.length}</div></div><div class="sc"><div class="lb">Питомцы</div><div class="vl">${ped.length}</div></div>`;
+  const now = new Date();
+  const weekAgo = new Date(now - 7*24*60*60*1000);
+  const twoWeeksAgo = new Date(now - 14*24*60*60*1000);
+  const wISO = weekAgo.toISOString(), twISO = twoWeeksAgo.toISOString();
+
+  const[b,u,e,p,pe,bk,msgs]=await Promise.all([
+    sb.from('businesses').select('id,is_approved,created_at,name,type'),
+    sb.from('profiles').select('id,created_at,name'),
+    sb.from('events').select('id,created_at'),
+    sb.from('promotions').select('id,is_active'),
+    sb.from('pets').select('id,created_at'),
+    sb.from('bookings').select('id,created_at,amount'),
+    sb.from('direct_messages').select('id,created_at').order('created_at',{ascending:false}).limit(5000)
+  ]);
+  const bd=b.data||[],ud=u.data||[],ed=e.data||[],pd=p.data||[],ped=pe.data||[],bkd=bk.data||[],msgd=msgs.data||[];
+  const pn=bd.filter(x=>!x.is_approved);
+
+  // Тренды за неделю vs предыдущую
+  function trend(arr){
+    const thisW = arr.filter(x=>x.created_at && new Date(x.created_at)>=weekAgo).length;
+    const prevW = arr.filter(x=>x.created_at && new Date(x.created_at)>=twoWeeksAgo && new Date(x.created_at)<weekAgo).length;
+    const diff = thisW - prevW;
+    const pct = prevW > 0 ? Math.round((diff/prevW)*100) : (thisW > 0 ? 100 : 0);
+    return {thisW, diff, pct};
+  }
+  const uT=trend(ud), bT=trend(bd), eT=trend(ed), peT=trend(ped), bkT=trend(bkd), mT=trend(msgd);
+  const revenue = bkd.reduce((s,x)=>s+(x.amount||0),0);
+  const revWeek = bkd.filter(x=>x.created_at&&new Date(x.created_at)>=weekAgo).reduce((s,x)=>s+(x.amount||0),0);
+
+  function trendHtml(t){
+    if(t.diff===0) return '<div class="trend" style="color:var(--m)">— без изменений</div>';
+    return `<div class="trend ${t.diff>0?'up':''}" style="color:${t.diff>0?'var(--ok)':'var(--err)'}">${t.diff>0?'↑':'↓'} ${Math.abs(t.diff)} (${t.diff>0?'+':''}${t.pct}%)</div>`;
+  }
+
+  document.getElementById('stats').innerHTML=`
+    <div class="sc"><div class="lb">Пользователи</div><div class="vl">${ud.length}</div><div class="sub">+${uT.thisW} за неделю</div>${trendHtml(uT)}</div>
+    <div class="sc"><div class="lb">Бизнесы</div><div class="vl">${bd.length}</div><div class="sub">${pn.length} ожидают</div>${trendHtml(bT)}</div>
+    <div class="sc"><div class="lb">Заказы</div><div class="vl">${bkd.length}</div><div class="sub">${revWeek?revWeek.toLocaleString('ru')+' ₽ / нед':'0 ₽'}</div>${trendHtml(bkT)}</div>
+    <div class="sc"><div class="lb">Сообщения</div><div class="vl">${msgd.length}</div><div class="sub">+${mT.thisW} за неделю</div>${trendHtml(mT)}</div>
+    <div class="sc"><div class="lb">События</div><div class="vl">${ed.length}</div><div class="sub">+${eT.thisW} за неделю</div>${trendHtml(eT)}</div>
+    <div class="sc"><div class="lb">Питомцы</div><div class="vl">${ped.length}</div><div class="sub">+${peT.thisW} за неделю</div>${trendHtml(peT)}</div>
+    <div class="sc"><div class="lb">Выручка</div><div class="vl">${revenue?revenue.toLocaleString('ru')+'₽':'0'}</div><div class="sub">Всего</div></div>
+    <div class="sc"><div class="lb">Акции</div><div class="vl">${pd.length}</div><div class="sub">${pd.filter(x=>x.is_active).length} активных</div></div>`;
+
+  // Мини-графики
+  const dc=document.getElementById('dash-charts');
+  if(dc) {
+    dc.innerHTML=`<div class="cd" style="margin:0"><h2 style="font-size:12px">Регистрации (7 дн)</h2><canvas id="dc-users" height="80"></canvas></div>
+      <div class="cd" style="margin:0"><h2 style="font-size:12px">Сообщения (7 дн)</h2><canvas id="dc-msgs" height="80"></canvas></div>`;
+    const labels7=[];const uD7=[],mD7=[];
+    for(let i=6;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i);const ds=d.toISOString().split('T')[0];labels7.push(d.toLocaleDateString('ru',{day:'numeric',month:'short'}));uD7.push(ud.filter(x=>x.created_at&&x.created_at.startsWith(ds)).length);mD7.push(msgd.filter(x=>x.created_at&&x.created_at.startsWith(ds)).length);}
+    setTimeout(()=>{drawChart('dc-users',labels7,uD7,'','#4A90D9');drawChart('dc-msgs',labels7,mD7,'','#34C759');},50);
+  }
+
+  // Pending
   document.getElementById('pend').innerHTML=pn.length?pn.map(x=>`<div style="padding:10px 0;border-bottom:1px solid var(--b)"><div class="lt"><span class="ln">${x.name}</span><span class="badge bt">${x.type}</span></div><div class="la"><button class="btn bok" onclick="apr('${x.id}')">Одобрить</button><button class="btn bno" onclick="del('businesses','${x.id}')">Отклонить</button></div></div>`).join(''):'<div class="emp">Нет заявок</div>';
+
+  // Recent users
+  const recent = ud.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,5);
+  const ru=document.getElementById('dash-recent-users');
+  if(ru) ru.innerHTML=recent.map(u=>{
+    const d=u.created_at?new Date(u.created_at).toLocaleDateString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+    return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--b);font-size:13px"><span class="ln">${u.name||'Гость'}</span><span class="lm">${d}</span></div>`;
+  }).join('')||'<div class="emp">Нет пользователей</div>';
+
+  // Visits today
+  loadVisitsBlock();
 }
+
+async function loadVisitsBlock(){
+  const vEl=document.getElementById('dash-visits');
+  if(!vEl)return;
+  vEl.innerHTML='<div class="lm">Загрузка...</div>';
+
+  try{
+    const todayStart=new Date();todayStart.setHours(0,0,0,0);
+    const yesterdayStart=new Date(todayStart);yesterdayStart.setDate(yesterdayStart.getDate()-1);
+
+    const{data:todayVisits,error}=await sb.from('visits').select('user_id,visited_at,user_agent').gte('visited_at',todayStart.toISOString()).order('visited_at',{ascending:false});
+    if(error)throw error;
+
+    const{data:yesterdayVisits}=await sb.from('visits').select('user_id').gte('visited_at',yesterdayStart.toISOString()).lt('visited_at',todayStart.toISOString());
+
+    const tv=todayVisits||[];
+    const yv=yesterdayVisits||[];
+
+    // Уникальные пользователи
+    const uniqueToday=new Set(tv.map(v=>v.user_id)).size;
+    const uniqueYesterday=new Set(yv.map(v=>v.user_id)).size;
+    const diff=uniqueToday-uniqueYesterday;
+
+    // Подгружаем имена для сегодняшних визитов
+    const uids=[...new Set(tv.map(v=>v.user_id))];
+    let nameMap={};
+    if(uids.length){
+      const{data:profiles}=await sb.from('profiles').select('id,user_id,name').or(uids.map(id=>`user_id.eq.${id}`).join(','));
+      (profiles||[]).forEach(p=>{nameMap[p.user_id]=p.name;nameMap[p.id]=p.name;});
+    }
+
+    // Устройства
+    const devices={ios:0,android:0,desktop:0};
+    tv.forEach(v=>{
+      const ua=(v.user_agent||'').toLowerCase();
+      if(ua.includes('iphone')||ua.includes('ipad'))devices.ios++;
+      else if(ua.includes('android'))devices.android++;
+      else devices.desktop++;
+    });
+
+    // Группируем по часам
+    const hourMap={};
+    tv.forEach(v=>{const h=new Date(v.visited_at).getHours();hourMap[h]=(hourMap[h]||0)+1;});
+
+    vEl.innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
+        <div style="background:var(--bg);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:24px;font-weight:800;color:var(--p)">${uniqueToday}</div>
+          <div style="font-size:11px;color:var(--m)">уник. сегодня</div>
+          <div style="font-size:11px;font-weight:600;color:${diff>=0?'var(--ok)':'var(--err)'}">${diff>=0?'↑':'↓'} ${Math.abs(diff)} vs вчера</div>
+        </div>
+        <div style="background:var(--bg);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:24px;font-weight:800;color:var(--t)">${tv.length}</div>
+          <div style="font-size:11px;color:var(--m)">всего заходов</div>
+        </div>
+        <div style="background:var(--bg);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:13px;font-weight:700">📱 ${devices.ios+devices.android}</div>
+          <div style="font-size:13px;font-weight:700">💻 ${devices.desktop}</div>
+          <div style="font-size:11px;color:var(--m)">устройства</div>
+        </div>
+      </div>
+      ${uids.length?`<div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--m)">Кто заходил сегодня:</div>
+      <div style="max-height:200px;overflow-y:auto">${tv.reduce((acc,v)=>{
+        if(acc.seen.has(v.user_id))return acc;
+        acc.seen.add(v.user_id);
+        const name=nameMap[v.user_id]||'Гость';
+        const time=new Date(v.visited_at).toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'});
+        const ua=(v.user_agent||'').toLowerCase();
+        const device=ua.includes('iphone')||ua.includes('ipad')?'📱':ua.includes('android')?'📱':'💻';
+        acc.html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--b);font-size:12px">
+          <span style="font-weight:600">${device} ${name}</span><span style="color:var(--m)">${time}</span></div>`;
+        return acc;
+      },{seen:new Set(),html:''}).html}</div>`:'<div class="emp">Пока никто не заходил</div>'}`;
+
+  }catch(e){
+    console.error('Visits load error:',e);
+    vEl.innerHTML=`<div class="lm" style="padding:12px">Таблица visits не найдена. Создайте в Supabase:</div>
+    <pre style="font-size:11px;background:var(--bg);padding:12px;border-radius:10px;white-space:pre-wrap;margin:0 0 8px">CREATE TABLE visits (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id text NOT NULL,
+  visited_at timestamptz DEFAULT now(),
+  user_agent text DEFAULT ''
+);
+ALTER TABLE visits ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can insert" ON visits FOR INSERT WITH CHECK (true);
+CREATE POLICY "Admin can read" ON visits FOR SELECT USING (true);</pre>
+    <button class="btn bed" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);toast('SQL скопирован')">Копировать SQL</button>`;
+  }
 
 async function apr(id){const{error}=await sb.from('businesses').update({is_approved:true}).eq('id',id);if(error){toast('Ошибка: '+error.message);return}toast('Одобрено ✓');loadDash();loadBiz()}
 async function unapr(id){await sb.from('businesses').update({is_approved:false}).eq('id',id);toast('Снято');loadBiz()}
@@ -465,26 +641,149 @@ async function del(t,id){if(!confirm('Удалить?'))return;const{error}=awai
 
 // ═══ BUSINESSES ═══
 let _bf='all';
+let _bizType='all';
+let _allBiz=[];
+let _bizLocMap={};
+
 function fb(f,el){_bf=f;document.querySelectorAll('#btabs .tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');loadBiz()}
+function setBizType(t,el){_bizType=t;document.querySelectorAll('#s-biz .uf-btn').forEach(b=>b.classList.remove('on'));el.classList.add('on');filterBiz();}
+
 async function loadBiz(){
   let q=sb.from('businesses').select('*').order('created_at',{ascending:false});
   if(_bf==='pending')q=q.eq('is_approved',false);if(_bf==='approved')q=q.eq('is_approved',true);
   const{data}=await q;
-  if(!data||!data.length){document.getElementById('bl').innerHTML='<div class="emp">Пусто</div>';return}
+  _allBiz=data||[];
 
-  // Подгружаем адреса для всех бизнесов
-  const bizIds = data.map(b => b.id);
-  const {data: locs} = await sb.from('business_locations').select('*').in('business_id', bizIds);
-  const locMap = {};
-  (locs||[]).forEach(l => { if(!locMap[l.business_id]) locMap[l.business_id]=[]; locMap[l.business_id].push(l); });
+  // Подгружаем адреса
+  if(_allBiz.length){
+    const bizIds=_allBiz.map(b=>b.id);
+    const{data:locs}=await sb.from('business_locations').select('*').in('business_id',bizIds);
+    _bizLocMap={};(locs||[]).forEach(l=>{if(!_bizLocMap[l.business_id])_bizLocMap[l.business_id]=[];_bizLocMap[l.business_id].push(l);});
+  }
+  filterBiz();
+}
 
-  document.getElementById('bl').innerHTML=data.map(b=>{
-    const bLocs = locMap[b.id] || [];
-    const addrHtml = bLocs.length > 1
-      ? bLocs.map(l => `<div>📍 ${l.address}${l.is_main?' <span style="color:var(--p);font-size:10px;">(осн.)</span>':''}</div>`).join('')
-      : `<span>📍 ${b.address||bLocs[0]?.address||'—'}</span>`;
-    return `<div class="cd"><div class="lt"><div><span class="ln">${b.name}</span> <span class="badge bt">${b.type}</span></div><span class="badge ${b.is_approved?'bo':'bw'}">${b.is_approved?'Одобрен':'Ожидает'}</span></div><div class="lm" style="margin-top:4px">${addrHtml} ${b.phone?'· '+b.phone:''}<br>${b.description?b.description.substring(0,120)+'...':''}</div><div class="la">${!b.is_approved?'<button class="btn bok" onclick="apr(\''+b.id+'\')">Одобрить</button>':'<button class="btn bed" onclick="unapr(\''+b.id+'\')">Снять</button>'}<button class="btn bno" onclick="del('businesses','${b.id}')">Удалить</button></div></div>`;
+function filterBiz(){
+  const q=(document.getElementById('biz-search')?.value||'').toLowerCase().trim();
+  let list=_allBiz.filter(b=>{
+    if(_bizType!=='all'&&b.type!==_bizType) return false;
+    if(q){
+      const s=[b.name,b.phone,b.email,b.address,b.description,b.type].join(' ').toLowerCase();
+      if(!s.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const ct=document.getElementById('biz-count');
+  if(ct)ct.textContent=`Показано: ${list.length} из ${_allBiz.length}`;
+
+  if(!list.length){document.getElementById('bl').innerHTML='<div class="emp">Пусто</div>';return}
+
+  document.getElementById('bl').innerHTML=list.map(b=>{
+    const bLocs=_bizLocMap[b.id]||[];
+    const addrHtml=bLocs.length>1?bLocs.map(l=>`<div>📍 ${l.address}${l.is_main?' <span style="color:var(--p);font-size:10px;">(осн.)</span>':''}</div>`).join(''):`<span>📍 ${b.address||bLocs[0]?.address||'—'}</span>`;
+    const created=b.created_at?new Date(b.created_at).toLocaleDateString('ru',{day:'numeric',month:'short',year:'2-digit'}):'';
+    return `<div class="cd"><div class="lt"><div><span class="ln">${b.name}</span> <span class="badge bt">${b.type}</span></div><span class="badge ${b.is_approved?'bo':'bw'}">${b.is_approved?'Одобрен':'Ожидает'}</span></div>
+    <div class="lm" style="margin-top:4px">${addrHtml} ${b.phone?'· '+b.phone:''} ${created?'· '+created:''}<br>${b.description?b.description.substring(0,120)+'...':''}</div>
+    <div class="la">
+      ${!b.is_approved?'<button class="btn bok" onclick="apr(\''+b.id+'\')">Одобрить</button>':'<button class="btn bed" onclick="unapr(\''+b.id+'\')">Снять</button>'}
+      <button class="btn bed" onclick="editBizAdmin('${b.id}')">✏️ Редактировать</button>
+      <button class="btn bno" onclick="del('businesses','${b.id}')">Удалить</button>
+    </div></div>`;
   }).join('');
+}
+
+// Редактирование бизнеса из админки
+async function editBizAdmin(bizId){
+  const biz=_allBiz.find(b=>b.id===bizId);
+  if(!biz) return;
+  const body=document.getElementById('userModalBody');
+  const locs=_bizLocMap[bizId]||[];
+  const addrs=locs.length?locs.map(l=>l.address).join('\n'):(biz.address||'');
+  const svcText=Array.isArray(biz.services)?biz.services.map(s=>typeof s==='string'?s:`${s.name} — ${s.price||''}`).join('\n'):'';
+
+  body.innerHTML=`
+    <h3 style="margin-bottom:14px">Редактировать: ${biz.name}</h3>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
+      <label style="font-size:12px;color:var(--m);font-weight:600">Название</label>
+      <input id="eb-name" value="${biz.name||''}" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-size:14px;font-family:inherit">
+      <label style="font-size:12px;color:var(--m);font-weight:600">Тип</label>
+      <select id="eb-type" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-family:inherit">
+        ${['trainer','grooming','dogsitting','psychologist','walking','training_ground','clinic','cafe','shop','vet','other'].map(t=>`<option value="${t}" ${biz.type===t?'selected':''}>${t}</option>`).join('')}
+      </select>
+      <label style="font-size:12px;color:var(--m);font-weight:600">Описание</label>
+      <textarea id="eb-desc" style="min-height:80px;border:1.5px solid var(--b);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;resize:none">${biz.description||''}</textarea>
+      <label style="font-size:12px;color:var(--m);font-weight:600">Телефон</label>
+      <input id="eb-phone" value="${biz.phone||''}" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-size:14px;font-family:inherit">
+      <label style="font-size:12px;color:var(--m);font-weight:600">Email</label>
+      <input id="eb-email" value="${biz.email||''}" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-size:14px;font-family:inherit">
+      <label style="font-size:12px;color:var(--m);font-weight:600">Адреса (каждый с новой строки)</label>
+      <textarea id="eb-address" style="min-height:60px;border:1.5px solid var(--b);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;resize:none">${addrs}</textarea>
+      <label style="font-size:12px;color:var(--m);font-weight:600">Цена от</label>
+      <input id="eb-price" value="${biz.price_from||''}" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-size:14px;font-family:inherit">
+      <label style="font-size:12px;color:var(--m);font-weight:600">Услуги (каждая с новой строки: название — цена)</label>
+      <textarea id="eb-services" style="min-height:80px;border:1.5px solid var(--b);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;resize:none">${svcText}</textarea>
+      <label style="font-size:12px;color:var(--m);font-weight:600">Расписание</label>
+      <input id="eb-schedule" value="${biz.schedule||''}" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-size:14px;font-family:inherit">
+      <label style="font-size:12px;color:var(--m);font-weight:600">Telegram</label>
+      <input id="eb-telegram" value="${biz.telegram||''}" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-size:14px;font-family:inherit">
+      <label style="font-size:12px;color:var(--m);font-weight:600">Instagram</label>
+      <input id="eb-instagram" value="${biz.instagram||''}" style="height:44px;border:1.5px solid var(--b);border-radius:10px;padding:0 12px;font-size:14px;font-family:inherit">
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+        <input type="checkbox" id="eb-approved" ${biz.is_approved?'checked':''} style="width:18px;height:18px;">
+        <label for="eb-approved" style="font-size:13px;font-weight:600">Одобрен</label>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn bok" style="flex:1" onclick="saveBizAdmin('${bizId}')">Сохранить</button>
+      <button class="btn bed" style="flex:1" onclick="document.getElementById('userModal').classList.remove('open')">Отмена</button>
+    </div>`;
+  document.getElementById('userModal').classList.add('open');
+}
+
+async function saveBizAdmin(bizId){
+  const name=document.getElementById('eb-name').value.trim();
+  if(!name){toast('Введите название');return}
+
+  // Парсим услуги
+  const svcLines=document.getElementById('eb-services').value.trim().split('\n').filter(Boolean);
+  const services=svcLines.map(l=>{
+    const parts=l.split('—').map(s=>s.trim());
+    return parts.length>1?{name:parts[0],price:parts[1]}:{name:parts[0],price:''};
+  });
+
+  const upd={
+    name,
+    type: document.getElementById('eb-type').value,
+    description: document.getElementById('eb-desc').value.trim(),
+    phone: document.getElementById('eb-phone').value.trim(),
+    email: document.getElementById('eb-email').value.trim(),
+    address: document.getElementById('eb-address').value.trim().split('\n')[0]||'',
+    price_from: document.getElementById('eb-price').value.trim(),
+    services: services.length?services:null,
+    schedule: document.getElementById('eb-schedule').value.trim(),
+    telegram: document.getElementById('eb-telegram').value.trim(),
+    instagram: document.getElementById('eb-instagram').value.trim(),
+    is_approved: document.getElementById('eb-approved').checked,
+    updated_at: new Date().toISOString()
+  };
+
+  try{
+    const{error}=await sb.from('businesses').update(upd).eq('id',bizId);
+    if(error)throw error;
+
+    // Обновляем адреса в business_locations
+    const addrs=document.getElementById('eb-address').value.trim().split('\n').filter(Boolean);
+    if(addrs.length){
+      await sb.from('business_locations').delete().eq('business_id',bizId);
+      const locRows=addrs.map((addr,i)=>({business_id:bizId,address:addr,is_main:i===0}));
+      await sb.from('business_locations').insert(locRows);
+    }
+
+    toast('Сохранено ✓');
+    document.getElementById('userModal').classList.remove('open');
+    loadBiz();
+  }catch(e){toast('Ошибка: '+(e.message||''));}
 }
 
 // ═══ USERS ═══
@@ -753,11 +1052,17 @@ async function openUserModal(userId){
 }
 
 async function blockUser(userId){
-  if(!confirm('Заблокировать пользователя? Его профиль будет удалён.'))return;
+  const reason=prompt('Причина бана:');
+  if(reason===null)return;
   try{
-    await sb.from('pets').delete().eq('user_id',userId);
-    await sb.from('profiles').delete().eq('user_id',userId);
-    toast('Пользователь заблокирован');
+    await sb.from('profiles').update({
+      is_banned:true,
+      banned_at:new Date().toISOString(),
+      ban_reason:reason||'Нарушение правил'
+    }).or(`id.eq.${userId},user_id.eq.${userId}`);
+    // Удаляем сообщения из общего чата
+    await sb.from('direct_messages').delete().eq('sender_id',userId).eq('room_id','public_chat');
+    toast('Пользователь забанен');
     document.getElementById('userModal').classList.remove('open');
     loadUsers();loadDash();
   }catch(e){toast('Ошибка: '+e.message)}
@@ -915,22 +1220,150 @@ function drawChart(canvasId,labels,data,label,color){
 
 // ═══ MODERATION ═══
 let _modTab='public';
+let _modMessages=[];
+let _modSelected=new Set();
+
 async function loadModerationTab(tab,el){
-  _modTab=tab;if(el){document.querySelectorAll('#s-moderation .tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');}
+  _modTab=tab;_modSelected.clear();
+  if(el){document.querySelectorAll('#s-moderation .tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');}
   const list=document.getElementById('mod-list');list.innerHTML='<div class="emp">Загрузка...</div>';
-  
-  if(tab==='public'){
-    const{data}=await sb.from('direct_messages').select('*').eq('room_id','public_chat').order('created_at',{ascending:false}).limit(50);
-    list.innerHTML=(data||[]).map(m=>`<div class="cd" style="margin-bottom:6px"><div class="lt"><div class="ln">${m.sender_name}</div><div class="lm">${new Date(m.created_at).toLocaleString('ru')}</div></div><div style="font-size:13px;margin:6px 0">${m.text?.substring(0,200)||''}</div><div class="la"><button class="btn bno" onclick="deleteMsg('${m.id}')">Удалить</button><button class="btn bed" onclick="banUserFromChat('${m.sender_id}','${m.sender_name}')">Бан</button></div></div>`).join('')||'<div class="emp">Нет сообщений</div>';
-  } else if(tab==='private'){
-    const{data}=await sb.from('direct_messages').select('*').neq('room_id','public_chat').order('created_at',{ascending:false}).limit(50);
-    list.innerHTML=(data||[]).map(m=>`<div class="cd" style="margin-bottom:6px"><div class="lt"><div class="ln">${m.sender_name} → ${m.room_id?.substring(0,8)}...</div><div class="lm">${new Date(m.created_at).toLocaleString('ru')}</div></div><div style="font-size:13px;margin:6px 0">${m.text?.substring(0,200)||''}</div><div class="la"><button class="btn bno" onclick="deleteMsg('${m.id}')">Удалить</button></div></div>`).join('')||'<div class="emp">Нет сообщений</div>';
-  } else {
-    list.innerHTML='<div class="emp">Система жалоб в разработке. Пока используйте вкладку «Обратная связь».</div>';
+  document.getElementById('mod-search').value='';
+  const bulkBtn=document.getElementById('mod-bulk-delete-btn');if(bulkBtn)bulkBtn.style.display='none';
+
+  if(tab==='banned'){
+    // Показываем забаненных
+    const{data}=await sb.from('profiles').select('*').eq('is_banned',true);
+    if(!data||!data.length){list.innerHTML='<div class="emp">Нет забаненных пользователей</div>';return;}
+    list.innerHTML=data.map(u=>{
+      const name=u.name||'Гость';
+      const banDate=u.banned_at?new Date(u.banned_at).toLocaleDateString('ru',{day:'numeric',month:'short'}):'—';
+      return `<div class="cd" style="margin-bottom:6px"><div class="lt"><div><span class="ln">${name}</span> <span class="lm">${u.email||''}</span></div><span class="badge bn2">Забанен ${banDate}</span></div>
+        <div class="lm" style="margin-top:4px">${u.ban_reason||'Без причины'}</div>
+        <div class="la"><button class="btn bok" onclick="unbanUser('${u.user_id||u.id}')">Разбанить</button></div></div>`;
+    }).join('');
+    return;
+  }
+
+  // Загружаем сообщения
+  let q=sb.from('direct_messages').select('*').order('created_at',{ascending:false}).limit(100);
+  if(tab==='public') q=q.eq('room_id','public_chat');
+  else q=q.neq('room_id','public_chat');
+  const{data}=await q;
+  _modMessages=data||[];
+  filterModMessages();
+}
+
+function filterModMessages(){
+  const q=(document.getElementById('mod-search')?.value||'').toLowerCase().trim();
+  const filtered=_modMessages.filter(m=>{
+    if(!q)return true;
+    const s=[m.sender_name,m.text,m.room_id].join(' ').toLowerCase();
+    return s.includes(q);
+  });
+
+  const list=document.getElementById('mod-list');
+  if(!filtered.length){list.innerHTML='<div class="emp">Нет сообщений</div>';return;}
+
+  list.innerHTML=filtered.map(m=>{
+    const checked=_modSelected.has(m.id)?'checked':'';
+    const isPrivate=_modTab==='private';
+    const time=new Date(m.created_at).toLocaleString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    return `<div class="cd" style="margin-bottom:4px;${_modSelected.has(m.id)?'border-color:var(--err);background:rgba(239,68,68,.03)':''}">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <input type="checkbox" ${checked} onchange="toggleModSelect('${m.id}')" style="margin-top:4px;width:16px;height:16px;flex-shrink:0;">
+        <div style="flex:1;min-width:0">
+          <div class="lt"><div class="ln">${m.sender_name||'?'}${isPrivate?' → <span style="font-weight:400;color:var(--m)">'+((m.room_id||'').substring(0,12))+'...</span>':''}</div><div class="lm">${time}</div></div>
+          <div style="font-size:13px;margin:4px 0;word-break:break-word">${(m.text||'').substring(0,300)}</div>
+          <div class="la">
+            <button class="btn bno" onclick="deleteMsg('${m.id}')" style="font-size:11px">🗑 Удалить</button>
+            <button class="btn bno" onclick="banUserFromChat('${m.sender_id}','${m.sender_name||'?'}')" style="font-size:11px">🚫 Бан</button>
+            <button class="btn bed" onclick="openUserModal('${m.sender_id}')" style="font-size:11px">👤 Профиль</button>
+            <button class="btn bed" onclick="deleteAllUserMessages('${m.sender_id}','${m.sender_name||'?'}')" style="font-size:11px">🗑 Все от ${(m.sender_name||'?').split(' ')[0]}</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleModSelect(id){
+  if(_modSelected.has(id))_modSelected.delete(id);else _modSelected.add(id);
+  const btn=document.getElementById('mod-bulk-delete-btn');
+  if(btn)btn.style.display=_modSelected.size?'':'none';
+  if(btn)btn.textContent=`🗑 Удалить выбранные (${_modSelected.size})`;
+  filterModMessages();
+}
+function toggleSelectAllMod(){
+  if(_modSelected.size===_modMessages.length){_modSelected.clear();}
+  else{_modMessages.forEach(m=>_modSelected.add(m.id));}
+  const btn=document.getElementById('mod-bulk-delete-btn');
+  if(btn)btn.style.display=_modSelected.size?'':'none';
+  if(btn)btn.textContent=`🗑 Удалить выбранные (${_modSelected.size})`;
+  filterModMessages();
+}
+
+async function bulkDeleteMessages(){
+  if(!_modSelected.size)return;
+  if(!confirm(`Удалить ${_modSelected.size} сообщений?`))return;
+  const ids=[..._modSelected];
+  for(let i=0;i<ids.length;i+=20){
+    const batch=ids.slice(i,i+20);
+    await sb.from('direct_messages').delete().in('id',batch);
+  }
+  toast(`Удалено ${ids.length} сообщений`);
+  _modSelected.clear();
+  loadModerationTab(_modTab);
+}
+
+async function deleteMsg(id){
+  if(!confirm('Удалить сообщение?'))return;
+  await sb.from('direct_messages').delete().eq('id',id);
+  toast('Удалено');
+  loadModerationTab(_modTab);
+}
+
+async function deleteAllUserMessages(uid,name){
+  if(!confirm(`Удалить ВСЕ сообщения от ${name}?`))return;
+  const room=_modTab==='public'?'public_chat':null;
+  let q=sb.from('direct_messages').delete().eq('sender_id',uid);
+  if(room)q=q.eq('room_id',room);
+  const{error}=await q;
+  if(error){toast('Ошибка: '+error.message);return;}
+  toast(`Все сообщения от ${name} удалены`);
+  loadModerationTab(_modTab);
+}
+
+async function banUserFromChat(uid,name){
+  const reason=prompt(`Причина бана для ${name}:`);
+  if(reason===null)return;
+  try{
+    // Обновляем профиль — ставим флаг бана
+    const{error}=await sb.from('profiles').update({
+      is_banned:true,
+      banned_at:new Date().toISOString(),
+      ban_reason:reason||'Нарушение правил'
+    }).or(`id.eq.${uid},user_id.eq.${uid}`);
+    if(error)throw error;
+
+    // Удаляем все сообщения из общего чата
+    await sb.from('direct_messages').delete().eq('sender_id',uid).eq('room_id','public_chat');
+
+    toast(`${name} забанен. Сообщения из общего чата удалены.`);
+    loadModerationTab(_modTab);
+  }catch(e){
+    toast('Ошибка: '+(e.message||''));
+    console.error('Ban error:',e);
   }
 }
-async function deleteMsg(id){if(!confirm('Удалить сообщение?'))return;await sb.from('direct_messages').delete().eq('id',id);toast('Удалено');loadModerationTab(_modTab);}
-async function banUserFromChat(uid,name){if(!confirm('Заблокировать '+name+'?'))return;toast('Пользователь заблокирован (в разработке)');}
+
+async function unbanUser(uid){
+  if(!confirm('Разбанить пользователя?'))return;
+  try{
+    await sb.from('profiles').update({is_banned:false,banned_at:null,ban_reason:null}).or(`id.eq.${uid},user_id.eq.${uid}`);
+    toast('Разбанен');
+    loadModerationTab('banned');
+  }catch(e){toast('Ошибка: '+(e.message||''));}
+}
 
 // ═══ LOGS ═══
 async function loadLogs(filter,el){

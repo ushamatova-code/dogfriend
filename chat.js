@@ -1087,6 +1087,8 @@ async function checkAuth() {
       checkUserBusiness();
 
       nav('home');
+      // Записываем визит
+      trackVisit();
       // Обновляем статистику после входа (charity block)
       setTimeout(() => loadProfileStats(), 1000);
       // Если открыли с параметром ?chat=userId — сразу открываем чат
@@ -1101,6 +1103,7 @@ async function checkAuth() {
       if (oldRegistered === '1') {
         console.log(' Using localStorage auth');
         nav('home');
+        trackVisit();
       } else {
         console.log('→ Redirecting to login');
         nav('login');
