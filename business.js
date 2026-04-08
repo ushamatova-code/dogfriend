@@ -375,14 +375,21 @@ async function openBusinessProfile(id) {
 
   // Теги услуг
   if (b.services && b.services.length) {
-    document.getElementById('spec-tags').innerHTML = b.services.map(t => `<span class="tag tag-b">${t}</span>`).join('');
+    document.getElementById('spec-tags').innerHTML = b.services.map(t => {
+      const name = typeof t === 'string' ? t : t.name;
+      return `<span class="tag tag-b">${name}</span>`;
+    }).join('');
   } else {
     document.getElementById('spec-tags').innerHTML = '';
   }
 
   // Блок услуг и цен
   const svcList = b.services && b.services.length
-    ? b.services.map((s, i) => ({ name: s, desc: 'Профессионально', price: b.price_from || 'По запросу', sel: i === 0 }))
+    ? b.services.map((s, i) => {
+        const name = typeof s === 'string' ? s : s.name;
+        const price = (typeof s === 'object' && s.price) ? s.price : (b.price_from || 'По запросу');
+        return { name, desc: 'Профессионально', price, sel: i === 0 };
+      })
     : [{ name: 'Консультация', desc: 'Свяжитесь для уточнения', price: b.price_from || 'По запросу', sel: true }];
 
   document.getElementById('spec-services').innerHTML = svcList.map((sv, i) => `

@@ -308,10 +308,10 @@ function renderBizDashboard(biz) {
     const currentServices = biz.services || [];
     html += `<div style="background:var(--white);border-radius:18px;padding:18px;margin-bottom:12px;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
       <div style="font-size:15px;font-weight:800;margin-bottom:4px;">🎯 Мои услуги</div>
-      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">Нажмите чтобы добавить или убрать</div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">Нажмите чтобы добавить/убрать. Цены — в «Редактировать»</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;" id="service-categories-container">
         ${BIZ_SERVICE_CATEGORIES.map(cat => {
-          const isSelected = currentServices.includes(cat.id);
+          const isSelected = currentServices.some(s => (typeof s === 'string' ? s : s.name) === cat.id);
           return `<div onclick="toggleServiceCategory('${cat.id}')" id="service-cat-${cat.id}"
             style="padding:9px 16px;border-radius:20px;border:2px solid ${isSelected ? 'var(--primary)' : 'var(--border)'};background:${isSelected ? 'var(--primary)' : 'var(--bg)'};color:${isSelected ? 'white' : 'var(--text-secondary)'};font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">
             <span>${cat.icon}</span><span>${cat.label}</span>
@@ -326,9 +326,17 @@ function renderBizDashboard(biz) {
     cfg.sections.forEach(sec => {
       let secContent = '';
       if (sec.type === 'checkboxes') {
-        const vals = (biz[sec.id] || []).map(v => SERVICE_LABELS[v] || v);
+        const vals = biz[sec.id] || [];
         if (vals.length) {
-          secContent = `<div style="display:flex;flex-wrap:wrap;gap:6px;">${vals.map(v => `<span style="background:rgba(74,144,217,0.1);color:var(--primary);font-size:13px;font-weight:600;padding:5px 12px;border-radius:20px;">${v}</span>`).join('')}</div>`;
+          secContent = `<div style="display:flex;flex-direction:column;gap:6px;">${vals.map(v => {
+            const name = typeof v === 'string' ? v : v.name;
+            const price = typeof v === 'object' && v.price ? v.price : '';
+            const label = SERVICE_LABELS[name] || name;
+            return `<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(74,144,217,0.06);padding:8px 14px;border-radius:12px;">
+              <span style="font-size:13px;font-weight:600;color:var(--primary);">${label}</span>
+              ${price ? `<span style="font-size:13px;font-weight:700;color:var(--text-primary);">${price}</span>` : ''}
+            </div>`;
+          }).join('')}</div>`;
         }
       } else {
         const filledFields = sec.fields.filter(f => biz[f.id]);
@@ -455,12 +463,16 @@ async function openBizEdit() {
 
     if (sec.type === 'checkboxes') {
       const vals = currentBiz[sec.id] || [];
-      html += `<div style="display:flex;flex-wrap:wrap;gap:8px;" id="biz-edit-checks-${sec.id}">`;
+      html += `<div style="display:flex;flex-direction:column;gap:8px;" id="biz-edit-checks-${sec.id}">`;
       sec.options.forEach(opt => {
-        const checked = vals.includes(opt);
-        html += `<label style="display:flex;align-items:center;gap:6px;background:${checked ? 'rgba(74,144,217,0.1)' : 'var(--bg)'};border:2px solid ${checked ? 'var(--primary)' : 'var(--border)'};border-radius:10px;padding:6px 12px;cursor:pointer;transition:all 0.15s;" onclick="toggleBizCheck(this,'${sec.id}')">
+        // Поддержка старого формата (строки) и нового (объекты {name, price})
+        const svcObj = vals.find(v => (typeof v === 'string' ? v : v.name) === opt);
+        const checked = !!svcObj;
+        const svcPrice = (svcObj && typeof svcObj === 'object') ? (svcObj.price || '') : '';
+        html += `<label style="display:flex;align-items:center;gap:8px;background:${checked ? 'rgba(74,144,217,0.1)' : 'var(--bg)'};border:2px solid ${checked ? 'var(--primary)' : 'var(--border)'};border-radius:12px;padding:8px 12px;cursor:pointer;transition:all 0.15s;" onclick="toggleBizCheck(this,'${sec.id}')">
           <input type="checkbox" value="${opt}" ${checked ? 'checked' : ''} style="display:none;">
-          <span style="font-size:13px;font-weight:600;">${opt}</span>
+          <span style="font-size:13px;font-weight:600;flex:1;">${opt}</span>
+          <input type="text" class="svc-price-input" data-svc="${opt}" value="${svcPrice}" placeholder="Цена" onclick="event.stopPropagation()" style="width:90px;height:32px;border:1.5px solid var(--border);border-radius:8px;padding:0 8px;font-size:12px;font-family:inherit;text-align:right;background:var(--white);outline:none;">
         </label>`;
       });
       html += `</div>`;
@@ -542,7 +554,13 @@ async function saveBizEdit() {
     if (sec.type === 'checkboxes') {
       const container = document.getElementById('biz-edit-checks-' + sec.id);
       if (container) {
-        formData[sec.id] = Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map(i => i.value);
+        const checkedInputs = Array.from(container.querySelectorAll('input[type="checkbox"]:checked'));
+        formData[sec.id] = checkedInputs.map(i => {
+          const name = i.value;
+          const priceInput = container.querySelector(`.svc-price-input[data-svc="${name}"]`);
+          const price = priceInput ? priceInput.value.trim() : '';
+          return price ? { name, price } : name;
+        });
       }
     } else {
       sec.fields.forEach(f => {
@@ -995,13 +1013,17 @@ async function toggleServiceCategory(categoryId) {
   if (!currentBiz) return;
   
   try {
-    // Получаем текущие услуги
+    // Получаем текущие услуги (может быть микс строк и объектов)
     let services = currentBiz.services || [];
     
-    // Переключаем категорию
-    if (services.includes(categoryId)) {
-      services = services.filter(s => s !== categoryId);
+    // Проверяем есть ли уже такая услуга
+    const existingIdx = services.findIndex(s => (typeof s === 'string' ? s : s.name) === categoryId);
+    
+    if (existingIdx >= 0) {
+      // Убираем
+      services = services.filter((_, i) => i !== existingIdx);
     } else {
+      // Добавляем как строку (цену можно будет указать в редактировании)
       services.push(categoryId);
     }
     
@@ -1017,8 +1039,8 @@ async function toggleServiceCategory(categoryId) {
     currentBiz.services = services;
     
     // Обновляем UI
+    const isSelected = existingIdx < 0;
     const elem = document.getElementById(`service-cat-${categoryId}`);
-    const isSelected = services.includes(categoryId);
     if (elem) {
       elem.style.borderColor = isSelected ? 'var(--primary)' : 'var(--border)';
       elem.style.background = isSelected ? 'rgba(74,144,217,0.1)' : 'var(--bg)';
