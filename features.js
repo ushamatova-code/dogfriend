@@ -567,15 +567,15 @@ window.renderCatalog = function() {
       // Кинологи — у кого type=trainer И нет доп. категорий, или services содержит 'trainer'
       filtered = filtered.filter(b => b.type === 'trainer' && (
         !b.services || !b.services.length ||
-        b.services.includes('trainer') ||
+        b.services.some(s => (typeof s === 'string' ? s : s.name) === 'trainer') ||
         // Если services пустой или не содержит специализаций — показываем как кинолога
-        !b.services.some(s => ['grooming','boarding','psychologist','walking'].includes(s))
+        !b.services.some(s => ['grooming','boarding','psychologist','walking'].includes(typeof s === 'string' ? s : s.name))
       ));
     } else if (['grooming','boarding','dogsitting','psychologist','walking','training_ground'].includes(cat.type)) {
       // Специализации — ищем всех у кого в services есть эта категория (тип trainer)
       // dogsitting = boarding (алиасы)
       const serviceKey = cat.type === 'dogsitting' ? 'boarding' : cat.type;
-      filtered = filtered.filter(b => b.type === 'trainer' && b.services && b.services.includes(serviceKey));
+      filtered = filtered.filter(b => b.type === 'trainer' && b.services && b.services.some(s => (typeof s === 'string' ? s : s.name) === serviceKey));
     } else {
       // Другие типы (clinic, cafe, shop) — фильтруем по type
       filtered = filtered.filter(b => b.type === cat.type);
@@ -610,14 +610,14 @@ window.renderCatalog = function() {
       (b.name || '').toLowerCase().includes(searchVal) ||
       (b.description || '').toLowerCase().includes(searchVal) ||
       (b.address || '').toLowerCase().includes(searchVal) ||
-      (b.services || []).some(s => s.toLowerCase().includes(searchVal))
+      (b.services || []).some(s => (typeof s === 'string' ? s : s.name).toLowerCase().includes(searchVal))
     );
   }
   
   // Apply chip filter
   if (typeof catalogFilter !== 'undefined' && catalogFilter !== 'Все') {
     filtered = filtered.filter(b => 
-      (b.services || []).some(s => s.includes(catalogFilter))
+      (b.services || []).some(s => (typeof s === 'string' ? s : s.name).includes(catalogFilter))
     );
   }
   
@@ -636,7 +636,7 @@ window.renderCatalog = function() {
     // Определяем специализацию из services
     const CAT_LABELS = {trainer:'Кинолог',grooming:'Груминг',boarding:'Передержка',psychologist:'Зоопсихолог',walking:'Выгул'};
     const specLabel = b.services && b.services.length
-      ? b.services.map(s => CAT_LABELS[s]).filter(Boolean).join(' · ') || 'Кинолог'
+      ? b.services.map(s => CAT_LABELS[typeof s === 'string' ? s : s.name]).filter(Boolean).join(' · ') || 'Кинолог'
       : 'Кинолог';
     return `<div class="card" style="margin:0 16px 10px;cursor:pointer;" onclick="openBusinessProfile('${b.id}')">
       <div style="display:flex;gap:14px;align-items:center;">

@@ -764,7 +764,7 @@ function renderShopsList() {
   if (_currentShopFilter !== 'all') {
     filtered = _allShops.filter(shop => {
       const services = shop.services || [];
-      return services.includes(_currentShopFilter);
+      return services.some(s => (typeof s === 'string' ? s : s.name) === _currentShopFilter);
     });
   }
   

@@ -337,7 +337,7 @@ function openPlaceModal(id) {
       ${b.schedule ? `<div style="font-size:14px;">🕐 ${b.schedule}</div>` : ''}
       ${b.phone ? `<div style="font-size:14px;"><a href="tel:${b.phone}" style="color:var(--primary);text-decoration:none;font-weight:700;">${b.phone}</a></div>` : ''}
     </div>
-    ${services.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">${services.map(t=>`<span class="tag tag-b">${t}</span>`).join('')}</div>` : ''}
+    ${services.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">${services.map(t=>`<span class="tag tag-b">${typeof t === 'string' ? t : t.name}</span>`).join('')}</div>` : ''}
   `;
   openModal('m-place');
 }

@@ -157,7 +157,7 @@ async function renderCatalogTrainers() {
         </div>
         <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">⭐ ${b.rating} · ${b.reviews_count || 0} отзывов</div>
         <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">📍 ${b.address}</div>
-        ${b.services && b.services.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;">${b.services.map(s => `<span class="tag tag-b" style="font-size:11px;">${s}</span>`).join('')}</div>` : ''}
+        ${b.services && b.services.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;">${b.services.map(s => `<span class="tag tag-b" style="font-size:11px;">${typeof s === 'string' ? s : s.name}</span>`).join('')}</div>` : ''}
       </div>
       <div style="text-align:right;flex-shrink:0;">
         <div style="font-weight:800;font-size:14px;color:var(--primary);">${b.price_from || 'от 3000 ₽'}</div>
@@ -213,7 +213,7 @@ function _renderHealthList() {
   // Фильтр по специализации (через services)
   if (_healthFilter !== 'Все' && _healthFilter !== 'Клиника') {
     businesses = businesses.filter(b =>
-      b.services && b.services.some(s => s.toLowerCase().includes(_healthFilter.toLowerCase()))
+      b.services && b.services.some(s => (typeof s === 'string' ? s : s.name).toLowerCase().includes(_healthFilter.toLowerCase()))
     );
   }
 
@@ -284,7 +284,7 @@ async function renderCafes() {
         <div style="font-weight:800;font-size:15px;margin-bottom:4px;">${b.name}</div>
         <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">📍 ${b.address}</div>
         <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">⭐ ${b.rating} · ${b.reviews_count || 0} отзывов</div>
-        ${b.services && b.services.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;">${b.services.map(s => `<span class="tag tag-b" style="font-size:11px;">${s}</span>`).join('')}</div>` : ''}
+        ${b.services && b.services.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;">${b.services.map(s => `<span class="tag tag-b" style="font-size:11px;">${typeof s === 'string' ? s : s.name}</span>`).join('')}</div>` : ''}
       </div>
     </div>
   `).join('');
@@ -739,7 +739,7 @@ async function renderHomeSpecialists() {
           </div>
           <div style="text-align:center;width:100%;">
             <div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${b.name}</div>
-            <div style="font-size:11px;color:var(--text-secondary);">${(()=>{const m={trainer:'Кинолог',grooming:'Груминг',boarding:'Передержка',psychologist:'Зоопсихолог',walking:'Выгул'};const s=b.services&&b.services.length?b.services.map(x=>m[x]).filter(Boolean):[];return s.length?s[0]:'Кинолог';})()}</div>
+            <div style="font-size:11px;color:var(--text-secondary);">${(()=>{const m={trainer:'Кинолог',grooming:'Груминг',boarding:'Передержка',psychologist:'Зоопсихолог',walking:'Выгул'};const s=b.services&&b.services.length?b.services.map(x=>m[typeof x==='string'?x:x.name]).filter(Boolean):[];return s.length?s[0]:'Кинолог';})()}</div>
             <div style="font-size:11px;color:var(--secondary);font-weight:700;">⭐ ${b.rating}</div>
             <div style="font-size:11px;color:var(--primary);font-weight:700;">${b.price_from || ''}</div>
           </div>
