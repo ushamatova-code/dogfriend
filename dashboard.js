@@ -27,7 +27,7 @@ const BIZ_FIELDS = {
           { id: 'name',        label: 'ФИО / Название',      type: 'text',     placeholder: 'Иван Петров', required: true },
           { id: 'description', label: 'О себе',               type: 'textarea', placeholder: 'Опыт работы, специализация, подход...' },
           { id: 'address',     label: 'Район / Место занятий',type: 'text',     placeholder: 'Сокольники, Москва', required: true },
-          { id: 'price_from',  label: 'Цена от',              type: 'text',     placeholder: '3 000 ₽' },
+          { id: 'price_from',  label: 'Цена от (общая, если не указана у услуги)', type: 'text',     placeholder: '3 000 ₽' },
         ]
       },
       {
@@ -555,12 +555,20 @@ async function saveBizEdit() {
       const container = document.getElementById('biz-edit-checks-' + sec.id);
       if (container) {
         const checkedInputs = Array.from(container.querySelectorAll('input[type="checkbox"]:checked'));
-        formData[sec.id] = checkedInputs.map(i => {
+        const formServices = checkedInputs.map(i => {
           const name = i.value;
           const priceInput = container.querySelector(`.svc-price-input[data-svc="${name}"]`);
           const price = priceInput ? priceInput.value.trim() : '';
           return price ? { name, price } : name;
         });
+        // Сохраняем категории услуг (trainer, grooming и т.д.) которые были добавлены 
+        // через быстрые кнопки — они не входят в чекбоксы формы
+        const checkboxOptions = sec.options || [];
+        const existingCategories = (currentBiz[sec.id] || []).filter(v => {
+          const name = typeof v === 'string' ? v : v.name;
+          return !checkboxOptions.includes(name);
+        });
+        formData[sec.id] = [...existingCategories, ...formServices];
       }
     } else {
       sec.fields.forEach(f => {
