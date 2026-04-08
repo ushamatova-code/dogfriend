@@ -1195,13 +1195,13 @@ function parseCsv(text) {
     if (!line) continue;
     const cols = parseCsvLine(line, sep);
     const name = (cols[nameIdx] || '').trim();
-    const price = parseInt((cols[priceIdx] || '0').replace(/[^0-9]/g, ''));
+    const price = parsePrice(cols[priceIdx]);
     if (!name || !price) continue;
 
     _importParsed.push({
       name,
       price,
-      old_price: oldPriceIdx >= 0 ? (parseInt((cols[oldPriceIdx] || '').replace(/[^0-9]/g, '')) || null) : null,
+      old_price: oldPriceIdx >= 0 ? (parsePrice(cols[oldPriceIdx]) || null) : null,
       category: catIdx >= 0 ? (cols[catIdx] || 'other').trim() : 'other',
       description: descIdx >= 0 ? (cols[descIdx] || '').trim() : '',
       images: imgIdx >= 0 && cols[imgIdx]?.trim() ? [cols[imgIdx].trim()] : [],
@@ -1213,6 +1213,17 @@ function parseCsv(text) {
 }
 
 // Парсинг CSV строки с учётом кавычек
+// Умный парсинг цены: 1990.00, 1 990,50, 2,500, 3500
+function parsePrice(str) {
+  let s = (str || '0').trim().replace(/\s/g, '');
+  if (/,\d{1,2}$/.test(s) && !/\.\d/.test(s)) {
+    s = s.replace(',', '.');
+  } else {
+    s = s.replace(/,/g, '');
+  }
+  return Math.round(parseFloat(s.replace(/[^0-9.]/g, '')) || 0);
+}
+
 function parseCsvLine(line, sep) {
   const result = [];
   let current = '';
@@ -1288,7 +1299,7 @@ function parseYml(xmlText) {
     offers.forEach(offer => {
       const name = (offer.querySelector('name')?.textContent || offer.querySelector('model')?.textContent || '').trim();
       const priceEl = offer.querySelector('price');
-      const price = priceEl ? parseInt(priceEl.textContent.replace(/[^0-9]/g, '')) : 0;
+      const price = priceEl ? parsePrice(priceEl.textContent) : 0;
       if (!name || !price) return;
 
       const oldPriceEl = offer.querySelector('oldprice');
@@ -1316,7 +1327,7 @@ function parseYml(xmlText) {
       _importParsed.push({
         name,
         price,
-        old_price: oldPriceEl ? parseInt(oldPriceEl.textContent.replace(/[^0-9]/g, '')) || null : null,
+        old_price: oldPriceEl ? (parsePrice(oldPriceEl.textContent) || null) : null,
         category,
         description: desc.substring(0, 500),
         images: images.slice(0, 5),
