@@ -673,6 +673,9 @@ function renderBizDashboardShop(biz) {
         <div style="font-size:16px;font-weight:800;">🛍️ Товары</div>
         <button onclick="openAddProduct()" class="btn btn-sm btn-p" style="height:36px;padding:0 14px;font-size:13px;border-radius:12px;">+ Добавить</button>
       </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button onclick="openImportModal()" class="btn btn-sm btn-g" style="height:36px;padding:0 14px;font-size:13px;border-radius:12px;">📥 Импорт товаров</button>
+      </div>
       <div id="biz-products-list"></div>
     </div>`;
 }
@@ -1037,3 +1040,377 @@ async function toggleServiceCategory(categoryId) {
 
 window.toggleServiceCategory = toggleServiceCategory;
 
+// ════════════════════════════════════════════════════════════
+// PRODUCT IMPORT — CSV / YML feed
+// ════════════════════════════════════════════════════════════
+
+function openImportModal() {
+  const modal = document.createElement('div');
+  modal.id = 'import-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:flex-end;backdrop-filter:blur(6px);';
+  modal.innerHTML = `
+    <div style="background:var(--white);border-radius:24px 24px 0 0;width:100%;max-height:92vh;overflow-y:auto;padding:20px 16px;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));">
+      <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px;"></div>
+      <div style="font-size:18px;font-weight:900;margin-bottom:4px;">📥 Импорт товаров</div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;">Загрузите CSV-файл или вставьте ссылку на YML-фид</div>
+
+      <!-- TABS -->
+      <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border);">
+        <button id="imp-tab-csv" onclick="switchImportTab('csv')" style="flex:1;background:none;border:none;padding:10px 0;font-size:14px;font-weight:700;color:var(--primary);border-bottom:2.5px solid var(--primary);margin-bottom:-2px;cursor:pointer;font-family:inherit;">📄 CSV-файл</button>
+        <button id="imp-tab-yml" onclick="switchImportTab('yml')" style="flex:1;background:none;border:none;padding:10px 0;font-size:14px;font-weight:700;color:var(--text-secondary);border-bottom:2.5px solid transparent;margin-bottom:-2px;cursor:pointer;font-family:inherit;">🔗 YML-фид</button>
+      </div>
+
+      <!-- CSV -->
+      <div id="imp-pane-csv">
+        <div style="background:var(--bg);border-radius:14px;padding:14px;margin-bottom:12px;">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px;">Формат CSV-файла:</div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.6;">
+            Первая строка — заголовки. Обязательные колонки: <b>name</b>, <b>price</b><br>
+            Опционально: <b>description</b>, <b>category</b>, <b>old_price</b>, <b>image</b>, <b>in_stock</b><br>
+            Категории: food, accessories, toys, clothing, health, other<br>
+            Разделитель: запятая или точка с запятой
+          </div>
+        </div>
+        <button onclick="downloadCsvTemplate()" class="btn btn-g" style="width:100%;margin-bottom:12px;height:44px;font-size:14px;border-radius:14px;">📋 Скачать шаблон CSV</button>
+        <label style="display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--bg);border:2px dashed var(--border);border-radius:14px;padding:24px 16px;cursor:pointer;text-align:center;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span style="font-size:14px;font-weight:700;color:var(--primary);">Выберите CSV-файл</span>
+          <span style="font-size:12px;color:var(--text-secondary);" id="imp-csv-filename">Или перетащите сюда</span>
+          <input type="file" accept=".csv,.txt,.tsv" style="display:none;" onchange="handleCsvFile(this)">
+        </label>
+        <div id="imp-csv-preview" style="margin-top:12px;"></div>
+      </div>
+
+      <!-- YML -->
+      <div id="imp-pane-yml" style="display:none;">
+        <div style="background:var(--bg);border-radius:14px;padding:14px;margin-bottom:12px;">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px;">YML-фид (Яндекс.Маркет):</div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.6;">
+            Вставьте ссылку на YML/XML файл из вашей CMS<br>
+            Поддерживаются: 1С-Битрикс, InSales, WooCommerce, Tilda и другие
+          </div>
+        </div>
+        <input id="imp-yml-url" type="url" placeholder="https://example.com/feed.yml" style="width:100%;height:48px;border:1.5px solid var(--border);border-radius:14px;padding:0 14px;font-size:14px;font-family:inherit;outline:none;background:var(--bg);margin-bottom:12px;box-sizing:border-box;">
+        <button onclick="loadYmlFeed()" class="btn btn-p" style="width:100%;height:48px;font-size:14px;border-radius:14px;">🔍 Загрузить фид</button>
+        <div id="imp-yml-preview" style="margin-top:12px;"></div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div id="imp-actions" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:14px;font-weight:700;" id="imp-count">0 товаров</div>
+          <label style="font-size:13px;display:flex;align-items:center;gap:6px;">
+            <input type="checkbox" id="imp-replace" style="width:16px;height:16px;">
+            Заменить все товары
+          </label>
+        </div>
+        <button onclick="executeImport()" id="imp-go-btn" class="btn btn-p" style="width:100%;height:52px;font-size:16px;border-radius:16px;">📥 Импортировать</button>
+      </div>
+
+      <button onclick="closeImportModal()" class="btn btn-g" style="width:100%;margin-top:12px;height:44px;font-size:14px;border-radius:14px;">Отмена</button>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeImportModal(); });
+}
+
+function closeImportModal() {
+  const m = document.getElementById('import-modal');
+  if (m) m.remove();
+  _importParsed = [];
+}
+
+function switchImportTab(tab) {
+  const csvPane = document.getElementById('imp-pane-csv');
+  const ymlPane = document.getElementById('imp-pane-yml');
+  const csvTab = document.getElementById('imp-tab-csv');
+  const ymlTab = document.getElementById('imp-tab-yml');
+  if (tab === 'csv') {
+    csvPane.style.display = '';
+    ymlPane.style.display = 'none';
+    csvTab.style.color = 'var(--primary)'; csvTab.style.borderBottom = '2.5px solid var(--primary)';
+    ymlTab.style.color = 'var(--text-secondary)'; ymlTab.style.borderBottom = '2.5px solid transparent';
+  } else {
+    csvPane.style.display = 'none';
+    ymlPane.style.display = '';
+    ymlTab.style.color = 'var(--primary)'; ymlTab.style.borderBottom = '2.5px solid var(--primary)';
+    csvTab.style.color = 'var(--text-secondary)'; csvTab.style.borderBottom = '2.5px solid transparent';
+  }
+}
+
+// ── CSV ──
+let _importParsed = [];
+
+function downloadCsvTemplate() {
+  const header = 'name;price;old_price;category;description;image;in_stock';
+  const row1 = 'Корм для собак Royal Canin;2500;;food;Сухой корм для средних пород;https://example.com/photo.jpg;true';
+  const row2 = 'Поводок кожаный;1200;1500;accessories;Натуральная кожа, длина 1.5м;;true';
+  const csv = header + '\n' + row1 + '\n' + row2;
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'dogly_products_template.csv';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('Шаблон скачан');
+}
+
+function handleCsvFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('imp-csv-filename').textContent = file.name;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target.result;
+    parseCsv(text);
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function parseCsv(text) {
+  // Определяем разделитель
+  const firstLine = text.split('\n')[0];
+  const sep = firstLine.includes(';') ? ';' : ',';
+
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) { showToast('Файл пустой или только заголовки'); return; }
+
+  const headers = lines[0].split(sep).map(h => h.trim().toLowerCase().replace(/['"]/g, ''));
+  const nameIdx = headers.indexOf('name');
+  const priceIdx = headers.indexOf('price');
+
+  if (nameIdx === -1 || priceIdx === -1) {
+    showToast('Нужны колонки name и price');
+    return;
+  }
+
+  const descIdx = headers.indexOf('description');
+  const catIdx = headers.indexOf('category');
+  const oldPriceIdx = headers.indexOf('old_price');
+  const imgIdx = headers.indexOf('image');
+  const stockIdx = headers.indexOf('in_stock');
+
+  _importParsed = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const cols = parseCsvLine(line, sep);
+    const name = (cols[nameIdx] || '').trim();
+    const price = parseInt((cols[priceIdx] || '0').replace(/[^0-9]/g, ''));
+    if (!name || !price) continue;
+
+    _importParsed.push({
+      name,
+      price,
+      old_price: oldPriceIdx >= 0 ? (parseInt((cols[oldPriceIdx] || '').replace(/[^0-9]/g, '')) || null) : null,
+      category: catIdx >= 0 ? (cols[catIdx] || 'other').trim() : 'other',
+      description: descIdx >= 0 ? (cols[descIdx] || '').trim() : '',
+      images: imgIdx >= 0 && cols[imgIdx]?.trim() ? [cols[imgIdx].trim()] : [],
+      in_stock: stockIdx >= 0 ? (cols[stockIdx] || '').trim().toLowerCase() !== 'false' : true,
+    });
+  }
+
+  showImportPreview('imp-csv-preview');
+}
+
+// Парсинг CSV строки с учётом кавычек
+function parseCsvLine(line, sep) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"' && line[i + 1] === '"') { current += '"'; i++; }
+      else if (ch === '"') { inQuotes = false; }
+      else { current += ch; }
+    } else {
+      if (ch === '"') { inQuotes = true; }
+      else if (ch === sep) { result.push(current); current = ''; }
+      else { current += ch; }
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+// ── YML ──
+async function loadYmlFeed() {
+  const url = document.getElementById('imp-yml-url')?.value.trim();
+  if (!url) { showToast('Вставьте ссылку на фид'); return; }
+
+  const preview = document.getElementById('imp-yml-preview');
+  preview.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:13px;">⏳ Загружаем фид...</div>';
+
+  try {
+    // Пробуем загрузить через прокси (CORS)
+    let text = '';
+    const proxyUrls = [
+      'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+      'https://corsproxy.io/?' + encodeURIComponent(url),
+      url // fallback — прямой запрос
+    ];
+
+    for (const proxyUrl of proxyUrls) {
+      try {
+        const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(10000) });
+        if (resp.ok) { text = await resp.text(); break; }
+      } catch(e) { continue; }
+    }
+
+    if (!text) throw new Error('Не удалось загрузить фид');
+
+    parseYml(text);
+  } catch(e) {
+    preview.innerHTML = `<div style="background:rgba(239,68,68,0.08);border-radius:12px;padding:14px;color:#EF4444;font-size:13px;">❌ ${e.message}<br><br><span style="color:var(--text-secondary);">Возможные причины: неверная ссылка, CORS-ограничения, или сервер не отвечает. Попробуйте скачать фид и загрузить как CSV.</span></div>`;
+  }
+}
+
+function parseYml(xmlText) {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xmlText, 'text/xml');
+    const offers = doc.querySelectorAll('offer');
+
+    if (!offers.length) {
+      showToast('В фиде нет товаров (offer)');
+      document.getElementById('imp-yml-preview').innerHTML = '<div style="padding:12px;color:var(--text-secondary);font-size:13px;">Не найдено элементов &lt;offer&gt;. Проверьте формат фида.</div>';
+      return;
+    }
+
+    _importParsed = [];
+    const catMap = {};
+
+    // Собираем категории
+    doc.querySelectorAll('category').forEach(c => {
+      catMap[c.getAttribute('id')] = c.textContent.trim();
+    });
+
+    offers.forEach(offer => {
+      const name = (offer.querySelector('name')?.textContent || offer.querySelector('model')?.textContent || '').trim();
+      const priceEl = offer.querySelector('price');
+      const price = priceEl ? parseInt(priceEl.textContent.replace(/[^0-9]/g, '')) : 0;
+      if (!name || !price) return;
+
+      const oldPriceEl = offer.querySelector('oldprice');
+      const desc = offer.querySelector('description')?.textContent?.trim() || '';
+      const catId = offer.querySelector('categoryId')?.textContent || '';
+      const catName = (catMap[catId] || '').toLowerCase();
+
+      // Маппинг YML-категорий на наши
+      let category = 'other';
+      if (/корм|еда|питан/i.test(catName)) category = 'food';
+      else if (/аксесс|поводок|ошейник|миск/i.test(catName)) category = 'accessories';
+      else if (/игруш/i.test(catName)) category = 'toys';
+      else if (/одежд|костюм|комбинез/i.test(catName)) category = 'clothing';
+      else if (/здоров|витамин|лекар|шампун/i.test(catName)) category = 'health';
+
+      // Фото
+      const images = [];
+      offer.querySelectorAll('picture').forEach(pic => {
+        const url = pic.textContent?.trim();
+        if (url) images.push(url);
+      });
+
+      const available = offer.getAttribute('available');
+
+      _importParsed.push({
+        name,
+        price,
+        old_price: oldPriceEl ? parseInt(oldPriceEl.textContent.replace(/[^0-9]/g, '')) || null : null,
+        category,
+        description: desc.substring(0, 500),
+        images: images.slice(0, 5),
+        in_stock: available !== 'false',
+      });
+    });
+
+    showImportPreview('imp-yml-preview');
+  } catch(e) {
+    showToast('Ошибка парсинга XML');
+    console.error('YML parse error:', e);
+  }
+}
+
+// ── Preview & Execute ──
+function showImportPreview(containerId) {
+  const preview = document.getElementById(containerId);
+  const actions = document.getElementById('imp-actions');
+
+  if (!_importParsed.length) {
+    preview.innerHTML = '<div style="padding:12px;color:var(--text-secondary);font-size:13px;">Не найдено товаров.</div>';
+    if (actions) actions.style.display = 'none';
+    return;
+  }
+
+  if (actions) actions.style.display = '';
+  document.getElementById('imp-count').textContent = `${_importParsed.length} товаров найдено`;
+
+  const cats = {};
+  _importParsed.forEach(p => { cats[p.category] = (cats[p.category] || 0) + 1; });
+  const catLabels = { food: '🍖 Корма', accessories: '🦮 Аксессуары', toys: '🎾 Игрушки', clothing: '🧥 Одежда', health: '💊 Здоровье', other: '📦 Другое' };
+
+  preview.innerHTML = `
+    <div style="background:var(--bg);border-radius:14px;padding:12px;margin-bottom:8px;">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px;">Найдено: ${_importParsed.length} товаров</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+        ${Object.entries(cats).map(([k, v]) => `<span style="background:var(--white);padding:4px 10px;border-radius:8px;font-size:12px;font-weight:600;">${catLabels[k] || k} (${v})</span>`).join('')}
+      </div>
+      <div style="font-size:12px;color:var(--text-secondary);">С фото: ${_importParsed.filter(p => p.images.length).length} · Без фото: ${_importParsed.filter(p => !p.images.length).length}</div>
+    </div>
+    <div style="max-height:200px;overflow-y:auto;">
+      ${_importParsed.slice(0, 10).map(p => `
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+          <div style="width:36px;height:36px;border-radius:8px;background:var(--bg);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+            ${p.images[0] ? `<img src="${p.images[0]}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.textContent='🛍️'">` : '🛍️'}
+          </div>
+          <div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;">${p.name}</div>
+          <div style="font-weight:700;color:var(--primary);flex-shrink:0;">${p.price.toLocaleString('ru')} ₽</div>
+        </div>`).join('')}
+      ${_importParsed.length > 10 ? `<div style="text-align:center;padding:8px;font-size:12px;color:var(--text-secondary);">... и ещё ${_importParsed.length - 10}</div>` : ''}
+    </div>`;
+}
+
+async function executeImport() {
+  if (!_importParsed.length || !supabaseClient || !currentBiz) return;
+
+  const replaceAll = document.getElementById('imp-replace')?.checked;
+  const btn = document.getElementById('imp-go-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Импортируем...'; }
+
+  try {
+    // Удаляем старые если выбрано "заменить"
+    if (replaceAll) {
+      await supabaseClient.from('shop_products').delete().eq('business_id', currentBiz.id);
+    }
+
+    // Вставляем пачками по 50
+    let imported = 0;
+    for (let i = 0; i < _importParsed.length; i += 50) {
+      const batch = _importParsed.slice(i, i + 50).map(p => ({
+        business_id: currentBiz.id,
+        name: p.name,
+        price: p.price,
+        old_price: p.old_price,
+        category: p.category || 'other',
+        description: p.description || null,
+        images: p.images.length ? p.images : null,
+        in_stock: p.in_stock !== false,
+        is_active: true
+      }));
+
+      const { error } = await supabaseClient.from('shop_products').insert(batch);
+      if (error) throw error;
+      imported += batch.length;
+
+      if (btn) btn.textContent = `⏳ ${imported} / ${_importParsed.length}...`;
+    }
+
+    showToast(`✅ Импортировано ${imported} товаров!`, '#34C759');
+    closeImportModal();
+    await loadBizProducts(currentBiz.id);
+  } catch(e) {
+    console.error('Import error:', e);
+    showToast('❌ Ошибка: ' + (e.message || ''));
+    if (btn) { btn.disabled = false; btn.textContent = '📥 Импортировать'; }
+  }
+}
