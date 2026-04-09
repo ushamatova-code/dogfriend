@@ -967,6 +967,96 @@ async function handleChatDeeplink() {
 }
 
 // ════════════════════════════════════════════════════════════
+// SHARE & DEEPLINKS — магазины, товары, специалисты
+// ════════════════════════════════════════════════════════════
+const APP_BASE_URL = 'https://dogfriend.vercel.app';
+
+function shareLink(url, text) {
+  if (navigator.share) {
+    navigator.share({ title: 'Dogly', text: text, url: url }).catch(() => {});
+  } else {
+    navigator.clipboard?.writeText(url).then(() => {
+      showToast('Ссылка скопирована');
+    }).catch(() => {
+      // Fallback
+      const input = document.createElement('input');
+      input.value = url;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      input.remove();
+      showToast('Ссылка скопирована');
+    });
+  }
+}
+
+function shareShop() {
+  if (!_currentShop) return;
+  const url = `${APP_BASE_URL}/?shop=${_currentShop.id}`;
+  const text = `${_currentShop.name} — магазин на Dogly`;
+  shareLink(url, text);
+}
+
+function shareProduct() {
+  if (!_currentProduct) return;
+  const shopId = _currentProduct.business_id || (_currentShop ? _currentShop.id : '');
+  const url = `${APP_BASE_URL}/?product=${_currentProduct.id}` + (shopId ? `&shop=${shopId}` : '');
+  const text = `${_currentProduct.name} — ${_currentProduct.price?.toLocaleString('ru')} ₽ на Dogly`;
+  shareLink(url, text);
+}
+
+function shareSpecialist() {
+  const specId = currentSpecId;
+  if (!specId) return;
+  // Берём имя из DOM
+  const nameEl = document.getElementById('spec-name');
+  const name = nameEl ? nameEl.textContent : 'Специалист';
+  const url = `${APP_BASE_URL}/?spec=${specId}`;
+  const text = `${name} — специалист на Dogly`;
+  shareLink(url, text);
+}
+
+// Обработка deeplink'ов при загрузке
+async function handleDeeplinks() {
+  const params = new URLSearchParams(window.location.search);
+  const shopId = params.get('shop');
+  const productId = params.get('product');
+  const specId = params.get('spec');
+
+  if (!shopId && !productId && !specId) return;
+
+  // Убираем параметры из URL
+  window.history.replaceState({}, '', window.location.pathname);
+
+  // Ждём Supabase
+  let waited = 0;
+  while (!supabaseClient && waited < 10000) {
+    await new Promise(r => setTimeout(r, 200));
+    waited += 200;
+  }
+  if (!supabaseClient) return;
+  await new Promise(r => setTimeout(r, 500));
+
+  try {
+    if (productId) {
+      // Открываем товар → нужен магазин
+      const sid = shopId || '';
+      if (sid) {
+        await openShop(sid);
+        await new Promise(r => setTimeout(r, 300));
+      }
+      openShopProduct(productId);
+    } else if (shopId) {
+      await openShop(shopId);
+    } else if (specId) {
+      await openBusinessProfile(specId);
+    }
+  } catch(e) {
+    console.warn('Deeplink error:', e);
+  }
+}
+
+// ════════════════════════════════════════════════════════════
 // ONESIGNAL — сохраняем player_id в Supabase для серверных пушей
 // ════════════════════════════════════════════════════════════
 async function saveOneSignalPlayerId() {
