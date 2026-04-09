@@ -1035,6 +1035,7 @@ async function checkAuth() {
   // Запасной таймер — никогда не зависнем на сплэше
   const fallback = setTimeout(() => {
     if (_isPasswordRecovery) return;
+    if (typeof _hasDeeplink !== 'undefined' && _hasDeeplink) return;
     const active = document.querySelector('.screen.active');
     if (active && active.id === 'splash') {
       nav(localStorage.getItem('df_registered') === '1' ? 'home' : 'login');
@@ -1106,13 +1107,22 @@ async function checkAuth() {
         trackVisit();
       } else {
         console.log('→ Redirecting to login');
-        nav('login');
+        // Если есть deeplink — не перебиваем, пусть пользователь смотрит контент
+        if (typeof _hasDeeplink !== 'undefined' && _hasDeeplink) {
+          console.log('  Deeplink active — skipping nav to login');
+        } else {
+          nav('login');
+        }
       }
     }
   } catch(e) {
     clearTimeout(fallback);
     console.error('checkAuth exception:', e);
-    nav(localStorage.getItem('df_registered') === '1' ? 'home' : 'login');
+    if (typeof _hasDeeplink !== 'undefined' && _hasDeeplink) {
+      // Не перебиваем deeplink
+    } else {
+      nav(localStorage.getItem('df_registered') === '1' ? 'home' : 'login');
+    }
   }
 }
 

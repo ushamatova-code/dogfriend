@@ -1017,6 +1017,7 @@ function shareSpecialist() {
 }
 
 // Обработка deeplink'ов при загрузке — работает как посты: по таймеру, без зависимости от авторизации
+var _hasDeeplink = false;
 (function() {
   const params = new URLSearchParams(window.location.search);
   const shopId = params.get('shop');
@@ -1024,6 +1025,7 @@ function shareSpecialist() {
   const specId = params.get('spec');
 
   if (!shopId && !productId && !specId) return;
+  _hasDeeplink = true;
 
   window.addEventListener('load', () => {
     setTimeout(async () => {
@@ -1041,7 +1043,6 @@ function shareSpecialist() {
 
       try {
         if (productId) {
-          const sid = shopId || productId;
           if (shopId) {
             await openShop(shopId);
             await new Promise(r => setTimeout(r, 300));
@@ -1055,9 +1056,32 @@ function shareSpecialist() {
       } catch(e) {
         console.warn('Deeplink error:', e);
       }
+
+      // Показываем баннер регистрации через 3 сек если не залогинен
+      setTimeout(() => {
+        if (!currentUser && !localStorage.getItem('df_registered')) {
+          showDeeplinkAuthBanner();
+        }
+      }, 3000);
     }, 1500);
   });
 })();
+
+// Баннер «Войдите чтобы купить / записаться» поверх deeplink контента
+function showDeeplinkAuthBanner() {
+  if (document.getElementById('deeplink-auth-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'deeplink-auth-banner';
+  banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:var(--white);border-radius:20px 20px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,0.12);padding:20px 16px;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:9999;';
+  banner.innerHTML = `
+    <div style="font-size:16px;font-weight:800;margin-bottom:6px;">Нравится? Войдите в Dogly!</div>
+    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">Чтобы купить, записаться или написать — нужен аккаунт</div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="document.getElementById('deeplink-auth-banner').remove();nav('login')" style="flex:1;height:48px;background:linear-gradient(135deg,var(--primary),#6B5CE7);color:white;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Войти / Регистрация</button>
+      <button onclick="document.getElementById('deeplink-auth-banner').remove()" style="width:48px;height:48px;background:var(--bg);border:none;border-radius:14px;cursor:pointer;font-size:18px;">✕</button>
+    </div>`;
+  document.body.appendChild(banner);
+}
 
 // ════════════════════════════════════════════════════════════
 // ONESIGNAL — сохраняем player_id в Supabase для серверных пушей
