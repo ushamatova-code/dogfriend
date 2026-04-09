@@ -274,17 +274,31 @@ function renderShopProducts() {
 
   grid.innerHTML = products.map(p => {
     const img = (p.images && p.images[0])
-      ? '<img src="' + p.images[0] + '" style="width:100%;height:100%;object-fit:contain;display:block;background:white;">'
-      : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;background:linear-gradient(135deg,#f5f5f5,#e8e8e8);">' + getCatEmoji(p.category) + '</div>';
-
-    const discountBadge = p.old_price
-      ? '<div style="position:absolute;top:8px;right:8px;background:#FF3B30;color:white;font-size:11px;font-weight:800;padding:4px 8px;border-radius:12px;box-shadow:0 2px 8px rgba(255,59,48,0.3);">-' + Math.round((1 - p.price/p.old_price)*100) + '%</div>'
+      ? `<img src="${p.images[0]}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
       : '';
-    
-    const priceOld = p.old_price ? '<span style="font-size:12px;color:var(--text-secondary);text-decoration:line-through;">' + p.old_price.toLocaleString('ru') + ' ₽</span>' : '';
-    const stockBadge = !p.in_stock ? '<div style="font-size:12px;color:#FF3B30;font-weight:700;padding:6px 10px;background:#FFF5F5;border-radius:10px;text-align:center;margin-bottom:8px;">Нет в наличии</div>' : '<div style="font-size:12px;color:#34C759;font-weight:700;padding:6px 10px;background:#F0FFF4;border-radius:10px;text-align:center;margin-bottom:8px;">✓ В наличии</div>';
+    const placeholder = `<div style="width:100%;height:100%;display:${img ? 'none' : 'flex'};align-items:center;justify-content:center;font-size:32px;background:linear-gradient(135deg,#f8f9fa,#e9ecef);">${getCatEmoji(p.category)}</div>`;
 
-    return '<div onclick="openShopProduct(\'' + p.id + '\')" style="background:var(--white);border-radius:18px;box-shadow:0 2px 12px rgba(0,0,0,0.08);cursor:pointer;overflow:hidden;transition:transform 0.2s,box-shadow 0.2s;position:relative;" onmouseover="this.style.transform=\'translateY(-4px)\';this.style.boxShadow=\'0 8px 24px rgba(0,0,0,0.12)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'0 2px 12px rgba(0,0,0,0.08)\'"><div style="width:100%;aspect-ratio:4/3;background:#f8f9fa;overflow:hidden;position:relative;">' + img + discountBadge + '</div><div style="padding:12px;"><div style="font-size:14px;font-weight:700;line-height:1.4;margin-bottom:8px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:38px;">' + p.name + '</div><div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:10px;"><span style="font-size:17px;font-weight:900;color:var(--primary);">' + p.price.toLocaleString('ru') + ' ₽</span>' + priceOld + '</div>' + stockBadge + '<button onclick="event.stopPropagation();quickAddToCart(\'' + p.id + '\')" style="width:100%;background:linear-gradient(135deg,var(--primary),#6B5CE7);color:white;border:none;border-radius:12px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(74,144,217,0.3);transition:transform 0.1s;" ' + (!p.in_stock ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '') + ' onmousedown="this.style.transform=\'scale(0.95)\'" onmouseup="this.style.transform=\'\'" onmouseleave="this.style.transform=\'\'">🛒 В корзину</button></div></div>';
+    const discount = p.old_price ? Math.round((1 - p.price / p.old_price) * 100) : 0;
+    const discountBadge = discount > 0
+      ? `<div style="position:absolute;top:8px;right:8px;background:#FF3B30;color:white;font-size:11px;font-weight:800;padding:3px 8px;border-radius:10px;">-${discount}%</div>`
+      : '';
+    const oldPrice = p.old_price
+      ? `<span style="font-size:11px;color:var(--text-secondary);text-decoration:line-through;margin-left:4px;">${p.old_price.toLocaleString('ru')} ₽</span>`
+      : '';
+
+    return `<div onclick="openShopProduct('${p.id}')" style="background:var(--white);border-radius:16px;box-shadow:0 1px 6px rgba(0,0,0,0.06);cursor:pointer;overflow:hidden;display:flex;flex-direction:column;">
+      <div style="width:100%;aspect-ratio:1/1;background:#f8f9fa;overflow:hidden;position:relative;">
+        ${img}${placeholder}${discountBadge}
+      </div>
+      <div style="padding:10px 10px 12px;display:flex;flex-direction:column;flex:1;">
+        <div style="font-size:13px;font-weight:700;line-height:1.35;margin-bottom:6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:36px;">${p.name}</div>
+        <div style="display:flex;align-items:baseline;flex-wrap:wrap;margin-bottom:8px;">
+          <span style="font-size:16px;font-weight:900;color:var(--primary);">${p.price.toLocaleString('ru')} ₽</span>${oldPrice}
+        </div>
+        <div style="font-size:11px;font-weight:600;padding:4px 0;color:${p.in_stock ? '#34C759' : '#FF3B30'};margin-bottom:8px;">${p.in_stock ? '✓ В наличии' : '✗ Нет в наличии'}</div>
+        <button onclick="event.stopPropagation();quickAddToCart('${p.id}')" ${!p.in_stock ? 'disabled' : ''} style="width:100%;background:${p.in_stock ? 'linear-gradient(135deg,var(--primary),#6B5CE7)' : '#e0e0e0'};color:${p.in_stock ? 'white' : '#999'};border:none;border-radius:12px;padding:9px;font-size:13px;font-weight:700;cursor:${p.in_stock ? 'pointer' : 'default'};font-family:inherit;margin-top:auto;">🛒 В корзину</button>
+      </div>
+    </div>`;
   }).join('');
 }
 
