@@ -3,12 +3,17 @@
   "name": "dogfriend",
   "builds": [
     {
+      "src": "api/og.js",
+      "use": "@vercel/edge"
+    },
+    {
       "src": "**/*",
       "use": "@vercel/static"
     }
   ],
   "routes": [
     { "src": "/sw.js", "dest": "/sw.js" },
+    { "src": "/share(.*)", "dest": "/api/og.js" },
     { "src": "/admin.html", "dest": "/admin.html" },
     { "src": "/admin", "dest": "/admin.html" },
     { "src": "/landing.html", "dest": "/landing.html" },

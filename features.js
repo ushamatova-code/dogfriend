@@ -992,7 +992,7 @@ function shareLink(url, text) {
 
 function shareShop() {
   if (!_currentShop) return;
-  const url = `${APP_BASE_URL}/?shop=${_currentShop.id}`;
+  const url = `${APP_BASE_URL}/share?shop=${_currentShop.id}`;
   const text = `${_currentShop.name} — магазин на Dogly`;
   shareLink(url, text);
 }
@@ -1000,7 +1000,7 @@ function shareShop() {
 function shareProduct() {
   if (!_currentProduct) return;
   const shopId = _currentProduct.business_id || (_currentShop ? _currentShop.id : '');
-  const url = `${APP_BASE_URL}/?product=${_currentProduct.id}` + (shopId ? `&shop=${shopId}` : '');
+  const url = `${APP_BASE_URL}/share?product=${_currentProduct.id}` + (shopId ? `&shop=${shopId}` : '');
   const text = `${_currentProduct.name} — ${_currentProduct.price?.toLocaleString('ru')} ₽ на Dogly`;
   shareLink(url, text);
 }
@@ -1011,7 +1011,7 @@ function shareSpecialist() {
   // Берём имя из DOM
   const nameEl = document.getElementById('spec-name');
   const name = nameEl ? nameEl.textContent : 'Специалист';
-  const url = `${APP_BASE_URL}/?spec=${specId}`;
+  const url = `${APP_BASE_URL}/share?spec=${specId}`;
   const text = `${name} — специалист на Dogly`;
   shareLink(url, text);
 }
