@@ -1093,8 +1093,6 @@ async function checkAuth() {
       setTimeout(() => loadProfileStats(), 1000);
       // Если открыли с параметром ?chat=userId — сразу открываем чат
       handleChatDeeplink();
-      // Deeplinks для магазинов, товаров, специалистов
-      handleDeeplinks();
       // Инициализируем push-уведомления (VAPID для Android)
       setTimeout(async () => { await initServiceWorker(); if (currentUser) subscribeToPush(); }, 3000);
       // OneSignal — сохраняем player_id и показываем промпт
@@ -1106,7 +1104,6 @@ async function checkAuth() {
         console.log(' Using localStorage auth');
         nav('home');
         trackVisit();
-        handleDeeplinks();
       } else {
         console.log('→ Redirecting to login');
         nav('login');

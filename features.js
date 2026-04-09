@@ -1016,8 +1016,8 @@ function shareSpecialist() {
   shareLink(url, text);
 }
 
-// Обработка deeplink'ов при загрузке
-async function handleDeeplinks() {
+// Обработка deeplink'ов при загрузке — работает как посты: по таймеру, без зависимости от авторизации
+(function() {
   const params = new URLSearchParams(window.location.search);
   const shopId = params.get('shop');
   const productId = params.get('product');
@@ -1025,36 +1025,39 @@ async function handleDeeplinks() {
 
   if (!shopId && !productId && !specId) return;
 
-  // Убираем параметры из URL
-  window.history.replaceState({}, '', window.location.pathname);
+  window.addEventListener('load', () => {
+    setTimeout(async () => {
+      // Убираем параметры из URL
+      window.history.replaceState({}, '', window.location.pathname);
 
-  // Ждём Supabase
-  let waited = 0;
-  while (!supabaseClient && waited < 10000) {
-    await new Promise(r => setTimeout(r, 200));
-    waited += 200;
-  }
-  if (!supabaseClient) return;
-  await new Promise(r => setTimeout(r, 500));
-
-  try {
-    if (productId) {
-      // Открываем товар → нужен магазин
-      const sid = shopId || '';
-      if (sid) {
-        await openShop(sid);
-        await new Promise(r => setTimeout(r, 300));
+      // Ждём Supabase
+      let waited = 0;
+      while (!supabaseClient && waited < 10000) {
+        await new Promise(r => setTimeout(r, 200));
+        waited += 200;
       }
-      openShopProduct(productId);
-    } else if (shopId) {
-      await openShop(shopId);
-    } else if (specId) {
-      await openBusinessProfile(specId);
-    }
-  } catch(e) {
-    console.warn('Deeplink error:', e);
-  }
-}
+      if (!supabaseClient) return;
+      await new Promise(r => setTimeout(r, 300));
+
+      try {
+        if (productId) {
+          const sid = shopId || productId;
+          if (shopId) {
+            await openShop(shopId);
+            await new Promise(r => setTimeout(r, 300));
+          }
+          openShopProduct(productId);
+        } else if (shopId) {
+          await openShop(shopId);
+        } else if (specId) {
+          await openBusinessProfile(specId);
+        }
+      } catch(e) {
+        console.warn('Deeplink error:', e);
+      }
+    }, 1500);
+  });
+})();
 
 // ════════════════════════════════════════════════════════════
 // ONESIGNAL — сохраняем player_id в Supabase для серверных пушей
