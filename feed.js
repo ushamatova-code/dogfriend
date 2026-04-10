@@ -189,9 +189,10 @@ function renderFeedPosts(posts, myLikes) {
 
 function openUserProfileById(userId) {
   if (!userId) return;
-  // Используем существующий механизм открытия профиля
-  if (typeof openChatWithUser === 'function') {
-    // Открываем профиль через модалку
+  if (typeof openFullUserProfile === 'function') {
+    openFullUserProfile(userId);
+  } else {
+    // Fallback — модалка
     const contact = contactBook && contactBook[userId];
     const name = contact ? contact.name : 'Пользователь';
     const initials = name.slice(0,2).toUpperCase();
