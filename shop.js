@@ -802,9 +802,8 @@ function renderShopsList() {
 
 // ── Навигация в магазины из нижнего меню ──
 function navToShops() {
-  nav('catalog');
-  // Небольшая задержка чтобы экран успел отрисоваться
-  setTimeout(function() { switchCatalogTab('shops'); }, 50);
+  nav('shopsList');
+  loadShopsList();
 }
 
 // ── Товары на главной — «Подобрали для вас» ──
@@ -814,42 +813,78 @@ async function renderHomeProducts() {
   var row = document.getElementById('home-products-row');
   if (!row || !supabaseClient) return;
 
-  // Не загружаем повторно если уже загрузили
   if (_homeProductsLoaded && row.children.length > 1) return;
 
   try {
-    // Загружаем товары с фото, из активных магазинов
-    var result = await supabaseClient
-      .from('shop_products')
-      .select('id, name, price, old_price, images, business_id')
-      .eq('is_active', true)
-      .not('images', 'is', null)
-      .order('created_at', { ascending: false })
-      .limit(30);
+    // Узнаём все активные магазины
+    var shopsResult = await supabaseClient
+      .from('businesses')
+      .select('id')
+      .eq('type', 'shop')
+      .eq('is_approved', true)
+      .limit(20);
 
-    if (result.error) throw result.error;
+    var shopIds = (shopsResult.data || []).map(function(s) { return s.id; });
 
-    var products = (result.data || []).filter(function(p) {
-      return p.images && p.images.length > 0 && p.images[0];
-    });
-
-    if (!products.length) {
+    if (!shopIds.length) {
       row.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:13px;width:100%;">Товаров пока нет</div>';
       return;
     }
 
-    // Перемешиваем для эффекта "подобрали для вас"
-    for (var i = products.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var temp = products[i];
-      products[i] = products[j];
-      products[j] = temp;
+    // Загружаем товары от КАЖДОГО магазина отдельно
+    var perShop = Math.max(4, Math.ceil(16 / shopIds.length));
+    var promises = shopIds.map(function(shopId) {
+      return supabaseClient
+        .from('shop_products')
+        .select('id, name, price, old_price, images, business_id, category')
+        .eq('business_id', shopId)
+        .eq('is_active', true)
+        .not('images', 'is', null)
+        .limit(perShop);
+    });
+
+    var results = await Promise.all(promises);
+
+    var allProducts = [];
+    results.forEach(function(r) {
+      if (r.data) {
+        r.data.forEach(function(p) {
+          if (p.images && p.images.length > 0 && p.images[0]) {
+            allProducts.push(p);
+          }
+        });
+      }
+    });
+
+    if (!allProducts.length) {
+      row.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:13px;width:100%;">Товаров пока нет</div>';
+      return;
     }
 
-    // Берём максимум 10
-    products = products.slice(0, 10);
+    // Перемешиваем
+    for (var i = allProducts.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = allProducts[i]; allProducts[i] = allProducts[j]; allProducts[j] = t;
+    }
 
-    row.innerHTML = products.map(function(p) {
+    // Выбираем из разных категорий для разнообразия
+    var selected = [];
+    var usedCats = {};
+    // Сначала по одному из каждой категории
+    allProducts.forEach(function(p) {
+      var cat = p.category || 'other';
+      if (!usedCats[cat] && selected.length < 10) {
+        selected.push(p);
+        usedCats[cat] = true;
+      }
+    });
+    // Добираем до 10
+    allProducts.forEach(function(p) {
+      if (selected.length >= 10) return;
+      if (selected.indexOf(p) === -1) selected.push(p);
+    });
+
+    row.innerHTML = selected.map(function(p) {
       var img = p.images[0];
       var priceText = p.price ? Number(p.price).toLocaleString('ru') + ' ₽' : '';
       var oldPriceText = p.old_price ? Number(p.old_price).toLocaleString('ru') + ' ₽' : '';

@@ -373,15 +373,11 @@
 
 <!-- SERVICES HUB -->
 <div class="screen" id="catalog">
-  <div style="padding:calc(16px + env(safe-area-inset-top, 0px)) 20px 0;background:var(--white);">
+  <div style="padding:calc(16px + env(safe-area-inset-top, 0px)) 20px 14px;background:var(--white);">
     <h1 style="font-size:22px;">Услуги</h1>
-    <p style="font-size:14px;color:var(--text-secondary);margin-top:4px;">Специалисты и товары для вашего питомца</p>
-    <div style="display:flex;gap:0;margin-top:14px;border-bottom:2px solid var(--border);">
-      <button id="catalog-tab-services" onclick="switchCatalogTab('services')" style="flex:1;background:none;border:none;padding:10px 0;font-size:14px;font-weight:700;color:var(--primary);border-bottom:2.5px solid var(--primary);margin-bottom:-2px;cursor:pointer;font-family:inherit;">Специалисты</button>
-      <button id="catalog-tab-shops" onclick="switchCatalogTab('shops')" style="flex:1;background:none;border:none;padding:10px 0;font-size:14px;font-weight:700;color:var(--text-secondary);border-bottom:2.5px solid transparent;margin-bottom:-2px;cursor:pointer;font-family:inherit;">Магазины</button>
-    </div>
+    <p style="font-size:14px;color:var(--text-secondary);margin-top:4px;">Специалисты для вашего питомца</p>
   </div>
-  <!-- Вкладка специалисты -->
+  <!-- Специалисты -->
   <div id="catalog-pane-services" class="scroll" style="padding:12px 16px 80px;">
     <!-- Category cards grid -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
@@ -442,16 +438,6 @@
     </div>
   </div>
 
-  <!-- Вкладка магазины -->
-  <div id="catalog-pane-shops" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
-    <!-- Категории магазинов -->
-    <div id="shops-categories-row" style="display:flex;gap:8px;padding:12px 16px 10px;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
-    </div>
-    <div class="scroll" style="padding:0 16px 20px;">
-      <div id="shops-list"></div>
-    </div>
-  </div>
-
   <nav class="bnav">
     <div class="ni" onclick="nav('home')">
       <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
@@ -476,6 +462,41 @@
   </nav>
 </div>
 
+
+<!-- ══ СПИСОК МАГАЗИНОВ ══ -->
+<div class="screen" id="shopsList">
+  <div style="padding:calc(16px + env(safe-area-inset-top, 0px)) 20px 0;background:var(--white);">
+    <h1 style="font-size:22px;">Магазин</h1>
+    <p style="font-size:14px;color:var(--text-secondary);margin-top:4px;margin-bottom:8px;">Товары для вашего питомца</p>
+  </div>
+  <div id="shops-categories-row" style="display:flex;gap:8px;padding:8px 16px 10px;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch;scrollbar-width:none;background:var(--white);border-bottom:1px solid var(--border);">
+  </div>
+  <div class="scroll" style="padding:12px 16px 20px;">
+    <div id="shops-list"></div>
+  </div>
+  <nav class="bnav">
+    <div class="ni" onclick="nav('home')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
+      <div class="ni-lbl">Главная</div>
+    </div>
+    <div class="ni" onclick="nav('catalog')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+      <div class="ni-lbl">Услуги</div>
+    </div>
+    <div class="ni on" onclick="navToShops()">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>
+      <div class="ni-lbl">Магазин</div>
+    </div>
+    <div class="ni" onclick="nav('chatList')">
+      <div class="ni-icon" style="position:relative;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg><span class="chat-unread-badge" style="position:absolute;top:-6px;right:-8px;min-width:18px;height:18px;background:#FF3B30;color:white;border-radius:9px;font-size:10px;font-weight:800;display:none;align-items:center;justify-content:center;padding:0 4px;">0</span></div>
+      <div class="ni-lbl">Сообщество</div>
+    </div>
+    <div class="ni" onclick="nav('profile')">
+      <div class="ni-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <div class="ni-lbl">Профиль</div>
+    </div>
+  </nav>
+</div>
 
 <!-- ══ МАГАЗИН ══ -->
 <div class="screen" id="shopView">
