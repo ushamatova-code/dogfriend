@@ -254,26 +254,8 @@
       </div>
     </div>
 
-    <!-- Impact card — charity (edge to edge) -->
-    <div class="ic" style="border-radius:20px;padding:16px 18px;margin:10px 16px 4px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="#FF6B8A" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-        <div style="font-size:13px;font-weight:700;opacity:0.9;">Помощь приютам</div>
-      </div>
-      <div id="home-charity-amount" style="font-size:26px;font-weight:900;font-family:'Nunito',sans-serif;margin-bottom:2px;">0 ₽ собрано</div>
-      <div style="font-size:12px;opacity:0.75;margin-bottom:10px;">50% комиссии с каждой оплаты идёт в приюты</div>
-      <div class="pbar" style="height:5px;"><div id="home-charity-bar" class="pfill" style="width:0%;"></div></div>
-    </div>
-
-    <!-- Подобрали для вас — товары (сразу после эмоции = конверсия) -->
-    <div class="sec-hd"><div class="sec-t">Подобрали для вас</div><div class="sec-l" onclick="navToShops()">Все товары</div></div>
-    <div class="scroll-row" id="home-products-row" style="padding-bottom:12px;">
-      <div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:13px;width:100%;">Загружаем...</div>
-    </div>
-
-    <!-- Quick Actions — навигация -->
-    <div class="sec-hd" style="padding:12px 16px 6px;"><div class="sec-t" style="font-size:16px;">Разделы</div></div>
-    <div class="scroll-row" style="padding-bottom:12px;">
+    <!-- Quick Actions — навигация (сразу после геолокации) -->
+    <div class="scroll-row" style="padding:10px 0 4px;">
       <div class="qa" onclick="nav('catalog')">
         <div class="qa-icon" style="background:linear-gradient(135deg,#EEF6FF,#DBEAFE);">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2E7AE6" stroke-width="2" stroke-linecap="round"><path d="M12 14l9-5-9-5-9 5 9 5z"/><path d="M12 14l6.16-3.42A12.08 12.08 0 0121 17.58C18.28 20.43 15.28 22 12 22c-3.28 0-6.28-1.57-9-4.42a12.08 12.08 0 012.84-6.58L12 14z"/></svg>
@@ -310,6 +292,23 @@
         </div>
         <div class="qa-lbl">Акции</div>
       </div>
+    </div>
+
+    <!-- Impact card — charity -->
+    <div class="ic" style="border-radius:20px;padding:16px 18px;margin:4px 16px 4px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#FF6B8A" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        <div style="font-size:13px;font-weight:700;opacity:0.9;">Помощь приютам</div>
+      </div>
+      <div id="home-charity-amount" style="font-size:26px;font-weight:900;font-family:'Nunito',sans-serif;margin-bottom:2px;">0 ₽ собрано</div>
+      <div style="font-size:12px;opacity:0.75;margin-bottom:10px;">50% комиссии с каждой оплаты идёт в приюты</div>
+      <div class="pbar" style="height:5px;"><div id="home-charity-bar" class="pfill" style="width:0%;"></div></div>
+    </div>
+
+    <!-- Подобрали для вас — товары -->
+    <div class="sec-hd"><div class="sec-t">Подобрали для вас</div><div class="sec-l" onclick="navToShops()">Все товары</div></div>
+    <div class="scroll-row" id="home-products-row" style="padding-bottom:12px;">
+      <div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:13px;width:100%;">Загружаем...</div>
     </div>
 
     <!-- Best specialists -->
