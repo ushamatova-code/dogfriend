@@ -800,6 +800,91 @@ function renderShopsList() {
 }
 
 
+// ── Навигация в магазины из нижнего меню ──
+function navToShops() {
+  nav('catalog');
+  // Небольшая задержка чтобы экран успел отрисоваться
+  setTimeout(function() { switchCatalogTab('shops'); }, 50);
+}
+
+// ── Товары на главной — «Подобрали для вас» ──
+let _homeProductsLoaded = false;
+
+async function renderHomeProducts() {
+  var row = document.getElementById('home-products-row');
+  if (!row || !supabaseClient) return;
+
+  // Не загружаем повторно если уже загрузили
+  if (_homeProductsLoaded && row.children.length > 1) return;
+
+  try {
+    // Загружаем товары с фото, из активных магазинов
+    var result = await supabaseClient
+      .from('shop_products')
+      .select('id, name, price, old_price, images, business_id')
+      .eq('is_active', true)
+      .not('images', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(30);
+
+    if (result.error) throw result.error;
+
+    var products = (result.data || []).filter(function(p) {
+      return p.images && p.images.length > 0 && p.images[0];
+    });
+
+    if (!products.length) {
+      row.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:13px;width:100%;">Товаров пока нет</div>';
+      return;
+    }
+
+    // Перемешиваем для эффекта "подобрали для вас"
+    for (var i = products.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var temp = products[i];
+      products[i] = products[j];
+      products[j] = temp;
+    }
+
+    // Берём максимум 10
+    products = products.slice(0, 10);
+
+    row.innerHTML = products.map(function(p) {
+      var img = p.images[0];
+      var priceText = p.price ? Number(p.price).toLocaleString('ru') + ' ₽' : '';
+      var oldPriceText = p.old_price ? Number(p.old_price).toLocaleString('ru') + ' ₽' : '';
+      var name = p.name || 'Товар';
+      if (name.length > 32) name = name.substring(0, 30) + '...';
+
+      return '<div onclick="openHomeProduct(\'' + p.id + '\',\'' + (p.business_id || '') + '\')" style="' +
+        'width:150px;flex-shrink:0;background:var(--white);border-radius:16px;' +
+        'box-shadow:0 2px 12px rgba(0,0,0,0.06);overflow:hidden;cursor:pointer;' +
+        'border:0.5px solid var(--border);">' +
+        '<div style="width:150px;height:150px;background:#f5f5f5;overflow:hidden;">' +
+          '<img src="' + img + '" style="width:100%;height:100%;object-fit:cover;" ' +
+          'onerror="this.parentElement.innerHTML=\'<div style=padding:40px;text-align:center;font-size:32px>🛍️</div>\'">' +
+        '</div>' +
+        '<div style="padding:10px 12px 12px;">' +
+          '<div style="font-size:13px;font-weight:700;line-height:1.3;margin-bottom:6px;' +
+          'overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">' +
+            name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;') +
+          '</div>' +
+          '<div style="display:flex;align-items:baseline;gap:6px;">' +
+            (priceText ? '<div style="font-size:15px;font-weight:900;color:var(--primary);">' + priceText + '</div>' : '') +
+            (oldPriceText ? '<div style="font-size:11px;color:var(--text-secondary);text-decoration:line-through;">' + oldPriceText + '</div>' : '') +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    _homeProductsLoaded = true;
+
+  } catch(e) {
+    console.error('renderHomeProducts error:', e);
+    row.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:13px;width:100%;">Ошибка загрузки</div>';
+  }
+}
+
 // Window экспорты
 window.switchCatalogTab = switchCatalogTab;
 window.openShop = openShop;
@@ -815,3 +900,37 @@ window.clearCart = clearCart;
 window.openImageCropper = openImageCropper;
 window.applyCrop = applyCrop;
 window.closeCropper = closeCropper;
+window.navToShops = navToShops;
+window.renderHomeProducts = renderHomeProducts;
+
+// ── Открытие товара с главной (загружает из БД, не из кэша магазина) ──
+async function openHomeProduct(productId, businessId) {
+  if (!supabaseClient) return;
+  try {
+    // Загружаем товар из БД
+    var result = await supabaseClient
+      .from('shop_products')
+      .select('*')
+      .eq('id', productId)
+      .single();
+
+    if (result.error || !result.data) {
+      showToast('Товар не найден');
+      return;
+    }
+
+    // Добавляем в кэш чтобы openShopProduct нашёл
+    var product = result.data;
+    if (!_currentShopProducts.find(function(p) { return p.id === product.id; })) {
+      _currentShopProducts.push(product);
+    }
+
+    // Открываем как обычно
+    openShopProduct(productId);
+  } catch(e) {
+    console.error('openHomeProduct error:', e);
+    showToast('Ошибка загрузки товара');
+  }
+}
+
+window.openHomeProduct = openHomeProduct;

@@ -154,7 +154,7 @@ async function enablePushFromSettings() {
   const _orig=window.nav;
   window.nav=function(id){
     _orig(id);
-    if(id==='home')      { if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); if(typeof loadProfileStats==='function') loadProfileStats(); }
+    if(id==='home')      { if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); if(typeof loadProfileStats==='function') loadProfileStats(); if(typeof renderHomeProducts==='function') renderHomeProducts(); }
     if(id==='profile')   { setTimeout(() => { if(typeof checkUserBusiness==='function' && currentUser) checkUserBusiness(); }, 200); }
     if(id==='dogmap')    { renderPlaces(); setTimeout(() => { if (_placesMap) _placesMap.invalidateSize(); }, 300); }
     if(id==='discounts') renderDiscounts();
@@ -169,6 +169,7 @@ async function enablePushFromSettings() {
 window.addEventListener('load',()=>{
   setTimeout(()=>{
     if(typeof renderHomeSpecialists==='function') renderHomeSpecialists();
+    if(typeof renderHomeProducts==='function') renderHomeProducts();
     renderPlaces();renderDiscounts();renderLessons();renderPets();
     updateDistrictChatLabel();
     renderSavedDistrictChats();
