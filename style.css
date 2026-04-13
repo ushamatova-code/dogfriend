@@ -1,19 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Nunito:wght@400;600;700;800;900&display=swap');
 
 :root {
-  --primary: #4A90D9;
-  --primary-dark: #3A7BC8;
+  --primary: #2E7AE6;
+  --primary-dark: #1D65CC;
   --secondary: #F5A623;
-  --success: #34C759;
-  --error: #D0021B;
-  --bg: #F6F4F1;
+  --success: #22C55E;
+  --error: #EF4444;
+  --bg: #F2F2F7;
   --white: #FFFFFF;
-  --text-primary: #1A1A1A;
-  --text-secondary: #8E8E93;
-  --border: #EBE8E4;
-  --shadow: 0 1px 3px rgba(0,0,0,0.02), 0 4px 16px rgba(0,0,0,0.04);
-  --shadow-md: 0 2px 8px rgba(0,0,0,0.03), 0 8px 32px rgba(0,0,0,0.06);
-  --shadow-lg: 0 4px 12px rgba(0,0,0,0.04), 0 16px 48px rgba(0,0,0,0.08);
+  --text-primary: #111827;
+  --text-secondary: #6B7280;
+  --border: #E0E0E6;
+  --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.05), 0 8px 32px rgba(0,0,0,0.08);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,0.06), 0 16px 48px rgba(0,0,0,0.1);
   --nav-h: 72px;
   --radius: 20px;
 }
@@ -96,11 +96,11 @@ h3 {
 .btn-p {
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   color: #fff;
-  box-shadow: 0 4px 20px rgba(74, 144, 217, 0.35);
+  box-shadow: 0 4px 16px rgba(46, 122, 230, 0.35);
 }
-.btn-p:active { box-shadow: 0 2px 10px rgba(74, 144, 217, 0.2); }
-.btn-g { background: rgba(74, 144, 217, 0.08); color: var(--primary); }
-.btn-o { background: transparent; color: var(--primary); border: 1.5px solid rgba(74, 144, 217, 0.3); }
+.btn-p:active { box-shadow: 0 2px 8px rgba(46, 122, 230, 0.2); }
+.btn-g { background: rgba(46, 122, 230, 0.1); color: var(--primary); }
+.btn-o { background: transparent; color: var(--primary); border: 1.5px solid rgba(46, 122, 230, 0.3); }
 .btn-s { background: var(--white); color: var(--text-primary); border: 1.5px solid var(--border); box-shadow: var(--shadow); }
 .btn-sm { height: 40px; font-size: 13px; border-radius: 12px; padding: 0 18px; width: auto; }
 
@@ -138,7 +138,7 @@ h3 {
 .card {
   background: var(--white); border-radius: var(--radius);
   padding: 18px; box-shadow: var(--shadow); margin: 0 16px 12px;
-  border: 1px solid rgba(0,0,0,0.03);
+  border: 1px solid var(--border);
 }
 
 /* ═══ INPUTS ═══ */
@@ -246,7 +246,7 @@ h3 {
   background: var(--white); border-radius: var(--radius);
   padding: 18px; margin: 0 16px 12px;
   box-shadow: var(--shadow);
-  border: 1px solid rgba(0,0,0,0.02);
+  border: 1px solid var(--border);
   display: flex; gap: 14px; cursor: pointer;
   transition: all 0.18s;
 }
@@ -270,7 +270,7 @@ h3 {
   display: flex; align-items: center; justify-content: center; font-size: 28px;
   box-shadow: var(--shadow);
 }
-.qa-lbl { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-align: center; }
+.qa-lbl { font-size: 12px; font-weight: 700; color: var(--text-primary); text-align: center; }
 
 /* ═══ PROGRESS BAR ═══ */
 .pbar { height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; }
