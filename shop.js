@@ -94,27 +94,14 @@ const SHOP_CATEGORIES = [
 
 // ── Переключение вкладок каталога
 function switchCatalogTab(tab) {
-  const servPane = document.getElementById('catalog-pane-services');
-  const shopPane = document.getElementById('catalog-pane-shops');
-  const servBtn  = document.getElementById('catalog-tab-services');
-  const shopBtn  = document.getElementById('catalog-tab-shops');
-  if (!servPane || !shopPane) return;
-
-  if (tab === 'services') {
-    servPane.style.display = 'block';
-    shopPane.style.display = 'none';
-    if (servBtn) { servBtn.style.color = 'var(--primary)'; servBtn.style.borderBottom = '2.5px solid var(--primary)'; }
-    if (shopBtn) { shopBtn.style.color = 'var(--text-secondary)'; shopBtn.style.borderBottom = '2.5px solid transparent'; }
-  } else {
-    servPane.style.display = 'none';
-    shopPane.style.display = 'flex';
-    if (shopBtn) { shopBtn.style.color = 'var(--primary)'; shopBtn.style.borderBottom = '2.5px solid var(--primary)'; }
-    if (servBtn) { servBtn.style.color = 'var(--text-secondary)'; servBtn.style.borderBottom = '2.5px solid transparent'; }
-    // Всегда сбрасываем и перезагружаем список магазинов
-    const list = document.getElementById('shops-list');
-    if (list) list.innerHTML = '';
-    loadShopsList();
+  if (tab === 'shops') {
+    // Магазины теперь отдельный экран
+    navToShops();
+    return;
   }
+  // tab === 'services' — просто показываем catalog
+  const servPane = document.getElementById('catalog-pane-services');
+  if (servPane) servPane.style.display = 'block';
 }
 
 // ── Загрузка списка магазинов
@@ -576,18 +563,9 @@ window.nav = function(id) {
   _origNavShop(id);
   if (id === 'shopCart') renderShopCart();
   if (id === 'catalog') {
-    // Всегда возвращаемся на вкладку специалистов и сбрасываем состояние магазинов
+    // Показываем панель специалистов
     const servPane = document.getElementById('catalog-pane-services');
-    const shopPane = document.getElementById('catalog-pane-shops');
-    const servBtn  = document.getElementById('catalog-tab-services');
-    const shopBtn  = document.getElementById('catalog-tab-shops');
     if (servPane) servPane.style.display = '';
-    if (shopPane) { shopPane.style.display = 'none'; }
-    if (servBtn) { servBtn.style.color = 'var(--primary)'; servBtn.style.borderBottom = '2.5px solid var(--primary)'; }
-    if (shopBtn) { shopBtn.style.color = 'var(--text-secondary)'; shopBtn.style.borderBottom = '2.5px solid transparent'; }
-    // Сбрасываем список магазинов чтобы при следующем открытии загрузился заново
-    const list = document.getElementById('shops-list');
-    if (list) list.innerHTML = '';
   }
 };
 
@@ -803,7 +781,103 @@ function renderShopsList() {
 // ── Навигация в магазины из нижнего меню ──
 function navToShops() {
   nav('shopsList');
-  loadShopsList();
+  _loadShopsListScreen();
+}
+
+async function _loadShopsListScreen() {
+  const list = document.getElementById('shops-list-main');
+  if (!list || !supabaseClient) return;
+
+  list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text-secondary);"><div style="font-size:32px;margin-bottom:8px;">🛍️</div><div>Загружаем магазины...</div></div>';
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('businesses')
+      .select('*, business_locations(address,is_main)')
+      .eq('type', 'shop')
+      .eq('is_approved', true)
+      .order('rating', { ascending: false });
+
+    if (error) throw error;
+
+    _allShops = data || [];
+
+    if (!_allShops.length) {
+      list.innerHTML = `
+        <div style="text-align:center;padding:48px 20px;color:var(--text-secondary);">
+          <div style="font-size:48px;margin-bottom:12px;">🏪</div>
+          <div style="font-size:16px;font-weight:700;margin-bottom:6px;">Магазинов пока нет</div>
+          <div style="font-size:13px;line-height:1.5;">Зарегистрируйте свой магазин<br>через раздел «Для бизнеса»</div>
+        </div>`;
+      return;
+    }
+
+    // Категории фильтрации
+    const catRow = document.getElementById('shops-list-categories-row');
+    if (catRow) {
+      catRow.innerHTML = SHOP_FILTER_CATEGORIES.map(cat => `
+        <div onclick="_filterShopsListScreen('${cat.id}', this)"
+          style="display:flex;align-items:center;gap:6px;flex-shrink:0;padding:8px 14px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;background:${cat.id==='all'?'var(--primary)':'var(--bg)'};color:${cat.id==='all'?'white':'var(--text-primary)'};border:1.5px solid ${cat.id==='all'?'var(--primary)':'var(--border)'};">
+          ${cat.label}
+        </div>`).join('');
+    }
+
+    _renderShopsListScreen('all');
+
+  } catch(e) {
+    console.error('_loadShopsListScreen error:', e);
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);">Ошибка загрузки</div>';
+  }
+}
+
+function _filterShopsListScreen(catId, el) {
+  const catRow = document.getElementById('shops-list-categories-row');
+  if (catRow) {
+    catRow.querySelectorAll('div').forEach(d => {
+      d.style.background = 'var(--bg)';
+      d.style.color = 'var(--text-primary)';
+      d.style.borderColor = 'var(--border)';
+    });
+    if (el) {
+      el.style.background = 'var(--primary)';
+      el.style.color = 'white';
+      el.style.borderColor = 'var(--primary)';
+    }
+  }
+  _renderShopsListScreen(catId);
+}
+
+function _renderShopsListScreen(catId) {
+  const list = document.getElementById('shops-list-main');
+  if (!list) return;
+  const shops = catId === 'all' ? _allShops : _allShops.filter(s => {
+    const svcs = Array.isArray(s.services) ? s.services : (typeof s.services === 'string' ? [s.services] : []);
+    return svcs.some(sv => sv === catId);
+  });
+  if (!shops.length) {
+    list.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--text-secondary);"><div style="font-size:32px;margin-bottom:8px;">🏪</div><div>Магазинов в этой категории нет</div></div>';
+    return;
+  }
+  list.innerHTML = shops.map(s => {
+    const locs = s.business_locations || [];
+    const addr = (locs.find(l => l.is_main) || locs[0])?.address || s.address || '';
+    const coverStyle = s.cover_url
+      ? `background:url('${s.cover_url}') center/cover;`
+      : 'background:linear-gradient(135deg,#4A90D9,#7B5EA7);';
+    return `
+      <div onclick="openShop('${s.id}')" style="background:var(--white);border-radius:20px;box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;cursor:pointer;border:0.5px solid var(--border);">
+        <div style="height:110px;${coverStyle}display:flex;align-items:flex-end;padding:10px 14px;">
+          <div style="background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);border-radius:10px;padding:4px 10px;">
+            <span style="color:white;font-size:13px;font-weight:700;">⭐ ${s.rating || '5.0'}</span>
+          </div>
+        </div>
+        <div style="padding:12px 14px;">
+          <div style="font-size:16px;font-weight:900;margin-bottom:4px;">${s.name}</div>
+          ${addr ? `<div style="font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${addr}</div>` : ''}
+          ${s.description ? `<div style="font-size:13px;color:var(--text-secondary);margin-top:6px;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${s.description}</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
 }
 
 // ── Товары на главной — «Подобрали для вас» ──

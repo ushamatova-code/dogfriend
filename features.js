@@ -155,7 +155,7 @@ async function enablePushFromSettings() {
   window.nav=function(id){
     _orig(id);
     if(id==='home')      { if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); if(typeof loadProfileStats==='function') loadProfileStats(); if(typeof renderHomeProducts==='function') renderHomeProducts(); }
-    if(id==='profile')   { setTimeout(() => { if(typeof checkUserBusiness==='function' && currentUser) checkUserBusiness(); }, 200); }
+    if(id==='profile')   { setTimeout(() => { if(typeof checkUserBusiness==='function' && currentUser) checkUserBusiness(); loadMyProfilePosts(); }, 200); }
     if(id==='dogmap')    { renderPlaces(); setTimeout(() => { if (_placesMap) _placesMap.invalidateSize(); }, 300); }
     if(id==='discounts') renderDiscounts();
     if(id==='lessons')   renderLessons();
@@ -1604,3 +1604,80 @@ if (!document.getElementById('reaction-animations')) {
   `;
   document.head.appendChild(style);
 }
+
+// ════════════════════════════════════════════════════════════
+// МОИ ПУБЛИКАЦИИ В ПРОФИЛЕ
+// ════════════════════════════════════════════════════════════
+
+async function loadMyProfilePosts() {
+  const list = document.getElementById('prof-posts-list');
+  const countEl = document.getElementById('prof-posts-count');
+  if (!list) return;
+
+  if (!supabaseClient || !currentUser) {
+    list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-secondary);font-size:13px;">Войдите в аккаунт</div>';
+    return;
+  }
+
+  list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-secondary);font-size:13px;">Загружаем...</div>';
+
+  try {
+    const { data: posts, error } = await supabaseClient
+      .from('posts')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .order('created_at', { ascending: false })
+      .limit(30);
+
+    if (error) throw error;
+
+    if (countEl) countEl.textContent = posts && posts.length ? posts.length + ' публ.' : '';
+
+    if (!posts || !posts.length) {
+      list.innerHTML = `
+        <div style="text-align:center;padding:32px 0;color:var(--text-secondary);">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--border)" stroke-width="1.5" style="display:block;margin:0 auto 8px;"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Публикаций пока нет</div>
+          <div style="font-size:12px;">Напишите первый пост в ленте!</div>
+        </div>`;
+      return;
+    }
+
+    // Используем buildPostCard из feed.js если доступна, иначе простой рендер
+    if (typeof buildPostCard === 'function') {
+      // Получаем лайки
+      var myLikes = new Set();
+      if (typeof getMyLikes === 'function') {
+        myLikes = await getMyLikes(posts.map(p => p.id));
+      }
+      // Добавляем посты в _feedPosts чтобы лайки/комменты работали
+      if (typeof _feedPosts !== 'undefined') {
+        posts.forEach(post => {
+          if (!_feedPosts.find(fp => fp.id === post.id)) _feedPosts.push(post);
+        });
+      }
+      list.innerHTML = posts.map(post =>
+        '<div id="feed-post-' + post.id + '">' + buildPostCard(post, myLikes.has(post.id)) + '</div>'
+      ).join('');
+    } else {
+      // Простой fallback рендер
+      list.innerHTML = posts.map(post => {
+        const timeStr = post.created_at ? new Date(post.created_at).toLocaleDateString('ru-RU') : '';
+        const photosHtml = post.photos && post.photos.length
+          ? '<div style="margin:8px 0;border-radius:10px;overflow:hidden;"><img src="' + post.photos[0] + '" style="width:100%;max-height:200px;object-fit:cover;border-radius:10px;"></div>'
+          : '';
+        return '<div style="background:var(--white);border-radius:16px;box-shadow:var(--shadow);padding:14px 16px;margin-bottom:10px;border:0.5px solid var(--border);">' +
+          (post.text ? '<div style="font-size:14px;line-height:1.6;margin-bottom:6px;">' + post.text + '</div>' : '') +
+          photosHtml +
+          '<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">' + timeStr +
+          ' · ❤️ ' + (post.likes_count || 0) + ' · 💬 ' + (post.comments_count || 0) + '</div>' +
+          '</div>';
+      }).join('');
+    }
+  } catch(e) {
+    console.error('loadMyProfilePosts error:', e);
+    list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-secondary);font-size:13px;">Ошибка загрузки</div>';
+  }
+}
+
+window.loadMyProfilePosts = loadMyProfilePosts;

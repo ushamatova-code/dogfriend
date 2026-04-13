@@ -263,6 +263,15 @@ function showUserProfile(userId, name, initials, grad) {
       const safeId = userId.replace(/'/g, "\'");
       const safeName = displayName.replace(/'/g, "\'");
 
+      // Кнопка дружбы — строим асинхронно, начинаем с заглушки
+      const isSelf = currentUser && currentUser.id === userId;
+      let friendBtnHtml = '';
+      if (!isSelf) {
+        friendBtnHtml = `<button id="friend-btn-${userId}" class="btn btn-p" style="font-size:13px;" onclick="sendFriendRequest('${safeId}')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:6px;"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+          Добавить в друзья</button>`;
+      }
+
       body.innerHTML = `
         <div style="padding-bottom:16px;">
           <!-- Шапка профиля -->
@@ -277,9 +286,17 @@ function showUserProfile(userId, name, initials, grad) {
             <button class="btn btn-p" onclick="closeModal('m-user-profile');openChatWithUser('${safeId}','${safeName}','${initials}','${grad}')">
               Написать сообщение
             </button>
+            ${friendBtnHtml}
             <button class="btn btn-g" onclick="closeModal('m-user-profile')">Закрыть</button>
           </div>
         </div>`;
+
+      // Обновляем кнопку дружбы реальным статусом
+      if (!isSelf && typeof _getFriendStatus === 'function') {
+        _getFriendStatus(userId).then(status => {
+          if (typeof _updateFriendBtnUI === 'function') _updateFriendBtnUI(userId, status);
+        });
+      }
     });
   }
 }
