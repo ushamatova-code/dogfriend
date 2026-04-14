@@ -1772,14 +1772,39 @@ async function loadFeedScreen() {
   try {
     const { data: posts } = await supabaseClient
       .from('posts')
-      .select('id, user_id, author_name, author_avatar, text, photos, district, likes_count, comments_count, created_at')
+      .select('id, user_id, business_id, author_name, author_avatar, text, photos, district, likes_count, comments_count, created_at')
       .order('created_at', { ascending: false })
       .limit(30);
+
     if (!posts || !posts.length) {
       list.innerHTML = '<div style="text-align:center;padding:40px 16px;color:var(--text-secondary);font-size:13px;">Пока нет постов.<br>Будьте первым!</div>';
       return;
     }
-    list.innerHTML = posts.map(p => renderFeedPost(p)).join('');
+
+    // Определяем какие посты мы лайкнули
+    var myLikes = new Set();
+    if (currentUser) {
+      var { data: likes } = await supabaseClient
+        .from('post_likes')
+        .select('post_id')
+        .eq('user_id', currentUser.id);
+      if (likes) likes.forEach(l => myLikes.add(l.post_id));
+    }
+
+    // Парсим photos из JSON строки если нужно
+    var parsed = posts.map(function(p) {
+      var post = Object.assign({}, p);
+      if (typeof post.photos === 'string') {
+        try { post.photos = JSON.parse(post.photos); } catch(e) { post.photos = []; }
+      }
+      return post;
+    });
+
+    if (typeof buildPostCard === 'function') {
+      list.innerHTML = parsed.map(p => buildPostCard(p, myLikes.has(p.id))).join('');
+    } else {
+      list.innerHTML = parsed.map(p => renderFeedPostFallback(p)).join('');
+    }
   } catch(e) {
     list.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-secondary);">Не удалось загрузить ленту</div>';
     console.error('Feed load error:', e);
@@ -1799,70 +1824,72 @@ async function loadHomeFeedPreview() {
   try {
     const { data: posts } = await supabaseClient
       .from('posts')
-      .select('id, user_id, author_name, author_avatar, text, photos, district, likes_count, comments_count, created_at')
+      .select('id, user_id, business_id, author_name, author_avatar, text, photos, district, likes_count, comments_count, created_at')
       .order('created_at', { ascending: false })
       .limit(2);
+
     if (!posts || !posts.length) {
       preview.innerHTML = '<div style="text-align:center;padding:12px 0;color:var(--text-secondary);font-size:13px;">Пока нет постов — будьте первым!</div>';
       return;
     }
-    preview.innerHTML = posts.map(p => renderFeedPost(p, true)).join('');
+
+    var parsed = posts.map(function(p) {
+      var post = Object.assign({}, p);
+      if (typeof post.photos === 'string') {
+        try { post.photos = JSON.parse(post.photos); } catch(e) { post.photos = []; }
+      }
+      return post;
+    });
+
+    if (typeof buildPostCard === 'function') {
+      preview.innerHTML = parsed.map(p => buildPostCard(p, false)).join('');
+    } else {
+      preview.innerHTML = parsed.map(p => renderFeedPostFallback(p)).join('');
+    }
   } catch(e) { console.error('Home feed preview error:', e); }
 }
 
-function renderFeedPost(post, compact) {
+// Fallback рендер на случай если feed.js ещё не загрузился
+function _goToProfile(uid) {
+  if (typeof openUserProfileById === 'function') openUserProfileById(uid);
+  else if (typeof openFullUserProfile === 'function') openFullUserProfile(uid);
+}
+window._goToProfile = _goToProfile;
+
+function renderFeedPostFallback(post) {
   var name = post.author_name || 'Пользователь';
   var initials = name.substring(0,2).toUpperCase();
   var district = post.district || '';
-  var timeStr = formatPostTime(post.created_at);
-  var likes = post.likes_count || 0;
-  var comments = post.comments_count || 0;
-
+  var now = new Date(); var d = new Date(post.created_at);
+  var diff = Math.floor((now - d) / 1000);
+  var timeStr = diff < 60 ? 'только что' : diff < 3600 ? Math.floor(diff/60) + ' мин назад' : diff < 86400 ? Math.floor(diff/3600) + ' ч назад' : Math.floor(diff/86400) + ' дн назад';
   var avatarInner = post.author_avatar
     ? '<img src="' + post.author_avatar + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
-    : initials;
-
-  var photos = [];
-  try { photos = post.photos ? JSON.parse(post.photos) : []; } catch(e) {}
+    : '<span style="font-size:16px;font-weight:700;color:white;">' + initials.charAt(0) + '</span>';
+  var photos = Array.isArray(post.photos) ? post.photos : [];
   var imgHtml = '';
   if (photos.length === 1) {
-    imgHtml = '<img src="' + photos[0] + '" style="width:100%;border-radius:10px;margin-top:8px;max-height:220px;object-fit:cover;">';
+    imgHtml = '<div style="margin:10px 0;border-radius:12px;overflow:hidden;"><img src="' + photos[0] + '" style="width:100%;max-height:400px;object-fit:contain;background:#f5f5f5;border-radius:12px;display:block;"></div>';
   } else if (photos.length > 1) {
-    imgHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px;">'
-      + photos.slice(0,4).map(function(url) {
-          return '<img src="' + url + '" style="width:100%;height:110px;object-fit:cover;border-radius:8px;">';
-        }).join('')
-      + '</div>';
+    imgHtml = '<div style="margin:10px 0;display:grid;grid-template-columns:1fr 1fr;gap:3px;">' + photos.map(function(u){ return '<img src="' + u + '" style="width:100%;height:150px;object-fit:cover;">'; }).join('') + '</div>';
   }
-
-  return '<div style="background:white;border-radius:14px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,0.07);">'
-    + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">'
-    + '<div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);display:flex;align-items:center;justify-content:center;font-size:13px;color:white;font-weight:700;flex-shrink:0;overflow:hidden;">' + avatarInner + '</div>'
-    + '<div style="flex:1;min-width:0;">'
-    + '<div style="font-size:13px;font-weight:700;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + name + '</div>'
-    + '<div style="font-size:11px;color:#888;">' + (district ? district + ' · ' : '') + timeStr + '</div>'
+  var uid = post.user_id || '';
+  var clickable = uid ? ' onclick="_goToProfile(\'' + uid + '\')" style="cursor:pointer;"' : '';
+  return '<div style="background:var(--white);margin:0 0 8px;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06);padding:14px 16px;border:0.5px solid var(--border);">'
+    + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">'
+    + '<div' + clickable + ' style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;">' + avatarInner + '</div>'
+    + '<div' + clickable + ' style="flex:1;min-width:0;">'
+    + '<div style="font-weight:700;font-size:14px;">' + name + (district ? ' <span style="font-size:11px;color:var(--text-secondary);">· ' + district + '</span>' : '') + '</div>'
+    + '<div style="font-size:12px;color:var(--text-secondary);">' + timeStr + '</div>'
     + '</div></div>'
-    + '<div style="font-size:13px;color:#111;line-height:1.5;white-space:pre-wrap;">' + (post.text || '') + '</div>'
+    + (post.text ? '<div style="font-size:14px;line-height:1.6;color:var(--text-primary);margin:8px 0;word-break:break-word;">' + post.text + '</div>' : '')
     + imgHtml
-    + (!compact ? '<div style="display:flex;gap:16px;margin-top:10px;padding-top:8px;border-top:1px solid #f0f0f0;">'
-      + '<span style="font-size:12px;color:#888;display:flex;align-items:center;gap:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF6B8A" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>' + likes + '</span>'
-      + '<span style="font-size:12px;color:#888;display:flex;align-items:center;gap:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4A90D9" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>' + comments + '</span>'
-      + '</div>' : '')
-    + '</div>';
-}
-
-function formatPostTime(iso) {
-  if (!iso) return '';
-  var d = new Date(iso);
-  var now = new Date();
-  var diff = Math.floor((now - d) / 1000);
-  if (diff < 60) return 'только что';
-  if (diff < 3600) return Math.floor(diff/60) + ' мин назад';
-  if (diff < 86400) return Math.floor(diff/3600) + ' ч назад';
-  return Math.floor(diff/86400) + ' дн назад';
+    + '<div style="display:flex;gap:20px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">'
+    + '<span style="font-size:13px;font-weight:600;color:var(--text-secondary);display:flex;align-items:center;gap:6px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>' + (post.likes_count || 0) + '</span>'
+    + '<span style="font-size:13px;font-weight:600;color:var(--text-secondary);display:flex;align-items:center;gap:6px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>' + (post.comments_count || 0) + '</span>'
+    + '</div></div>';
 }
 
 window.loadFeedScreen = loadFeedScreen;
 window.loadHomeFeedPreview = loadHomeFeedPreview;
-window.renderFeedPost = renderFeedPost;
 window.loadHomeFeedPreview = loadHomeFeedPreview;
