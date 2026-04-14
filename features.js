@@ -365,11 +365,14 @@ function switchCommTab(tab) {
 // ════════════════════════════════════════════════════════════
 async function openChatUserProfile() {
   const userId = currentPrivateChatId;
-  if (!userId || !supabaseClient) return;
-  
+  if (!userId) return;
+  if (typeof openFullUserProfile === 'function') {
+    openFullUserProfile(userId);
+    return;
+  }
+  if (!supabaseClient) return;
   const body = document.getElementById('m-user-profile-body');
   if (!body) return;
-  
   body.innerHTML = '<div style="padding:20px;color:var(--text-secondary);">Загружаем профиль...</div>';
   openModal('m-user-profile');
   
