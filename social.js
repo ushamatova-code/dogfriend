@@ -319,8 +319,9 @@ async function openFullUserProfile(userId) {
 
     // Аватар
     var avatarHtml = p.avatar_url
-      ? '<img src="' + p.avatar_url + '" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,0.4);box-shadow:0 4px 16px rgba(0,0,0,0.15);" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">' +
-        '<div style="display:none;width:88px;height:88px;border-radius:50%;background:rgba(255,255,255,0.15);align-items:center;justify-content:center;font-size:32px;font-weight:800;color:white;border:3px solid rgba(255,255,255,0.3);">' + initials + '</div>'
+      ? '<div style="width:88px;height:88px;border-radius:50%;overflow:hidden;border:3px solid rgba(255,255,255,0.4);box-shadow:0 4px 16px rgba(0,0,0,0.15);background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:white;">' +
+        '<img src="' + p.avatar_url + '" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display=\'none\';this.parentElement.textContent=\'' + initials + '\'">' +
+        '</div>'
       : '<div style="width:88px;height:88px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:white;border:3px solid rgba(255,255,255,0.3);">' + initials + '</div>';
 
     // Кнопка дружбы / редактирования
@@ -357,11 +358,15 @@ async function openFullUserProfile(userId) {
         '<div style="font-size:14px;font-weight:800;margin-bottom:12px;">🐕 Питомцы</div>' +
         '<div style="display:flex;gap:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;">' +
         petsList.map(function(pet) {
-          var petAv = pet.photo_url
-            ? '<img src="' + pet.photo_url + '" style="width:56px;height:56px;border-radius:50%;object-fit:cover;" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
-            : '';
-          var petFallback = '<div style="' + (pet.photo_url ? 'display:none;' : '') + 'width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);display:flex;align-items:center;justify-content:center;font-size:22px;">🐕</div>';
-          return '<div style="text-align:center;flex-shrink:0;">' + petAv + petFallback +
+          var petAvatar;
+          if (pet.photo_url) {
+            petAvatar = '<div style="width:56px;height:56px;border-radius:50%;overflow:hidden;flex-shrink:0;background:linear-gradient(135deg,#4A90D9,#7B5EA7);display:flex;align-items:center;justify-content:center;font-size:22px;color:white;">' +
+              '<img src="' + pet.photo_url + '" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'🐕\'">' +
+              '</div>';
+          } else {
+            petAvatar = '<div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);display:flex;align-items:center;justify-content:center;font-size:22px;color:white;">🐕</div>';
+          }
+          return '<div style="text-align:center;flex-shrink:0;">' + petAvatar +
             '<div style="font-size:12px;font-weight:700;margin-top:6px;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + _escS(pet.name) + ' ' + (pet.sex === 'ж' ? '♀' : '♂') + '</div>' +
             (pet.breed ? '<div style="font-size:10px;color:var(--text-secondary);max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + _escS(pet.breed) + '</div>' : '') +
             '</div>';
