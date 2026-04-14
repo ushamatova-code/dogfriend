@@ -323,11 +323,15 @@ async function openFullUserProfile(userId) {
         '<div style="display:none;width:88px;height:88px;border-radius:50%;background:rgba(255,255,255,0.15);align-items:center;justify-content:center;font-size:32px;font-weight:800;color:white;border:3px solid rgba(255,255,255,0.3);">' + initials + '</div>'
       : '<div style="width:88px;height:88px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:white;border:3px solid rgba(255,255,255,0.3);">' + initials + '</div>';
 
-    // Кнопка дружбы
+    // Кнопка дружбы / редактирования
     var safeId = userId.replace(/'/g, "\\'");
     var safeName = name.replace(/'/g, "\\'");
     var friendBtnHtml = '';
-    if (!isSelf) {
+    if (isSelf) {
+      friendBtnHtml = '<button class="btn btn-p" style="width:100%;font-size:13px;" onclick="nav(\'edit-profile\');loadProfileForm()">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:6px;"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
+        'Редактировать профиль</button>';
+    } else {
       if (friendStatus === 'accepted') {
         friendBtnHtml = '<div id="friend-btn-' + userId + '" style="display:flex;gap:8px;width:100%;">' +
           '<button class="btn btn-p" style="flex:1;font-size:13px;" onclick="openChatWithUser(\'' + safeId + '\',\'' + safeName + '\',\'' + initials + '\',\'linear-gradient(135deg,#4A90D9,#7B5EA7)\')">' +
@@ -384,6 +388,17 @@ async function openFullUserProfile(userId) {
         '<div style="font-size:13px;">Публикаций пока нет</div></div>';
     }
 
+    // Count friends for stats
+    var friendsCount = 0;
+    try {
+      var friendsResult = await supabaseClient
+        .from('friends')
+        .select('id')
+        .or('user_id.eq.' + userId + ',friend_id.eq.' + userId)
+        .eq('status', 'accepted');
+      friendsCount = (friendsResult.data || []).length;
+    } catch(e) {}
+
     body.innerHTML =
       // Gradient header
       '<div style="background:linear-gradient(145deg,var(--primary),#7B5EA7);padding:24px 20px 20px;text-align:center;border-radius:0 0 24px 24px;margin:-16px -20px 16px -20px;">' +
@@ -392,6 +407,8 @@ async function openFullUserProfile(userId) {
         (p.district ? '<div style="font-size:13px;color:rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;gap:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>' + _escS(p.district) + '</div>' : '') +
         // Stats bar
         '<div style="display:flex;gap:0;background:rgba(255,255,255,0.12);border-radius:14px;padding:12px;margin-top:14px;">' +
+          '<div style="flex:1;text-align:center;' + (isSelf ? 'cursor:pointer;' : '') + '"' + (isSelf ? ' onclick="nav(\'myFriends\');if(typeof initSocial===\'function\')initSocial()"' : '') + '><div style="font-size:18px;font-weight:900;color:white;">' + friendsCount + '</div><div style="font-size:11px;color:rgba(255,255,255,0.7);">друзей</div></div>' +
+          '<div style="width:1px;background:rgba(255,255,255,0.15);"></div>' +
           '<div style="flex:1;text-align:center;"><div style="font-size:18px;font-weight:900;color:white;">' + postsList.length + '</div><div style="font-size:11px;color:rgba(255,255,255,0.7);">постов</div></div>' +
           '<div style="width:1px;background:rgba(255,255,255,0.15);"></div>' +
           '<div style="flex:1;text-align:center;"><div style="font-size:18px;font-weight:900;color:white;">' + petsList.length + '</div><div style="font-size:11px;color:rgba(255,255,255,0.7);">питомцев</div></div>' +
