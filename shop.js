@@ -940,7 +940,7 @@ async function renderHomeProducts() {
 window.switchCatalogTab = switchCatalogTab;
 window.openShop = openShop;
 window.openShopProduct = openShopProduct;
-window.closeShopProduct = closeShopProduct;
+window.closeShopProduct = function() { back(); };
 window.filterShopByCategory = filterShopByCategory;
 window.filterShopsByCategory = filterShopsByCategory;
 window.slideGallery = slideGallery;
