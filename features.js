@@ -154,7 +154,12 @@ async function enablePushFromSettings() {
   const _orig=window.nav;
   window.nav=function(id){
     _orig(id);
-    if(id==='home')      { if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); if(typeof loadProfileStats==='function') loadProfileStats(); if(typeof renderHomeProducts==='function') renderHomeProducts(); setTimeout(loadHomeFeedPreview, 400); }
+    if(id==='home') {
+      if(typeof loadProfileStats==='function') loadProfileStats();
+      setTimeout(()=>{ if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); }, 100);
+      setTimeout(()=>{ if(typeof renderHomeProducts==='function') renderHomeProducts(); }, 500);
+      setTimeout(()=>{ if(typeof loadHomeFeedPreview==='function') loadHomeFeedPreview(); }, 900);
+    }
     if(id==='feedScreen') { setTimeout(loadFeedScreen, 200); }
     if(id==='profile')   { setTimeout(() => { if(typeof checkUserBusiness==='function' && currentUser) checkUserBusiness(); loadMyProfilePosts(); loadProfileSocialData(); }, 200); }
     if(id==='dogmap')    { renderPlaces(); setTimeout(() => { if (_placesMap) _placesMap.invalidateSize(); }, 300); }
@@ -168,13 +173,15 @@ async function enablePushFromSettings() {
 
 // Initial render on DOMContentLoaded (after main listener)
 window.addEventListener('load',()=>{
-  setTimeout(()=>{
-    if(typeof renderHomeSpecialists==='function') renderHomeSpecialists();
-    if(typeof renderHomeProducts==='function') renderHomeProducts();
-    renderPlaces();renderDiscounts();renderLessons();renderPets();
-    updateDistrictChatLabel();
-    renderSavedDistrictChats();
-  },200);
+  // Разносим запросы по времени чтобы не перегружать Supabase соединения
+  setTimeout(()=>{ if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); }, 300);
+  setTimeout(()=>{ if(typeof renderHomeProducts==='function') renderHomeProducts(); }, 800);
+  setTimeout(()=>{ if(typeof renderPlaces==='function') renderPlaces(); }, 1300);
+  setTimeout(()=>{ if(typeof renderDiscounts==='function') renderDiscounts(); }, 1800);
+  setTimeout(()=>{ if(typeof renderLessons==='function') renderLessons(); }, 2200);
+  setTimeout(()=>{ if(typeof renderPets==='function') renderPets(); }, 2600);
+  setTimeout(()=>{ updateDistrictChatLabel(); renderSavedDistrictChats(); }, 3000);
+  setTimeout(()=>{ if(typeof loadHomeFeedPreview==='function') loadHomeFeedPreview(); }, 3500);
 
   // Закрываем результаты поиска при клике вне
   document.addEventListener('click', (e) => {
