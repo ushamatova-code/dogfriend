@@ -1800,11 +1800,7 @@ async function loadFeedScreen() {
       return post;
     });
 
-    if (typeof buildPostCard === 'function') {
-      list.innerHTML = parsed.map(p => buildPostCard(p, myLikes.has(p.id))).join('');
-    } else {
-      list.innerHTML = parsed.map(p => renderFeedPostFallback(p)).join('');
-    }
+    list.innerHTML = parsed.map(function(p) { return renderFeedPostFallback(p); }).join('');
   } catch(e) {
     list.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-secondary);">Не удалось загрузить ленту</div>';
     console.error('Feed load error:', e);
@@ -1841,20 +1837,23 @@ async function loadHomeFeedPreview() {
       return post;
     });
 
-    if (typeof buildPostCard === 'function') {
-      preview.innerHTML = parsed.map(p => buildPostCard(p, false)).join('');
-    } else {
-      preview.innerHTML = parsed.map(p => renderFeedPostFallback(p)).join('');
-    }
+    preview.innerHTML = parsed.map(function(p) { return renderFeedPostFallback(p); }).join('');
   } catch(e) { console.error('Home feed preview error:', e); }
 }
 
-// Fallback рендер на случай если feed.js ещё не загрузился
+// Рендер поста — свой дизайн, данные из feed.js
 function _goToProfile(uid) {
   if (typeof openUserProfileById === 'function') openUserProfileById(uid);
   else if (typeof openFullUserProfile === 'function') openFullUserProfile(uid);
 }
 window._goToProfile = _goToProfile;
+
+function _likePost(id) { if (typeof togglePostLike === 'function') togglePostLike(id); }
+function _openPost(id) { if (typeof openPostDetail === 'function') openPostDetail(id); }
+function _sharePost(id) { if (typeof copyPostLink === 'function') copyPostLink(id); }
+window._likePost = _likePost;
+window._openPost = _openPost;
+window._sharePost = _sharePost;
 
 function renderFeedPostFallback(post) {
   var name = post.author_name || 'Пользователь';
@@ -1865,29 +1864,75 @@ function renderFeedPostFallback(post) {
   var timeStr = diff < 60 ? 'только что' : diff < 3600 ? Math.floor(diff/60) + ' мин назад' : diff < 86400 ? Math.floor(diff/3600) + ' ч назад' : Math.floor(diff/86400) + ' дн назад';
   var avatarInner = post.author_avatar
     ? '<img src="' + post.author_avatar + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
-    : '<span style="font-size:16px;font-weight:700;color:white;">' + initials.charAt(0) + '</span>';
+    : '<span style="font-size:15px;font-weight:800;color:white;">' + initials + '</span>';
   var photos = Array.isArray(post.photos) ? post.photos : [];
   var imgHtml = '';
   if (photos.length === 1) {
-    imgHtml = '<div style="margin:10px 0;border-radius:12px;overflow:hidden;"><img src="' + photos[0] + '" style="width:100%;max-height:400px;object-fit:contain;background:#f5f5f5;border-radius:12px;display:block;"></div>';
+    imgHtml = '<div style="margin:10px -14px 0;"><img src="' + photos[0] + '" style="width:100%;max-height:280px;object-fit:cover;display:block;"></div>';
   } else if (photos.length > 1) {
-    imgHtml = '<div style="margin:10px 0;display:grid;grid-template-columns:1fr 1fr;gap:3px;">' + photos.map(function(u){ return '<img src="' + u + '" style="width:100%;height:150px;object-fit:cover;">'; }).join('') + '</div>';
+    imgHtml = '<div style="margin:10px -14px 0;display:grid;grid-template-columns:1fr 1fr;gap:2px;">'
+      + photos.slice(0,4).map(function(u, i) {
+          var overlay = (i === 3 && photos.length > 4) ? '<div style="position:absolute;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;color:white;font-size:20px;font-weight:800;">+' + (photos.length - 4) + '</div>' : '';
+          return '<div style="position:relative;"><img src="' + u + '" style="width:100%;height:140px;object-fit:cover;display:block;">' + overlay + '</div>';
+        }).join('')
+      + '</div>';
   }
+  var pid = post.id || '';
   var uid = post.user_id || '';
-  var clickable = uid ? ' onclick="_goToProfile(\'' + uid + '\')" style="cursor:pointer;"' : '';
-  return '<div style="background:var(--white);margin:0 0 8px;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06);padding:14px 16px;border:0.5px solid var(--border);">'
-    + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">'
-    + '<div' + clickable + ' style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;">' + avatarInner + '</div>'
-    + '<div' + clickable + ' style="flex:1;min-width:0;">'
-    + '<div style="font-weight:700;font-size:14px;">' + name + (district ? ' <span style="font-size:11px;color:var(--text-secondary);">· ' + district + '</span>' : '') + '</div>'
-    + '<div style="font-size:12px;color:var(--text-secondary);">' + timeStr + '</div>'
-    + '</div></div>'
-    + (post.text ? '<div style="font-size:14px;line-height:1.6;color:var(--text-primary);margin:8px 0;word-break:break-word;">' + post.text + '</div>' : '')
-    + imgHtml
-    + '<div style="display:flex;gap:20px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">'
-    + '<span style="font-size:13px;font-weight:600;color:var(--text-secondary);display:flex;align-items:center;gap:6px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>' + (post.likes_count || 0) + '</span>'
-    + '<span style="font-size:13px;font-weight:600;color:var(--text-secondary);display:flex;align-items:center;gap:6px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>' + (post.comments_count || 0) + '</span>'
-    + '</div></div>';
+  var likes = post.likes_count || 0;
+  var comments = post.comments_count || 0;
+
+  var el = document.createElement('div');
+  el.style.cssText = 'background:white;border-radius:20px;padding:14px 14px 12px;box-shadow:0 2px 16px rgba(0,0,0,0.07);overflow:hidden;margin-bottom:2px;';
+
+  var header = document.createElement('div');
+  header.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:10px;' + (uid ? 'cursor:pointer;' : '');
+  if (uid) header.onclick = function() { _goToProfile(uid); };
+  header.innerHTML = '<div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;">' + avatarInner + '</div>'
+    + '<div style="flex:1;min-width:0;">'
+    + '<div style="font-size:14px;font-weight:800;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + name + '</div>'
+    + '<div style="font-size:11px;color:#999;margin-top:1px;">' + (district ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2" style="vertical-align:-1px;margin-right:2px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>' + district + ' · ' : '') + timeStr + '</div>'
+    + '</div>';
+  el.appendChild(header);
+
+  if (post.text) {
+    var textEl = document.createElement('div');
+    textEl.style.cssText = 'font-size:14px;line-height:1.65;color:#222;margin-bottom:2px;word-break:break-word;';
+    textEl.textContent = post.text;
+    el.appendChild(textEl);
+  }
+
+  if (imgHtml) {
+    var imgWrap = document.createElement('div');
+    imgWrap.innerHTML = imgHtml;
+    el.appendChild(imgWrap.firstChild);
+  }
+
+  var actions = document.createElement('div');
+  actions.style.cssText = 'display:flex;align-items:center;gap:0;margin-top:12px;padding-top:10px;border-top:1px solid #f2f2f2;';
+
+  var likeBtn = document.createElement('button');
+  likeBtn.id = 'like-btn-' + pid;
+  likeBtn.dataset.liked = '0';
+  likeBtn.style.cssText = 'display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;font-size:13px;font-weight:700;color:#FF6B8A;padding:4px 12px 4px 0;';
+  likeBtn.innerHTML = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FF6B8A" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg><span id="likes-count-' + pid + '">' + likes + '</span>';
+  likeBtn.onclick = function() { _likePost(pid); };
+  actions.appendChild(likeBtn);
+
+  var commentBtn = document.createElement('button');
+  commentBtn.style.cssText = 'display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;font-size:13px;font-weight:700;color:#4A90D9;padding:4px 12px 4px 0;';
+  commentBtn.innerHTML = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#4A90D9" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span id="comments-count-' + pid + '">' + comments + '</span>';
+  commentBtn.onclick = function() { _openPost(pid); };
+  actions.appendChild(commentBtn);
+
+  var shareBtn = document.createElement('button');
+  shareBtn.style.cssText = 'display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;font-size:13px;color:#ccc;padding:4px 0;margin-left:auto;';
+  shareBtn.innerHTML = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>';
+  shareBtn.onclick = function() { _sharePost(pid); };
+  actions.appendChild(shareBtn);
+
+  el.appendChild(actions);
+  return el.outerHTML;
 }
 
 window.loadFeedScreen = loadFeedScreen;
