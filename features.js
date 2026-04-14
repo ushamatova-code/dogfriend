@@ -154,8 +154,9 @@ async function enablePushFromSettings() {
   const _orig=window.nav;
   window.nav=function(id){
     _orig(id);
-    if(id==='home')      { if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); if(typeof loadProfileStats==='function') loadProfileStats(); if(typeof renderHomeProducts==='function') renderHomeProducts(); }
-    if(id==='profile')   { setTimeout(() => { if(typeof checkUserBusiness==='function' && currentUser) checkUserBusiness(); loadProfileMenuStats(); }, 200); }
+    if(id==='home')      { if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); if(typeof loadProfileStats==='function') loadProfileStats(); if(typeof renderHomeProducts==='function') renderHomeProducts(); setTimeout(loadHomeFeedPreview, 400); }
+    if(id==='feedScreen') { setTimeout(loadFeedScreen, 200); }
+    if(id==='profile')   { setTimeout(() => { if(typeof checkUserBusiness==='function' && currentUser) checkUserBusiness(); loadMyProfilePosts(); loadProfileSocialData(); }, 200); }
     if(id==='dogmap')    { renderPlaces(); setTimeout(() => { if (_placesMap) _placesMap.invalidateSize(); }, 300); }
     if(id==='discounts') renderDiscounts();
     if(id==='lessons')   renderLessons();
@@ -365,14 +366,11 @@ function switchCommTab(tab) {
 // ════════════════════════════════════════════════════════════
 async function openChatUserProfile() {
   const userId = currentPrivateChatId;
-  if (!userId) return;
-  if (typeof openFullUserProfile === 'function') {
-    openFullUserProfile(userId);
-    return;
-  }
-  if (!supabaseClient) return;
+  if (!userId || !supabaseClient) return;
+  
   const body = document.getElementById('m-user-profile-body');
   if (!body) return;
+  
   body.innerHTML = '<div style="padding:20px;color:var(--text-secondary);">Загружаем профиль...</div>';
   openModal('m-user-profile');
   
@@ -1701,13 +1699,10 @@ window.loadMyProfilePosts = loadMyProfilePosts;
 // PROFILE SOCIAL DATA — питомцы, друзья, район, приюты
 // ════════════════════════════════════════════════════════════
 
-// Лёгкая загрузка данных для меню профиля (только stats bar)
-async function loadProfileMenuStats() {
+async function loadProfileSocialData() {
   if (!supabaseClient || !currentUser) return;
 
   var p = JSON.parse(localStorage.getItem('df_profile') || '{}');
-
-  // Район
   var distEl = document.getElementById('prof-district-display');
   if (distEl) {
     distEl.innerHTML = p.district
@@ -1715,26 +1710,140 @@ async function loadProfileMenuStats() {
       : '';
   }
 
-  // Питомцы — только счётчик
+  // Питомцы
   try {
-    var petsResult = await supabaseClient.from('pets').select('id', { count: 'exact', head: true }).eq('user_id', currentUser.id);
+    var petsResult = await supabaseClient.from('pets').select('id, name, photo_url, breed').eq('user_id', currentUser.id).order('created_at', { ascending: true });
+    var pets = petsResult.data || [];
+    var petsRow = document.getElementById('prof-pets-row');
     var petsStatEl = document.getElementById('prof-stat-pets');
-    if (petsStatEl) petsStatEl.textContent = petsResult.count || 0;
-  } catch(e) { console.error('Profile pets stat error:', e); }
-}
+    if (petsStatEl) petsStatEl.textContent = pets.length;
+    if (petsRow) {
+      var addBtn = '<div onclick="nav(\'myPets\')" style="width:64px;flex-shrink:0;text-align:center;cursor:pointer;"><div style="width:56px;height:56px;border-radius:50%;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto;color:var(--text-secondary);font-size:22px;">+</div><div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Добавить</div></div>';
+      var petsHtml = pets.map(function(pet) {
+        var av = pet.photo_url ? '<img src="' + pet.photo_url + '" style="width:56px;height:56px;border-radius:50%;object-fit:cover;" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">' : '';
+        var fb = '<div style="' + (pet.photo_url ? 'display:none;' : '') + 'width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);display:flex;align-items:center;justify-content:center;font-size:22px;color:white;font-weight:700;">' + (pet.name||'?').substring(0,1).toUpperCase() + '</div>';
+        return '<div onclick="nav(\'myPets\')" style="width:64px;flex-shrink:0;text-align:center;cursor:pointer;">' + av + fb + '<div style="font-size:11px;font-weight:700;margin-top:4px;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (pet.name||'') + '</div></div>';
+      }).join('');
+      petsRow.innerHTML = petsHtml + addBtn;
+    }
+  } catch(e) { console.error('Profile pets error:', e); }
 
-// Открыть свой профиль как социальную страницу
-function openMyProfilePage() {
-  if (typeof openFullUserProfile === 'function' && currentUser) {
-    openFullUserProfile(currentUser.id);
-  }
-}
+  // Друзья
+  try {
+    if (typeof loadMyFriends === 'function') await loadMyFriends();
+    var friendsRow = document.getElementById('prof-friends-row');
+    var friendsStatEl = document.getElementById('prof-stat-friends');
+    if (friendsStatEl && typeof _myFriends !== 'undefined') friendsStatEl.textContent = _myFriends.length;
+    if (friendsRow && typeof _myFriends !== 'undefined') {
+      if (!_myFriends.length) {
+        friendsRow.innerHTML = '<div style="text-align:center;color:var(--text-secondary);font-size:13px;padding:12px 0;width:100%;">Пока нет друзей</div>';
+      } else {
+        friendsRow.innerHTML = _myFriends.slice(0, 10).map(function(f) {
+          var initials = f.name.substring(0,2).toUpperCase();
+          var av = f.avatar_url ? '<img src="' + f.avatar_url + '" style="width:48px;height:48px;border-radius:50%;object-fit:cover;" onerror="this.parentElement.textContent=\'' + initials + '\'">' : initials;
+          return '<div onclick="if(typeof openFullUserProfile===\'function\')openFullUserProfile(\'' + f.id + '\')" style="width:56px;flex-shrink:0;text-align:center;cursor:pointer;"><div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);display:flex;align-items:center;justify-content:center;font-size:16px;color:white;font-weight:700;overflow:hidden;margin:0 auto;">' + av + '</div><div style="font-size:10px;font-weight:700;margin-top:4px;max-width:56px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + f.name.split(' ')[0] + '</div></div>';
+        }).join('');
+      }
+    }
+  } catch(e) { console.error('Profile friends error:', e); }
 
-// Оставляем для обратной совместимости
-async function loadProfileSocialData() {
-  return loadProfileMenuStats();
+  // Посты count в stats bar
+  setTimeout(function() {
+    var postsStatEl = document.getElementById('prof-stat-posts');
+    var postsCountEl = document.getElementById('prof-posts-count');
+    if (postsStatEl && postsCountEl) {
+      var num = parseInt(postsCountEl.textContent) || 0;
+      postsStatEl.textContent = num;
+    }
+  }, 500);
 }
 
 window.loadProfileSocialData = loadProfileSocialData;
-window.loadProfileMenuStats = loadProfileMenuStats;
-window.openMyProfilePage = openMyProfilePage;
+
+
+// ════════════════════════════════════════════════════════════
+// FEED SCREEN — Лента района
+// ════════════════════════════════════════════════════════════
+
+async function loadFeedScreen() {
+  const list = document.getElementById('feed-screen-list');
+  if (!list || !supabaseClient) return;
+  list.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-secondary);font-size:13px;">Загружаем...</div>';
+  try {
+    const { data: posts } = await supabaseClient
+      .from('posts')
+      .select('id, content, created_at, user_id, image_url, profiles(name, avatar_url, district)')
+      .order('created_at', { ascending: false })
+      .limit(30);
+    if (!posts || !posts.length) {
+      list.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-secondary);font-size:13px;">Пока нет постов.<br>Будьте первым!</div>';
+      return;
+    }
+    list.innerHTML = posts.map(p => renderFeedPost(p)).join('');
+  } catch(e) {
+    list.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-secondary);">Не удалось загрузить ленту</div>';
+    console.error('Feed load error:', e);
+  }
+}
+
+async function loadHomeFeedPreview() {
+  const preview = document.getElementById('home-feed-preview');
+  const avatarEl = document.getElementById('home-feed-avatar');
+  if (!preview || !supabaseClient) return;
+
+  // Обновим аватар из currentUser
+  if (avatarEl && currentUser) {
+    var p = JSON.parse(localStorage.getItem('df_profile') || '{}');
+    if (p.name) avatarEl.textContent = p.name.substring(0,2).toUpperCase();
+  }
+
+  try {
+    const { data: posts } = await supabaseClient
+      .from('posts')
+      .select('id, content, created_at, user_id, image_url, profiles(name, avatar_url, district)')
+      .order('created_at', { ascending: false })
+      .limit(3);
+    if (!posts || !posts.length) {
+      preview.innerHTML = '<div style="text-align:center;padding:12px 0;color:var(--text-secondary);font-size:13px;">Пока нет постов — будьте первым!</div>';
+      return;
+    }
+    preview.innerHTML = posts.map(p => renderFeedPost(p, true)).join('');
+  } catch(e) { console.error('Home feed preview error:', e); }
+}
+
+function renderFeedPost(post, compact) {
+  var profile = post.profiles || {};
+  var name = profile.name || 'Пользователь';
+  var initials = name.substring(0,2).toUpperCase();
+  var district = profile.district || '';
+  var avatar = profile.avatar_url
+    ? '<img src="' + profile.avatar_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
+    : initials;
+  var timeStr = formatPostTime(post.created_at);
+  var imgHtml = post.image_url ? '<img src="' + post.image_url + '" style="width:100%;border-radius:10px;margin-top:8px;max-height:200px;object-fit:cover;">' : '';
+  var uid = post.user_id || '';
+  return '<div style="background:white;border-radius:14px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,0.07);">'
+    + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">'
+    + '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);display:flex;align-items:center;justify-content:center;font-size:13px;color:white;font-weight:700;flex-shrink:0;overflow:hidden;">' + avatar + '</div>'
+    + '<div style="flex:1;min-width:0;">'
+    + '<div style="font-size:13px;font-weight:700;color:#111;">' + name + '</div>'
+    + '<div style="font-size:11px;color:#888;">' + (district ? district + ' · ' : '') + timeStr + '</div>'
+    + '</div></div>'
+    + '<div style="font-size:13px;color:#111;line-height:1.5;">' + (post.content || '') + '</div>'
+    + imgHtml
+    + '</div>';
+}
+
+function formatPostTime(iso) {
+  if (!iso) return '';
+  var d = new Date(iso);
+  var now = new Date();
+  var diff = Math.floor((now - d) / 1000);
+  if (diff < 60) return 'только что';
+  if (diff < 3600) return Math.floor(diff/60) + ' мин назад';
+  if (diff < 86400) return Math.floor(diff/3600) + ' ч назад';
+  return Math.floor(diff/86400) + ' дн назад';
+}
+
+window.loadFeedScreen = loadFeedScreen;
+window.loadHomeFeedPreview = loadHomeFeedPreview;
