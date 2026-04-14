@@ -1772,11 +1772,11 @@ async function loadFeedScreen() {
   try {
     const { data: posts } = await supabaseClient
       .from('posts')
-      .select('id, content, created_at, user_id, image_url, profiles(name, avatar_url, district)')
+      .select('id, user_id, author_name, author_avatar, text, photos, district, likes_count, comments_count, created_at')
       .order('created_at', { ascending: false })
       .limit(30);
     if (!posts || !posts.length) {
-      list.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-secondary);font-size:13px;">Пока нет постов.<br>Будьте первым!</div>';
+      list.innerHTML = '<div style="text-align:center;padding:40px 16px;color:var(--text-secondary);font-size:13px;">Пока нет постов.<br>Будьте первым!</div>';
       return;
     }
     list.innerHTML = posts.map(p => renderFeedPost(p)).join('');
@@ -1791,7 +1791,6 @@ async function loadHomeFeedPreview() {
   const avatarEl = document.getElementById('home-feed-avatar');
   if (!preview || !supabaseClient) return;
 
-  // Обновим аватар из currentUser
   if (avatarEl && currentUser) {
     var p = JSON.parse(localStorage.getItem('df_profile') || '{}');
     if (p.name) avatarEl.textContent = p.name.substring(0,2).toUpperCase();
@@ -1800,9 +1799,9 @@ async function loadHomeFeedPreview() {
   try {
     const { data: posts } = await supabaseClient
       .from('posts')
-      .select('id, content, created_at, user_id, image_url, profiles(name, avatar_url, district)')
+      .select('id, user_id, author_name, author_avatar, text, photos, district, likes_count, comments_count, created_at')
       .order('created_at', { ascending: false })
-      .limit(3);
+      .limit(2);
     if (!posts || !posts.length) {
       preview.innerHTML = '<div style="text-align:center;padding:12px 0;color:var(--text-secondary);font-size:13px;">Пока нет постов — будьте первым!</div>';
       return;
@@ -1812,25 +1811,43 @@ async function loadHomeFeedPreview() {
 }
 
 function renderFeedPost(post, compact) {
-  var profile = post.profiles || {};
-  var name = profile.name || 'Пользователь';
+  var name = post.author_name || 'Пользователь';
   var initials = name.substring(0,2).toUpperCase();
-  var district = profile.district || '';
-  var avatar = profile.avatar_url
-    ? '<img src="' + profile.avatar_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
-    : initials;
+  var district = post.district || '';
   var timeStr = formatPostTime(post.created_at);
-  var imgHtml = post.image_url ? '<img src="' + post.image_url + '" style="width:100%;border-radius:10px;margin-top:8px;max-height:200px;object-fit:cover;">' : '';
-  var uid = post.user_id || '';
+  var likes = post.likes_count || 0;
+  var comments = post.comments_count || 0;
+
+  var avatarInner = post.author_avatar
+    ? '<img src="' + post.author_avatar + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
+    : initials;
+
+  var photos = [];
+  try { photos = post.photos ? JSON.parse(post.photos) : []; } catch(e) {}
+  var imgHtml = '';
+  if (photos.length === 1) {
+    imgHtml = '<img src="' + photos[0] + '" style="width:100%;border-radius:10px;margin-top:8px;max-height:220px;object-fit:cover;">';
+  } else if (photos.length > 1) {
+    imgHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px;">'
+      + photos.slice(0,4).map(function(url) {
+          return '<img src="' + url + '" style="width:100%;height:110px;object-fit:cover;border-radius:8px;">';
+        }).join('')
+      + '</div>';
+  }
+
   return '<div style="background:white;border-radius:14px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,0.07);">'
     + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">'
-    + '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);display:flex;align-items:center;justify-content:center;font-size:13px;color:white;font-weight:700;flex-shrink:0;overflow:hidden;">' + avatar + '</div>'
+    + '<div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);display:flex;align-items:center;justify-content:center;font-size:13px;color:white;font-weight:700;flex-shrink:0;overflow:hidden;">' + avatarInner + '</div>'
     + '<div style="flex:1;min-width:0;">'
-    + '<div style="font-size:13px;font-weight:700;color:#111;">' + name + '</div>'
+    + '<div style="font-size:13px;font-weight:700;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + name + '</div>'
     + '<div style="font-size:11px;color:#888;">' + (district ? district + ' · ' : '') + timeStr + '</div>'
     + '</div></div>'
-    + '<div style="font-size:13px;color:#111;line-height:1.5;">' + (post.content || '') + '</div>'
+    + '<div style="font-size:13px;color:#111;line-height:1.5;white-space:pre-wrap;">' + (post.text || '') + '</div>'
     + imgHtml
+    + (!compact ? '<div style="display:flex;gap:16px;margin-top:10px;padding-top:8px;border-top:1px solid #f0f0f0;">'
+      + '<span style="font-size:12px;color:#888;display:flex;align-items:center;gap:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF6B8A" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>' + likes + '</span>'
+      + '<span style="font-size:12px;color:#888;display:flex;align-items:center;gap:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4A90D9" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>' + comments + '</span>'
+      + '</div>' : '')
     + '</div>';
 }
 
@@ -1846,4 +1863,6 @@ function formatPostTime(iso) {
 }
 
 window.loadFeedScreen = loadFeedScreen;
+window.loadHomeFeedPreview = loadHomeFeedPreview;
+window.renderFeedPost = renderFeedPost;
 window.loadHomeFeedPreview = loadHomeFeedPreview;
