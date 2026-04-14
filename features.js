@@ -173,15 +173,19 @@ async function enablePushFromSettings() {
 
 // Initial render on DOMContentLoaded (after main listener)
 window.addEventListener('load',()=>{
-  // Разносим запросы по времени чтобы не перегружать Supabase соединения
-  setTimeout(()=>{ if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); }, 300);
-  setTimeout(()=>{ if(typeof renderHomeProducts==='function') renderHomeProducts(); }, 800);
-  setTimeout(()=>{ if(typeof renderPlaces==='function') renderPlaces(); }, 1300);
-  setTimeout(()=>{ if(typeof renderDiscounts==='function') renderDiscounts(); }, 1800);
-  setTimeout(()=>{ if(typeof renderLessons==='function') renderLessons(); }, 2200);
-  setTimeout(()=>{ if(typeof renderPets==='function') renderPets(); }, 2600);
-  setTimeout(()=>{ updateDistrictChatLabel(); renderSavedDistrictChats(); }, 3000);
-  setTimeout(()=>{ if(typeof loadHomeFeedPreview==='function') loadHomeFeedPreview(); }, 3500);
+  // Только рендеры БЕЗ сетевых запросов — выполняем сразу
+  if(typeof renderLessons==='function') renderLessons();
+  updateDistrictChatLabel();
+  renderSavedDistrictChats();
+
+  // Сетевые запросы запускаем ПОСЛЕ того как checkAuth завершится (~3000ms)
+  // чтобы не конкурировать за соединения при инициализации
+  setTimeout(()=>{ if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); }, 3200);
+  setTimeout(()=>{ if(typeof renderHomeProducts==='function') renderHomeProducts(); }, 3600);
+  setTimeout(()=>{ if(typeof renderPlaces==='function') renderPlaces(); }, 4000);
+  setTimeout(()=>{ if(typeof renderDiscounts==='function') renderDiscounts(); }, 4400);
+  setTimeout(()=>{ if(typeof renderPets==='function') renderPets(); }, 4800);
+  setTimeout(()=>{ if(typeof loadHomeFeedPreview==='function') loadHomeFeedPreview(); }, 5200);
 
   // Закрываем результаты поиска при клике вне
   document.addEventListener('click', (e) => {

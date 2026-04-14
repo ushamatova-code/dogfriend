@@ -352,8 +352,10 @@ function loadProfile() {
     }
   }
   
-  // Обновляем статистику профиля из реальных данных
-  loadProfileStats();
+  // Обновляем статистику профиля из реальных данных — только если уже авторизованы
+  if (currentUser && supabaseClient) {
+    loadProfileStats();
+  }
 }
 
 async function loadProfileStats() {
