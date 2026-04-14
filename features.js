@@ -173,19 +173,15 @@ async function enablePushFromSettings() {
 
 // Initial render on DOMContentLoaded (after main listener)
 window.addEventListener('load',()=>{
-  // Только рендеры БЕЗ сетевых запросов — выполняем сразу
-  if(typeof renderLessons==='function') renderLessons();
-  updateDistrictChatLabel();
-  renderSavedDistrictChats();
-
-  // Сетевые запросы запускаем ПОСЛЕ того как checkAuth завершится (~3000ms)
-  // чтобы не конкурировать за соединения при инициализации
-  setTimeout(()=>{ if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); }, 3200);
-  setTimeout(()=>{ if(typeof renderHomeProducts==='function') renderHomeProducts(); }, 3600);
-  setTimeout(()=>{ if(typeof renderPlaces==='function') renderPlaces(); }, 4000);
-  setTimeout(()=>{ if(typeof renderDiscounts==='function') renderDiscounts(); }, 4400);
-  setTimeout(()=>{ if(typeof renderPets==='function') renderPets(); }, 4800);
-  setTimeout(()=>{ if(typeof loadHomeFeedPreview==='function') loadHomeFeedPreview(); }, 5200);
+  // Разносим запросы по времени чтобы не перегружать Supabase соединения
+  setTimeout(()=>{ if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); }, 300);
+  setTimeout(()=>{ if(typeof renderHomeProducts==='function') renderHomeProducts(); }, 800);
+  setTimeout(()=>{ if(typeof renderPlaces==='function') renderPlaces(); }, 1300);
+  setTimeout(()=>{ if(typeof renderDiscounts==='function') renderDiscounts(); }, 1800);
+  setTimeout(()=>{ if(typeof renderLessons==='function') renderLessons(); }, 2200);
+  setTimeout(()=>{ if(typeof renderPets==='function') renderPets(); }, 2600);
+  setTimeout(()=>{ updateDistrictChatLabel(); renderSavedDistrictChats(); }, 3000);
+  setTimeout(()=>{ if(typeof loadHomeFeedPreview==='function') loadHomeFeedPreview(); }, 3500);
 
   // Закрываем результаты поиска при клике вне
   document.addEventListener('click', (e) => {
@@ -341,34 +337,43 @@ function openNamedDistrictChat(district) {
 // ════════════════════════════════════════════════════════════
 // COMMUNITY TABS (Districts / DMs)
 // ════════════════════════════════════════════════════════════
-function switchCommTab(tab) {
-  const districts = document.getElementById('comm-panel-districts');
-  const dms = document.getElementById('comm-panel-dms');
-  const feed = document.getElementById('comm-panel-feed');
-  const tabD = document.getElementById('comm-tab-districts');
-  const tabDM = document.getElementById('comm-tab-dms');
-  const tabFeed = document.getElementById('comm-tab-feed');
-  if (!districts || !dms) return;
+// Текущий активный фильтр чатов
+let _commFilter = 'all';
 
-  // Скрываем все панели
-  districts.style.display = 'none';
-  dms.style.display = 'none';
-  if (feed) feed.style.display = 'none';
+function switchCommTab(filter) {
+  _commFilter = filter;
 
-  // Сбрасываем все табы
-  const resetTab = (t) => { if(t) { t.style.color = 'var(--text-secondary)'; t.style.borderBottom = '2.5px solid var(--border)'; }};
-  resetTab(tabD); resetTab(tabDM); resetTab(tabFeed);
+  const panelGroups = document.getElementById('comm-panel-districts');
+  const panelDms    = document.getElementById('comm-panel-dms');
+  const panelFeed   = document.getElementById('comm-panel-feed');
+  const searchWrap  = document.getElementById('comm-search-wrap');
 
-  if (tab === 'districts') {
-    districts.style.display = 'block';
-    if (tabD) { tabD.style.color = 'var(--primary)'; tabD.style.borderBottom = '2.5px solid var(--primary)'; }
-  } else if (tab === 'feed') {
-    if (feed) feed.style.display = 'block';
-    if (tabFeed) { tabFeed.style.color = 'var(--primary)'; tabFeed.style.borderBottom = '2.5px solid var(--primary)'; }
-    if (typeof renderFeed === 'function') renderFeed();
-  } else {
-    dms.style.display = 'block';
-    if (tabDM) { tabDM.style.color = 'var(--primary)'; tabDM.style.borderBottom = '2.5px solid var(--primary)'; }
+  // Чипсы
+  const chipAll    = document.getElementById('chip-all');
+  const chipGroups = document.getElementById('chip-groups');
+  const chipDms    = document.getElementById('chip-dms');
+
+  // Сброс всех чипсов
+  const chipOn  = 'border:1.5px solid var(--primary);background:var(--primary);color:white;';
+  const chipOff = 'border:1.5px solid var(--border);background:var(--white);color:var(--text-secondary);';
+  [chipAll, chipGroups, chipDms].forEach(c => { if (c) c.style.cssText += chipOff; });
+
+  // Применяем активный стиль
+  if (filter === 'all')    { if (chipAll)    chipAll.style.cssText    += chipOn; }
+  else if (filter === 'groups') { if (chipGroups) chipGroups.style.cssText += chipOn; }
+  else if (filter === 'dms')    { if (chipDms)    chipDms.style.cssText    += chipOn; }
+
+  // Показываем/скрываем панели
+  if (panelGroups) panelGroups.style.display = (filter === 'all' || filter === 'groups') ? '' : 'none';
+  if (panelDms)    panelDms.style.display    = (filter === 'all' || filter === 'dms')    ? '' : 'none';
+  if (panelFeed)   panelFeed.style.display   = 'none'; // лента — отдельный экран
+
+  // Поиск районов — скрываем только когда смотрим только личные
+  if (searchWrap) searchWrap.style.display = (filter === 'dms') ? 'none' : '';
+
+  // Если переключились на "Все" или "Личные" — рендерим ленту DM-чатов
+  if ((filter === 'all' || filter === 'dms') && typeof renderPrivateChats === 'function') {
+    renderPrivateChats();
   }
 }
 
