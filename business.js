@@ -1,5 +1,23 @@
 let selectedBusinessType = '';
+let _selectedBusinessFormat = ''; // 'private' или 'center'
 let _addressCount = 0;
+
+function selectBusinessFormat(format) {
+  _selectedBusinessFormat = format;
+  const priv = document.getElementById('bf-format-private');
+  const cent = document.getElementById('bf-format-center');
+  if (priv && cent) {
+    priv.style.borderColor = format === 'private' ? 'var(--primary)' : 'var(--border)';
+    priv.style.background = format === 'private' ? 'rgba(74,144,217,0.06)' : 'var(--bg)';
+    cent.style.borderColor = format === 'center' ? 'var(--primary)' : 'var(--border)';
+    cent.style.background = format === 'center' ? 'rgba(74,144,217,0.06)' : 'var(--bg)';
+  }
+  // Меняем подсказку к адресу
+  const addressInputs = document.querySelectorAll('.bf-address-input');
+  addressInputs.forEach(inp => {
+    inp.placeholder = format === 'private' ? 'Район работы — например: Москва, Таганский' : 'Полный адрес — например: Москва, ул. Ленина 10';
+  });
+}
 
 function addAddressField() {
   const list = document.getElementById('bf-addresses-list');
@@ -50,8 +68,8 @@ function businessAvatarHtml(b, size = 54) {
     return `<div style="width:${size}px;height:${size}px;border-radius:14px;overflow:hidden;flex-shrink:0;">` +
       `<img src="${b.cover_url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='${b.name.substring(0,2).toUpperCase()}'"></div>`;
   }
-  const icons = { trainer: '🐕', clinic: '🏥', cafe: '☕' };
-  const grads = { trainer: 'linear-gradient(135deg,#4A90D9,#7B5EA7)', clinic: 'linear-gradient(135deg,#F0FFF4,#C6F6D5)', cafe: 'linear-gradient(135deg,#FFF5E6,#FFD9A0)' };
+  const icons = { trainer: '🐕', clinic: '🏥', cafe: '☕', shop: '🛍️', psychologist: '🧠', grooming: '✂️', boarding: '🏠', walking: '🚶', training_ground: '⭐' };
+  const grads = { trainer: 'linear-gradient(135deg,#4A90D9,#7B5EA7)', clinic: 'linear-gradient(135deg,#F0FFF4,#C6F6D5)', cafe: 'linear-gradient(135deg,#FFF5E6,#FFD9A0)', shop: 'linear-gradient(135deg,#F0EDFF,#DDD6FE)', psychologist: 'linear-gradient(135deg,#F0FFF4,#DCFCE7)', grooming: 'linear-gradient(135deg,#FFF0F6,#FFD6E7)', boarding: 'linear-gradient(135deg,#FFF5E6,#FEF3C7)', walking: 'linear-gradient(135deg,#F0F4FF,#DBEAFE)', training_ground: 'linear-gradient(135deg,#FFF0E6,#FED7AA)' };
   return `<div class="avatar" style="width:${size}px;height:${size}px;font-size:${Math.round(size*0.33)}px;background:${grads[b.type] || grads.trainer};">${b.name.substring(0,2).toUpperCase()}</div>`;
 }
 
@@ -326,7 +344,9 @@ async function openBusinessProfile(id) {
     psychologist: '🧠',
     grooming: '✂️',
     boarding: '🏠',
-    walking: '🚶'
+    walking: '🚶',
+    shop: '🛍️',
+    training_ground: '⭐'
   };
   const typeLabels = { 
     trainer: 'Кинолог / Тренер', 
@@ -335,7 +355,9 @@ async function openBusinessProfile(id) {
     psychologist: 'Зоопсихолог',
     grooming: 'Груминг',
     boarding: 'Передержка',
-    walking: 'Выгул собак'
+    walking: 'Выгул собак',
+    shop: 'Зоомагазин',
+    training_ground: 'Дрессировочная площадка'
   };
 
   // Шапка
@@ -581,7 +603,8 @@ function selectBusinessType(type) {
     psychologist:'Анкета зоопсихолога',
     grooming:'Анкета грумера',
     boarding:'Анкета передержки',
-    walking:'Анкета выгульщика'
+    walking:'Анкета выгульщика',
+    training_ground:'Анкета площадки'
   };
   const services = {
     trainer:['ОКД','Щенки','Послушание','Аджилити','Коррекция поведения'],
@@ -589,11 +612,53 @@ function selectBusinessType(type) {
     cafe:['Веранда','Миски','Лакомства','Wi-Fi','Детская зона'],
     shop:['Корма','Игрушки','Одежда','Аксессуары','Поводки','Витамины','Лакомства','Переноски','Лежанки','Гигиена'],
     psychologist:['Коррекция агрессии','Страхи и фобии','Социализация','Консультации','Поведенческая терапия'],
-    grooming:['Стрижка','Мытьё','Тримминг','Подстригание когтей','Чистка ушей'],
-    boarding:['Дневная передержка','Длительная передержка','Уход за щенками','Выгул','Игры'],
-    walking:['Индивидуальный выгул','Групповой выгул','Активные прогулки','Социализация','Дрессировка на прогулке']
+    grooming:['Стрижка','Мытьё','Тримминг','Подстригание когтей','Чистка ушей','Спа-процедуры'],
+    boarding:['Дневная передержка','Длительная передержка','Уход за щенками','Выгул','Игры','Видеонаблюдение'],
+    walking:['Индивидуальный выгул','Групповой выгул','Активные прогулки','Социализация','Дрессировка на прогулке'],
+    training_ground:['Аджилити','ОКД','Фрисби','Свободный выгул','Площадка с оборудованием','Групповые занятия','Индивидуальные занятия']
   };
   document.getElementById('bf-title').textContent = titles[type];
+
+  // Формат работы — показываем для типов, где может быть и частный, и центр
+  const formatBlock = document.getElementById('bf-format-block');
+  const typesWithFormat = ['grooming','psychologist','boarding','walking','trainer'];
+  if (formatBlock) {
+    if (typesWithFormat.includes(type)) {
+      formatBlock.style.display = 'block';
+      // Сбрасываем выбор
+      _selectedBusinessFormat = '';
+      document.getElementById('bf-format-private').style.borderColor = 'var(--border)';
+      document.getElementById('bf-format-private').style.background = 'var(--bg)';
+      document.getElementById('bf-format-center').style.borderColor = 'var(--border)';
+      document.getElementById('bf-format-center').style.background = 'var(--bg)';
+    } else {
+      formatBlock.style.display = 'none';
+      _selectedBusinessFormat = type === 'training_ground' ? 'center' : '';
+    }
+  }
+
+  // Обновляем placeholder имени
+  const nameInput = document.getElementById('bf-name');
+  if (nameInput) {
+    const namePlaceholders = {
+      trainer: 'ФИО или название центра',
+      clinic: 'Название клиники',
+      cafe: 'Название заведения',
+      shop: 'Название магазина',
+      psychologist: 'ФИО или название центра',
+      grooming: 'ФИО или название салона',
+      boarding: 'ФИО или название пансиона',
+      walking: 'ФИО',
+      training_ground: 'Название площадки'
+    };
+    nameInput.placeholder = namePlaceholders[type] || 'Название / ФИО';
+  }
+
+  // Обновляем подсказку к адресу
+  const addressHint = document.querySelector('#bf-addresses-list')?.parentElement?.querySelector('.bf-address-hint');
+  const addrLabel = document.querySelector('[for="bf-addresses-list"]') || document.getElementById('bf-addresses-list')?.parentElement;
+  // Для частных специалистов — район работы, для центров — точный адрес
+  // (динамически обновится через selectBusinessFormat)
   
   // Добавляем поле обложки если его нет
   let coverBlock = document.getElementById('bf-cover-block');
@@ -641,6 +706,9 @@ async function submitBusiness() {
   if (!name) {alert('Укажите название');return;}
   if (!addresses.length) {alert('Укажите адрес');return;}
   if (!phone && selectedBusinessType !== 'shop') {alert('Укажите телефон');return;}
+  // Проверяем формат для типов, где он нужен
+  const typesWithFormat = ['grooming','psychologist','boarding','walking','trainer'];
+  if (typesWithFormat.includes(selectedBusinessType) && !_selectedBusinessFormat) {alert('Выберите формат работы');return;}
   const checks = document.querySelectorAll('#bf-services input[type="checkbox"]:checked');
   const services = Array.from(checks).map(c => c.value);
   try {
@@ -671,6 +739,7 @@ async function submitBusiness() {
       services: services,
       location_lat: location_lat,
       location_lng: location_lng,
+      business_format: _selectedBusinessFormat || null,
       is_approved: false
     }).select().single();
     if (error) throw error;

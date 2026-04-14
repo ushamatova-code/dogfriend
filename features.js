@@ -155,7 +155,7 @@ async function enablePushFromSettings() {
   window.nav=function(id){
     _orig(id);
     if(id==='home')      { if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); if(typeof loadProfileStats==='function') loadProfileStats(); if(typeof renderHomeProducts==='function') renderHomeProducts(); }
-    if(id==='profile')   { setTimeout(() => { if(typeof checkUserBusiness==='function' && currentUser) checkUserBusiness(); loadProfileMenuStats(); }, 200); }
+    if(id==='profile')   { setTimeout(() => { if(typeof checkUserBusiness==='function' && currentUser) checkUserBusiness(); loadMyProfilePosts(); loadProfileSocialData(); }, 200); }
     if(id==='dogmap')    { renderPlaces(); setTimeout(() => { if (_placesMap) _placesMap.invalidateSize(); }, 300); }
     if(id==='discounts') renderDiscounts();
     if(id==='lessons')   renderLessons();
@@ -365,9 +365,98 @@ function switchCommTab(tab) {
 // ════════════════════════════════════════════════════════════
 async function openChatUserProfile() {
   const userId = currentPrivateChatId;
-  if (!userId) return;
-  if (typeof openFullUserProfile === 'function') {
-    openFullUserProfile(userId);
+  if (!userId || !supabaseClient) return;
+  
+  const body = document.getElementById('m-user-profile-body');
+  if (!body) return;
+  
+  body.innerHTML = '<div style="padding:20px;color:var(--text-secondary);">Загружаем профиль...</div>';
+  openModal('m-user-profile');
+  
+  try {
+    // Загружаем профиль пользователя
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+    
+    // Загружаем питомцев
+    const { data: pets } = await supabaseClient
+      .from('pets')
+      .select('*')
+      .eq('user_id', userId);
+    
+    // Загружаем заказы для статистики
+    const { data: bookings } = await supabaseClient
+      .from('bookings')
+      .select('id')
+      .eq('user_id', userId);
+    
+    const name = profile?.name || contactBook[userId]?.name || 'Пользователь';
+    const initials = name.substring(0,2).toUpperCase();
+    const district = profile?.district || '';
+    const avatarUrl = profile?.avatar_url;
+    const ordersCount = (bookings || []).length;
+    const charityAmount = ordersCount * 150;
+    const petsList = pets || [];
+    
+    body.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:20px;">
+        <div class="avatar" style="width:80px;height:80px;font-size:28px;box-shadow:0 4px 16px rgba(0,0,0,0.1);overflow:hidden;">
+          ${avatarUrl ? `<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.textContent='${initials}'">` : initials}
+        </div>
+        <div style="font-size:20px;font-weight:900;font-family:'Nunito',sans-serif;">${name}</div>
+        ${district ? `<div style="display:flex;align-items:center;gap:4px;color:var(--text-secondary);font-size:13px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          ${district}
+        </div>` : ''}
+      </div>
+      
+      <!-- Stats -->
+      <div style="display:flex;gap:0;background:var(--bg);border-radius:14px;padding:12px;margin-bottom:16px;">
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:18px;font-weight:900;color:var(--primary);">${ordersCount}</div>
+          <div style="font-size:11px;color:var(--text-secondary);">транзакций</div>
+        </div>
+        <div style="width:1px;background:var(--border);"></div>
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:18px;font-weight:900;color:var(--primary);">${charityAmount} ₽</div>
+          <div style="font-size:11px;color:var(--text-secondary);">приютам</div>
+        </div>
+        <div style="width:1px;background:var(--border);"></div>
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:18px;font-weight:900;color:var(--primary);">${petsList.length}</div>
+          <div style="font-size:11px;color:var(--text-secondary);">питомцев</div>
+        </div>
+      </div>
+      
+      <!-- Pets -->
+      ${petsList.length ? `
+        <div style="text-align:left;margin-bottom:12px;">
+          <div style="font-size:15px;font-weight:800;margin-bottom:10px;">Питомцы</div>
+          ${petsList.map(p => `
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+              <div style="width:44px;height:44px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#4A90D9,#7B5EA7);color:white;font-weight:700;font-size:16px;flex-shrink:0;">
+                ${p.photo_url ? `<img src="${p.photo_url}" style="width:100%;height:100%;object-fit:cover;">` : p.name.substring(0,1).toUpperCase()}
+              </div>
+              <div>
+                <div style="font-weight:700;font-size:14px;">${p.name} ${p.sex==='ж'?'♀':'♂'}</div>
+                <div style="font-size:12px;color:var(--text-secondary);">${p.breed || ''}${p.age ? ' · '+p.age : ''}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      ` : '<div style="color:var(--text-secondary);font-size:13px;margin-bottom:12px;">Питомцы не добавлены</div>'}
+      
+      <button class="btn btn-p" style="margin-bottom:8px;" onclick="closeModal('m-user-profile')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:6px;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        Написать
+      </button>
+    `;
+  } catch(e) {
+    console.error('User profile error:', e);
+    body.innerHTML = '<div style="padding:20px;color:var(--text-secondary);">Не удалось загрузить профиль</div>';
   }
 }
 
@@ -456,8 +545,16 @@ async function openServiceCategory(catKey) {
   const list = document.getElementById('catalog-trainers-list');
   if (list) list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-secondary);">Загружаем...</div>';
   
-  // Всегда загружаем свежие данные всех trainer-бизнесов
-  await loadBusinesses('trainer');
+  // Загружаем бизнесы нужного типа
+  // Для специализаций (grooming, psychologist, boarding, walking) — грузим и trainer, и соответствующий тип
+  const standaloneTypes = ['grooming','psychologist','boarding','walking','training_ground'];
+  if (catKey === 'all' || catKey === 'trainer') {
+    await loadBusinesses(null); // все типы
+  } else if (standaloneTypes.includes(catKey) || catKey === 'dogsitting') {
+    await loadBusinesses(null); // грузим все, чтобы найти и trainer с этой специализацией, и отдельные типы
+  } else {
+    await loadBusinesses(cat.type);
+  }
   
   renderCatalog();
 }
@@ -484,10 +581,14 @@ window.renderCatalog = function() {
         !b.services.some(s => ['grooming','boarding','psychologist','walking'].includes(typeof s === 'string' ? s : s.name))
       ));
     } else if (['grooming','boarding','dogsitting','psychologist','walking','training_ground'].includes(cat.type)) {
-      // Специализации — ищем всех у кого в services есть эта категория (тип trainer)
-      // dogsitting = boarding (алиасы)
+      // Специализации — ищем:
+      // 1) Бизнесы с отдельным type (например type=grooming, type=training_ground)
+      // 2) Кинологов (type=trainer) у которых в services есть эта специализация
       const serviceKey = cat.type === 'dogsitting' ? 'boarding' : cat.type;
-      filtered = filtered.filter(b => b.type === 'trainer' && b.services && b.services.some(s => (typeof s === 'string' ? s : s.name) === serviceKey));
+      filtered = filtered.filter(b =>
+        b.type === serviceKey ||
+        (b.type === 'trainer' && b.services && b.services.some(s => (typeof s === 'string' ? s : s.name) === serviceKey))
+      );
     } else {
       // Другие типы (clinic, cafe, shop) — фильтруем по type
       filtered = filtered.filter(b => b.type === cat.type);
@@ -1597,7 +1698,7 @@ window.loadMyProfilePosts = loadMyProfilePosts;
 // PROFILE SOCIAL DATA — питомцы, друзья, район, приюты
 // ════════════════════════════════════════════════════════════
 
-async function loadProfileMenuStats() {
+async function loadProfileSocialData() {
   if (!supabaseClient || !currentUser) return;
 
   var p = JSON.parse(localStorage.getItem('df_profile') || '{}');
@@ -1608,22 +1709,52 @@ async function loadProfileMenuStats() {
       : '';
   }
 
-  // Питомцы count
+  // Питомцы
   try {
-    var petsResult = await supabaseClient.from('pets').select('id').eq('user_id', currentUser.id);
+    var petsResult = await supabaseClient.from('pets').select('id, name, photo_url, breed').eq('user_id', currentUser.id).order('created_at', { ascending: true });
+    var pets = petsResult.data || [];
+    var petsRow = document.getElementById('prof-pets-row');
     var petsStatEl = document.getElementById('prof-stat-pets');
-    if (petsStatEl) petsStatEl.textContent = (petsResult.data || []).length;
-  } catch(e) { console.error('Profile pets count error:', e); }
+    if (petsStatEl) petsStatEl.textContent = pets.length;
+    if (petsRow) {
+      var addBtn = '<div onclick="nav(\'myPets\')" style="width:64px;flex-shrink:0;text-align:center;cursor:pointer;"><div style="width:56px;height:56px;border-radius:50%;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto;color:var(--text-secondary);font-size:22px;">+</div><div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Добавить</div></div>';
+      var petsHtml = pets.map(function(pet) {
+        var av = pet.photo_url ? '<img src="' + pet.photo_url + '" style="width:56px;height:56px;border-radius:50%;object-fit:cover;" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">' : '';
+        var fb = '<div style="' + (pet.photo_url ? 'display:none;' : '') + 'width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);display:flex;align-items:center;justify-content:center;font-size:22px;color:white;font-weight:700;">' + (pet.name||'?').substring(0,1).toUpperCase() + '</div>';
+        return '<div onclick="nav(\'myPets\')" style="width:64px;flex-shrink:0;text-align:center;cursor:pointer;">' + av + fb + '<div style="font-size:11px;font-weight:700;margin-top:4px;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (pet.name||'') + '</div></div>';
+      }).join('');
+      petsRow.innerHTML = petsHtml + addBtn;
+    }
+  } catch(e) { console.error('Profile pets error:', e); }
+
+  // Друзья
+  try {
+    if (typeof loadMyFriends === 'function') await loadMyFriends();
+    var friendsRow = document.getElementById('prof-friends-row');
+    var friendsStatEl = document.getElementById('prof-stat-friends');
+    if (friendsStatEl && typeof _myFriends !== 'undefined') friendsStatEl.textContent = _myFriends.length;
+    if (friendsRow && typeof _myFriends !== 'undefined') {
+      if (!_myFriends.length) {
+        friendsRow.innerHTML = '<div style="text-align:center;color:var(--text-secondary);font-size:13px;padding:12px 0;width:100%;">Пока нет друзей</div>';
+      } else {
+        friendsRow.innerHTML = _myFriends.slice(0, 10).map(function(f) {
+          var initials = f.name.substring(0,2).toUpperCase();
+          var av = f.avatar_url ? '<img src="' + f.avatar_url + '" style="width:48px;height:48px;border-radius:50%;object-fit:cover;" onerror="this.parentElement.textContent=\'' + initials + '\'">' : initials;
+          return '<div onclick="if(typeof openFullUserProfile===\'function\')openFullUserProfile(\'' + f.id + '\')" style="width:56px;flex-shrink:0;text-align:center;cursor:pointer;"><div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);display:flex;align-items:center;justify-content:center;font-size:16px;color:white;font-weight:700;overflow:hidden;margin:0 auto;">' + av + '</div><div style="font-size:10px;font-weight:700;margin-top:4px;max-width:56px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + f.name.split(' ')[0] + '</div></div>';
+        }).join('');
+      }
+    }
+  } catch(e) { console.error('Profile friends error:', e); }
+
+  // Посты count в stats bar
+  setTimeout(function() {
+    var postsStatEl = document.getElementById('prof-stat-posts');
+    var postsCountEl = document.getElementById('prof-posts-count');
+    if (postsStatEl && postsCountEl) {
+      var num = parseInt(postsCountEl.textContent) || 0;
+      postsStatEl.textContent = num;
+    }
+  }, 500);
 }
 
-// Открыть свой профиль как социальную страницу (через openFullUserProfile)
-function openMyProfilePage() {
-  if (!currentUser) { showToast('Войдите в аккаунт'); return; }
-  if (typeof openFullUserProfile === 'function') {
-    openFullUserProfile(currentUser.id);
-  }
-}
-
-window.loadProfileMenuStats = loadProfileMenuStats;
-window.loadProfileSocialData = loadProfileMenuStats; // backward compat
-window.openMyProfilePage = openMyProfilePage;
+window.loadProfileSocialData = loadProfileSocialData;
