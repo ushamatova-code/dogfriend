@@ -35,6 +35,41 @@
     });
   });
 </script>
+  <style>
+    /* 6 вкладок в bnav */
+    .bnav { padding-bottom: env(safe-area-inset-bottom, 0px); }
+    .ni { min-width: 0; }
+    .ni-lbl { font-size: 9px !important; }
+    .ni-icon svg { width: 20px !important; height: 20px !important; }
+
+    /* Дизайн карточек ленты */
+    #feed-screen-list > div,
+    #home-feed-preview > div {
+      background: #ffffff !important;
+      border-radius: 20px !important;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08) !important;
+      border: none !important;
+      margin: 0 !important;
+      overflow: hidden !important;
+    }
+    #feed-screen-list > div > div,
+    #home-feed-preview > div > div {
+      padding: 14px 16px !important;
+    }
+    /* Аватар в карточке */
+    #feed-screen-list .avatar-wrap,
+    #home-feed-preview .avatar-wrap {
+      border-radius: 50% !important;
+    }
+    /* Фото — на всю ширину без отступов */
+    #feed-screen-list img[style*="max-height:400px"],
+    #home-feed-preview img[style*="max-height:400px"] {
+      border-radius: 0 !important;
+      margin-left: -16px !important;
+      margin-right: -16px !important;
+      width: calc(100% + 32px) !important;
+    }
+  </style>
 </head>
 <body>
 <div class="phone-shell">

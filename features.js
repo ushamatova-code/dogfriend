@@ -1800,7 +1800,16 @@ async function loadFeedScreen() {
       return post;
     });
 
-    list.innerHTML = parsed.map(function(p) { return renderFeedPostFallback(p); }).join('');
+    // Используем buildPostCard из feed.js — там вся логика лайков/комментов/меню
+    if (typeof buildPostCard === 'function') {
+      list.innerHTML = parsed.map(function(p) { return '<div class="df-post-wrap">' + buildPostCard(p, myLikes.has(p.id)) + '</div>'; }).join('');
+    } else {
+      if (typeof buildPostCard === 'function') {
+      list.innerHTML = parsed.map(function(p) { return buildPostCard(p, myLikes.has(p.id)); }).join('');
+    } else {
+      list.innerHTML = parsed.map(function(p) { return renderFeedPostFallback(p); }).join('');
+    }
+    }
   } catch(e) {
     list.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-secondary);">Не удалось загрузить ленту</div>';
     console.error('Feed load error:', e);
@@ -1837,7 +1846,15 @@ async function loadHomeFeedPreview() {
       return post;
     });
 
-    preview.innerHTML = parsed.map(function(p) { return renderFeedPostFallback(p); }).join('');
+    if (typeof buildPostCard === 'function') {
+      preview.innerHTML = parsed.map(function(p) { return '<div class="df-post-wrap">' + buildPostCard(p, false) + '</div>'; }).join('');
+    } else {
+      if (typeof buildPostCard === 'function') {
+      preview.innerHTML = parsed.map(function(p) { return buildPostCard(p, false); }).join('');
+    } else {
+      preview.innerHTML = parsed.map(function(p) { return renderFeedPostFallback(p); }).join('');
+    }
+    }
   } catch(e) { console.error('Home feed preview error:', e); }
 }
 
