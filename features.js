@@ -163,7 +163,8 @@ async function enablePushFromSettings() {
       setTimeout(()=>{ if(typeof loadHomeFeedPreview==='function') loadHomeFeedPreview(); }, 1000);
     }
     if(id==='feedScreen') { setTimeout(loadFeedScreen, 200); }
-    if(id==='profile')   { setTimeout(() => { if(typeof checkUserBusiness==='function' && currentUser) checkUserBusiness(); loadMyProfilePosts(); loadProfileSocialData(); }, 200); }
+    if(id==='profile')   { setTimeout(() => { if(typeof checkUserBusiness==='function' && currentUser) checkUserBusiness(); loadMyProfilePosts(); loadProfileSocialData(); if(typeof loadPendingFriendRequests==='function') loadPendingFriendRequests(); }, 200); }
+    if(id==='userProfile') { setTimeout(() => { if(typeof loadMyProfilePosts==='function') loadMyProfilePosts(); }, 100); }
     if(id==='dogmap')    { renderPlaces(); setTimeout(() => { if (_placesMap) _placesMap.invalidateSize(); }, 300); }
     if(id==='discounts') renderDiscounts();
     if(id==='lessons')   renderLessons();
@@ -2145,7 +2146,17 @@ async function openFullUserProfile(userId) {
         <div id="prof-posts-list"></div>
       </div>` : '';
 
-    // Друзья (только для себя) + заявки
+    // Заявки в друзья (только для себя)
+    const requestsSection = isSelf ? `
+      <div id="friend-requests-block" style="display:none;margin:0 16px 12px;background:var(--white);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px 8px;">
+          <div style="font-size:13px;font-weight:800;color:var(--text-primary);">Заявки в друзья</div>
+          <span id="friend-requests-count-lbl" style="font-size:12px;color:var(--text-secondary);"></span>
+        </div>
+        <div id="friend-requests-list"></div>
+      </div>` : '';
+
+    // Друзья (только для себя)
     const friendsSection = isSelf ? `
       <div style="margin:0 16px 12px;">
         <div style="font-size:13px;font-weight:800;color:var(--text-secondary);margin-bottom:10px;letter-spacing:0.5px;">ДРУЗЬЯ <span id="prof-stat-friends" style="font-weight:600;color:var(--primary);"></span></div>
@@ -2169,6 +2180,9 @@ async function openFullUserProfile(userId) {
       <!-- Питомцы -->
       ${petsHtml}
 
+      <!-- Заявки в друзья -->
+      ${requestsSection}
+
       <!-- Друзья -->
       ${friendsSection}
 
@@ -2178,7 +2192,8 @@ async function openFullUserProfile(userId) {
 
     // Загружаем дополнительные данные
     if (isSelf) {
-      if (typeof loadMyProfilePosts === 'function') loadMyProfilePosts();
+      setTimeout(() => { if (typeof loadMyProfilePosts === 'function') loadMyProfilePosts(); }, 50);
+      if (typeof loadPendingFriendRequests === 'function') loadPendingFriendRequests();
       if (typeof loadMyFriends === 'function') {
         await loadMyFriends();
         const friendsRow = document.getElementById('prof-friends-row');
@@ -2344,10 +2359,22 @@ async function acceptFriendRequest(fromUserId) {
       });
     }
 
-    // Обновляем экран заявок если открыт
+    // Обновляем данные и UI
     await loadPendingFriendRequests();
     await loadMyFriends();
     _updateFriendRequestsBadge();
+    // Обновляем список друзей на экране профиля если он открыт
+    const friendsRow = document.getElementById('prof-friends-row');
+    const friendsStat = document.getElementById('prof-stat-friends');
+    if (friendsStat) friendsStat.textContent = _myFriends.length || '';
+    if (friendsRow && _myFriends.length) {
+      const grad = 'linear-gradient(135deg,#4A90D9,#7B5EA7)';
+      friendsRow.innerHTML = _myFriends.slice(0,10).map(f => {
+        const fi = (f.name||'?').substring(0,2).toUpperCase();
+        const fa = f.avatar_url ? `<img src="${f.avatar_url}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;" onerror="this.parentElement.textContent='${fi}'">` : fi;
+        return `<div onclick="openFullUserProfile('${f.id}')" style="width:56px;flex-shrink:0;text-align:center;cursor:pointer;"><div style="width:48px;height:48px;border-radius:50%;background:${grad};display:flex;align-items:center;justify-content:center;font-size:16px;color:white;font-weight:700;overflow:hidden;margin:0 auto;">${fa}</div><div style="font-size:10px;font-weight:700;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.name.split(' ')[0]}</div></div>`;
+      }).join('');
+    }
   } catch(e) { console.error('acceptFriendRequest exception:', e); }
 }
 
@@ -2479,7 +2506,12 @@ function _renderFriendRequests() {
 
 // openFriendRequests — просто скроллит в профиль (заявки уже там)
 function openFriendRequests() {
-  nav('profile');
+  // Открываем полный профиль где видны заявки
+  if (currentUser && typeof openFullUserProfile === 'function') {
+    openFullUserProfile(currentUser.id);
+  } else {
+    nav('profile');
+  }
 }
 
 // ── Запустить polling входящих заявок (каждые 30 сек) ────────
