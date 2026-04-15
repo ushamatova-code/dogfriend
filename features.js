@@ -2074,6 +2074,144 @@ async function loadProfileMenuStats() {
   } catch(e) {}
 }
 
+// ════════════════════════════════════════════════════════════
+// ПОЛНЫЙ ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ — экран userProfile
+// ════════════════════════════════════════════════════════════
+async function openFullUserProfile(userId) {
+  if (!userId) return;
+  const isSelf = currentUser && currentUser.id === userId;
+
+  nav('userProfile');
+
+  const body = document.getElementById('user-profile-body');
+  if (body) body.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-secondary);">Загружаем...</div>';
+
+  try {
+    const [profileRes, petsRes] = await Promise.all([
+      supabaseClient.from('profiles').select('*').eq('user_id', userId).single(),
+      supabaseClient.from('pets').select('*').eq('user_id', userId).order('created_at', { ascending: true })
+    ]);
+
+    const p = profileRes.data || {};
+    const pets = petsRes.data || [];
+    const name = p.name || 'Пользователь';
+    const initials = name.substring(0, 2).toUpperCase();
+    const district = p.district || '';
+    const grad = 'linear-gradient(135deg,#4A90D9,#7B5EA7)';
+
+    const avatarHtml = p.avatar_url
+      ? `<img src="${p.avatar_url}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,0.4);box-shadow:0 3px 12px rgba(0,0,0,0.12);" onerror="this.parentElement.innerHTML='<span style=\'font-size:28px;font-weight:700;color:white;\'>${initials}</span>'">`
+      : `<span style="font-size:28px;font-weight:700;color:white;">${initials}</span>`;
+
+    const petsHtml = pets.length ? `
+      <div style="margin:0 16px 12px;">
+        <div style="font-size:13px;font-weight:800;color:var(--text-secondary);margin-bottom:10px;letter-spacing:0.5px;">ПИТОМЦЫ</div>
+        <div style="display:flex;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;">
+          ${pets.map(pet => {
+            const pa = pet.photo_url
+              ? `<img src="${pet.photo_url}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;">`
+              : `<div style="width:52px;height:52px;border-radius:50%;background:${grad};display:flex;align-items:center;justify-content:center;font-size:20px;color:white;font-weight:700;">${pet.name.substring(0,1).toUpperCase()}</div>`;
+            return `<div style="text-align:center;flex-shrink:0;">${pa}<div style="font-size:11px;font-weight:700;margin-top:4px;max-width:56px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pet.name}</div></div>`;
+          }).join('')}
+        </div>
+      </div>` : '';
+
+    // Кнопки действий
+    let actionsHtml = '';
+    if (isSelf) {
+      actionsHtml = `
+        <button class="btn btn-p" style="margin-bottom:8px;" onclick="nav('edit-profile');loadProfileForm()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:6px;"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Редактировать профиль
+        </button>`;
+    } else {
+      const safeId = userId.replace(/'/g, "\'");
+      const safeName = name.replace(/'/g, "\'");
+      actionsHtml = `
+        <button class="btn btn-p" style="margin-bottom:8px;" onclick="openChatWithUser('${safeId}','${safeName}','${initials}','${grad}')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:6px;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          Написать сообщение
+        </button>
+        <button id="friend-btn-${userId}" class="btn btn-p" style="margin-bottom:8px;font-size:13px;" onclick="sendFriendRequest('${safeId}')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:6px;"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+          Добавить в друзья
+        </button>`;
+    }
+
+    // Посты (только для себя)
+    const postsSection = isSelf ? `
+      <div style="margin:0 16px 8px;">
+        <div style="font-size:13px;font-weight:800;color:var(--text-secondary);margin-bottom:10px;letter-spacing:0.5px;">МОИ ПУБЛИКАЦИИ <span id="prof-posts-count" style="font-weight:600;"></span></div>
+        <div id="prof-posts-list"></div>
+      </div>` : '';
+
+    // Друзья (только для себя) + заявки
+    const friendsSection = isSelf ? `
+      <div style="margin:0 16px 12px;">
+        <div style="font-size:13px;font-weight:800;color:var(--text-secondary);margin-bottom:10px;letter-spacing:0.5px;">ДРУЗЬЯ <span id="prof-stat-friends" style="font-weight:600;color:var(--primary);"></span></div>
+        <div id="prof-friends-row" style="display:flex;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;flex-wrap:wrap;"></div>
+      </div>` : '';
+
+    if (!body) return;
+    body.innerHTML = `
+      <!-- Шапка -->
+      <div style="background:linear-gradient(135deg,#4A90D9,#7B5EA7);padding:24px 16px 20px;text-align:center;border-radius:0 0 24px 24px;margin-bottom:16px;">
+        <div style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;overflow:hidden;">${avatarHtml}</div>
+        <div style="font-size:20px;font-weight:900;color:white;font-family:'Nunito',sans-serif;margin-bottom:4px;">${name}</div>
+        ${district ? `<div style="font-size:13px;color:rgba(255,255,255,0.8);">📍 ${district}</div>` : ''}
+      </div>
+
+      <!-- Кнопки -->
+      <div style="padding:0 16px 16px;display:flex;flex-direction:column;gap:8px;">
+        ${actionsHtml}
+      </div>
+
+      <!-- Питомцы -->
+      ${petsHtml}
+
+      <!-- Друзья -->
+      ${friendsSection}
+
+      <!-- Посты -->
+      ${postsSection}
+    `;
+
+    // Загружаем дополнительные данные
+    if (isSelf) {
+      if (typeof loadMyProfilePosts === 'function') loadMyProfilePosts();
+      if (typeof loadMyFriends === 'function') {
+        await loadMyFriends();
+        const friendsRow = document.getElementById('prof-friends-row');
+        const friendsStat = document.getElementById('prof-stat-friends');
+        if (friendsStat) friendsStat.textContent = _myFriends.length || '';
+        if (friendsRow) {
+          if (!_myFriends.length) {
+            friendsRow.innerHTML = '<div style="color:var(--text-secondary);font-size:13px;padding:4px 0;">Пока нет друзей</div>';
+          } else {
+            friendsRow.innerHTML = _myFriends.slice(0,10).map(f => {
+              const fi = (f.name||'?').substring(0,2).toUpperCase();
+              const fa = f.avatar_url ? `<img src="${f.avatar_url}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;" onerror="this.parentElement.textContent='${fi}'">` : fi;
+              return `<div onclick="openFullUserProfile('${f.id}')" style="width:56px;flex-shrink:0;text-align:center;cursor:pointer;"><div style="width:48px;height:48px;border-radius:50%;background:${grad};display:flex;align-items:center;justify-content:center;font-size:16px;color:white;font-weight:700;overflow:hidden;margin:0 auto;">${fa}</div><div style="font-size:10px;font-weight:700;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.name.split(' ')[0]}</div></div>`;
+            }).join('');
+          }
+        }
+      }
+    } else {
+      // Обновляем кнопку дружбы
+      if (typeof _getFriendStatus === 'function') {
+        const status = await _getFriendStatus(userId);
+        if (typeof _updateFriendBtnUI === 'function') _updateFriendBtnUI(userId, status);
+      }
+    }
+  } catch(e) {
+    console.error('openFullUserProfile error:', e);
+    const body2 = document.getElementById('user-profile-body');
+    if (body2) body2.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-secondary);">Не удалось загрузить профиль</div>';
+  }
+}
+
+window.openFullUserProfile = openFullUserProfile;
+
 function openMyProfilePage() {
   if (typeof openFullUserProfile === 'function' && currentUser) {
     openFullUserProfile(currentUser.id);
