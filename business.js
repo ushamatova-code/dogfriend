@@ -782,16 +782,18 @@ async function renderHomeSpecialists() {
       .from('businesses')
       .select('*')
       .eq('is_approved', true)
-      .eq('type', 'trainer')
+      .in('type', ['trainer', 'grooming', 'psychologist', 'boarding', 'walking', 'training_ground'])
       .order('rating', { ascending: false })
       .limit(8);
     if (error) throw error;
     
     if (!data || data.length === 0) {
-      row.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-secondary);font-size:13px;width:100%;">Пока нет кинологов</div>';
+      row.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-secondary);font-size:13px;width:100%;">Пока нет специалистов</div>';
       return;
     }
     
+    const typeLabels = { trainer: 'Кинолог', grooming: 'Груминг', psychologist: 'Зоопсихолог', boarding: 'Передержка', walking: 'Выгул', training_ground: 'Площадка' };
+
     row.innerHTML = data.map(b => {
       const initials = b.name ? b.name.substring(0,2).toUpperCase() : '??';
       const avatarHtml = b.cover_url 
@@ -808,7 +810,7 @@ async function renderHomeSpecialists() {
           </div>
           <div style="text-align:center;width:100%;">
             <div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${b.name}</div>
-            <div style="font-size:11px;color:var(--text-secondary);">${(()=>{const m={trainer:'Кинолог',grooming:'Груминг',boarding:'Передержка',psychologist:'Зоопсихолог',walking:'Выгул'};const s=b.services&&b.services.length?b.services.map(x=>m[typeof x==='string'?x:x.name]).filter(Boolean):[];return s.length?s[0]:'Кинолог';})()}</div>
+            <div style="font-size:11px;color:var(--text-secondary);">${typeLabels[b.type] || 'Специалист'}</div>
             <div style="font-size:11px;color:var(--secondary);font-weight:700;">⭐ ${b.rating}</div>
             <div style="font-size:11px;color:var(--primary);font-weight:700;">${b.price_from || ''}</div>
           </div>

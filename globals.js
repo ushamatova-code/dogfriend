@@ -352,10 +352,8 @@ function loadProfile() {
     }
   }
   
-  // Обновляем статистику профиля — только если уже авторизованы
-  if (currentUser && supabaseClient) {
-    loadProfileStats();
-  }
+  // Обновляем статистику профиля — функция сама проверит наличие currentUser
+  loadProfileStats();
 }
 
 async function loadProfileStats() {
@@ -560,7 +558,7 @@ window.addEventListener('load', () => {
   splash.style.display = 'flex';
   
   // Ждём инициализации — checkAuth сама обработает любой случай
-  setTimeout(() => checkAuth(), 2500);
+  setTimeout(() => checkAuth(), 1000);
   
   // Обновляем счётчик непрочитанных — с задержкой чтобы не конкурировать с checkAuth
   setTimeout(() => {

@@ -155,10 +155,12 @@ async function enablePushFromSettings() {
   window.nav=function(id){
     _orig(id);
     if(id==='home') {
+      // loadProfileStats обновляет блок приютов — вызываем сразу
       if(typeof loadProfileStats==='function') loadProfileStats();
-      setTimeout(()=>{ if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); }, 100);
-      setTimeout(()=>{ if(typeof renderHomeProducts==='function') renderHomeProducts(); }, 500);
-      setTimeout(()=>{ if(typeof loadHomeFeedPreview==='function') loadHomeFeedPreview(); }, 900);
+      // Специалисты и товары — с небольшой задержкой чтобы supabase точно был инициализирован
+      setTimeout(()=>{ if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); }, 300);
+      setTimeout(()=>{ if(typeof renderHomeProducts==='function') renderHomeProducts(); }, 600);
+      setTimeout(()=>{ if(typeof loadHomeFeedPreview==='function') loadHomeFeedPreview(); }, 1000);
     }
     if(id==='feedScreen') { setTimeout(loadFeedScreen, 200); }
     if(id==='profile')   { setTimeout(() => { if(typeof checkUserBusiness==='function' && currentUser) checkUserBusiness(); loadMyProfilePosts(); loadProfileSocialData(); }, 200); }
@@ -173,18 +175,12 @@ async function enablePushFromSettings() {
 
 // Initial render on DOMContentLoaded (after main listener)
 window.addEventListener('load',()=>{
-  // Без сети — сразу
+  // Только локальные рендеры без сети — выполняем сразу
   if(typeof renderLessons==='function') renderLessons();
   updateDistrictChatLabel();
   renderSavedDistrictChats();
-
-  // Сетевые запросы — после checkAuth (~3000ms)
-  setTimeout(()=>{ if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); }, 3200);
-  setTimeout(()=>{ if(typeof renderHomeProducts==='function') renderHomeProducts(); }, 3600);
-  setTimeout(()=>{ if(typeof renderPlaces==='function') renderPlaces(); }, 4000);
-  setTimeout(()=>{ if(typeof renderDiscounts==='function') renderDiscounts(); }, 4400);
-  setTimeout(()=>{ if(typeof renderPets==='function') renderPets(); }, 4800);
-  setTimeout(()=>{ if(typeof loadHomeFeedPreview==='function') loadHomeFeedPreview(); }, 5200);
+  // Сетевые вызовы НЕ дублируем здесь — они вызываются из патча nav('home')
+  // который срабатывает после checkAuth. Это гарантирует что supabaseClient уже готов.
 
   // Закрываем результаты поиска при клике вне
   document.addEventListener('click', (e) => {
