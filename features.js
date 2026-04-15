@@ -357,16 +357,20 @@ function switchCommTab(filter) {
   if (chipGroups) chipGroups.style.cssText += (filter === 'groups') ? ON : OFF;
   if (chipDms)    chipDms.style.cssText    += (filter === 'dms')    ? ON : OFF;
 
-  if (panelGroups) panelGroups.style.display = (filter === 'dms')    ? 'none' : '';
-  if (panelDms)    panelDms.style.display    = (filter === 'groups') ? 'none' : '';
-  if (panelFeed)   panelFeed.style.display   = 'none';
+  if (panelGroups) panelGroups.style.display = (filter === 'dms' || filter === 'feed') ? 'none' : '';
+  if (panelDms)    panelDms.style.display    = (filter === 'groups' || filter === 'feed') ? 'none' : '';
+  if (panelFeed)   panelFeed.style.display   = (filter === 'feed') ? 'block' : 'none';
 
-  // Поиск районов скрываем только на вкладке "Личные"
-  if (searchWrap) searchWrap.style.display = (filter === 'dms') ? 'none' : '';
+  // Поиск районов скрываем только на вкладке "Личные" и "feed"
+  if (searchWrap) searchWrap.style.display = (filter === 'dms' || filter === 'feed') ? 'none' : '';
 
   // Обновляем список личных чатов при показе
-  if (filter !== 'groups' && typeof renderPrivateChats === 'function') {
+  if (filter !== 'groups' && filter !== 'feed' && typeof renderPrivateChats === 'function') {
     renderPrivateChats();
+  }
+  // Рендерим ленту при переключении на feed
+  if (filter === 'feed' && typeof renderFeed === 'function') {
+    renderFeed();
   }
 }
 

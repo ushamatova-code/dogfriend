@@ -677,6 +677,11 @@ async function togglePostLike(postId) {
   const btn = document.getElementById(`like-btn-${postId}`);
   const countEl = document.getElementById(`likes-count-${postId}`);
   const svg = btn ? btn.querySelector('svg') : null;
+
+  // Блокируем повторный клик пока идёт запрос
+  if (btn && btn.disabled) return;
+  if (btn) btn.disabled = true;
+
   const isLiked = btn && btn.getAttribute('data-liked') === '1';
   const currentCount = parseInt(countEl ? countEl.textContent : '0') || 0;
 
@@ -692,13 +697,21 @@ async function togglePostLike(postId) {
 
   try {
     if (isLiked) {
-      await supabaseClient.from('post_likes').delete().eq('post_id', postId).eq('user_id', currentUser.id);
-      await supabaseClient.from('posts').update({ likes_count: Math.max(0, currentCount - 1) }).eq('id', postId);
+      // Убираем лайк
+      await supabaseClient.from('post_likes').delete()
+        .eq('post_id', postId).eq('user_id', currentUser.id);
+      const newCount = Math.max(0, currentCount - 1);
+      await supabaseClient.from('posts').update({ likes_count: newCount }).eq('id', postId);
     } else {
-      await supabaseClient.from('post_likes').insert({ post_id: postId, user_id: currentUser.id });
-      await supabaseClient.from('posts').update({ likes_count: currentCount + 1 }).eq('id', postId);
+      // Ставим лайк — upsert защищает от дублей даже если нет UNIQUE constraint в БД
+      await supabaseClient.from('post_likes').upsert(
+        { post_id: postId, user_id: currentUser.id },
+        { onConflict: 'post_id,user_id', ignoreDuplicates: true }
+      );
+      const newCount = currentCount + 1;
+      await supabaseClient.from('posts').update({ likes_count: newCount }).eq('id', postId);
 
-      // Push автору поста (если не сам себе лайкнул)
+      // Push автору (если не себе)
       const post = _feedPosts.find(p => p.id === postId);
       if (post && post.user_id !== currentUser.id) {
         const profile = JSON.parse(localStorage.getItem('df_profile') || '{}');
@@ -708,15 +721,14 @@ async function togglePostLike(postId) {
             title: myName + ' оценил вашу публикацию ❤️',
             message: post.text ? post.text.substring(0, 60) : 'Нажмите чтобы посмотреть',
             url: location.origin + location.pathname + '?post=' + postId,
-            chatId: null,
-            type: 'like'
+            chatId: null, type: 'like'
           });
         }
       }
     }
   } catch(e) {
     console.error('Like error:', e);
-    // Откатываем UI при ошибке
+    // Откатываем UI
     if (btn && svg && countEl) {
       btn.setAttribute('data-liked', isLiked ? '1' : '0');
       svg.setAttribute('fill', isLiked ? '#E91E63' : 'none');
@@ -724,6 +736,8 @@ async function togglePostLike(postId) {
       btn.style.color = isLiked ? '#E91E63' : 'var(--text-secondary)';
       countEl.textContent = currentCount;
     }
+  } finally {
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -762,12 +776,13 @@ async function openPostDetail(postId) {
         const avatarHtml = c.author_avatar
           ? `<img src="${c.author_avatar}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">`
           : `<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;">${(c.author_name||'?').substring(0,1)}</div>`;
+        const canClick = !!c.user_id;
         html += `
           <div style="display:flex;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);">
-            ${avatarHtml}
+            <div onclick="${canClick ? `openUserProfileById('${c.user_id}')` : ''}" style="width:32px;height:32px;border-radius:50%;overflow:hidden;flex-shrink:0;${canClick ? 'cursor:pointer;' : ''}">${avatarHtml}</div>
             <div style="flex:1;">
               <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:3px;">
-                <span style="font-size:13px;font-weight:700;">${escFeed(c.author_name)}</span>
+                <span onclick="${canClick ? `openUserProfileById('${c.user_id}')` : ''}" style="font-size:13px;font-weight:700;${canClick ? 'cursor:pointer;' : ''}">${escFeed(c.author_name)}</span>
                 <span style="font-size:11px;color:var(--text-secondary);">${formatPostTime(c.created_at)}</span>
               </div>
               <div style="font-size:13px;color:var(--text-primary);line-height:1.5;">${escFeed(c.text)}</div>
@@ -790,6 +805,10 @@ async function submitComment() {
   if (!_currentPostId || !supabaseClient) return;
 
   const profile = JSON.parse(localStorage.getItem('df_profile') || '{}');
+  // Берём аватар из currentUserProfile (актуальный из БД), иначе из localStorage
+  const myAvatar = (typeof currentUserProfile !== 'undefined' && currentUserProfile && currentUserProfile.avatar_url)
+    ? currentUserProfile.avatar_url
+    : (profile.avatar_url || null);
   input.value = '';
 
   try {
@@ -797,7 +816,7 @@ async function submitComment() {
       post_id: _currentPostId,
       user_id: currentUser.id,
       author_name: profile.name || 'Пользователь',
-      author_avatar: profile.avatar_url || null,
+      author_avatar: myAvatar,
       text: text
     });
     if (error) throw error;
