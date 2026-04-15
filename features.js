@@ -173,15 +173,18 @@ async function enablePushFromSettings() {
 
 // Initial render on DOMContentLoaded (after main listener)
 window.addEventListener('load',()=>{
-  // Разносим запросы по времени чтобы не перегружать Supabase соединения
-  setTimeout(()=>{ if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); }, 300);
-  setTimeout(()=>{ if(typeof renderHomeProducts==='function') renderHomeProducts(); }, 800);
-  setTimeout(()=>{ if(typeof renderPlaces==='function') renderPlaces(); }, 1300);
-  setTimeout(()=>{ if(typeof renderDiscounts==='function') renderDiscounts(); }, 1800);
-  setTimeout(()=>{ if(typeof renderLessons==='function') renderLessons(); }, 2200);
-  setTimeout(()=>{ if(typeof renderPets==='function') renderPets(); }, 2600);
-  setTimeout(()=>{ updateDistrictChatLabel(); renderSavedDistrictChats(); }, 3000);
-  setTimeout(()=>{ if(typeof loadHomeFeedPreview==='function') loadHomeFeedPreview(); }, 3500);
+  // Без сети — сразу
+  if(typeof renderLessons==='function') renderLessons();
+  updateDistrictChatLabel();
+  renderSavedDistrictChats();
+
+  // Сетевые запросы — после checkAuth (~3000ms)
+  setTimeout(()=>{ if(typeof renderHomeSpecialists==='function') renderHomeSpecialists(); }, 3200);
+  setTimeout(()=>{ if(typeof renderHomeProducts==='function') renderHomeProducts(); }, 3600);
+  setTimeout(()=>{ if(typeof renderPlaces==='function') renderPlaces(); }, 4000);
+  setTimeout(()=>{ if(typeof renderDiscounts==='function') renderDiscounts(); }, 4400);
+  setTimeout(()=>{ if(typeof renderPets==='function') renderPets(); }, 4800);
+  setTimeout(()=>{ if(typeof loadHomeFeedPreview==='function') loadHomeFeedPreview(); }, 5200);
 
   // Закрываем результаты поиска при клике вне
   document.addEventListener('click', (e) => {
@@ -337,7 +340,7 @@ function openNamedDistrictChat(district) {
 // ════════════════════════════════════════════════════════════
 // COMMUNITY TABS (Districts / DMs)
 // ════════════════════════════════════════════════════════════
-// Текущий активный фильтр чатов
+// Текущий фильтр чатов
 let _commFilter = 'all';
 
 function switchCommTab(filter) {
@@ -347,32 +350,26 @@ function switchCommTab(filter) {
   const panelDms    = document.getElementById('comm-panel-dms');
   const panelFeed   = document.getElementById('comm-panel-feed');
   const searchWrap  = document.getElementById('comm-search-wrap');
+  const chipAll     = document.getElementById('chip-all');
+  const chipGroups  = document.getElementById('chip-groups');
+  const chipDms     = document.getElementById('chip-dms');
 
-  // Чипсы
-  const chipAll    = document.getElementById('chip-all');
-  const chipGroups = document.getElementById('chip-groups');
-  const chipDms    = document.getElementById('chip-dms');
+  const ON  = ';border:1.5px solid var(--primary);background:var(--primary);color:white;';
+  const OFF = ';border:1.5px solid var(--border);background:var(--white);color:var(--text-secondary);';
 
-  // Сброс всех чипсов
-  const chipOn  = 'border:1.5px solid var(--primary);background:var(--primary);color:white;';
-  const chipOff = 'border:1.5px solid var(--border);background:var(--white);color:var(--text-secondary);';
-  [chipAll, chipGroups, chipDms].forEach(c => { if (c) c.style.cssText += chipOff; });
+  if (chipAll)    chipAll.style.cssText    += (filter === 'all')    ? ON : OFF;
+  if (chipGroups) chipGroups.style.cssText += (filter === 'groups') ? ON : OFF;
+  if (chipDms)    chipDms.style.cssText    += (filter === 'dms')    ? ON : OFF;
 
-  // Применяем активный стиль
-  if (filter === 'all')    { if (chipAll)    chipAll.style.cssText    += chipOn; }
-  else if (filter === 'groups') { if (chipGroups) chipGroups.style.cssText += chipOn; }
-  else if (filter === 'dms')    { if (chipDms)    chipDms.style.cssText    += chipOn; }
+  if (panelGroups) panelGroups.style.display = (filter === 'dms')    ? 'none' : '';
+  if (panelDms)    panelDms.style.display    = (filter === 'groups') ? 'none' : '';
+  if (panelFeed)   panelFeed.style.display   = 'none';
 
-  // Показываем/скрываем панели
-  if (panelGroups) panelGroups.style.display = (filter === 'all' || filter === 'groups') ? '' : 'none';
-  if (panelDms)    panelDms.style.display    = (filter === 'all' || filter === 'dms')    ? '' : 'none';
-  if (panelFeed)   panelFeed.style.display   = 'none'; // лента — отдельный экран
-
-  // Поиск районов — скрываем только когда смотрим только личные
+  // Поиск районов скрываем только на вкладке "Личные"
   if (searchWrap) searchWrap.style.display = (filter === 'dms') ? 'none' : '';
 
-  // Если переключились на "Все" или "Личные" — рендерим ленту DM-чатов
-  if ((filter === 'all' || filter === 'dms') && typeof renderPrivateChats === 'function') {
+  // Обновляем список личных чатов при показе
+  if (filter !== 'groups' && typeof renderPrivateChats === 'function') {
     renderPrivateChats();
   }
 }

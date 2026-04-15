@@ -19,11 +19,22 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <title>Dogly</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.1/dist/cropper.min.css">
-<script src="https://unpkg.com/cropperjs@1.6.1/dist/cropper.min.js"></script>
+<!-- Preconnect — DNS+TLS заранее -->
+<link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
+<link rel="preconnect" href="https://nxrztljcxphkdfbfubba.supabase.co" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<!-- DM Sans + Nunito через bunny.net — работает в РФ без VPN (замена Google Fonts) -->
+<link rel="stylesheet" href="https://fonts.bunny.net/css?family=dm-sans:400,500,600,700|nunito:400,600,700,800,900&display=swap">
+<!-- Leaflet CSS — не блокирует рендер -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></noscript>
+<!-- Cropper CSS — не блокирует рендер -->
+<link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.1/dist/cropper.min.css" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.1/dist/cropper.min.css"></noscript>
 <link rel="stylesheet" href="style.css">
+<!-- JS — defer: не блокируют парсинг HTML -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+<script src="https://unpkg.com/cropperjs@1.6.1/dist/cropper.min.js" defer></script>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -1337,20 +1348,20 @@
   <!-- Шапка с чипсами -->
   <div style="padding:calc(16px + env(safe-area-inset-top, 0px)) 20px 10px;background:var(--white);flex-shrink:0;">
     <h1 style="margin-bottom:12px;">Сообщения</h1>
-    <div style="display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px;margin-bottom:0;">
-      <button id="chip-all" onclick="switchCommTab('all')" style="flex-shrink:0;display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 14px;border-radius:20px;border:1.5px solid var(--primary);background:var(--primary);color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all 0.15s;">Все чаты</button>
-      <button id="chip-groups" onclick="switchCommTab('groups')" style="flex-shrink:0;display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);color:var(--text-secondary);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all 0.15s;">
+    <div style="display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px;">
+      <button id="chip-all" onclick="switchCommTab('all')" style="flex-shrink:0;display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 14px;border-radius:20px;border:1.5px solid var(--primary);background:var(--primary);color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">Все чаты</button>
+      <button id="chip-groups" onclick="switchCommTab('groups')" style="flex-shrink:0;display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);color:var(--text-secondary);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
         Группы
       </button>
-      <button id="chip-dms" onclick="switchCommTab('dms')" style="flex-shrink:0;display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);color:var(--text-secondary);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all 0.15s;position:relative;">
+      <button id="chip-dms" onclick="switchCommTab('dms')" style="flex-shrink:0;display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);color:var(--text-secondary);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;position:relative;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
         Личные
         <span class="chat-unread-badge" style="position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;background:#FF3B30;color:white;border-radius:9px;font-size:10px;font-weight:800;display:none;align-items:center;justify-content:center;padding:0 4px;">0</span>
       </button>
     </div>
   </div>
-  <!-- Строка поиска районов — скрывается когда активен фильтр "Личные" -->
+  <!-- Поиск районов — скрывается на вкладке "Личные" -->
   <div id="comm-search-wrap" style="padding:8px 20px 10px;background:var(--white);border-bottom:1px solid var(--border);flex-shrink:0;">
     <div style="position:relative;">
       <div class="search-bar">
@@ -1362,7 +1373,7 @@
     </div>
   </div>
   <div class="scroll">
-    <!-- Группы — сохраняем id для обратной совместимости -->
+    <!-- Группы — id сохранён, используется в features.js и chat.js -->
     <div id="comm-panel-districts">
       <div class="ci" onclick="openGlobalChat()" style="gap:14px;">
         <div class="avatar" style="width:52px;height:52px;font-size:20px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);flex-shrink:0;">
@@ -1396,7 +1407,7 @@
       </div>
       <div id="saved-district-chats"></div>
     </div>
-    <!-- Личные — сохраняем id, chat.js пишет сюда напрямую -->
+    <!-- Личные — id сохранён, chat.js и notifications.js пишут сюда напрямую -->
     <div id="comm-panel-dms">
       <div id="private-chats-list"></div>
       <div style="padding:24px 16px;text-align:center;color:var(--text-secondary);font-size:13px;" id="no-private-chats">
@@ -1404,13 +1415,13 @@
         <br>Ещё нет личных сообщений<br><span style="font-size:12px;">Напишите специалисту чтобы начать чат</span>
       </div>
     </div>
-    <!-- Лента — скрыта по умолчанию -->
+    <!-- Лента — скрыта, управляется отдельно -->
     <div id="comm-panel-feed" style="display:none;position:relative;min-height:300px;">
       <div id="feed-list" style="padding:8px 0;"></div>
       <div id="feed-loading" style="text-align:center;padding:40px;color:var(--text-secondary);font-size:14px;">Загружаем ленту...</div>
       <button onclick="openCreatePost()" style="position:fixed;bottom:80px;right:20px;width:52px;height:52px;border-radius:50%;background:var(--primary);color:white;border:none;font-size:32px;cursor:pointer;box-shadow:0 4px 16px rgba(74,144,217,0.4);z-index:100;display:flex;align-items:center;justify-content:center;line-height:0;padding:0;padding-bottom:2px;" id="feed-fab">+</button>
     </div>
-    <!-- Заглушки старых tab-id — обратная совместимость со старым switchCommTab из других мест -->
+    <!-- Пустые заглушки старых id — обратная совместимость -->
     <div id="comm-tab-districts" style="display:none;"></div>
     <div id="comm-tab-dms" style="display:none;"></div>
     <div id="comm-tab-feed" style="display:none;"></div>
