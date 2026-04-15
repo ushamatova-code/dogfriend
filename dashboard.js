@@ -185,7 +185,240 @@ const BIZ_FIELDS = {
         options: ['Корма','Игрушки','Одежда','Аксессуары','Поводки и ошейники','Витамины','Лакомства','Переноски','Лежанки','Гигиена']
       },
     ]
-  }
+  },
+
+  psychologist: {
+    icon: '🧠',
+    label: 'Зоопсихолог',
+    sections: [
+      {
+        title: '📋 Основная информация',
+        fields: [
+          { id: 'name',        label: 'ФИО / Название',        type: 'text',     placeholder: 'Мария Иванова', required: true },
+          { id: 'description', label: 'О себе',                 type: 'textarea', placeholder: 'Специализация, подход, опыт...' },
+          { id: 'address',     label: 'Район / Место приёма',   type: 'text',     placeholder: 'Москва, Сокольники', required: true },
+          { id: 'price_from',  label: 'Цена консультации от',   type: 'text',     placeholder: '3 000 ₽' },
+        ]
+      },
+      {
+        title: '📞 Контакты',
+        fields: [
+          { id: 'phone',    label: 'Телефон',  type: 'tel',   placeholder: '+7 (999) 123-45-67', required: true },
+          { id: 'email',    label: 'Email',    type: 'email', placeholder: 'zoo@mail.ru' },
+          { id: 'telegram', label: 'Telegram', type: 'text',  placeholder: '@username' },
+          { id: 'website',  label: 'Сайт',     type: 'url',   placeholder: 'https://...' },
+        ]
+      },
+      {
+        title: '🎓 Специализация',
+        fields: [
+          { id: 'experience',    label: 'Опыт работы',              type: 'text',     placeholder: '7 лет' },
+          { id: 'education',     label: 'Образование / сертификаты', type: 'textarea', placeholder: 'IAABC, APDT...' },
+          { id: 'dog_breeds',    label: 'Породы (специализация)',    type: 'text',     placeholder: 'Все породы' },
+          { id: 'lesson_format', label: 'Формат работы',            type: 'text',     placeholder: 'Выезд, онлайн, в кабинете' },
+          { id: 'area',          label: 'Рабочая зона',             type: 'text',     placeholder: 'Москва и область' },
+        ]
+      },
+      {
+        title: '✅ Услуги',
+        type: 'checkboxes',
+        id: 'services',
+        options: ['Коррекция агрессии','Страхи и фобии','Разлучение с хозяином','Гиперактивность','Апатия / депрессия','Социализация','Онлайн-консультация','Выезд на дом','Работа с щенками','Посттравматика']
+      },
+      {
+        title: '🕐 График работы',
+        fields: [
+          { id: 'schedule', label: 'Расписание', type: 'textarea', placeholder: 'Пн-Пт 10:00–19:00' },
+        ]
+      },
+    ]
+  },
+
+  grooming: {
+    icon: '✂️',
+    label: 'Груминг',
+    sections: [
+      {
+        title: '📋 Основная информация',
+        fields: [
+          { id: 'name',        label: 'ФИО / Название салона', type: 'text',     placeholder: 'Салон "Красивый пёс"', required: true },
+          { id: 'description', label: 'О салоне / мастере',    type: 'textarea', placeholder: 'Опыт, специализация, условия...' },
+          { id: 'address',     label: 'Адрес',                 type: 'text',     placeholder: 'Москва, ул. Ленина 10', required: true },
+          { id: 'price_from',  label: 'Стрижка от',            type: 'text',     placeholder: '2 000 ₽' },
+        ]
+      },
+      {
+        title: '📞 Контакты',
+        fields: [
+          { id: 'phone',    label: 'Телефон',  type: 'tel',   placeholder: '+7 (999) 123-45-67', required: true },
+          { id: 'email',    label: 'Email',    type: 'email', placeholder: 'grooming@mail.ru' },
+          { id: 'telegram', label: 'Telegram', type: 'text',  placeholder: '@username' },
+          { id: 'instagram',label: 'Instagram',type: 'text',  placeholder: '@grooming_salon' },
+          { id: 'website',  label: 'Сайт',     type: 'url',   placeholder: 'https://...' },
+        ]
+      },
+      {
+        title: '✂️ Специализация',
+        fields: [
+          { id: 'experience',  label: 'Опыт работы',           type: 'text',     placeholder: '5 лет' },
+          { id: 'dog_breeds',  label: 'Породы (специализация)', type: 'text',     placeholder: 'Все породы / Пудель, Йорк...' },
+          { id: 'area',        label: 'Выезд на дом',          type: 'text',     placeholder: 'Есть / Нет / Районы' },
+          { id: 'lesson_format',label: 'Формат',               type: 'text',     placeholder: 'Салон / Выезд / Оба' },
+        ]
+      },
+      {
+        title: '✅ Услуги',
+        type: 'checkboxes',
+        id: 'services',
+        options: ['Стрижка','Мытьё','Тримминг','Подстригание когтей','Чистка ушей','Чистка зубов','Спа-процедуры','Покраска шерсти','Плетение косичек','Выезд на дом','Экспресс-груминг']
+      },
+      {
+        title: '🕐 График работы',
+        fields: [
+          { id: 'schedule', label: 'Расписание', type: 'textarea', placeholder: 'Пн-Сб 9:00–20:00' },
+        ]
+      },
+    ]
+  },
+
+  boarding: {
+    icon: '🏠',
+    label: 'Передержка / Догситтинг',
+    sections: [
+      {
+        title: '📋 Основная информация',
+        fields: [
+          { id: 'name',        label: 'ФИО / Название',       type: 'text',     placeholder: 'Анна Петрова', required: true },
+          { id: 'description', label: 'О себе / услуге',       type: 'textarea', placeholder: 'Условия, опыт, количество животных...' },
+          { id: 'address',     label: 'Район',                 type: 'text',     placeholder: 'Москва, Митино', required: true },
+          { id: 'price_from',  label: 'Цена в сутки от',       type: 'text',     placeholder: '1 000 ₽/сут' },
+        ]
+      },
+      {
+        title: '📞 Контакты',
+        fields: [
+          { id: 'phone',    label: 'Телефон',  type: 'tel',   placeholder: '+7 (999) 123-45-67', required: true },
+          { id: 'email',    label: 'Email',    type: 'email', placeholder: 'boarding@mail.ru' },
+          { id: 'telegram', label: 'Telegram', type: 'text',  placeholder: '@username' },
+        ]
+      },
+      {
+        title: '🐕 Условия',
+        fields: [
+          { id: 'experience',   label: 'Опыт',                    type: 'text',     placeholder: '3 года' },
+          { id: 'max_dog_size', label: 'Размер собак',            type: 'text',     placeholder: 'До 30 кг / Любой' },
+          { id: 'dog_breeds',   label: 'Ограничения по породам',  type: 'text',     placeholder: 'Нет / Только мелкие' },
+          { id: 'area',         label: 'Макс. количество собак',  type: 'text',     placeholder: '2 собаки одновременно' },
+          { id: 'dog_policy',   label: 'Условия проживания',      type: 'textarea', placeholder: 'Живём в квартире, есть двор...' },
+        ]
+      },
+      {
+        title: '✅ Услуги',
+        type: 'checkboxes',
+        id: 'services',
+        options: ['Дневная передержка','Длительная передержка','Ночная передержка','Уход за щенками','Выгул','Игры и активности','Видеоотчёты','Приём лекарств','Купание','Груминг']
+      },
+      {
+        title: '🕐 Доступность',
+        fields: [
+          { id: 'schedule', label: 'График приёма', type: 'textarea', placeholder: 'Круглосуточно / Пн-Вс 8:00–22:00' },
+        ]
+      },
+    ]
+  },
+
+  walking: {
+    icon: '🚶',
+    label: 'Выгул собак',
+    sections: [
+      {
+        title: '📋 Основная информация',
+        fields: [
+          { id: 'name',        label: 'ФИО',              type: 'text',     placeholder: 'Иван Сидоров', required: true },
+          { id: 'description', label: 'О себе',            type: 'textarea', placeholder: 'Опыт, подход, маршруты...' },
+          { id: 'address',     label: 'Район работы',      type: 'text',     placeholder: 'Москва, Хорошево-Мнёвники', required: true },
+          { id: 'price_from',  label: 'Цена прогулки от',  type: 'text',     placeholder: '500 ₽' },
+        ]
+      },
+      {
+        title: '📞 Контакты',
+        fields: [
+          { id: 'phone',    label: 'Телефон',  type: 'tel',   placeholder: '+7 (999) 123-45-67', required: true },
+          { id: 'email',    label: 'Email',    type: 'email', placeholder: 'walker@mail.ru' },
+          { id: 'telegram', label: 'Telegram', type: 'text',  placeholder: '@username' },
+        ]
+      },
+      {
+        title: '🐕 О прогулках',
+        fields: [
+          { id: 'experience',    label: 'Опыт',                   type: 'text',     placeholder: '2 года' },
+          { id: 'max_dog_size',  label: 'Размер собак',           type: 'text',     placeholder: 'До 40 кг / Любой' },
+          { id: 'dog_breeds',    label: 'Ограничения по породам', type: 'text',     placeholder: 'Нет ограничений' },
+          { id: 'area',          label: 'Рабочая зона',           type: 'text',     placeholder: 'Хорошево, Щукино, Строгино' },
+          { id: 'lesson_format', label: 'Длительность прогулки',  type: 'text',     placeholder: '60 мин / 90 мин' },
+        ]
+      },
+      {
+        title: '✅ Услуги',
+        type: 'checkboxes',
+        id: 'services',
+        options: ['Индивидуальный выгул','Групповой выгул','Активные прогулки','Социализация на прогулке','Дрессировка на прогулке','Отчёт фото/видео','Выезд к клиенту','Утренние прогулки','Вечерние прогулки']
+      },
+      {
+        title: '🕐 График работы',
+        fields: [
+          { id: 'schedule', label: 'Расписание', type: 'textarea', placeholder: 'Пн-Вс 7:00–21:00' },
+        ]
+      },
+    ]
+  },
+
+  training_ground: {
+    icon: '⭐',
+    label: 'Дрессировочная площадка',
+    sections: [
+      {
+        title: '📋 Основная информация',
+        fields: [
+          { id: 'name',        label: 'Название площадки', type: 'text',     placeholder: 'Площадка "Чемпион"', required: true },
+          { id: 'description', label: 'О площадке',        type: 'textarea', placeholder: 'Оборудование, покрытие, размер...' },
+          { id: 'address',     label: 'Адрес',             type: 'text',     placeholder: 'Москва, парк Сокольники', required: true },
+          { id: 'price_from',  label: 'Аренда от',         type: 'text',     placeholder: '500 ₽/час' },
+        ]
+      },
+      {
+        title: '📞 Контакты',
+        fields: [
+          { id: 'phone',    label: 'Телефон',  type: 'tel',   placeholder: '+7 (999) 123-45-67', required: true },
+          { id: 'email',    label: 'Email',    type: 'email', placeholder: 'ground@mail.ru' },
+          { id: 'telegram', label: 'Telegram', type: 'text',  placeholder: '@username' },
+          { id: 'website',  label: 'Сайт',     type: 'url',   placeholder: 'https://...' },
+        ]
+      },
+      {
+        title: '🏟️ О площадке',
+        fields: [
+          { id: 'area',         label: 'Площадь / размер',      type: 'text',     placeholder: '500 м²' },
+          { id: 'dog_policy',   label: 'Покрытие',              type: 'text',     placeholder: 'Трава / Резина / Грунт' },
+          { id: 'max_dog_size', label: 'Ограждение',            type: 'text',     placeholder: 'Полностью огорожена / Частично' },
+          { id: 'equipment',    label: 'Оборудование',          type: 'textarea', placeholder: 'Снаряды аджилити, барьеры, бум...' },
+          { id: 'lesson_format',label: 'Освещение',             type: 'text',     placeholder: 'Есть / Нет' },
+        ]
+      },
+      {
+        title: '✅ Активности',
+        type: 'checkboxes',
+        id: 'services',
+        options: ['Аджилити','ОКД','Фрисби','Свободный выгул','Групповые занятия','Индивидуальные занятия','IPO / Защитная служба','Флайбол','Аренда без тренера','С инструктором']
+      },
+      {
+        title: '🕐 График работы',
+        fields: [
+          { id: 'schedule', label: 'Расписание', type: 'textarea', placeholder: 'Пн-Вс 8:00–22:00' },
+        ]
+      },
+    ]
+  },
 };
 
 // Загрузить бизнес пользователя и показать кнопку в профиле
@@ -225,8 +458,8 @@ async function checkUserBusiness() {
 function renderBizDashboard(biz) {
   currentBiz = biz;
   const cfg = BIZ_FIELDS[biz.type];
-  const typeIcons = { trainer: '🐕', clinic: '🏥', cafe: '☕', shop: '🛍️' };
-  const typeLabels = { trainer: 'Кинолог / Тренер', clinic: 'Ветеринарная клиника', cafe: 'Dog-friendly место', shop: 'Магазин' };
+  const typeIcons  = { trainer: '🐕', clinic: '🏥', cafe: '☕', shop: '🛍️', psychologist: '🧠', grooming: '✂️', boarding: '🏠', walking: '🚶', training_ground: '⭐' };
+  const typeLabels = { trainer: 'Кинолог / Тренер', clinic: 'Ветеринарная клиника', cafe: 'Dog-friendly место', shop: 'Магазин', psychologist: 'Зоопсихолог', grooming: 'Груминг', boarding: 'Передержка / Догситтинг', walking: 'Выгул собак', training_ground: 'Дрессировочная площадка' };
   const SERVICE_LABELS = {
     trainer: 'Кинолог / Тренер', grooming: 'Груминг', boarding: 'Передержка',
     psychologist: 'Зоопсихолог', walking: 'Выгул', training_ground: 'Площадка',
