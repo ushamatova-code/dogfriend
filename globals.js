@@ -54,7 +54,7 @@ async function sendWelcomeMessages(newUserId) {
     console.log('🎉 Sending welcome messages to new user:', newUserId);
     
     // Формируем room_id (всегда сортированные ID через underscore)
-    const roomId = [OWNER_USER_ID, newUserId].sort().join('_');
+    const roomId = [OWNER_USER_ID, newUserId].sort().join('__');
     
     // Отправляем сообщения с задержками
     for (const msg of WELCOME_MESSAGES) {

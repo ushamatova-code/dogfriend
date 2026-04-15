@@ -804,9 +804,8 @@ async function loadAllDialogsFromDB() {
 
     // Для каждой комнаты определяем собеседника и восстанавливаем чат
     for (const [roomId, messages] of Object.entries(rooms)) {
-      // chatId = userId собеседника
-      // room_id формат: uuid1_uuid2
-      const parts = roomId.split('_').filter(p => p.length === 36 && p.includes('-'));
+      // room_id формат: uuid1__uuid2 (двойное подчёркивание)
+      const parts = roomId.split('__').filter(p => p.length > 0);
       const theirId = parts.find(p => p !== myUserId);
       
       // Пропускаем если не нашли валидный UUID собеседника
@@ -1750,67 +1749,31 @@ function startRealtimeDMSubscription() {
   console.log(' Starting Realtime subscription for direct_messages');
   
   realtimeDMChannel = supabaseClient
-    .channel('dm-changes')
+    .channel('dm-changes-' + myUserId)
     .on('postgres_changes', {
       event: 'INSERT',
       schema: 'public',
-      table: 'direct_messages'
+      table: 'direct_messages',
+      filter: `recipient_id=eq.${myUserId}`
     }, (payload) => {
       const msg = payload.new;
       if (!msg) return;
-      
+
       const myId = currentUser?.id || userId;
       const myIds = [myId];
       if (currentUser?.id && userId && currentUser.id !== userId) myIds.push(userId);
-      
+
       // Пропускаем свои сообщения
       if (myIds.includes(msg.sender_id)) return;
-      
+
       const roomId = msg.room_id;
-      
+
       // ── Общий чат ──
-      if (roomId === 'public_chat') {
-        // Общий чат обрабатывается через broadcast (мгновенно), пропускаем
-        return;
-      }
-      
-      // ── Event-чат ──
-      if (roomId && roomId.startsWith('event_')) {
-        const chatId = roomId;
-        // Проверяем что мы подписаны на этот event-чат
-        if (!contactBook[chatId]) return;
-        
-        if (!privateChats[chatId]) privateChats[chatId] = [];
-        
-        // Дубль?
-        const dup = privateChats[chatId].some(x => x.dbId === msg.id);
-        if (dup) return;
-        
-        privateChats[chatId].push({
-          text: msg.text, sender: 'other',
-          time: msg.time, senderName: msg.sender_name,
-          senderId: msg.sender_id, dbId: msg.id,
-          created_at: msg.created_at,
-          // Поля ответа - оба варианта
-          replyToId: msg.reply_to_id || null,
-          replyToText: msg.reply_to_text || null,
-          replyToName: msg.reply_to_name || null,
-          reply_to_id: msg.reply_to_id || null,
-          reply_to_text: msg.reply_to_text || null,
-          reply_to_name: msg.reply_to_name || null,
-        });
-        
-        if (currentPrivateChatId === chatId) {
-          renderPrivateChatMessages(chatId);
-        } else {
-          addUnreadMessage(chatId);
-          playNotificationSound();
-          showInAppNotification(msg.sender_name, msg.text);
-        }
-        renderPrivateChats();
-        return;
-      }
-      
+      if (roomId === 'public_chat') return;
+
+      // ── Event-чат — получаем через отдельный канал ──
+      if (roomId && roomId.startsWith('event_')) return;
+
       // ── Личный чат ──
       const isMyRoom = myIds.some(id => roomId && roomId.includes(id));
       if (!isMyRoom) return;
