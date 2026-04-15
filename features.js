@@ -405,28 +405,24 @@ async function openChatUserProfile() {
         .select('id', { count: 'exact', head: true })
         .eq('event_id', eventId);
 
-      const eventUrl = location.origin + location.pathname + '?event=' + eventId;
-      const dateStr = ev?.event_date
-        ? new Date(ev.event_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-        : '';
-
+      const eventTitle = ev?.title || eventName;
       body.innerHTML = `
         <div style="text-align:center;margin-bottom:16px;">
           <div style="width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 12px;">📅</div>
-          <div style="font-size:18px;font-weight:800;margin-bottom:4px;">${eventName}</div>
+          <div style="font-size:18px;font-weight:800;margin-bottom:4px;">${eventTitle}</div>
           ${dateStr ? `<div style="font-size:13px;color:var(--text-secondary);">🗓 ${dateStr}</div>` : ''}
           ${ev?.address ? `<div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">📍 ${ev.address}</div>` : ''}
           ${membersCount ? `<div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">👥 ${membersCount} участников</div>` : ''}
         </div>
         ${ev?.description ? `<div style="font-size:14px;line-height:1.6;color:var(--text-primary);margin-bottom:16px;padding:12px;background:var(--bg);border-radius:12px;">${ev.description}</div>` : ''}
-        <button class="btn btn-p" style="margin-bottom:8px;" onclick="navigator.clipboard.writeText('${eventUrl}').then(()=>showToast('Ссылка скопирована!','#34C759')).catch(()=>showToast('${eventUrl}'));closeModal('m-user-profile');">
+        <button class="btn btn-p" style="margin-bottom:8px;" onclick="closeModal('m-user-profile');shareEvent('${eventId}','${eventTitle.replace(/'/g,"\\'")}');">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:6px;"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          Скопировать ссылку на событие
+          Поделиться событием
         </button>
-        <button class="btn btn-g" onclick="closeModal('m-user-profile');if(typeof openEventDetail==='function')openEventDetail('${eventId}');">
+        <button class="btn btn-g" style="margin-bottom:8px;" onclick="closeModal('m-user-profile');if(typeof openEventDetail==='function')openEventDetail('${eventId}');">
           Открыть событие
         </button>
-        <button class="btn btn-g" style="margin-top:8px;" onclick="closeModal('m-user-profile')">Закрыть</button>`;
+        <button class="btn btn-g" onclick="closeModal('m-user-profile')">Закрыть</button>`;
     } catch(e) {
       body.innerHTML = `
         <div style="text-align:center;padding:20px 0 16px;">
@@ -1082,7 +1078,6 @@ function shareProduct() {
 function shareSpecialist() {
   const specId = currentSpecId;
   if (!specId) return;
-  // Берём имя из DOM
   const nameEl = document.getElementById('spec-name');
   const name = nameEl ? nameEl.textContent : 'Специалист';
   const url = `${APP_BASE_URL}/share?spec=${specId}`;
@@ -1090,23 +1085,28 @@ function shareSpecialist() {
   shareLink(url, text);
 }
 
-// Обработка deeplink'ов при загрузке — работает как посты: по таймеру, без зависимости от авторизации
+function shareEvent(eventId, eventTitle) {
+  const url = `${APP_BASE_URL}?event=${eventId}`;
+  const text = `${eventTitle || 'Событие'} — приходи на Dogly!`;
+  shareLink(url, text);
+}
+
+// Обработка deeplink'ов при загрузке
 var _hasDeeplink = false;
 (function() {
   const params = new URLSearchParams(window.location.search);
   const shopId = params.get('shop');
   const productId = params.get('product');
   const specId = params.get('spec');
+  const eventId = params.get('event');
 
-  if (!shopId && !productId && !specId) return;
+  if (!shopId && !productId && !specId && !eventId) return;
   _hasDeeplink = true;
 
   window.addEventListener('load', () => {
     setTimeout(async () => {
-      // Убираем параметры из URL
       window.history.replaceState({}, '', window.location.pathname);
 
-      // Ждём Supabase
       let waited = 0;
       while (!supabaseClient && waited < 10000) {
         await new Promise(r => setTimeout(r, 200));
@@ -1117,21 +1117,23 @@ var _hasDeeplink = false;
 
       try {
         if (productId) {
-          if (shopId) {
-            await openShop(shopId);
-            await new Promise(r => setTimeout(r, 300));
-          }
+          if (shopId) { await openShop(shopId); await new Promise(r => setTimeout(r, 300)); }
           openShopProduct(productId);
         } else if (shopId) {
           await openShop(shopId);
         } else if (specId) {
           await openBusinessProfile(specId);
+        } else if (eventId) {
+          if (typeof openEventDetail === 'function') {
+            nav('events');
+            await new Promise(r => setTimeout(r, 400));
+            openEventDetail(eventId);
+          }
         }
       } catch(e) {
         console.warn('Deeplink error:', e);
       }
 
-      // Показываем баннер регистрации через 3 сек если не залогинен
       setTimeout(() => {
         if (!currentUser && !localStorage.getItem('df_registered')) {
           showDeeplinkAuthBanner();
