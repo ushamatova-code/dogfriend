@@ -953,8 +953,12 @@ async function savePushSubscription(subscription) {
 async function sendPushToUser(targetUserId, { title, message, url, chatId, type }) {
   if (!supabaseClient) return;
   try {
+    // Получаем актуальный JWT токен и передаём явно — иначе Edge Function возвращает 401
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const token = session?.access_token;
     await supabaseClient.functions.invoke('send-push', {
-      body: { target_user_id: targetUserId, title, message, url, chatId, type }
+      body: { target_user_id: targetUserId, title, message, url, chatId, type },
+      headers: token ? { Authorization: 'Bearer ' + token } : {}
     });
   } catch (e) {
     console.error('[Push] ❌ Ошибка отправки:', e);
