@@ -2090,3 +2090,274 @@ window.loadProfileSocialData = loadProfileSocialData;
 window.loadFeedScreen = loadFeedScreen;
 window.loadHomeFeedPreview = loadHomeFeedPreview;
 window.loadHomeFeedPreview = loadHomeFeedPreview;
+
+// ============================================================
+// СИСТЕМА ДРУЗЕЙ
+// ============================================================
+
+let _myFriends = [];
+let _pendingRequests = []; // входящие заявки
+
+// ── Получить статус дружбы с пользователем ──────────────────
+async function _getFriendStatus(targetUserId) {
+  if (!supabaseClient || !currentUser) return 'none';
+  try {
+    const myId = currentUser.id;
+    const { data, error } = await supabaseClient
+      .from('friends')
+      .select('status, user_id, friend_id')
+      .or(`and(user_id.eq.${myId},friend_id.eq.${targetUserId}),and(user_id.eq.${targetUserId},friend_id.eq.${myId})`)
+      .maybeSingle();
+    if (error || !data) return 'none';
+    if (data.status === 'accepted') return 'friends';
+    if (data.status === 'pending') {
+      return data.user_id === myId ? 'sent' : 'incoming';
+    }
+    return 'none';
+  } catch(e) { return 'none'; }
+}
+
+// ── Обновить UI кнопки дружбы ───────────────────────────────
+function _updateFriendBtnUI(userId, status) {
+  const btn = document.getElementById('friend-btn-' + userId);
+  if (!btn) return;
+  if (status === 'friends') {
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:6px;"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>Уже друзья';
+    btn.style.background = 'linear-gradient(135deg,#34C759,#2ea44f)';
+    btn.onclick = null;
+  } else if (status === 'sent') {
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:6px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Заявка отправлена';
+    btn.style.background = 'linear-gradient(135deg,#8e8e93,#6e6e73)';
+    btn.onclick = null;
+  } else if (status === 'incoming') {
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:6px;"><polyline points="20 6 9 17 4 12"/></svg>Принять заявку';
+    btn.style.background = 'linear-gradient(135deg,#34C759,#2ea44f)';
+    btn.onclick = () => acceptFriendRequest(userId);
+  } else {
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:6px;"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>Добавить в друзья';
+    btn.style.background = '';
+    btn.onclick = () => sendFriendRequest(userId);
+  }
+}
+
+// ── Отправить заявку в друзья ────────────────────────────────
+async function sendFriendRequest(targetUserId) {
+  if (!supabaseClient || !currentUser) return;
+  const myId = currentUser.id;
+  if (myId === targetUserId) return;
+
+  // Проверяем что заявки ещё нет
+  const existing = await _getFriendStatus(targetUserId);
+  if (existing !== 'none') {
+    if (existing === 'incoming') { acceptFriendRequest(targetUserId); return; }
+    return;
+  }
+
+  try {
+    const { error } = await supabaseClient.from('friends').insert({
+      user_id: myId,
+      friend_id: targetUserId,
+      status: 'pending'
+    });
+    if (error) { console.error('sendFriendRequest error:', error); showToast('Ошибка отправки заявки'); return; }
+
+    _updateFriendBtnUI(targetUserId, 'sent');
+    showToast('Заявка отправлена!', '#34C759');
+
+    // Push уведомление получателю
+    const myProfile = JSON.parse(localStorage.getItem('df_profile') || '{}');
+    const myName = myProfile.name || 'Пользователь';
+    if (typeof sendPushToUser === 'function') {
+      sendPushToUser(targetUserId, {
+        title: 'Новый запрос в друзья',
+        message: myName + ' хочет добавить вас в друзья',
+        url: '/',
+        type: 'friend_request'
+      });
+    }
+  } catch(e) { console.error('sendFriendRequest exception:', e); }
+}
+
+// ── Принять заявку ───────────────────────────────────────────
+async function acceptFriendRequest(fromUserId) {
+  if (!supabaseClient || !currentUser) return;
+  const myId = currentUser.id;
+  try {
+    const { error } = await supabaseClient
+      .from('friends')
+      .update({ status: 'accepted' })
+      .eq('user_id', fromUserId)
+      .eq('friend_id', myId)
+      .eq('status', 'pending');
+    if (error) { console.error('acceptFriendRequest error:', error); showToast('Ошибка'); return; }
+
+    _updateFriendBtnUI(fromUserId, 'friends');
+    showToast('Теперь вы друзья! 🐶', '#34C759');
+
+    // Push уведомление отправителю
+    const myProfile = JSON.parse(localStorage.getItem('df_profile') || '{}');
+    const myName = myProfile.name || 'Пользователь';
+    if (typeof sendPushToUser === 'function') {
+      sendPushToUser(fromUserId, {
+        title: 'Заявка принята!',
+        message: myName + ' принял(а) вашу заявку в друзья',
+        url: '/',
+        type: 'friend_accepted'
+      });
+    }
+
+    // Обновляем экран заявок если открыт
+    await loadPendingFriendRequests();
+    await loadMyFriends();
+    _updateFriendRequestsBadge();
+  } catch(e) { console.error('acceptFriendRequest exception:', e); }
+}
+
+// ── Отклонить заявку ─────────────────────────────────────────
+async function declineFriendRequest(fromUserId) {
+  if (!supabaseClient || !currentUser) return;
+  const myId = currentUser.id;
+  try {
+    const { error } = await supabaseClient
+      .from('friends')
+      .delete()
+      .eq('user_id', fromUserId)
+      .eq('friend_id', myId)
+      .eq('status', 'pending');
+    if (error) { showToast('Ошибка'); return; }
+    showToast('Заявка отклонена');
+    await loadPendingFriendRequests();
+    _updateFriendRequestsBadge();
+  } catch(e) {}
+}
+
+// ── Загрузить мои друзья ─────────────────────────────────────
+async function loadMyFriends() {
+  if (!supabaseClient || !currentUser) return;
+  const myId = currentUser.id;
+  try {
+    const { data, error } = await supabaseClient
+      .from('friends')
+      .select('user_id, friend_id')
+      .eq('status', 'accepted')
+      .or(`user_id.eq.${myId},friend_id.eq.${myId}`);
+    if (error || !data) { _myFriends = []; return; }
+
+    const friendIds = data.map(r => r.user_id === myId ? r.friend_id : r.user_id);
+    if (!friendIds.length) { _myFriends = []; return; }
+
+    const { data: profiles } = await supabaseClient
+      .from('profiles')
+      .select('user_id, name, avatar_url')
+      .in('user_id', friendIds);
+
+    _myFriends = (profiles || []).map(p => ({
+      id: p.user_id,
+      name: p.name || 'Пользователь',
+      avatar_url: p.avatar_url || null
+    }));
+  } catch(e) { console.error('loadMyFriends error:', e); _myFriends = []; }
+}
+
+// ── Загрузить входящие заявки ────────────────────────────────
+async function loadPendingFriendRequests() {
+  if (!supabaseClient || !currentUser) return;
+  const myId = currentUser.id;
+  try {
+    const { data, error } = await supabaseClient
+      .from('friends')
+      .select('user_id, created_at')
+      .eq('friend_id', myId)
+      .eq('status', 'pending');
+    if (error || !data || !data.length) { _pendingRequests = []; _renderFriendRequests(); return; }
+
+    const senderIds = data.map(r => r.user_id);
+    const { data: profiles } = await supabaseClient
+      .from('profiles')
+      .select('user_id, name, avatar_url')
+      .in('user_id', senderIds);
+
+    _pendingRequests = data.map(r => {
+      const p = (profiles || []).find(pr => pr.user_id === r.user_id) || {};
+      return { id: r.user_id, name: p.name || 'Пользователь', avatar_url: p.avatar_url || null, created_at: r.created_at };
+    });
+    _renderFriendRequests();
+  } catch(e) { console.error('loadPendingFriendRequests error:', e); _pendingRequests = []; }
+}
+
+// ── Обновить бейдж на "Мой профиль" ─────────────────────────
+function _updateFriendRequestsBadge() {
+  const badge = document.getElementById('friends-requests-badge');
+  if (!badge) return;
+  const count = _pendingRequests.length;
+  if (count > 0) {
+    badge.textContent = count;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+// ── Рендер экрана входящих заявок ───────────────────────────
+function _renderFriendRequests() {
+  const container = document.getElementById('friend-requests-list');
+  const empty = document.getElementById('friend-requests-empty');
+  if (!container) return;
+
+  _updateFriendRequestsBadge();
+
+  if (!_pendingRequests.length) {
+    container.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+
+  container.innerHTML = _pendingRequests.map(req => {
+    const initials = (req.name || '?').substring(0, 2).toUpperCase();
+    const avContent = req.avatar_url
+      ? `<img src="${req.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.textContent='${initials}'">`
+      : initials;
+    return `
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);">
+        <div onclick="if(typeof openFullUserProfile==='function')openFullUserProfile('${req.id}')"
+             style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:white;flex-shrink:0;overflow:hidden;cursor:pointer;">${avContent}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:800;font-size:15px;">${req.name}</div>
+          <div style="font-size:12px;color:var(--text-secondary);">хочет добавить вас в друзья</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0;">
+          <button onclick="acceptFriendRequest('${req.id}')"
+                  style="padding:8px 14px;border-radius:12px;border:none;background:linear-gradient(135deg,#34C759,#2ea44f);color:white;font-size:13px;font-weight:700;cursor:pointer;">Принять</button>
+          <button onclick="declineFriendRequest('${req.id}')"
+                  style="padding:8px 14px;border-radius:12px;border:none;background:var(--bg);color:var(--text-secondary);font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--border);">✕</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Открыть экран заявок ─────────────────────────────────────
+async function openFriendRequests() {
+  nav('friendRequests');
+  await loadPendingFriendRequests();
+}
+
+// ── Запустить polling входящих заявок (каждые 30 сек) ────────
+function startFriendRequestsPolling() {
+  // Сразу проверяем
+  loadPendingFriendRequests().then(_updateFriendRequestsBadge);
+  // Затем каждые 30 секунд
+  setInterval(async () => {
+    await loadPendingFriendRequests();
+    _updateFriendRequestsBadge();
+  }, 30000);
+}
+
+window.sendFriendRequest = sendFriendRequest;
+window.acceptFriendRequest = acceptFriendRequest;
+window.declineFriendRequest = declineFriendRequest;
+window.loadMyFriends = loadMyFriends;
+window.openFriendRequests = openFriendRequests;
+window.startFriendRequestsPolling = startFriendRequestsPolling;
+window._getFriendStatus = _getFriendStatus;
+window._updateFriendBtnUI = _updateFriendBtnUI;

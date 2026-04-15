@@ -1292,6 +1292,8 @@ async function checkAuth() {
       checkUserBusiness();
 
       nav('home');
+      // Запускаем polling входящих заявок в друзья
+      if (typeof startFriendRequestsPolling === 'function') startFriendRequestsPolling();
       // Записываем визит
       trackVisit();
       // Обновляем статистику после входа (charity block)
@@ -2427,13 +2429,10 @@ async function loadPrivateChatFromServer(chatId) {
   console.log('📥 Loading messages from DB for chatId:', chatId, 'roomId:', roomId);
   
   try {
-    // Запрашиваем ОБА формата room_id: старый (uuid_uuid) и новый (uuid__uuid)
-    // чтобы не потерять сообщения записанные старой версией кода
-    const roomIdOld = [myUserId, String(chatId)].sort().join('_');
     const { data, error } = await supabaseClient
       .from('direct_messages')
       .select('*')
-      .or(`room_id.eq.${roomId},room_id.eq.${roomIdOld}`)
+      .eq('room_id', roomId)
       .order('created_at', { ascending: true })
       .limit(500);
     
@@ -2472,18 +2471,9 @@ async function loadPrivateChatFromServer(chatId) {
           reply_to_name: m.reply_to_name || null,
         };
       });
-      // Умный мерж: сохраняем ВСЕ существующие сообщения с dbId + новые из DB + optimistic
-      const existingMsgs = privateChats[chatId] || [];
-      const existingDbIds = new Set(existingMsgs.map(m => m.dbId).filter(Boolean));
-      const newDbMsgs = dbMessages.filter(m => !existingDbIds.has(m.dbId));
-      const newDbIds = new Set(dbMessages.map(m => m.dbId).filter(Boolean));
-      const optimistic = existingMsgs.filter(m => !m.dbId && !newDbIds.has(m.dbId));
-      const merged = [...existingMsgs.filter(m => m.dbId), ...newDbMsgs, ...optimistic];
-      merged.sort((a, b) => {
-        if (a.created_at && b.created_at) return a.created_at.localeCompare(b.created_at);
-        return 0;
-      });
-      privateChats[chatId] = merged;
+      const dbIds = new Set(dbMessages.map(m => m.dbId).filter(Boolean));
+      const optimistic = (privateChats[chatId] || []).filter(m => !m.dbId && !dbIds.has(m.dbId));
+      privateChats[chatId] = [...dbMessages, ...optimistic];
 
       savePrivateChatsToStorage();
       // Обновляем _lastPollTime чтобы polling не добавлял уже загруженные сообщения
