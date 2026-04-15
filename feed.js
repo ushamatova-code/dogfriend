@@ -307,13 +307,40 @@ function buildPostCard(post, iLiked) {
     ? `<img src="${post.author_avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
     : `<span style="font-size:16px;font-weight:700;color:white;">${(post.author_name||'?').substring(0,1).toUpperCase()}</span>`;
 
-  const photosHtml = (post.photos && post.photos.length)
-    ? `<div style="margin:10px 0;border-radius:12px;overflow:hidden;">${
-        post.photos.length === 1
-          ? `<img src="${post.photos[0]}" style="width:100%;max-height:400px;object-fit:contain;background:#f5f5f5;border-radius:12px;cursor:pointer;display:block;" onclick="openPhotoFull('${post.photos[0]}')">`
-          : `<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;">${post.photos.map(url => `<img src="${url}" style="width:100%;height:150px;object-fit:cover;cursor:pointer;" onclick="openPhotoFull('${url}')">`).join('')}</div>`
-      }</div>`
-    : '';
+  const pid = post.id;
+  let photosHtml = '';
+  if (post.photos && post.photos.length) {
+    if (post.photos.length === 1) {
+      photosHtml = `<div style="margin:10px -16px 0;"><img src="${post.photos[0]}" style="width:100%;max-height:400px;object-fit:cover;display:block;cursor:pointer;" onclick="openPhotoFull('${post.photos[0]}')"></div>`;
+    } else if (post.photos.length === 2) {
+      photosHtml = `<div style="margin:10px -16px 0;display:grid;grid-template-columns:1fr 1fr;gap:2px;">${post.photos.map(url => `<img src="${url}" style="width:100%;height:200px;object-fit:cover;cursor:pointer;" onclick="openPhotoFull('${url}')">`).join('')}</div>`;
+    } else {
+      // Карусель для 3+ фото
+      const carouselId = `carousel-${pid}`;
+      const slides = post.photos.map((url, i) =>
+        `<div style="flex:0 0 100%;scroll-snap-align:start;"><img src="${url}" style="width:100%;height:320px;object-fit:cover;display:block;cursor:pointer;" onclick="openPhotoFull('${url}')"></div>`
+      ).join('');
+      const dots = post.photos.map((_, i) =>
+        `<div id="${carouselId}-dot-${i}" style="width:6px;height:6px;border-radius:50%;background:${i===0?'white':'rgba(255,255,255,0.5)'};transition:background 0.2s;cursor:pointer;" onclick="scrollCarousel('${carouselId}',${i})"></div>`
+      ).join('');
+      photosHtml = `
+        <div style="margin:10px -16px 0;position:relative;">
+          <div id="${carouselId}" onscroll="updateCarouselDots('${carouselId}',${post.photos.length})" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;scroll-behavior:smooth;">
+            <style>#${carouselId}::-webkit-scrollbar{display:none}</style>
+            ${slides}
+          </div>
+          <div style="position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:5px;pointer-events:none;">
+            <div style="display:flex;gap:5px;pointer-events:all;">${dots}</div>
+          </div>
+          <div style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(0,0,0,0.35);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="stepCarousel('${carouselId}',${post.photos.length},1)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+          <div style="position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(0,0,0,0.35);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="stepCarousel('${carouselId}',${post.photos.length},-1)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </div>
+        </div>`;
+    }
+  }
 
   const textHtml = post.text
     ? `<div style="font-size:14px;line-height:1.6;color:var(--text-primary);margin:8px 0;word-break:break-word;">${escFeed(post.text)}</div>`
@@ -986,6 +1013,30 @@ function openPhotoFull(url) {
 // ════════════════════════════════════════════════════════════
 // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 // ════════════════════════════════════════════════════════════
+
+function scrollCarousel(id, index) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.scrollTo({ left: el.offsetWidth * index, behavior: 'smooth' });
+}
+
+function stepCarousel(id, total, dir) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const current = Math.round(el.scrollLeft / el.offsetWidth);
+  const next = Math.max(0, Math.min(total - 1, current + dir));
+  el.scrollTo({ left: el.offsetWidth * next, behavior: 'smooth' });
+}
+
+function updateCarouselDots(id, total) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const current = Math.round(el.scrollLeft / el.offsetWidth);
+  for (let i = 0; i < total; i++) {
+    const dot = document.getElementById(`${id}-dot-${i}`);
+    if (dot) dot.style.background = i === current ? 'white' : 'rgba(255,255,255,0.5)';
+  }
+}
 
 function escFeed(str) {
   if (!str) return '';
