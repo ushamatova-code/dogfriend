@@ -763,7 +763,17 @@ async function openPostDetail(postId) {
       .order('created_at', { ascending: true });
     if (error) throw error;
 
-    // Собираем user_id у которых нет аватарки в комментарии — загружаем из profiles
+    // Реальное количество из БД — синхронизируем кэш и UI
+    const realCount = (comments || []).length;
+    if (post && post.comments_count !== realCount) {
+      post.comments_count = realCount;
+    }
+    const countEl = document.getElementById(`comments-count-${postId}`);
+    if (countEl) countEl.textContent = realCount;
+    // Также обновляем в БД если расходится
+    if (post && post.comments_count !== realCount && supabaseClient) {
+      supabaseClient.from('posts').update({ comments_count: realCount }).eq('id', postId).then(() => {});
+    }
     const missingAvatarIds = [...new Set(
       (comments || []).filter(c => !c.author_avatar && c.user_id).map(c => c.user_id)
     )];
@@ -837,13 +847,17 @@ async function submitComment() {
     });
     if (error) throw error;
 
-    // Обновляем счётчик локально и в БД
+    // Получаем реальный счётчик из БД
+    const { count: realCount } = await supabaseClient
+      .from('post_comments')
+      .select('id', { count: 'exact', head: true })
+      .eq('post_id', _currentPostId);
+
+    const newCount = realCount || 0;
+
+    // Обновляем кэш и UI
     const post = _feedPosts.find(p => p.id === _currentPostId);
-    const newCount = (post ? (post.comments_count || 0) : 0) + 1;
-    if (post) {
-      post.comments_count = newCount;
-    }
-    // Обновляем счётчик на карточке в ленте
+    if (post) post.comments_count = newCount;
     const countEl = document.getElementById(`comments-count-${_currentPostId}`);
     if (countEl) countEl.textContent = newCount;
 
