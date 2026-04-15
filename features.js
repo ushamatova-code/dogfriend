@@ -2285,33 +2285,36 @@ async function loadPendingFriendRequests() {
   } catch(e) { console.error('loadPendingFriendRequests error:', e); _pendingRequests = []; }
 }
 
-// ── Обновить бейдж на "Мой профиль" ─────────────────────────
+// ── Обновить бейдж на "Мой профиль" и блок заявок в профиле ─
 function _updateFriendRequestsBadge() {
   const badge = document.getElementById('friends-requests-badge');
-  if (!badge) return;
+  const block = document.getElementById('friend-requests-block');
+  const countLbl = document.getElementById('friend-requests-count-lbl');
   const count = _pendingRequests.length;
-  if (count > 0) {
-    badge.textContent = count;
-    badge.style.display = 'flex';
-  } else {
-    badge.style.display = 'none';
+
+  if (badge) {
+    if (count > 0) { badge.textContent = count; badge.style.display = 'flex'; }
+    else { badge.style.display = 'none'; }
+  }
+  if (block) {
+    block.style.display = count > 0 ? 'block' : 'none';
+  }
+  if (countLbl) {
+    countLbl.textContent = count > 0 ? count + ' ' + (count === 1 ? 'заявка' : count < 5 ? 'заявки' : 'заявок') : '';
   }
 }
 
-// ── Рендер экрана входящих заявок ───────────────────────────
+// ── Рендер блока заявок прямо в профиле ─────────────────────
 function _renderFriendRequests() {
   const container = document.getElementById('friend-requests-list');
-  const empty = document.getElementById('friend-requests-empty');
   if (!container) return;
 
   _updateFriendRequestsBadge();
 
   if (!_pendingRequests.length) {
     container.innerHTML = '';
-    if (empty) empty.style.display = 'block';
     return;
   }
-  if (empty) empty.style.display = 'none';
 
   container.innerHTML = _pendingRequests.map(req => {
     const initials = (req.name || '?').substring(0, 2).toUpperCase();
@@ -2319,27 +2322,26 @@ function _renderFriendRequests() {
       ? `<img src="${req.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.textContent='${initials}'">`
       : initials;
     return `
-      <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-top:1px solid var(--border);">
         <div onclick="if(typeof openFullUserProfile==='function')openFullUserProfile('${req.id}')"
-             style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:white;flex-shrink:0;overflow:hidden;cursor:pointer;">${avContent}</div>
+             style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#4A90D9,#7B5EA7);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:white;flex-shrink:0;overflow:hidden;cursor:pointer;">${avContent}</div>
         <div style="flex:1;min-width:0;">
-          <div style="font-weight:800;font-size:15px;">${req.name}</div>
-          <div style="font-size:12px;color:var(--text-secondary);">хочет добавить вас в друзья</div>
+          <div style="font-weight:800;font-size:14px;">${req.name}</div>
+          <div style="font-size:12px;color:var(--text-secondary);">хочет дружить</div>
         </div>
-        <div style="display:flex;gap:8px;flex-shrink:0;">
+        <div style="display:flex;gap:6px;flex-shrink:0;">
           <button onclick="acceptFriendRequest('${req.id}')"
-                  style="padding:8px 14px;border-radius:12px;border:none;background:linear-gradient(135deg,#34C759,#2ea44f);color:white;font-size:13px;font-weight:700;cursor:pointer;">Принять</button>
+                  style="padding:6px 12px;border-radius:10px;border:none;background:linear-gradient(135deg,#34C759,#2ea44f);color:white;font-size:12px;font-weight:700;cursor:pointer;">Принять</button>
           <button onclick="declineFriendRequest('${req.id}')"
-                  style="padding:8px 14px;border-radius:12px;border:none;background:var(--bg);color:var(--text-secondary);font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--border);">✕</button>
+                  style="padding:6px 10px;border-radius:10px;border:none;background:var(--bg);color:var(--text-secondary);font-size:12px;font-weight:700;cursor:pointer;border:1px solid var(--border);">✕</button>
         </div>
       </div>`;
   }).join('');
 }
 
-// ── Открыть экран заявок ─────────────────────────────────────
-async function openFriendRequests() {
-  nav('friendRequests');
-  await loadPendingFriendRequests();
+// openFriendRequests — просто скроллит в профиль (заявки уже там)
+function openFriendRequests() {
+  nav('profile');
 }
 
 // ── Запустить polling входящих заявок (каждые 30 сек) ────────
