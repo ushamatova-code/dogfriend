@@ -714,6 +714,177 @@ function loadPrivateChatsFromStorage() {
   // Event-чаты грузятся из БД после инициализации Supabase (см. initSupabase)
 }
 
+// ─── Загрузка истории одного event-чата из БД ───────────────────────────────
+async function loadEventChatFromServer(chatId, roomId) {
+  if (!supabaseClient || !currentUser) return;
+  try {
+    const { data, error } = await supabaseClient
+      .from('direct_messages')
+      .select('*')
+      .eq('room_id', roomId)
+      .order('created_at', { ascending: true })
+      .limit(100);
+    if (error || !data) return;
+
+    const myUserId = currentUser.id;
+    const msgs = data.map(m => ({
+      text: m.text,
+      sender: m.sender_id === myUserId ? 'user' : 'other',
+      time: m.time || new Date(m.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+      senderName: m.sender_name,
+      senderId: m.sender_id,
+      created_at: m.created_at,
+      dbId: m.id,
+      replyToId: m.reply_to_id || null,
+      replyToText: m.reply_to_text || null,
+      replyToName: m.reply_to_name || null,
+      reply_to_id: m.reply_to_id || null,
+      reply_to_text: m.reply_to_text || null,
+      reply_to_name: m.reply_to_name || null,
+    }));
+
+    // Мержим: сохраняем optimistic-сообщения без dbId
+    const existing = privateChats[chatId] || [];
+    const dbIds = new Set(msgs.map(m => m.dbId).filter(Boolean));
+    const optimistic = existing.filter(m => !m.dbId && !dbIds.has(m.dbId));
+    privateChats[chatId] = [...msgs, ...optimistic];
+  } catch(e) {
+    console.error('loadEventChatFromServer error:', e);
+  }
+}
+
+// ─── Инициализация lastId для event-polling ──────────────────────────────────
+let _eventLastIds = {};   // chatId → последний created_at
+let _eventPollTimer = null;
+
+function initEventLastIds() {
+  _eventLastIds = {};
+  // Для каждого event-чата запоминаем дату последнего известного сообщения
+  Object.keys(privateChats).forEach(chatId => {
+    if (!chatId.startsWith('event_')) return;
+    const msgs = privateChats[chatId] || [];
+    if (msgs.length) {
+      const last = msgs[msgs.length - 1];
+      _eventLastIds[chatId] = last.created_at || new Date(0).toISOString();
+    } else {
+      _eventLastIds[chatId] = new Date(Date.now() - 60000).toISOString();
+    }
+  });
+}
+
+// ─── Фоновый polling новых сообщений в event-чатах ──────────────────────────
+// (Realtime не покрывает event-чаты т.к. recipient_id = null)
+function startBgEventPolling() {
+  if (_eventPollTimer) return; // уже запущен
+  _eventPollTimer = setInterval(bgEventPollTick, 6000);
+}
+
+function stopBgEventPolling() {
+  if (_eventPollTimer) { clearInterval(_eventPollTimer); _eventPollTimer = null; }
+}
+
+async function bgEventPollTick() {
+  if (!supabaseClient || !currentUser) return;
+  const eventChatIds = Object.keys(contactBook).filter(k => k.startsWith('event_'));
+  if (!eventChatIds.length) return;
+
+  const myUserId = currentUser.id;
+  // Самая старая точка среди всех event-чатов — берём с запасом
+  const since = Object.values(_eventLastIds).sort()[0]
+    || new Date(Date.now() - 60000).toISOString();
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('direct_messages')
+      .select('*')
+      .in('room_id', eventChatIds)
+      .gt('created_at', since)
+      .order('created_at', { ascending: true });
+
+    if (error || !data || !data.length) return;
+
+    data.forEach(msg => {
+      if (msg.sender_id === myUserId) return; // своё — уже отображено
+      const chatId = msg.room_id;
+      if (!privateChats[chatId]) privateChats[chatId] = [];
+
+      // Дубль?
+      const exists = privateChats[chatId].some(m =>
+        m.dbId === msg.id ||
+        (m.text === msg.text && Math.abs(new Date(m.created_at || 0) - new Date(msg.created_at || 0)) < 5000)
+      );
+      if (exists) { _eventLastIds[chatId] = msg.created_at; return; }
+
+      const time = msg.time || new Date(msg.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      privateChats[chatId].push({
+        text: msg.text,
+        sender: 'other',
+        time,
+        senderName: msg.sender_name,
+        senderId: msg.sender_id,
+        created_at: msg.created_at,
+        dbId: msg.id,
+        replyToId: msg.reply_to_id || null,
+        replyToText: msg.reply_to_text || null,
+        replyToName: msg.reply_to_name || null,
+        reply_to_id: msg.reply_to_id || null,
+        reply_to_text: msg.reply_to_text || null,
+        reply_to_name: msg.reply_to_name || null,
+      });
+      _eventLastIds[chatId] = msg.created_at;
+
+      if (currentPrivateChatId === chatId) {
+        renderPrivateChatMessages(chatId);
+      } else {
+        addUnreadMessage(chatId);
+        playNotificationSound();
+        showInAppNotification(msg.sender_name, msg.text);
+      }
+      renderPrivateChats();
+    });
+  } catch(e) {
+    console.error('bgEventPollTick error:', e);
+  }
+}
+
+// ─── openEventGroupChat — открыть event-чат по объекту события ───────────────
+function openEventGroupChat(event) {
+  if (!event || !event.id) return;
+  const chatId = 'event_' + event.id;
+  const evTitle = event.title || 'Событие';
+
+  // Убеждаемся что контакт есть в contactBook
+  if (!contactBook[chatId]) {
+    contactBook[chatId] = {
+      name: '📅 ' + evTitle.replace(/^(📅\s*)+/, ''),
+      initials: '📅',
+      grad: 'linear-gradient(135deg,#4A90D9,#7B5EA7)',
+      isEventChat: true,
+      roomId: chatId
+    };
+    localStorage.setItem('df_contacts', JSON.stringify(contactBook));
+  }
+
+  if (!privateChats[chatId]) privateChats[chatId] = [];
+
+  // Открываем UI чата
+  openChatWithUser(chatId, contactBook[chatId].name, '📅', 'linear-gradient(135deg,#4A90D9,#7B5EA7)');
+
+  // Подгружаем свежую историю из БД
+  loadEventChatFromServer(chatId, chatId).then(() => {
+    renderPrivateChatMessages(chatId);
+    renderPrivateChats();
+    // Запускаем polling если не запущен
+    if (!_eventPollTimer) {
+      initEventLastIds();
+      startBgEventPolling();
+    }
+    _eventLastIds[chatId] = privateChats[chatId].length
+      ? (privateChats[chatId][privateChats[chatId].length - 1].created_at || new Date(0).toISOString())
+      : new Date(Date.now() - 60000).toISOString();
+  });
+}
+
 // Вызывается из initSupabase после успешного подключения
 async function reloadEventChatsFromDB() {
   if (!supabaseClient || !currentUser) return;
@@ -804,8 +975,11 @@ async function loadAllDialogsFromDB() {
 
     // Для каждой комнаты определяем собеседника и восстанавливаем чат
     for (const [roomId, messages] of Object.entries(rooms)) {
-      // room_id формат: uuid1__uuid2 (двойное подчёркивание)
-      const parts = roomId.split('__').filter(p => p.length > 0);
+      // room_id может быть uuid1__uuid2 (двойное) или uuid1_uuid2 (одинарное — старый формат)
+      // UUID имеет длину 36 и содержит дефисы — используем это чтобы надёжно выделить оба UUID
+      const parts = roomId.split('__').length > 1
+        ? roomId.split('__').filter(p => p.length > 0)
+        : roomId.split('_').filter(p => p.length === 36 && p.includes('-'));
       const theirId = parts.find(p => p !== myUserId);
       
       // Пропускаем если не нашли валидный UUID собеседника
@@ -1190,6 +1364,7 @@ async function supabaseLogin() {
 
       // Загружаем все диалоги из БД
       loadAllDialogsFromDB();
+      reloadEventChatsFromDB();
       
       checkUserBusiness();
       nav('home');
