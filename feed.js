@@ -711,19 +711,22 @@ async function togglePostLike(postId) {
       const newCount = currentCount + 1;
       await supabaseClient.from('posts').update({ likes_count: newCount }).eq('id', postId);
 
-      // Push автору (если не себе)
-      const post = _feedPosts.find(p => p.id === postId);
-      if (post && post.user_id !== currentUser.id) {
+      // Push автору (если не себе) — ищем в кэше или запрашиваем из БД
+      let post = _feedPosts.find(p => p.id === postId);
+      if (!post && supabaseClient) {
+        try {
+          const { data } = await supabaseClient.from('posts').select('user_id, text').eq('id', postId).single();
+          if (data) post = data;
+        } catch(e) {}
+      }
+      if (post && post.user_id !== currentUser.id && typeof sendPushToUser === 'function') {
         const profile = JSON.parse(localStorage.getItem('df_profile') || '{}');
-        const myName = profile.name || 'Кто-то';
-        if (typeof sendPushToUser === 'function') {
-          sendPushToUser(post.user_id, {
-            title: myName + ' оценил вашу публикацию ❤️',
-            message: post.text ? post.text.substring(0, 60) : 'Нажмите чтобы посмотреть',
-            url: location.origin + location.pathname + '?post=' + postId,
-            chatId: null, type: 'like'
-          });
-        }
+        sendPushToUser(post.user_id, {
+          title: (profile.name || 'Кто-то') + ' оценил вашу публикацию ❤️',
+          message: post.text ? post.text.substring(0, 60) : 'Нажмите чтобы посмотреть',
+          url: location.origin + location.pathname + '?post=' + postId,
+          chatId: null, type: 'like'
+        });
       }
     }
   } catch(e) {
@@ -805,10 +808,10 @@ async function submitComment() {
   if (!_currentPostId || !supabaseClient) return;
 
   const profile = JSON.parse(localStorage.getItem('df_profile') || '{}');
-  // Берём аватар из currentUserProfile (актуальный из БД), иначе из localStorage
+  // df_profile содержит только name/district — аватар берём из currentUserProfile или df_avatar
   const myAvatar = (typeof currentUserProfile !== 'undefined' && currentUserProfile && currentUserProfile.avatar_url)
     ? currentUserProfile.avatar_url
-    : (profile.avatar_url || null);
+    : (localStorage.getItem('df_avatar') || null);
   input.value = '';
 
   try {
@@ -842,10 +845,22 @@ async function submitComment() {
           title: myName + ' прокомментировал вашу публикацию 💬',
           message: text.substring(0, 80),
           url: location.origin + location.pathname + '?post=' + _currentPostId,
-          chatId: null,
-          type: 'comment'
+          chatId: null, type: 'comment'
         });
       }
+    } else if (!post && supabaseClient) {
+      // Пост не в кэше (открыт напрямую) — запрашиваем автора
+      try {
+        const { data: pd } = await supabaseClient.from('posts').select('user_id').eq('id', _currentPostId).single();
+        if (pd && pd.user_id !== currentUser.id && typeof sendPushToUser === 'function') {
+          sendPushToUser(pd.user_id, {
+            title: (profile.name || 'Кто-то') + ' прокомментировал вашу публикацию 💬',
+            message: text.substring(0, 80),
+            url: location.origin + location.pathname + '?post=' + _currentPostId,
+            chatId: null, type: 'comment'
+          });
+        }
+      } catch(e) {}
     }
 
     // Перезагружаем комментарии в модалке

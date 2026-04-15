@@ -1859,14 +1859,27 @@ async function loadHomeFeedPreview() {
       return post;
     });
 
+    // Добавляем посты в _feedPosts чтобы лайки/уведомления работали из главной
+    if (typeof _feedPosts !== 'undefined') {
+      parsed.forEach(function(post) {
+        if (!_feedPosts.find(function(fp) { return fp.id === post.id; })) {
+          _feedPosts.push(post);
+        }
+      });
+    }
+
+    // Загружаем лайки текущего пользователя
+    var myLikes = new Set();
+    if (currentUser && typeof getMyLikes === 'function') {
+      myLikes = await getMyLikes(parsed.map(function(p) { return p.id; }));
+    }
+
     if (typeof buildPostCard === 'function') {
-      preview.innerHTML = parsed.map(function(p) { return '<div class="df-post-wrap">' + buildPostCard(p, false) + '</div>'; }).join('');
-    } else {
-      if (typeof buildPostCard === 'function') {
-      preview.innerHTML = parsed.map(function(p) { return buildPostCard(p, false); }).join('');
+      preview.innerHTML = parsed.map(function(p) {
+        return '<div class="df-post-wrap">' + buildPostCard(p, myLikes.has(p.id)) + '</div>';
+      }).join('');
     } else {
       preview.innerHTML = parsed.map(function(p) { return renderFeedPostFallback(p); }).join('');
-    }
     }
   } catch(e) { console.error('Home feed preview error:', e); }
 }
