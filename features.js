@@ -378,43 +378,96 @@ function switchCommTab(filter) {
 // USER PROFILE (from chat — shows avatar, district, pets, stats)
 // ════════════════════════════════════════════════════════════
 async function openChatUserProfile() {
-  const userId = currentPrivateChatId;
-  if (!userId || !supabaseClient) return;
-  
+  const chatId = currentPrivateChatId;
+  if (!chatId || !supabaseClient) return;
+
   const body = document.getElementById('m-user-profile-body');
   if (!body) return;
-  
+
+  // ── Событийный чат — показываем инфо о событии ──
+  if (String(chatId).startsWith('event_')) {
+    const eventId = chatId.replace('event_', '');
+    const contact = contactBook[chatId] || {};
+    const eventName = (contact.name || 'Событие').replace(/^📅\s*/, '');
+
+    body.innerHTML = '<div style="padding:20px;color:var(--text-secondary);">Загружаем...</div>';
+    openModal('m-user-profile');
+
+    try {
+      const { data: ev } = await supabaseClient
+        .from('events')
+        .select('*')
+        .eq('id', eventId)
+        .single();
+
+      const { count: membersCount } = await supabaseClient
+        .from('event_participants')
+        .select('id', { count: 'exact', head: true })
+        .eq('event_id', eventId);
+
+      const eventUrl = location.origin + location.pathname + '?event=' + eventId;
+      const dateStr = ev?.event_date
+        ? new Date(ev.event_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : '';
+
+      body.innerHTML = `
+        <div style="text-align:center;margin-bottom:16px;">
+          <div style="width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,#4A90D9,#7B5EA7);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 12px;">📅</div>
+          <div style="font-size:18px;font-weight:800;margin-bottom:4px;">${eventName}</div>
+          ${dateStr ? `<div style="font-size:13px;color:var(--text-secondary);">🗓 ${dateStr}</div>` : ''}
+          ${ev?.address ? `<div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">📍 ${ev.address}</div>` : ''}
+          ${membersCount ? `<div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">👥 ${membersCount} участников</div>` : ''}
+        </div>
+        ${ev?.description ? `<div style="font-size:14px;line-height:1.6;color:var(--text-primary);margin-bottom:16px;padding:12px;background:var(--bg);border-radius:12px;">${ev.description}</div>` : ''}
+        <button class="btn btn-p" style="margin-bottom:8px;" onclick="navigator.clipboard.writeText('${eventUrl}').then(()=>showToast('Ссылка скопирована!','#34C759')).catch(()=>showToast('${eventUrl}'));closeModal('m-user-profile');">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:6px;"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Скопировать ссылку на событие
+        </button>
+        <button class="btn btn-g" onclick="closeModal('m-user-profile');if(typeof openEventDetail==='function')openEventDetail('${eventId}');">
+          Открыть событие
+        </button>
+        <button class="btn btn-g" style="margin-top:8px;" onclick="closeModal('m-user-profile')">Закрыть</button>`;
+    } catch(e) {
+      body.innerHTML = `
+        <div style="text-align:center;padding:20px 0 16px;">
+          <div style="font-size:32px;margin-bottom:8px;">📅</div>
+          <div style="font-size:17px;font-weight:800;margin-bottom:16px;">${eventName}</div>
+        </div>
+        <button class="btn btn-p" style="margin-bottom:8px;" onclick="const u=location.origin+location.pathname+'?event=${eventId}';navigator.clipboard.writeText(u).then(()=>showToast('Ссылка скопирована!','#34C759'));closeModal('m-user-profile');">Скопировать ссылку</button>
+        <button class="btn btn-g" onclick="closeModal('m-user-profile')">Закрыть</button>`;
+    }
+    return;
+  }
+
+  // ── Личный чат — показываем профиль пользователя (прежняя логика) ──
   body.innerHTML = '<div style="padding:20px;color:var(--text-secondary);">Загружаем профиль...</div>';
   openModal('m-user-profile');
-  
+
   try {
-    // Загружаем профиль пользователя
     const { data: profile } = await supabaseClient
       .from('profiles')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', chatId)
       .single();
-    
-    // Загружаем питомцев
+
     const { data: pets } = await supabaseClient
       .from('pets')
       .select('*')
-      .eq('user_id', userId);
-    
-    // Загружаем заказы для статистики
+      .eq('user_id', chatId);
+
     const { data: bookings } = await supabaseClient
       .from('bookings')
       .select('id')
-      .eq('user_id', userId);
-    
-    const name = profile?.name || contactBook[userId]?.name || 'Пользователь';
+      .eq('user_id', chatId);
+
+    const name = profile?.name || contactBook[chatId]?.name || 'Пользователь';
     const initials = name.substring(0,2).toUpperCase();
     const district = profile?.district || '';
     const avatarUrl = profile?.avatar_url;
     const ordersCount = (bookings || []).length;
     const charityAmount = ordersCount * 150;
     const petsList = pets || [];
-    
+
     body.innerHTML = `
       <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:20px;">
         <div class="avatar" style="width:80px;height:80px;font-size:28px;box-shadow:0 4px 16px rgba(0,0,0,0.1);overflow:hidden;">
@@ -426,8 +479,6 @@ async function openChatUserProfile() {
           ${district}
         </div>` : ''}
       </div>
-      
-      <!-- Stats -->
       <div style="display:flex;gap:0;background:var(--bg);border-radius:14px;padding:12px;margin-bottom:16px;">
         <div style="flex:1;text-align:center;">
           <div style="font-size:18px;font-weight:900;color:var(--primary);">${ordersCount}</div>
@@ -444,8 +495,6 @@ async function openChatUserProfile() {
           <div style="font-size:11px;color:var(--text-secondary);">питомцев</div>
         </div>
       </div>
-      
-      <!-- Pets -->
       ${petsList.length ? `
         <div style="text-align:left;margin-bottom:12px;">
           <div style="font-size:15px;font-weight:800;margin-bottom:10px;">Питомцы</div>
@@ -462,12 +511,10 @@ async function openChatUserProfile() {
           `).join('')}
         </div>
       ` : '<div style="color:var(--text-secondary);font-size:13px;margin-bottom:12px;">Питомцы не добавлены</div>'}
-      
-      <button class="btn btn-p" style="margin-bottom:8px;" onclick="closeModal('m-user-profile')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="margin-right:6px;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-        Написать
+      <button class="btn btn-p" style="margin-bottom:8px;" onclick="closeModal('m-user-profile');if(typeof openFullUserProfile==='function')openFullUserProfile('${chatId}')">
+        Открыть профиль
       </button>
-    `;
+      <button class="btn btn-g" onclick="closeModal('m-user-profile')">Закрыть</button>`;
   } catch(e) {
     console.error('User profile error:', e);
     body.innerHTML = '<div style="padding:20px;color:var(--text-secondary);">Не удалось загрузить профиль</div>';

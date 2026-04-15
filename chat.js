@@ -212,7 +212,7 @@ function renderPrivateChatMessages(chatId) {
         </svg>
       </div>
       <div class="msg-bubble" data-message-id="${msg.dbId || ''}" style="max-width:75%;background:${isMine ? 'var(--primary)' : 'var(--white)'};color:${isMine ? 'white' : 'var(--text-primary)'};padding:10px 14px;border-radius:${isMine ? '16px 16px 4px 16px' : '16px 16px 16px 4px'};word-wrap:break-word;font-size:14px;box-shadow:var(--shadow);transform:translateX(0);transition:transform 0.2s ease-out;">
-        ${!isMine ? `<div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:4px;">${escHtml(msg.senderName || '')}</div>` : ''}
+        ${!isMine && msg.senderName ? `<div onclick="${msg.senderId ? `openUserProfileById('${msg.senderId}')` : ''}" style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:4px;${msg.senderId ? 'cursor:pointer;' : ''}">${escHtml(msg.senderName)}</div>` : ''}
         ${replyBlock}
         ${content}
         <div style="font-size:11px;${isMine ? 'color:rgba(255,255,255,0.7)' : 'color:var(--text-secondary)'};margin-top:4px;text-align:right;">${msg.time}</div>
@@ -608,6 +608,22 @@ function _doRenderPrivateChats() {
     const cachedAv = _avatarCache[id];
     const avContent = cachedAv ? `<img src="${cachedAv}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.textContent='${safeInitials}'">` : safeInitials;
     const avBg = cachedAv ? 'background:none;padding:0;overflow:hidden;' : `background:${contact.grad};`;
+
+    // Время последнего сообщения — показываем дату если не сегодня
+    let lastTimeStr = last?.time || '';
+    if (last?.created_at) {
+      const msgDate = new Date(last.created_at);
+      const now = new Date();
+      const isToday = msgDate.toDateString() === now.toDateString();
+      const isYesterday = new Date(now - 86400000).toDateString() === msgDate.toDateString();
+      if (isToday) {
+        lastTimeStr = msgDate.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      } else if (isYesterday) {
+        lastTimeStr = 'вчера';
+      } else {
+        lastTimeStr = msgDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+      }
+    }
     return `
     <div style="position:relative;overflow:hidden;" id="ci-wrap-${safeId}">
       <div style="position:absolute;right:0;top:0;bottom:0;width:80px;background:#FF3B30;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;cursor:pointer;" onclick="deleteLocalChat('${safeId}')">
@@ -619,7 +635,7 @@ function _doRenderPrivateChats() {
         <div style="flex:1;min-width:0;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
             <span style="font-weight:800;font-size:15px;">${safeName}</span>
-            <span style="font-size:11px;color:var(--text-secondary);">${last?.time || ''}</span>
+            <span style="font-size:11px;color:var(--text-secondary);">${lastTimeStr}</span>
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;">
             <span style="font-size:13px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">${lastPreview}</span>
@@ -702,12 +718,13 @@ function loadPrivateChatsFromStorage() {
 async function reloadEventChatsFromDB() {
   if (!supabaseClient || !currentUser) return;
 
-  // Берём только события где пользователь реально участвует (из БД, не из localStorage)
+  // Берём все события где пользователь когда-либо участвовал — не только 'going'
+  // чтобы чат не пропадал при смене статуса
   const { data: participations, error } = await supabaseClient
     .from('event_participants')
     .select('event_id')
-    .eq('user_id', currentUser.id)
-    .eq('status', 'going');
+    .eq('user_id', currentUser.id);
+    // Убрали .eq('status', 'going') — чат должен оставаться при любом статусе
 
   if (error) { console.error('reloadEventChatsFromDB error:', error); return; }
   
