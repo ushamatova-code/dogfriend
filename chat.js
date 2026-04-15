@@ -988,8 +988,7 @@ async function loadAllDialogsFromDB() {
         continue;
       }
 
-      // Восстанавливаем сообщения — мержим с существующими чтобы не потерять
-      // optimistic-сообщения которые ещё не успели сохраниться в БД
+      // Преобразуем сообщения из БД
       const dbMessages = messages.map(m => ({
         text: m.text,
         sender: m.sender_id === myUserId ? 'user' : 'other',
@@ -1005,10 +1004,21 @@ async function loadAllDialogsFromDB() {
         reply_to_text: m.reply_to_text || null,
         reply_to_name: m.reply_to_name || null,
       }));
-      const dbIds = new Set(dbMessages.map(m => m.dbId).filter(Boolean));
-      // Сохраняем optimistic-сообщения (без dbId) которых ещё нет в БД
-      const optimistic = (privateChats[theirId] || []).filter(m => !m.dbId && !dbIds.has(m.dbId));
-      privateChats[theirId] = [...dbMessages, ...optimistic];
+
+      // ВАЖНО: один контакт может иметь сообщения в ДВУХ комнатах — старый формат (uuid_uuid)
+      // и новый (uuid__uuid). Мержим все вместе по dbId чтобы не потерять ни одного сообщения.
+      const existingMsgs = privateChats[theirId] || [];
+      const existingDbIds = new Set(existingMsgs.map(m => m.dbId).filter(Boolean));
+      const newDbMsgs = dbMessages.filter(m => !existingDbIds.has(m.dbId));
+      const newDbIds = new Set(dbMessages.map(m => m.dbId).filter(Boolean));
+      const optimistic = existingMsgs.filter(m => !m.dbId && !newDbIds.has(m.dbId));
+      const merged = [...existingMsgs.filter(m => m.dbId), ...newDbMsgs, ...optimistic];
+      merged.sort((a, b) => {
+        if (a.created_at && b.created_at) return a.created_at.localeCompare(b.created_at);
+        if (a.dbId && b.dbId) return a.dbId > b.dbId ? 1 : -1;
+        return 0;
+      });
+      privateChats[theirId] = merged;
 
       // Восстанавливаем контакт если не знаем
       if (!contactBook[theirId]) {
