@@ -1291,7 +1291,21 @@ async function checkAuth() {
       // Проверяем бизнес сразу после авторизации
       checkUserBusiness();
 
-      nav('home');
+      // Проверяем нужен ли онбординг (новый пользователь через Google)
+      const needsOnboarding = await checkNeedsOnboarding();
+      if (needsOnboarding) {
+        // Подставляем имя из Google если есть
+        const googleName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || '';
+        if (googleName) {
+          setTimeout(() => {
+            const nameInput = document.getElementById('onb-name');
+            if (nameInput) nameInput.value = googleName;
+          }, 100);
+        }
+        nav('onboarding');
+      } else {
+        nav('home');
+      }
       // Запускаем polling входящих заявок в друзья
       if (typeof startFriendRequestsPolling === 'function') startFriendRequestsPolling();
       // Записываем визит
@@ -1468,9 +1482,187 @@ async function supabaseRegister() {
 }
 
 
-// ============================================================
-// ВОССТАНОВЛЕНИЕ ПАРОЛЯ
-// ============================================================
+// Онбординг: превью аватарки пользователя
+let _onbAvatarFile = null;
+function onbPreviewAvatar(input) {
+  const file = input.files[0];
+  if (!file) return;
+  _onbAvatarFile = file;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const preview = document.getElementById('onb-avatar-preview');
+    preview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+// Онбординг: превью фото питомца
+let _onbPetPhotoFile = null;
+function onbPreviewPetPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  _onbPetPhotoFile = file;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const preview = document.getElementById('onb-pet-photo-preview');
+    preview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+// Вход через Google
+async function loginWithGoogle() {
+  if (!supabaseClient) { showToast('Нет подключения к серверу'); return; }
+  try {
+    showToast('Переходим в Google...', 'var(--primary)');
+    const { error } = await supabaseClient.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + window.location.pathname
+      }
+    });
+    if (error) throw error;
+  } catch(err) {
+    console.error('Google login error:', err);
+    showToast('Ошибка: ' + (err.message || 'Попробуйте позже'));
+  }
+}
+
+// Проверяем нужен ли онбординг (после первого входа через Google или email)
+async function checkNeedsOnboarding() {
+  if (!currentUser || !supabaseClient) return false;
+  try {
+    const { data } = await supabaseClient
+      .from('profiles')
+      .select('name, district')
+      .eq('user_id', currentUser.id)
+      .single();
+    // Если нет профиля или имя не заполнено — нужен онбординг
+    if (!data || !data.name || data.name.trim() === '') return true;
+    return false;
+  } catch(e) {
+    return true; // При ошибке — показываем онбординг
+  }
+}
+
+// Онбординг: переход на шаг 2
+function onbNextStep() {
+  const name = document.getElementById('onb-name').value.trim();
+  if (!name) { showToast('Введите ваше имя'); return; }
+  document.getElementById('onb-step-1').style.display = 'none';
+  document.getElementById('onb-step-2').style.display = 'block';
+}
+
+// Онбординг: завершить с питомцем
+async function onbFinish() {
+  const petName = document.getElementById('onb-pet-name').value.trim();
+  if (!petName) { showToast('Введите кличку питомца'); return; }
+  
+  const name = document.getElementById('onb-name').value.trim();
+  const district = document.getElementById('onb-district').value.trim();
+  const breed = document.getElementById('onb-pet-breed').value.trim();
+  const age = document.getElementById('onb-pet-age').value.trim();
+
+  showToast('Сохраняем...', 'var(--primary)');
+
+  // Сохраняем профиль
+  await _saveOnboardingProfile(name, district);
+
+  // Загружаем аватарку пользователя если выбрана
+  if (_onbAvatarFile && supabaseClient && currentUser) {
+    try {
+      const compressed = await compressImage(_onbAvatarFile, 512, 0.8);
+      const ext = _onbAvatarFile.name.split('.').pop() || 'jpg';
+      const filePath = `avatars/${currentUser.id}.${ext}`;
+      const { error: uploadError } = await supabaseClient.storage
+        .from('avatars').upload(filePath, compressed, { upsert: true, contentType: compressed.type });
+      if (!uploadError) {
+        const { data: urlData } = supabaseClient.storage.from('avatars').getPublicUrl(filePath);
+        const publicUrl = urlData.publicUrl + '?t=' + Date.now();
+        await supabaseClient.from('profiles').upsert({
+          id: currentUser.id, user_id: currentUser.id, avatar_url: publicUrl, updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+        localStorage.setItem('df_avatar', publicUrl);
+        if (currentUserProfile) currentUserProfile.avatar_url = publicUrl;
+      }
+    } catch(e) { console.warn('Avatar upload error:', e); }
+  }
+
+  // Сохраняем питомца
+  if (supabaseClient && currentUser) {
+    try {
+      let petAvatarUrl = null;
+
+      // Загружаем фото питомца если выбрано
+      if (_onbPetPhotoFile) {
+        const compressed = await compressImage(_onbPetPhotoFile, 512, 0.8);
+        const ext = _onbPetPhotoFile.name.split('.').pop() || 'jpg';
+        const filePath = `pets/${currentUser.id}_${Date.now()}.${ext}`;
+        const { error: uploadError } = await supabaseClient.storage
+          .from('avatars').upload(filePath, compressed, { upsert: true, contentType: compressed.type });
+        if (!uploadError) {
+          const { data: urlData } = supabaseClient.storage.from('avatars').getPublicUrl(filePath);
+          petAvatarUrl = urlData.publicUrl + '?t=' + Date.now();
+        }
+      }
+
+      await supabaseClient.from('pets').insert({
+        user_id: currentUser.id,
+        name: petName,
+        breed: breed || null,
+        age: age || null,
+        avatar_url: petAvatarUrl,
+        created_at: new Date().toISOString()
+      });
+    } catch(e) { console.warn('Pet save error:', e); }
+  }
+
+  _afterOnboarding(name);
+}
+
+// Онбординг: пропустить добавление питомца
+async function onbSkipPet() {
+  const name = document.getElementById('onb-name').value.trim();
+  const district = document.getElementById('onb-district').value.trim();
+  await _saveOnboardingProfile(name, district);
+  _afterOnboarding(name);
+}
+
+async function _saveOnboardingProfile(name, district) {
+  const p = { name, district };
+  localStorage.setItem('df_profile', JSON.stringify(p));
+  if (district) localStorage.setItem('df_user_geo', district);
+
+  if (supabaseClient && currentUser) {
+    try {
+      await supabaseClient.from('profiles').upsert({
+        id: currentUser.id,
+        user_id: currentUser.id,
+        name,
+        district: district || null,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
+    } catch(e) { console.warn('Profile save error:', e); }
+  }
+}
+
+function _afterOnboarding(name) {
+  localStorage.setItem('df_registered', '1');
+  showToast('Добро пожаловать в Dogly! 🐾', '#34C759');
+  sendWelcomeMessages(currentUser.id).catch(() => {});
+  loadProfile();
+  stopRealtimeDMSubscription();
+  startRealtimeDMSubscription();
+  stopMessagePolling();
+  startMessagePolling();
+  loadAllDialogsFromDB();
+  reloadEventChatsFromDB();
+  checkUserBusiness();
+  nav('home');
+  setTimeout(() => askPushPermission(), 2000);
+}
+
+
 
 async function sendPasswordReset() {
   const email = document.getElementById('forgot-email').value.trim();
